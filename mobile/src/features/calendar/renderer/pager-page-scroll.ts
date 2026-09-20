@@ -55,6 +55,7 @@ export function usePagerPageScroll(
   const position = useSharedValue(CENTER_PAGE)
   const offset = useSharedValue(0)
   const activeContextKey = useSharedValue(contextKey)
+  const settledContextKey = useSharedValue<string | null>(null)
 
   useLayoutEffect(() => {
     activeContextKey.set(contextKey)
@@ -67,16 +68,20 @@ export function usePagerPageScroll(
       onPageScroll: (event) => {
         "worklet"
         if (callbacksBlocked.get()) return
-        if (activeContextKey.get() !== contextKey) {
-          position.set(CENTER_PAGE)
-          offset.set(0)
-          return
-        }
+        if (activeContextKey.get() !== contextKey) return
+        if (settledContextKey.get() === contextKey) return
         position.set(event.position)
         offset.set(event.offset)
       },
     },
-    [activeContextKey, callbacksBlocked, contextKey, offset, position],
+    [
+      activeContextKey,
+      callbacksBlocked,
+      contextKey,
+      offset,
+      position,
+      settledContextKey,
+    ],
   )
 
   const headerStripStyle = useAnimatedStyle(() => ({
@@ -87,5 +92,18 @@ export function usePagerPageScroll(
     ],
   }))
 
-  return { headerStripStyle, offset, onPageScroll, position }
+  const settleHeaderProgress = (page: number) => {
+    // Keep the accepted edge visible until React replaces the dated pages.
+    settledContextKey.set(contextKey)
+    position.set(page)
+    offset.set(0)
+  }
+
+  return {
+    headerStripStyle,
+    offset,
+    onPageScroll,
+    position,
+    settleHeaderProgress,
+  }
 }

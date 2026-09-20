@@ -71,18 +71,19 @@ export function HiddenEventsScreen() {
       <Stack.Screen options={{ title: t("hiddenEvents.title") }} />
       <RootPage testID="hidden-events-layout-owner" lane="standard">
         {({ laneStyle }) => (
-          <>
+          <ScrollView
+            testID="hidden-events-responsive-content"
+            contentContainerStyle={[laneStyle, styles.content]}
+          >
             {failed && (
-              <View style={laneStyle}>
-                <WriteErrorNotice
-                  message={t("hiddenEvents.error")}
-                  style={styles.error}
-                />
-              </View>
+              <WriteErrorNotice
+                message={t("hiddenEvents.error")}
+                style={styles.error}
+              />
             )}
 
             {isEmpty ? (
-              <View style={[laneStyle, styles.stateLane]}>
+              <View style={styles.stateLane}>
                 <EmptyState
                   testID="hidden-events-empty"
                   variant="screen"
@@ -92,10 +93,7 @@ export function HiddenEventsScreen() {
                 />
               </View>
             ) : (
-              <ScrollView
-                testID="hidden-events-responsive-content"
-                contentContainerStyle={[laneStyle, styles.content]}
-              >
+              <>
                 {namedHiddenEvents.length > 0 && (
                   <View style={styles.section}>
                     <ThemedText type="subtitle">
@@ -134,9 +132,9 @@ export function HiddenEventsScreen() {
                     ))}
                   </View>
                 )}
-              </ScrollView>
+              </>
             )}
-          </>
+          </ScrollView>
         )}
       </RootPage>
     </>
@@ -185,6 +183,8 @@ function HiddenRow({
 const styles = StyleSheet.create({
   stateLane: { flex: 1 },
   content: {
+    flexGrow: 1,
+    paddingTop: Spacing.four,
     gap: Spacing.four,
     paddingBottom: Spacing.four,
   },

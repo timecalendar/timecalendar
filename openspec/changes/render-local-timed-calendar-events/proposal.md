@@ -8,6 +8,7 @@ The owned Day/Week timeline still renders an empty grid even though synced and p
 - Decode stored synced and personal rows through a total, validated boundary that produces explicit timed or date-only domain tags without changing the SQLite or wire representation; this slice presents only positive-duration timed events contained in one display-zone civil date.
 - Filter invisible-source, hidden, and cancelled rows before either visual or semantic presentation, isolate malformed rows with privacy-safe aggregate reason codes, and publish complete immutable versioned page/event models rather than partially relabeling retained data.
 - Render one normal timed tile at its actual clock position with title, location, checklist progress, and one composed localized accessibility label; activate it by stable original event identity through the existing unified details route.
+- Refine the owned timeline's visual hierarchy with localized one-letter weekday glyphs, larger date numbers, secondary dark-mode date text, a filled circular Today cue, smaller secondary hour labels without a midnight or duplicate current-time gutter label, and one shared separator tone for columns and major hours.
 - Preserve synced read-only details and personal-event editing, keep event decoding/layout off gesture frames, retain exactly three timeline pages, and make page navigation entirely local with no sync or network dependency.
 - Add deterministic query, decoder, filtering, page-model, geometry, activation, accessibility, and no-network-navigation proof plus the complete revision-bound owner QA gate.
 
@@ -27,7 +28,7 @@ None.
 
 ## Impact
 
-- Affects the calendar domain/read seam under `mobile/src/features/calendar/data/`, synced and personal reactive repositories, the Calendar controller/screen, the owned renderer facade/coordinator/canvas, event accessibility/appearance helpers, checklist progress wiring, EN/FR resources, focused tests, and current Architecture Book Calendar/data/storage/testing pages plus `CHANGELOG.md`.
+- Affects the calendar domain/read seam under `mobile/src/features/calendar/data/`, synced and personal reactive repositories, the Calendar controller/screen, the owned renderer facade/coordinator/header/canvas, event accessibility/appearance helpers, checklist progress wiring, EN/FR resources, focused tests, and current Architecture Book Calendar/data/storage/testing pages plus `CHANGELOG.md`.
 - The `CalendarEvent` consumer contract becomes a complete discriminated/versioned rendering model rather than a permissive row-shaped object, so Home, Agenda, details-related routing tests, fixtures, and other data consumers must migrate coherently in this change.
 - Touches no repository-sensitive surface: no OpenAPI or generated client, no database schema or migration, no native/store/EAS/Firebase configuration, no deploy/CI or infrastructure files, and no legacy Flutter code.
 - Adds no dependency, server request, compatibility renderer, overlap packing, instant marker, spanning/DST/all-day presentation, arbitrary event cap, or storage/wire rewrite. T10–T16 retain those explicit later cases.

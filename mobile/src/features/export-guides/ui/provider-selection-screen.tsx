@@ -105,10 +105,9 @@ export default function ProviderSelectionScreen() {
       <RootPage lane="readable" style={styles.fill}>
         {(layout) => (
           <FlatList
-            style={layout.laneStyle}
             data={providers}
             keyExtractor={(provider) => provider.slug}
-            contentContainerStyle={styles.content}
+            contentContainerStyle={[layout.laneStyle, styles.content]}
             accessibilityLabel={instructions}
             ListHeaderComponent={<PageIntro caption={instructions} />}
             renderItem={({ item: provider }) => (
@@ -171,7 +170,7 @@ export default function ProviderSelectionScreen() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  content: { gap: Spacing.three, paddingBottom: Spacing.four },
+  content: { gap: Spacing.three, paddingVertical: Spacing.four },
   provider: {
     minHeight: 56,
     borderWidth: StyleSheet.hairlineWidth,

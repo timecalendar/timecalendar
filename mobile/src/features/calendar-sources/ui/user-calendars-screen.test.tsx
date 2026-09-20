@@ -204,7 +204,7 @@ describe("UserCalendarsScreen", () => {
     expect(
       StyleSheet.flatten(
         screen.getByTestId("user-calendars-content").props.style,
-      ).paddingTop,
+      ).paddingTop ?? 0,
     ).toBe(0)
     expect(screen.getByTestId("user-calendar-row-cal-1")).toBeTruthy()
     expect(screen.getByTestId("user-calendar-row-cal-2")).toBeTruthy()
@@ -224,6 +224,7 @@ describe("UserCalendarsScreen", () => {
   })
 
   it("centers the management list in the measured tablet lane", async () => {
+    mockUseUserCalendars.mockReturnValue([calendar()])
     await render(<UserCalendarsScreen />)
     const owner = screen.getByTestId("user-calendars-content")
 
@@ -236,7 +237,7 @@ describe("UserCalendarsScreen", () => {
     const layout = resolveResponsiveLayout(1024, "standard")
     expect(
       StyleSheet.flatten(
-        screen.getByTestId("user-calendars-safe-area").props.style,
+        screen.getByTestId("user-calendars-list").props.contentContainerStyle,
       ),
     ).toMatchObject({
       alignSelf: "center",

@@ -1,5 +1,14 @@
 # Architecture Book changelog
 
+## 2026-09-20 — Calendar timeline visual hierarchy QA
+
+- Refined date headers with localized narrow weekday glyphs, larger numbers, dark secondary date
+  text, and a fixed filled circular Today badge with an independent primary weekday cue.
+- Removed the clipped midnight and duplicate current-time gutter labels while retaining complete-day
+  geometry and one localized accessible status on the committed current-time rule.
+- Unified vertical separators and major hour lines on the separator token, kept half-hours
+  subordinate, and moved 01:00–23:00 gutter labels to compact secondary typography.
+
 ## 2026-09-19 — Calendar reads and opens ordinary local timed classes (T09)
 
 - Added bounded three-page SQLite reads through a total V1 timed/date-only domain boundary with

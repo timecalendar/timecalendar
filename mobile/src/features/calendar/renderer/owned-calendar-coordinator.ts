@@ -194,12 +194,17 @@ export function useOwnedCalendarCoordinator({
     scrollRef,
     verticalCallbacksBlocked,
   } = zoom
-  const { headerStripStyle, offset, onPageScroll, position } =
-    usePagerPageScroll(
-      headerLaneWidth,
-      progressContextKey,
-      horizontalCallbacksBlocked,
-    )
+  const {
+    headerStripStyle,
+    offset,
+    onPageScroll,
+    position,
+    settleHeaderProgress,
+  } = usePagerPageScroll(
+    headerLaneWidth,
+    progressContextKey,
+    horizontalCallbacksBlocked,
+  )
   const nativeScrollGesture = Gesture.Native()
     .withTestId("owned-calendar-native-scroll")
     .onBegin(() => {
@@ -322,7 +327,11 @@ export function useOwnedCalendarCoordinator({
     direction: WeekDirection,
     source: CalendarTransitionSource,
   ) => {
-    if (!foregroundRef.current || pendingRevisionRef.current !== null)
+    if (
+      !foregroundRef.current ||
+      pendingRevisionRef.current !== null ||
+      consumedGenerationRef.current === generation
+    )
       return null
     const revision = Math.max(revisionRef.current, revisionFloor) + 1
     revisionRef.current = revision
@@ -345,6 +354,7 @@ export function useOwnedCalendarCoordinator({
     const revision = pendingRevisionRef.current
     if (revision === null) return
     consumedGenerationRef.current = generation
+    settleHeaderProgress(selectedPage)
     selectedPageRef.current = CENTER_PAGE
     pendingRevisionRef.current = null
     onTransitionSettled(revision)
@@ -353,6 +363,7 @@ export function useOwnedCalendarCoordinator({
   const onPageSelected = (event: PagerViewOnPageSelectedEvent) => {
     if (geometryRevision !== geometryRevisionRef.current) return
     if (currentGenerationRef.current !== generation) return
+    if (consumedGenerationRef.current === generation) return
     if (horizontalCallbacksAreBlocked()) return
     selectedPageRef.current = event.nativeEvent.position
   }
@@ -362,6 +373,7 @@ export function useOwnedCalendarCoordinator({
   ) => {
     if (geometryRevision !== geometryRevisionRef.current) return
     if (currentGenerationRef.current !== generation) return
+    if (consumedGenerationRef.current === generation) return
     observePinchInterruption()
     if (event.nativeEvent.pageScrollState === "dragging") {
       movementOwnedRef.current = true
@@ -465,10 +477,6 @@ export function useOwnedCalendarCoordinator({
     position.set(CENTER_PAGE)
     offset.set(0)
     pagerRef.current?.setPageWithoutAnimation(CENTER_PAGE)
-    scrollRef.current?.scrollTo({
-      y: committedVerticalOffsetRef.current,
-      animated: false,
-    })
   }, [
     generation,
     offset,
@@ -477,7 +485,6 @@ export function useOwnedCalendarCoordinator({
     pinchInterruptionSequence,
     pinchSequence,
     position,
-    scrollRef,
   ])
 
   useLayoutEffect(() => {

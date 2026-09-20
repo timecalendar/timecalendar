@@ -2,7 +2,7 @@ import { fireEvent, render } from "@testing-library/react-native"
 import { StyleSheet, View } from "react-native"
 
 import { useColorScheme } from "@/hooks/use-color-scheme"
-import { Colors, resolveResponsiveLayout } from "@/theme"
+import { Colors, resolveResponsiveLayout, Spacing } from "@/theme"
 
 import { PageIntro, RootPage } from "./root-page"
 
@@ -38,7 +38,12 @@ describe("RootPage", () => {
       ).toMatchObject({
         maxWidth: (metrics.maxContentWidth ?? 0) + 2 * metrics.gutter,
         paddingHorizontal: metrics.gutter,
+        paddingTop: Spacing.four,
       })
+      expect(
+        StyleSheet.flatten(view.getByTestId("page").props.style).paddingTop ??
+          0,
+      ).toBe(0)
       expect(
         view.container.queryAll(
           (node) => node.props.keyboardShouldPersistTaps !== undefined,
@@ -55,6 +60,9 @@ describe("RootPage", () => {
     )
     expect(view.queryByTestId("page-lane")).toBeNull()
     expect(view.getByTestId("list-owner")).toBeTruthy()
+    expect(
+      StyleSheet.flatten(view.getByTestId("page").props.style).paddingTop ?? 0,
+    ).toBe(0)
   })
 
   it.each([

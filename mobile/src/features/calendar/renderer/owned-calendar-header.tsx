@@ -6,8 +6,10 @@ import { ThemedText } from "@/components/themed-text"
 import {
   type AppLocale,
   formatDayHeaderParts,
+  formatNarrowWeekday,
   HOURS_COLUMN_WIDTH,
 } from "@/features/calendar/data"
+import { useColorScheme } from "@/hooks/use-color-scheme"
 import { useTheme } from "@/theme"
 
 import type { CalendarPage } from "./owned-calendar-coordinator"
@@ -28,6 +30,8 @@ export function OwnedCalendarDateHeader({
   stripStyle: AnimatedStyle<ViewStyle>
 }) {
   const theme = useTheme()
+  const colorScheme = useColorScheme()
+  const dateColor = colorScheme === "dark" ? theme.textSecondary : theme.text
   return (
     <View
       testID="owned-calendar-date-header"
@@ -71,6 +75,11 @@ export function OwnedCalendarDateHeader({
                   locale,
                   displayZone,
                 )
+                const narrowWeekday = formatNarrowWeekday(
+                  column.date,
+                  locale,
+                  displayZone,
+                )
                 const isToday = column.key === todayKey
                 const dateLabel = `${parts.weekday} ${parts.dayOfMonth}`
                 return (
@@ -85,27 +94,32 @@ export function OwnedCalendarDateHeader({
                   >
                     <ThemedText
                       accessible={false}
-                      type={isToday ? "smallBold" : "small"}
                       numberOfLines={1}
                       adjustsFontSizeToFit
                       minimumFontScale={0.8}
-                      style={styles.weekdayLabel}
+                      style={[
+                        styles.weekdayLabel,
+                        { color: isToday ? theme.primary : dateColor },
+                      ]}
                     >
-                      {parts.weekday}
+                      {narrowWeekday}
                     </ThemedText>
                     <View
                       accessible={false}
                       style={[
                         styles.dateBadge,
                         isToday && {
-                          borderColor: theme.primary,
-                          backgroundColor: theme.primarySoft,
+                          backgroundColor: theme.primary,
                         },
                       ]}
                     >
                       <ThemedText
                         accessible={false}
-                        type={isToday ? "smallBold" : "small"}
+                        numberOfLines={1}
+                        style={[
+                          styles.dayNumber,
+                          { color: isToday ? theme.background : dateColor },
+                        ]}
                       >
                         {parts.dayOfMonth}
                       </ThemedText>
@@ -148,13 +162,26 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 4,
   },
-  weekdayLabel: { maxWidth: "100%" },
+  weekdayLabel: {
+    maxWidth: "100%",
+    fontSize: 11,
+    lineHeight: 13,
+    fontWeight: 500,
+  },
+  dayNumber: {
+    width: "100%",
+    height: "100%",
+    fontSize: 20,
+    lineHeight: 32,
+    fontWeight: 700,
+    textAlign: "center",
+    textAlignVertical: "center",
+    includeFontPadding: false,
+  },
   dateBadge: {
-    minWidth: 28,
-    minHeight: 24,
-    borderWidth: 1,
-    borderColor: "transparent",
-    borderRadius: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
   },

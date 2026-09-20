@@ -7,6 +7,7 @@ import { StyleSheet } from "react-native"
 import { readApplicationInfo } from "@/features/about/data"
 import { recordUnknownError } from "@/firebase"
 import i18n from "@/i18n"
+import { Spacing } from "@/theme"
 
 import { AboutScreen } from "./about-screen"
 
@@ -55,6 +56,15 @@ describe("AboutScreen", () => {
           nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
         }),
       )
+      expect(
+        StyleSheet.flatten(view.getByTestId("about-safe-area").props.style)
+          .paddingTop ?? 0,
+      ).toBe(0)
+      expect(
+        StyleSheet.flatten(
+          view.getByTestId("about-scroll-owner").props.contentContainerStyle,
+        ),
+      ).toMatchObject({ paddingTop: Spacing.four })
       expect(
         StyleSheet.flatten(
           view.getByTestId("about-responsive-content").props.style,

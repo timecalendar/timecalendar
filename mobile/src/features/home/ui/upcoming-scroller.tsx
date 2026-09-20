@@ -27,12 +27,14 @@ import { eventSurfaceColor } from "./event-surface"
 const CARD_WIDTH = 200
 
 export function UpcomingScroller({
+  contentInset = 0,
   events,
   checklistProgress,
   locale,
   displayZone,
   onPressEvent,
 }: {
+  contentInset?: number
   events: CalendarEvent[]
   checklistProgress: ChecklistProgressMap
   locale: AppLocale
@@ -46,7 +48,10 @@ export function UpcomingScroller({
       testID="upcoming-scroller"
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[
+        styles.content,
+        { paddingHorizontal: contentInset },
+      ]}
     >
       {events.map((event) => (
         <UpcomingCard

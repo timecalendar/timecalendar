@@ -29,46 +29,42 @@ export function PersonalEventsList() {
       <Stack.Screen options={{ title: t("personalEvents.list.title") }} />
       <RootPage testID="personal-events-responsive-owner" lane="standard">
         {(layout) => (
-          <View
-            testID="personal-events-responsive-lane"
-            style={[layout.laneStyle, styles.lane]}
-          >
-            <View style={styles.header}>
-              <Link href="/personal-event-form" asChild>
-                <Pressable
-                  testID="personal-events-add"
-                  accessibilityRole="button"
-                  accessibilityLabel={t("personalEvents.list.add")}
-                  hitSlop={Spacing.two}
-                  // Flatten: Link asChild forwards through expo-router's radix
-                  // <Slot>, whose dev-only shim throws on an array `style` child.
-                  style={StyleSheet.flatten([
-                    styles.addButton,
-                    { backgroundColor: theme.backgroundElement },
-                  ])}
-                >
-                  <ThemedText type="smallBold">
-                    {t("personalEvents.list.add")}
-                  </ThemedText>
-                </Pressable>
-              </Link>
-            </View>
-
-            {events.length === 0 ? (
+          <FlatList
+            testID="personal-events-list"
+            data={events}
+            keyExtractor={(event) => event.uid}
+            contentContainerStyle={[layout.laneStyle, styles.list]}
+            ListHeaderComponent={
+              <View style={styles.header}>
+                <Link href="/personal-event-form" asChild>
+                  <Pressable
+                    testID="personal-events-add"
+                    accessibilityRole="button"
+                    accessibilityLabel={t("personalEvents.list.add")}
+                    hitSlop={Spacing.two}
+                    // Flatten: Link asChild forwards through expo-router's radix
+                    // <Slot>, whose dev-only shim throws on an array `style` child.
+                    style={StyleSheet.flatten([
+                      styles.addButton,
+                      { backgroundColor: theme.backgroundElement },
+                    ])}
+                  >
+                    <ThemedText type="smallBold">
+                      {t("personalEvents.list.add")}
+                    </ThemedText>
+                  </Pressable>
+                </Link>
+              </View>
+            }
+            ListEmptyComponent={
               <EmptyState
                 variant="screen"
                 title={t("personalEvents.list.empty")}
                 testID="personal-events-empty"
               />
-            ) : (
-              <FlatList
-                data={events}
-                keyExtractor={(event) => event.uid}
-                contentContainerStyle={styles.list}
-                renderItem={({ item }) => <EventRow event={item} />}
-              />
-            )}
-          </View>
+            }
+            renderItem={({ item }) => <EventRow event={item} />}
+          />
         )}
       </RootPage>
     </>
@@ -122,11 +118,8 @@ function EventRow({ event }: { event: PersonalEvent }) {
 }
 
 const styles = StyleSheet.create({
-  lane: {
-    flex: 1,
-    gap: Spacing.three,
-  },
   header: {
+    marginBottom: Spacing.one,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -139,6 +132,8 @@ const styles = StyleSheet.create({
     borderRadius: Radii.medium,
   },
   list: {
+    flexGrow: 1,
+    paddingVertical: Spacing.four,
     gap: Spacing.two,
   },
   row: {

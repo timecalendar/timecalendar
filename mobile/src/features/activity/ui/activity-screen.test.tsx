@@ -10,6 +10,7 @@ import { StyleSheet } from "react-native"
 
 import type { ActivityLog, ActivityState } from "@/features/activity/data"
 import i18n from "@/i18n"
+import { Spacing } from "@/theme"
 
 import { buildActivitySections } from "./activity-items"
 import { ActivityScreen } from "./activity-screen"
@@ -198,6 +199,16 @@ describe("ActivityScreen behavior", () => {
           nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
         }),
       )
+      expect(
+        StyleSheet.flatten(
+          view.getByTestId("activity-layout-owner").props.style,
+        ).paddingTop ?? 0,
+      ).toBe(0)
+      expect(
+        StyleSheet.flatten(
+          view.getByTestId("activity-section-list").props.contentContainerStyle,
+        ),
+      ).toMatchObject({ paddingTop: Spacing.four })
       const list = view.getByTestId("activity-section-list")
       expect(
         StyleSheet.flatten(list.props.contentContainerStyle),

@@ -99,6 +99,14 @@ The pager is no longer blanket-hidden. Decorative clock/grid nodes remain hidden
 
 Alternatives considered: making the whole pager accessible duplicates neighbour pages; an invisible second semantic button tree creates duplicate/hit-geometry failures under D06; navigating from the renderer imports routing into the wrong layer; freezing tile pixel geometry at the settled scale would make pinch detach events from grid lines.
 
+## Decision: Keep dense visual labels separate from unambiguous semantics
+
+The pinned date header uses the locale's narrow weekday glyph visually and a larger date number, while its accessible cell keeps the existing localized short weekday/date label so repeated one-letter glyphs remain unambiguous. Ordinary date text uses the secondary text token in dark appearance; Today uses a primary weekday glyph and a fixed square, fully circular primary fill whose number uses the screen background token. The circle is a non-color shape cue and remains independent of the number of visible columns.
+
+The full 00:00–24:00 geometry and midnight major boundary remain intact, but the gutter omits the visually clipped 00:00 label and renders 01:00–23:00 with compact secondary typography. Vertical column dividers and major horizontal lines use the same separator token; half-hour lines use that token at reduced opacity. The visible current-time gutter chip is removed because the in-column cap and rule already provide the visual cue. On the committed page that rule carries the one localized current-time accessibility label; neighbour-page indicators and decorative grid nodes remain hidden.
+
+Alternatives considered: truncating the existing short weekday formatter would not produce correct locale-specific narrow forms; removing midnight geometry would change scrolling and tile coordinates; dropping current-time semantics with the visual chip would make the cue unavailable to assistive technology.
+
 ## Decision: Preserve details authority and prove local-only navigation
 
 Activation always routes the original UID to the existing unified event-details screen. The details read remains authoritative: synced events resolve with `kind: "synced"` and keep hide/unhide but no edit action; personal events resolve with `kind: "personal"` and keep the Edit action. The presentation model never carries rich descriptions/tags or editability decisions.

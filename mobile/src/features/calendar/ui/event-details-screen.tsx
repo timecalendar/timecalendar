@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next"
 import { ScrollView, StyleSheet } from "react-native"
 
 import { RootPage } from "@/components/root-page"
-import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
 import {
   type EventDetails,
@@ -47,27 +46,20 @@ function ResolvedEventDetails({ event }: { event: EventDetails }) {
       <EventDetailsHeader action={action} />
       <RootPage testID="event-details-responsive-owner" lane="readable">
         {(layout) => (
-          <ThemedView
-            testID="event-details-responsive-lane"
-            style={[layout.laneStyle, styles.lane]}
+          <ScrollView
+            testID="event-details-content"
+            style={styles.scroll}
+            contentContainerStyle={[layout.laneStyle, styles.content]}
           >
             {failed && (
-              <WriteErrorNotice
-                message={t("eventDetails.hide.error")}
-                style={styles.hideError}
-              />
+              <WriteErrorNotice message={t("eventDetails.hide.error")} />
             )}
-            <ScrollView
-              testID="event-details-content"
-              contentContainerStyle={styles.content}
-            >
-              <EventDetailsContent
-                event={event}
-                locale={locale}
-                displayZone={displayZone}
-              />
-            </ScrollView>
-          </ThemedView>
+            <EventDetailsContent
+              event={event}
+              locale={locale}
+              displayZone={displayZone}
+            />
+          </ScrollView>
         )}
       </RootPage>
     </>
@@ -75,13 +67,9 @@ function ResolvedEventDetails({ event }: { event: EventDetails }) {
 }
 
 const styles = StyleSheet.create({
-  lane: {
-    flex: 1,
-  },
-  hideError: {
-    paddingTop: Spacing.three,
-  },
+  scroll: { flex: 1 },
   content: {
+    paddingTop: Spacing.four,
     paddingBottom: Spacing.three,
     gap: Spacing.four,
   },

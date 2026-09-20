@@ -84,11 +84,10 @@ function eventDetails(overrides: Partial<EventDetails> = {}): EventDetails {
     color: "#1E88E5",
     groupColor: "#0D47A1",
     type: "cm",
-    // Local-time dates so the formatted date/time is TZ-independent.
-    startsAt: new Date(2026, 5, 16, 9, 0, 0, 0),
-    endsAt: new Date(2026, 5, 16, 10, 30, 0, 0),
+    startsAt: new Date("2026-06-16T09:00:00.000Z"),
+    endsAt: new Date("2026-06-16T10:30:00.000Z"),
     allDay: false,
-    exportedAt: new Date(2026, 5, 15, 22, 0, 0, 0),
+    exportedAt: new Date("2026-06-15T22:00:00.000Z"),
     location: "Room A1",
     description: "Intro lecture",
     teachers: ["Dr. Turing", "Dr. Lovelace"],
@@ -141,7 +140,7 @@ describe("EventDetailsScreen", () => {
       })
       const metrics = resolveResponsiveLayout(width, "readable")
       const style = StyleSheet.flatten(
-        screen.getByTestId("event-details-responsive-lane").props.style,
+        screen.getByTestId("event-details-content").props.contentContainerStyle,
       )
       expect(style.maxWidth).toBe(
         (metrics.maxContentWidth ?? 0) + 2 * metrics.gutter,
@@ -155,8 +154,8 @@ describe("EventDetailsScreen", () => {
     const contentStyle = StyleSheet.flatten(
       screen.getByTestId("event-details-content").props.contentContainerStyle,
     )
-    expect(pageStyle.paddingTop).toBe(Spacing.four)
-    expect(contentStyle.paddingTop).toBeUndefined()
+    expect(pageStyle.paddingTop ?? 0).toBe(0)
+    expect(contentStyle.paddingTop).toBe(Spacing.four)
     expect(contentStyle.paddingBottom).toBe(Spacing.three)
   })
 

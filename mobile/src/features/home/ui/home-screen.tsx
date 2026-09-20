@@ -1,8 +1,14 @@
 import { useTranslation } from "react-i18next"
-import { Platform, RefreshControl, ScrollView, StyleSheet } from "react-native"
+import {
+  Platform,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { AdaptiveContent } from "@/components/adaptive-content"
+import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { ThemedView } from "@/components/themed-view"
 import { Spacing, useTheme } from "@/theme"
 
@@ -17,19 +23,22 @@ export function HomeScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
   const home = useHomeScreenController()
+  const { laneStyle, metrics, onLayout } = useAdaptiveLayout("standard")
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-        <AdaptiveContent
-          lane="standard"
+        <View
           testID="home-responsive-owner"
           style={styles.responsiveOwner}
-          contentContainerStyle={styles.responsiveLane}
+          onLayout={onLayout}
         >
-          <HomeScreenHeader onAdd={home.addEvent} />
+          <View style={laneStyle}>
+            <HomeScreenHeader onAdd={home.addEvent} />
+          </View>
           <ScrollView
             testID="home-scroll"
+            style={styles.scroll}
             contentContainerStyle={[
               styles.content,
               Platform.OS === "android"
@@ -47,16 +56,22 @@ export function HomeScreen() {
               />
             }
           >
-            <WelcomeCard
-              now={home.now}
-              locale={home.locale}
-              displayZone={home.displayZone}
-              caption={home.caption}
-              greeting={home.greeting}
-              events={home.todayEvents}
-            />
-            <HomeScreenStatus isError={home.isError} onRetry={home.sync} />
+            <View style={[laneStyle, styles.intro]}>
+              <WelcomeCard
+                now={home.now}
+                locale={home.locale}
+                displayZone={home.displayZone}
+                caption={home.caption}
+                greeting={home.greeting}
+                events={home.todayEvents}
+              />
+              <HomeScreenStatus isError={home.isError} onRetry={home.sync} />
+            </View>
             <UpcomingSection
+              laneStyle={laneStyle}
+              contentInset={
+                metrics.isMeasured ? metrics.outerInset : metrics.gutter
+              }
               now={home.now}
               locale={home.locale}
               displayZone={home.displayZone}
@@ -67,19 +82,21 @@ export function HomeScreen() {
               onOpenCalendar={home.openCalendar}
               onPressEvent={home.openEvent}
             />
-            <TodaySection
-              now={home.now}
-              locale={home.locale}
-              displayZone={home.displayZone}
-              allDayEvents={home.allDay}
-              timedEvents={home.timed}
-              checklistProgress={home.checklistProgress}
-              hourRange={home.hourRange}
-              onPressEvent={home.openEvent}
-            />
+            <View style={laneStyle}>
+              <TodaySection
+                now={home.now}
+                locale={home.locale}
+                displayZone={home.displayZone}
+                allDayEvents={home.allDay}
+                timedEvents={home.timed}
+                checklistProgress={home.checklistProgress}
+                hourRange={home.hourRange}
+                onPressEvent={home.openEvent}
+              />
+            </View>
           </ScrollView>
           {Platform.OS === "android" && <HomeAddFab onPress={home.addEvent} />}
-        </AdaptiveContent>
+        </View>
       </SafeAreaView>
     </ThemedView>
   )
@@ -89,7 +106,8 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
   responsiveOwner: { flex: 1 },
-  responsiveLane: { flex: 1 },
+  scroll: { flex: 1 },
+  intro: { gap: Spacing.three },
   content: {
     paddingTop: Spacing.two,
     paddingBottom: Spacing.four,

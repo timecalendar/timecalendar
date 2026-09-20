@@ -47,6 +47,7 @@ export {
   formatFullDay,
   formatHourStartLabel,
   formatMonthYear,
+  formatNarrowWeekday,
   formatShortDateTime,
   formatTime,
   formatTimeRange,

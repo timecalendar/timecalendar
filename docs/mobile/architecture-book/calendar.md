@@ -29,12 +29,21 @@ pixels-per-hour scale and a focal-preserving raw offset on the UI thread; React 
 settled scale/offset. After pinch takes ownership, callbacks from the interrupted scroll and pager
 epochs stay gated through settlement; each native owner reopens only when a new drag begins, so
 queued offset, selection, and idle events cannot replace the focal result or dated header.
+Settled offset and zoom props acknowledge the live renderer state without issuing another
+scroll command. React Native's iOS `scrollTo` bounds exclude UIKit's automatically adjusted
+tab-bar inset, so replaying a native settlement would hide the final hours behind the glass bar.
+Pinch ownership starts on activation. A touch pinch keeps its last two-finger anchor when
+release updates report fewer than two fingers; an unactivated gesture cannot restore a
+pinch baseline.
 Calendar tab reselect-to-top is disabled. The ScrollView
 exposes the committed localized day or week date context as an adjustable accessibility label
 with mode-specific translated previous/next actions.
 One clipped three-slot weekday/date strip remains pinned above vertical motion beneath the native
 month title. Its fixed spacer matches the hour gutter, and its previous/current/next slots reuse the
-same ordered column records as the three clock pages. A feature-private page-scroll hook wraps the
+same ordered column records as the three clock pages. Each visual cell uses the locale's narrow
+one-letter weekday glyph above a larger date number; its accessible label retains the localized short
+weekday and date so repeated letters remain unambiguous. Ordinary dates use secondary gray text in
+dark appearance. A feature-private page-scroll hook wraps the
 installed pager with Reanimated `createAnimatedComponent` and attaches its callable `useHandler` /
 `useEvent` seam. Native `position` and `offset` write shared values whose `useAnimatedStyle`
 projection drives the strip across the measured content lane on the UI thread, so there is no
@@ -46,8 +55,9 @@ both surfaces without committing a destination. Monday is an explicit launch inp
 display-zone transition model advances Day by one civil date and Week by one Monday-first civil
 week. Week presentation removes Saturday/Sunday by weekday identity when the persisted Show
 weekends preference is off, while Day still advances through them. Agenda retains its seven-day
-range. Today is identified in the effective display zone and has both a
-typography/outlined-shape cue and localized semantics. One controller-owned clock in
+range. Today is identified in the effective display zone and uses a primary weekday glyph plus a
+fixed, fully circular primary-filled date badge whose number uses the screen background color. This
+shape and typography distinction accompanies localized semantics. One controller-owned clock in
 `features/calendar/data/clock.ts` drives that cue, the Today action, and the timeline's current-time
 presentation. It refreshes at the next displayed minute only while the route is focused and the app
 is active, recomputes immediately on focus or foreground return, and clears its pending timeout on
@@ -59,8 +69,9 @@ effective-zone current minute 30% down the usable automatic-inset viewport. The 
 against explicit 00:00–24:00 bounds at the settled scale. Later clock ticks, foreground returns,
 geometry revisions, zoom settlements, and accepted date or mode transitions preserve the mounted
 viewport instead of seeking again. Each page containing today's column draws a rule with a filled
-leading cap, and the committed centre page adds an accessible typographic time chip in the gutter;
-pages without today, including a hidden weekend, show neither. The live indicator coordinate follows
+leading cap. The committed centre-page rule carries the single localized current-time accessibility
+label; the gutter has no duplicate visible time chip. Pages without today, including a hidden
+weekend, show neither the indicator nor its semantics. The live indicator coordinate follows
 the UI-thread scale while its minute changes only at displayed precision. The renderer passes explicit
 full-day bounds to `nowIndicatorPosition`; the shared helper's 07:00–21:00 defaults remain unchanged
 for Home and other consumers. Neither clock ticks nor midnight rollover announce or start continuous
@@ -85,18 +96,21 @@ closing boundary is not clipped.
 
 `CalendarScreen` passes `useCalendars()[0].uses24hourClock` into pure gutter formatting.
 `true` produces 24-hour labels, `false` produces 12-hour day periods, and `null` retains
-the deterministic 24-hour convention. The controller retains only settled, clamped clock
+the deterministic 24-hour convention. Full-day geometry still begins at midnight, but the clipped
+00:00 text is omitted; compact secondary labels run from 01:00 through 23:00. The controller retains only settled, clamped clock
 offsets, so accepted day/week revisions and Day/Week/Agenda switches preserve the visible time
 without reporting frame-frequency values to React. Gutter labels, minor and major lines, the
 24:00 closing boundary, columns, all three pages and scroll extent derive from the same scale.
+Vertical column separators and major horizontal hour lines share the separator token; half-hour
+lines use the same token at reduced opacity.
 Day and Week share the validated environment-independent zoom preference; Agenda neither changes
 nor resets it. Their native platform menu offers 10-pixel Zoom in/out and Reset commands, anchors
 them at the live usable viewport center, disables them at 40/120/60, and announces one settled
 percentage.
 
-This remains an intentionally incomplete pre-launch milestone. T09 adds ordinary positive-duration,
-same-display-date timed tiles; all-day lanes, instants, spanning/DST shapes, overlap packing, and
-populated-event density tuning remain pending until their numbered owned-renderer slices land.
+This remains an intentionally incomplete pre-launch timeline. Ordinary positive-duration,
+same-display-date timed tiles are supported; all-day lanes, instants, spanning/DST shapes, overlap
+packing, and populated-event density tuning remain pending until their numbered owned-renderer slices land.
 Shared time-grid helpers still default to 07:00–21:00; only the owned shell opts into
 explicit full-day bounds. Paging remains bounded to one adjacent day or week according to
 the committed mode; there is no far-date pager.
@@ -236,13 +250,17 @@ separate. The binding contract and regression scenarios live in the
 
 ## Surfaces
 
-- Calendar offers the T06 owned Day/Week shell and Agenda, with platform-specific native chrome.
+- Calendar offers the owned Day/Week shell and Agenda, with platform-specific native chrome.
   Day and Week share one full-day native vertical scroll surface, a horizontally pinned gutter, native
   pager arbitration, a three-page working set, reduced-motion settlement, hidden neighbour/grid
   semantics, accessible previous/next alternatives, and one pinned localized five/seven-date
   header aligned with every clock page. Day has one column; Week has five or seven, and both use
   bounded shared zoom with accessible native menu commands. A fresh mount opens around the current
-  display-zone minute and shows the shaped column rule plus accessible gutter time chip. Supported
+  display-zone minute and shows the shaped column rule; the committed rule carries current-time
+  semantics without a duplicate visible gutter chip. The visible gutter omits 00:00, uses compact
+  secondary labels for 01:00–23:00, and shares one separator family across columns and major hours.
+  Header cells use localized narrow weekday glyphs, larger date numbers, and a filled circular Today
+  badge. Supported
   ordinary timed tiles use live-scale minute geometry, show title/location/checklist progress, and
   expose one localized button only on the committed page. Title and location share compact 11/13
   typography, wrap without ellipses, and clip only at the event's actual time boundary; title weight

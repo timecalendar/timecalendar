@@ -59,20 +59,18 @@ describe("SchoolGroupPickerScreen", () => {
       }),
     )
 
-    const content = owner.children[0] as unknown as {
-      props: { style: unknown }
-    }
+    const content = getByTestId("onboarding-group-scroll")
     const layout = resolveResponsiveLayout(1024, "standard")
-    expect(StyleSheet.flatten(content.props.style)).toMatchObject({
+    expect(
+      StyleSheet.flatten(content.props.contentContainerStyle),
+    ).toMatchObject({
       maxWidth: layout.contentWidth + 2 * layout.gutter,
       paddingHorizontal: layout.gutter,
     })
-    expect(StyleSheet.flatten(owner.props.style)).toMatchObject({
-      paddingTop: Spacing.four,
-    })
-    expect(StyleSheet.flatten(content.props.style)).not.toHaveProperty(
-      "paddingTop",
-    )
+    expect(StyleSheet.flatten(owner.props.style).paddingTop ?? 0).toBe(0)
+    expect(
+      StyleSheet.flatten(content.props.contentContainerStyle),
+    ).toMatchObject({ paddingVertical: Spacing.four })
   })
 
   it("renders the localized title, a leaf node, and the confirm control", async () => {

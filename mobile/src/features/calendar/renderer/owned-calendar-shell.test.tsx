@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen } from "@testing-library/react-native"
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react-native"
 import { createRef } from "react"
 import { AppState, StyleSheet } from "react-native"
 import { State } from "react-native-gesture-handler"
@@ -14,12 +20,19 @@ import {
   planCalendarThreePageRange,
   type TimedCalendarEventV1,
 } from "@/features/calendar/data"
+import { useColorScheme } from "@/hooks/use-color-scheme"
 import { Colors } from "@/theme"
 
 import {
   OwnedCalendarShell,
   type OwnedCalendarShellHandle,
 } from "./owned-calendar-shell"
+
+jest.mock("@/hooks/use-color-scheme", () => ({
+  useColorScheme: jest.fn(() => "light"),
+}))
+
+const mockUseColorScheme = useColorScheme as jest.Mock
 
 const pagerMock = jest.requireMock<{
   __pagerMock: {
@@ -119,6 +132,7 @@ describe("OwnedCalendarShell", () => {
   beforeEach(() => {
     AppState.currentState = "active"
     jest.clearAllMocks()
+    mockUseColorScheme.mockReturnValue("light")
     jest.mocked(useReducedMotion).mockReturnValue(false)
   })
 
@@ -374,13 +388,13 @@ describe("OwnedCalendarShell", () => {
     })
     const pinch = getByGestureTestId("owned-calendar-pinch") as unknown as {
       handlers: {
-        onBegin: (event: Record<string, unknown>) => void
+        onBegin?: (event: Record<string, unknown>) => void
         onStart: (event: Record<string, unknown>) => void
         onFinalize: (event: Record<string, unknown>, success: boolean) => void
       }
     }
     await act(async () => {
-      pinch.handlers.onBegin({})
+      pinch.handlers.onBegin?.({})
       pinch.handlers.onStart({ focalX: 160, focalY: 250, scale: 1.1 })
     })
     await fireEvent.press(tile)
@@ -391,7 +405,7 @@ describe("OwnedCalendarShell", () => {
     })
   })
 
-  it("shows the current time on today's column with shape and typographic cues", async () => {
+  it("shows the current time on today's column with one shaped accessible cue", async () => {
     await render(<OwnedCalendarShell {...props} />)
 
     const indicator = screen.getByTestId("owned-calendar-now-0-2026-06-17", {
@@ -399,10 +413,10 @@ describe("OwnedCalendarShell", () => {
     })
     expect(StyleSheet.flatten(indicator.props.style).top).toBe(720)
     expect(indicator.children).toHaveLength(2)
-    expect(screen.getByTestId("owned-calendar-now-label")).toHaveProp(
-      "accessibilityLabel",
-      "Current time, 12:00",
-    )
+    expect(indicator).toHaveProp("accessible", true)
+    expect(indicator).toHaveProp("accessibilityRole", "text")
+    expect(indicator).toHaveProp("accessibilityLabel", "Current time, 12:00")
+    expect(screen.queryByTestId("owned-calendar-now-label")).toBeNull()
     expect(
       screen.getAllByTestId(/^owned-calendar-now--?\d-/, {
         includeHiddenElements: true,
@@ -447,7 +461,7 @@ describe("OwnedCalendarShell", () => {
         includeHiddenElements: true,
       }),
     ).toBeNull()
-    expect(screen.queryByTestId("owned-calendar-now-label")).toBeNull()
+    expect(screen.queryByLabelText(/Current time/)).toBeNull()
 
     await view.rerender(
       <OwnedCalendarShell
@@ -463,7 +477,7 @@ describe("OwnedCalendarShell", () => {
         includeHiddenElements: true,
       }),
     ).toBeNull()
-    expect(screen.queryByTestId("owned-calendar-now-label")).toBeNull()
+    expect(screen.queryByLabelText(/Current time/)).toBeNull()
   })
 
   it("keeps hidden-weekend Today meaning and now visibility absent across midnight", async () => {
@@ -486,7 +500,7 @@ describe("OwnedCalendarShell", () => {
     )
 
     expect(screen.queryByLabelText(/Today/)).toBeNull()
-    expect(screen.queryByTestId("owned-calendar-now-label")).toBeNull()
+    expect(screen.queryByLabelText(/Current time/)).toBeNull()
     expect(onTransitionRequest).not.toHaveBeenCalled()
     expect(onTransitionSettled).not.toHaveBeenCalled()
     expect(onVerticalOffsetSettled).not.toHaveBeenCalled()
@@ -583,6 +597,38 @@ describe("OwnedCalendarShell", () => {
     ).toHaveLength(21)
     expect(screen.getByLabelText("MON 15")).toBeOnTheScreen()
     expect(screen.getByLabelText("WED 17, Today")).toBeOnTheScreen()
+    const monday = within(
+      screen.getByTestId("owned-calendar-date-0-2026-06-15"),
+    )
+    expect(monday.getByText("M")).toHaveStyle({
+      color: Colors.light.text,
+      fontSize: 11,
+      lineHeight: 13,
+      fontWeight: 500,
+    })
+    expect(monday.getByText("15")).toHaveStyle({
+      color: Colors.light.text,
+      width: "100%",
+      height: "100%",
+      fontSize: 20,
+      lineHeight: 32,
+      fontWeight: 700,
+      textAlign: "center",
+      textAlignVertical: "center",
+      includeFontPadding: false,
+    })
+    expect(monday.getByText("15").props.adjustsFontSizeToFit).toBeUndefined()
+    const today = within(screen.getByTestId("owned-calendar-date-0-2026-06-17"))
+    expect(today.getByText("W")).toHaveStyle({ color: Colors.light.primary })
+    expect(today.getByText("17").parent).toHaveStyle({
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: Colors.light.primary,
+    })
+    expect(today.getByText("17")).toHaveStyle({
+      color: Colors.light.background,
+    })
     expect(screen.getByTestId("owned-calendar-date-header-slot-0")).toHaveProp(
       "accessibilityElementsHidden",
       false,
@@ -595,6 +641,64 @@ describe("OwnedCalendarShell", () => {
       ).toHaveProp("importantForAccessibility", "no-hide-descendants")
     }
     expect(screen.queryByRole("button", { name: /Today/ })).toBeNull()
+  })
+
+  it("uses gray dates and the filled Today treatment in dark mode", async () => {
+    mockUseColorScheme.mockReturnValue("dark")
+    await render(<OwnedCalendarShell {...props} />)
+
+    const monday = within(
+      screen.getByTestId("owned-calendar-date-0-2026-06-15"),
+    )
+    expect(monday.getByText("M")).toHaveStyle({
+      color: Colors.dark.textSecondary,
+    })
+    expect(monday.getByText("15")).toHaveStyle({
+      color: Colors.dark.textSecondary,
+    })
+
+    const today = within(screen.getByTestId("owned-calendar-date-0-2026-06-17"))
+    expect(today.getByText("W")).toHaveStyle({ color: Colors.dark.primary })
+    expect(today.getByText("17").parent).toHaveStyle({
+      backgroundColor: Colors.dark.primary,
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+    })
+    expect(today.getByText("17")).toHaveStyle({
+      color: Colors.dark.background,
+    })
+  })
+
+  it("omits midnight and uses smaller secondary hour labels", async () => {
+    await render(<OwnedCalendarShell {...props} />)
+
+    expect(screen.queryByTestId("owned-calendar-hour-label-0")).toBeNull()
+    expect(
+      screen.getAllByTestId(/^owned-calendar-hour-label-/, {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(23)
+    expect(
+      screen.getByTestId("owned-calendar-hour-label-1", {
+        includeHiddenElements: true,
+      }),
+    ).toHaveTextContent("01:00")
+    expect(
+      screen.getByTestId("owned-calendar-hour-label-1", {
+        includeHiddenElements: true,
+      }),
+    ).toHaveStyle({
+      color: Colors.light.textSecondary,
+      fontSize: 11,
+      lineHeight: 13,
+      fontWeight: 400,
+    })
+    expect(
+      screen.getByTestId("owned-calendar-hour-label-23", {
+        includeHiddenElements: true,
+      }),
+    ).toHaveTextContent("23:00")
   })
 
   it("renders exactly three one-column day pages, including a hidden-weekend day", async () => {
@@ -752,6 +856,22 @@ describe("OwnedCalendarShell", () => {
     expect(headerTranslateX()).toBe(0)
     expect(onTransitionSettled).toHaveBeenCalledTimes(1)
     expect(onTransitionCancelled).not.toHaveBeenCalled()
+
+    await fireEvent(
+      screen.getByTestId("owned-calendar-pager", {
+        includeHiddenElements: true,
+      }),
+      "pageScroll",
+      { nativeEvent: { position: 1, offset: 0.25 } },
+    )
+    await view.rerender(
+      <OwnedCalendarShell
+        {...props}
+        anchor={new Date("2026-06-22T00:00:00.000Z")}
+        generation={1}
+      />,
+    )
+    expect(headerTranslateX()).toBe(-75)
   })
 
   it("recenters a native snap-back without committing a transition", async () => {
@@ -900,9 +1020,28 @@ describe("OwnedCalendarShell", () => {
     expect(style).toMatchObject({
       top: 1440,
       height: StyleSheet.hairlineWidth,
-      backgroundColor: Colors.light.textSecondary,
+      backgroundColor: Colors.light.separator,
     })
     expect(style).not.toHaveProperty("borderTopWidth")
+    expect(
+      screen.getByTestId("owned-calendar-column-0-2026-06-15", {
+        includeHiddenElements: true,
+      }).props.style,
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ borderColor: Colors.light.separator }),
+      ]),
+    )
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-minor-0-30", {
+          includeHiddenElements: true,
+        }).props.style,
+      ),
+    ).toMatchObject({
+      backgroundColor: Colors.light.separator,
+      opacity: 0.5,
+    })
   })
 
   it("drives labels, boundaries, pages, and content extent from one scale", async () => {
@@ -976,22 +1115,87 @@ describe("OwnedCalendarShell", () => {
     expect(pagerMock.setPage).toHaveBeenCalledTimes(1)
   })
 
-  it("consumes duplicate idle events once per pager generation", async () => {
-    await render(<OwnedCalendarShell {...props} />)
+  it.each([0, 2])(
+    "keeps the destination header visible through duplicate idle events on page %s",
+    async (page) => {
+      const view = await render(<OwnedCalendarShell {...props} />)
+      await measureHeaderLane()
+      const pager = screen.getByTestId("owned-calendar-pager", {
+        includeHiddenElements: true,
+      })
+
+      await fireEvent(pager, "pageScroll", {
+        nativeEvent: { position: page, offset: 0 },
+      })
+      await fireEvent(pager, "pageSelected", {
+        nativeEvent: { position: page },
+      })
+      await fireEvent(pager, "pageScrollStateChanged", {
+        nativeEvent: { pageScrollState: "idle" },
+      })
+      await fireEvent(pager, "pageScrollStateChanged", {
+        nativeEvent: { pageScrollState: "idle" },
+      })
+      await view.rerender(<OwnedCalendarShell {...props} />)
+
+      expect(headerTranslateX()).toBe((1 - page) * 300)
+      expect(onTransitionRequest).toHaveBeenCalledTimes(1)
+      expect(onTransitionSettled).toHaveBeenCalledTimes(1)
+    },
+  )
+
+  it.each([0, 2])(
+    "keeps late scroll events from moving an accepted destination header on page %s",
+    async (page) => {
+      const view = await render(<OwnedCalendarShell {...props} />)
+      await measureHeaderLane()
+      const pager = screen.getByTestId("owned-calendar-pager", {
+        includeHiddenElements: true,
+      })
+
+      await fireEvent(pager, "pageScroll", {
+        nativeEvent: { position: page, offset: 0 },
+      })
+      await fireEvent(pager, "pageSelected", {
+        nativeEvent: { position: page },
+      })
+      await fireEvent(pager, "pageScrollStateChanged", {
+        nativeEvent: { pageScrollState: "idle" },
+      })
+      await fireEvent(pager, "pageScroll", {
+        nativeEvent: { position: 1, offset: 0 },
+      })
+      await view.rerender(<OwnedCalendarShell {...props} />)
+
+      expect(headerTranslateX()).toBe((1 - page) * 300)
+      expect(onTransitionSettled).toHaveBeenCalledTimes(1)
+    },
+  )
+
+  it("does not let a replaced pager reset the next swipe's header", async () => {
+    const view = await render(<OwnedCalendarShell {...props} />)
+    await measureHeaderLane()
+    const staleScroll = screen.getByTestId("owned-calendar-pager", {
+      includeHiddenElements: true,
+    }).props.onPageScroll
+    const nextProps = {
+      ...props,
+      anchor: new Date("2026-06-22T00:00:00.000Z"),
+      generation: 1,
+    }
+    await view.rerender(<OwnedCalendarShell {...nextProps} />)
     const pager = screen.getByTestId("owned-calendar-pager", {
       includeHiddenElements: true,
     })
-
-    await fireEvent(pager, "pageSelected", { nativeEvent: { position: 2 } })
-    await fireEvent(pager, "pageScrollStateChanged", {
-      nativeEvent: { pageScrollState: "idle" },
+    await fireEvent(pager, "pageScroll", {
+      nativeEvent: { position: 1, offset: 0.25 },
     })
-    await fireEvent(pager, "pageScrollStateChanged", {
-      nativeEvent: { pageScrollState: "idle" },
+    await act(async () => {
+      staleScroll({ nativeEvent: { position: 2, offset: 0 } })
     })
+    await view.rerender(<OwnedCalendarShell {...nextProps} />)
 
-    expect(onTransitionRequest).toHaveBeenCalledTimes(1)
-    expect(onTransitionSettled).toHaveBeenCalledTimes(1)
+    expect(headerTranslateX()).toBe(-75)
   })
 
   it("keeps a week's development tint stable when it becomes center", async () => {
@@ -1169,6 +1373,7 @@ describe("OwnedCalendarShell", () => {
     })
 
     await act(async () => firePinch(State.END))
+    const pinchOffset = onZoomSettled.mock.lastCall?.[0].rawOffset as number
     await fireEvent(canvas, "scrollBeginDrag", scrollEvent(899, 12, 80))
     await fireEvent.scroll(canvas, scrollEvent(900, 12, 80))
     await fireEvent(canvas, "scrollEndDrag", scrollEvent(901, 12, 80))
@@ -1220,7 +1425,8 @@ describe("OwnedCalendarShell", () => {
         source: "command",
       }),
     )
-    expect(onZoomSettled.mock.lastCall?.[0].rawOffset).toBeCloseTo(61.52, 2)
+    const zoomOffset = onZoomSettled.mock.lastCall?.[0].rawOffset as number
+    expect((zoomOffset + 216) / 76).toBeCloseTo((pinchOffset + 216) / 66)
 
     await act(async () => fireNativeOwnerStart("owned-calendar-native-scroll"))
     await fireEvent(canvas, "scrollBeginDrag", scrollEvent(300, 12, 80))

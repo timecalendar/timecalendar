@@ -24,6 +24,12 @@ theme-paired, and license-recorded. Filled body actions use `primaryStrong`/`onP
 header and Android FAB placement remains feature-owned. Focused forms place one scroll owner and a
 sibling action region inside keyboard avoidance; the screen retains safe-area ownership.
 
+The root safe-area frame has no decorative top padding. Static page content owns its top
+spacing; scrollable pages put top spacing and responsive gutters inside their scroll content,
+so content can scroll up to the native header and the viewport spans the available width.
+`KeyboardSafeActionLayout` supplies the standard top spacing inside its scroll body, while its
+action region remains a sibling outside the scroll. List headers belong to the list content.
+
 ## Consequences
 
 New root siblings must be classified and tested. Feature screens no longer need a duplicate route

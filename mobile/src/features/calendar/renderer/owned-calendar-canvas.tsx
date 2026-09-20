@@ -180,6 +180,7 @@ export function OwnedCalendarCanvas({
         contentContainerStyle={styles.scrollContent}
         contentInsetAdjustmentBehavior="automatic"
         contentOffset={{ x: 0, y: initialVerticalOffset }}
+        scrollsToTop={false}
         removeClippedSubviews={false}
         directionalLockEnabled
         nestedScrollEnabled
@@ -219,7 +220,11 @@ export function OwnedCalendarCanvas({
         }}
       >
         <Animated.View
-          style={[styles.fullDayRow, fullDayRowStyle]}
+          style={[
+            styles.fullDayRow,
+            { borderColor: theme.separator },
+            fullDayRowStyle,
+          ]}
           collapsable={false}
         >
           <Animated.View
@@ -231,32 +236,23 @@ export function OwnedCalendarCanvas({
             ]}
             pointerEvents="none"
           >
-            {/* The 24 hour labels stay hidden from assistive technology; the
-                current-time chip beside them is the one node that is not, so it
-                can carry the localized "current time" semantics. */}
             <View
               testID="owned-calendar-hour-gutter-labels"
               accessible={false}
               importantForAccessibility="no-hide-descendants"
               style={StyleSheet.absoluteFill}
             >
-              {Array.from({ length: 24 }, (_, hour) => (
-                <AnimatedHourLabel
-                  key={hour}
-                  hour={hour}
-                  label={formatHourStartLabel(hour, locale, uses24HourClock)}
-                  pixelsPerHour={pixelsPerHour}
-                />
-              ))}
+              {Array.from({ length: 23 }, (_, index) => index + 1).map(
+                (hour) => (
+                  <AnimatedHourLabel
+                    key={hour}
+                    hour={hour}
+                    label={formatHourStartLabel(hour, locale, uses24HourClock)}
+                    pixelsPerHour={pixelsPerHour}
+                  />
+                ),
+              )}
             </View>
-            {nowVisible && nowOnCommittedPage && (
-              <AnimatedNowChip
-                minuteOfDay={nowMinuteOfDay}
-                label={nowLabel}
-                accessibilityLabel={t("calendar.nowLabel", { time: nowLabel })}
-                pixelsPerHour={pixelsPerHour}
-              />
-            )}
           </Animated.View>
           <GestureDetector gesture={nativePagerGesture}>
             <AnimatedPagerView
@@ -284,6 +280,11 @@ export function OwnedCalendarCanvas({
                   settledPixelsPerHour={settledPixelsPerHour}
                   todayKey={nowVisible ? todayKey : null}
                   nowMinuteOfDay={nowMinuteOfDay}
+                  nowAccessibilityLabel={
+                    nowOnCommittedPage
+                      ? t("calendar.nowLabel", { time: nowLabel })
+                      : undefined
+                  }
                   t={t}
                   locale={locale}
                   displayZone={displayZone}
@@ -310,7 +311,11 @@ function AnimatedHourLabel({
   const positionStyle = useMinutePositionStyle(hour * 60, pixelsPerHour)
   return (
     <Animated.View style={[styles.hourLabel, positionStyle]}>
-      <ThemedText type="small" testID={`owned-calendar-hour-label-${hour}`}>
+      <ThemedText
+        type="captionSmall"
+        themeColor="textSecondary"
+        testID={`owned-calendar-hour-label-${hour}`}
+      >
         {label}
       </ThemedText>
     </Animated.View>
@@ -323,6 +328,7 @@ function CalendarPageCanvas({
   settledPixelsPerHour,
   todayKey,
   nowMinuteOfDay,
+  nowAccessibilityLabel,
   t,
   locale,
   displayZone,
@@ -333,6 +339,7 @@ function CalendarPageCanvas({
   settledPixelsPerHour: number
   todayKey: string | null
   nowMinuteOfDay: number
+  nowAccessibilityLabel: string | undefined
   t: TFunction
   locale: AppLocale
   displayZone: string
@@ -372,6 +379,7 @@ function CalendarPageCanvas({
         pixelsPerHour={pixelsPerHour}
         todayKey={todayKey}
         nowMinuteOfDay={nowMinuteOfDay}
+        nowAccessibilityLabel={nowAccessibilityLabel}
       />
       <CalendarTiles
         page={page}
@@ -521,12 +529,14 @@ function CalendarGrid({
   pixelsPerHour,
   todayKey,
   nowMinuteOfDay,
+  nowAccessibilityLabel,
 }: {
   direction: number
   columns: readonly WeekColumn[]
   pixelsPerHour: SharedValue<number>
   todayKey: string | null
   nowMinuteOfDay: number
+  nowAccessibilityLabel: string | undefined
 }) {
   const theme = useTheme()
   const clockHeightStyle = useAnimatedStyle(() => ({
@@ -539,24 +549,33 @@ function CalendarGrid({
       pointerEvents="none"
     >
       <View style={styles.dayColumns}>
-        {columns.map((column) => (
-          <View
-            key={column.key}
-            testID={`owned-calendar-column-${direction}-${column.key}`}
-            accessible={false}
-            importantForAccessibility="no-hide-descendants"
-            style={[styles.dayColumn, { borderColor: theme.separator }]}
-          >
-            {column.key === todayKey && (
-              <AnimatedNowIndicator
-                testID={`owned-calendar-now-${direction}-${column.key}`}
-                minuteOfDay={nowMinuteOfDay}
-                pixelsPerHour={pixelsPerHour}
-                color={theme.primary}
-              />
-            )}
-          </View>
-        ))}
+        {columns.map((column) => {
+          const isToday = column.key === todayKey
+          const exposesNow = isToday && direction === 0
+          return (
+            <View
+              key={column.key}
+              testID={`owned-calendar-column-${direction}-${column.key}`}
+              accessible={false}
+              importantForAccessibility={
+                exposesNow ? "no" : "no-hide-descendants"
+              }
+              style={[styles.dayColumn, { borderColor: theme.separator }]}
+            >
+              {isToday && (
+                <AnimatedNowIndicator
+                  testID={`owned-calendar-now-${direction}-${column.key}`}
+                  minuteOfDay={nowMinuteOfDay}
+                  pixelsPerHour={pixelsPerHour}
+                  color={theme.primary}
+                  accessibilityLabel={
+                    exposesNow ? nowAccessibilityLabel : undefined
+                  }
+                />
+              )}
+            </View>
+          )
+        })}
       </View>
       {MINOR_MINUTES.map((minute) => (
         <AnimatedGridLine
@@ -574,7 +593,7 @@ function CalendarGrid({
           testID={`owned-calendar-major-${direction}-${minute}`}
           minute={minute}
           pixelsPerHour={pixelsPerHour}
-          color={theme.textSecondary}
+          color={theme.separator}
         />
       ))}
     </Animated.View>
@@ -590,57 +609,28 @@ function AnimatedNowIndicator({
   minuteOfDay,
   pixelsPerHour,
   color,
+  accessibilityLabel,
 }: {
   testID: string
   minuteOfDay: number
   pixelsPerHour: SharedValue<number>
   color: string
+  accessibilityLabel: string | undefined
 }) {
   const positionStyle = useMinutePositionStyle(minuteOfDay, pixelsPerHour)
   return (
     <Animated.View
       testID={testID}
-      accessible={false}
-      importantForAccessibility="no-hide-descendants"
+      accessible={accessibilityLabel !== undefined}
+      accessibilityRole={accessibilityLabel === undefined ? undefined : "text"}
+      accessibilityLabel={accessibilityLabel}
+      importantForAccessibility={
+        accessibilityLabel === undefined ? "no-hide-descendants" : "yes"
+      }
       style={[styles.nowIndicator, positionStyle]}
     >
       <View style={[styles.nowIndicatorCap, { backgroundColor: color }]} />
       <View style={[styles.nowIndicatorRule, { backgroundColor: color }]} />
-    </Animated.View>
-  )
-}
-
-// The gutter's current-time chip — the TYPOGRAPHIC cue of the pair, and its one
-// accessible node. It reads the same locale, display zone, and 12/24-hour
-// convention as the hour labels it sits among.
-function AnimatedNowChip({
-  minuteOfDay,
-  label,
-  accessibilityLabel,
-  pixelsPerHour,
-}: {
-  minuteOfDay: number
-  label: string
-  accessibilityLabel: string
-  pixelsPerHour: SharedValue<number>
-}) {
-  const theme = useTheme()
-  const positionStyle = useMinutePositionStyle(minuteOfDay, pixelsPerHour)
-  return (
-    <Animated.View style={[styles.nowChipAnchor, positionStyle]}>
-      <View
-        testID="owned-calendar-now-label"
-        accessible
-        accessibilityLabel={accessibilityLabel}
-        style={[
-          styles.nowChip,
-          { borderColor: theme.primary, backgroundColor: theme.background },
-        ]}
-      >
-        <ThemedText accessible={false} type="smallBold" numberOfLines={1}>
-          {label}
-        </ThemedText>
-      </View>
     </Animated.View>
   )
 }
@@ -707,7 +697,7 @@ const styles = StyleSheet.create({
   hourLabel: {
     position: "absolute",
     right: 6,
-    transform: [{ translateY: -8 }],
+    transform: [{ translateY: -6.5 }],
   },
   gridLine: {
     position: "absolute",
@@ -729,19 +719,6 @@ const styles = StyleSheet.create({
     borderRadius: NOW_CAP_SIZE / 2,
   },
   nowIndicatorRule: { flex: 1, height: 2 },
-  nowChipAnchor: {
-    position: "absolute",
-    right: 4,
-    left: 2,
-    transform: [{ translateY: -10 }],
-  },
-  nowChip: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    alignItems: "center",
-  },
   minorLine: { opacity: 0.5 },
   preview: { position: "absolute", top: 16, left: 16, gap: 4 },
   tileColumns: {
