@@ -76,10 +76,11 @@ jest.mock("@/hooks/use-color-scheme", () => ({ useColorScheme: jest.fn() }))
 
 const mockFocusEffect = jest.mocked(useFocusEffect)
 const mockColorScheme = jest.mocked(useColorScheme)
+const platformWithPad = Platform as typeof Platform & { isPad: boolean }
 const originalPlatform = {
   OS: Platform.OS,
   Version: Platform.Version,
-  isPad: Platform.isPad,
+  isPad: platformWithPad.isPad,
 }
 let focusEffect: (() => void) | undefined
 
@@ -97,7 +98,7 @@ afterEach(async () => {
   jest.mocked(router.back).mockClear()
   Platform.OS = originalPlatform.OS
   Platform.Version = originalPlatform.Version
-  Platform.isPad = originalPlatform.isPad
+  platformWithPad.isPad = originalPlatform.isPad
   await i18n.changeLanguage("en")
   jest.restoreAllMocks()
 })
@@ -210,7 +211,7 @@ describe("TimezoneChooserScreen", () => {
   it("uses the iOS 26 bottom toolbar and clears transient search natively", async () => {
     Platform.OS = "ios"
     jest.spyOn(Platform, "Version", "get").mockReturnValue("26.0")
-    jest.spyOn(Platform, "isPad", "get").mockReturnValue(false)
+    jest.spyOn(platformWithPad, "isPad", "get").mockReturnValue(false)
     setString(SETTINGS_KEYS.timezone, "Europe/Paris")
     const view = await render(<TimezoneChooserScreen />)
 
