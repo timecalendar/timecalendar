@@ -44,6 +44,7 @@
 //
 // Usage: node ci/disclosure-scan.mjs [--base <ref>] [--head <ref>]
 //        node ci/disclosure-scan.mjs --generate-baseline [--head <ref>]
+//        node ci/disclosure-scan.mjs --converge-baseline [--head <ref>]
 //        node ci/disclosure-scan.mjs --check-baseline [--head <ref>]
 
 import { execFileSync } from "node:child_process";
@@ -252,6 +253,19 @@ export function selfTestConfigured(compiled) {
     entry.regex.lastIndex = 0;
   }
   return { covered, failed };
+}
+
+function reportConfiguredSelfTestFailures(failed) {
+  for (const entryLine of failed) {
+    console.error(
+      `::error::disclosure-scan: DISCLOSURE_PATTERNS entry ${entryLine} does not match its own probe. ` +
+        "Neither the entry nor its probe is ever printed — this log is public, and a probe is by construction " +
+        "a string that matches a forbidden pattern.",
+    );
+  }
+  console.error(
+    `disclosure-scan: failing closed on ${failed.length} configured entry/entries that match nothing they claim to.`,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -859,6 +873,25 @@ export function compareCiBaseline(committed, measured, { configuredAvailable = t
   return findings;
 }
 
+export function reconcileCiEntries(
+  committed,
+  measured,
+  { configuredAvailable = true } = {},
+) {
+  const actual = new Map(measured.map((entry) => [baselineKey(entry.path, entry.id), entry.count]));
+  const reconciled = [];
+  for (const entry of committed) {
+    if (entry.id === FINDING_CLASSES.CONFIGURED && !configuredAvailable) {
+      reconciled.push(entry);
+      continue;
+    }
+    const measuredCount = actual.get(baselineKey(entry.path, entry.id)) ?? 0;
+    const count = Math.min(entry.count, measuredCount);
+    if (count > 0) reconciled.push({ ...entry, count });
+  }
+  return reconciled.sort((a, b) => a.path.localeCompare(b.path) || a.id.localeCompare(b.id));
+}
+
 function formatBaseline(baseline) {
   const formatLane = (entries) =>
     entries
@@ -893,6 +926,7 @@ function parseArgs(argv) {
     else if (argv[i] === "--cwd") options.cwd = argv[++i];
     else if (argv[i] === "--baseline") options.baseline = argv[++i];
     else if (argv[i] === "--generate-baseline") options.generateBaseline = true;
+    else if (argv[i] === "--converge-baseline") options.convergeBaseline = true;
     else if (argv[i] === "--check-baseline") options.checkBaseline = true;
     else throw new Error(`unknown argument: ${argv[i]}`);
   }
@@ -901,6 +935,17 @@ function parseArgs(argv) {
 
 export function main(argv = process.argv.slice(2), env = process.env) {
   const options = parseArgs(argv);
+  const baselineOperations = [
+    options.generateBaseline,
+    options.convergeBaseline,
+    options.checkBaseline,
+  ].filter(Boolean).length;
+  if (baselineOperations > 1) {
+    console.error(
+      "::error::disclosure-scan: --generate-baseline, --converge-baseline and --check-baseline are mutually exclusive.",
+    );
+    return 2;
+  }
   const cwd = options.cwd ?? process.cwd();
   const head = options.head ?? env.DISCLOSURE_HEAD ?? "HEAD";
   const baseRef = options.base ?? env.DISCLOSURE_BASE ?? "origin/main";
@@ -925,6 +970,10 @@ export function main(argv = process.argv.slice(2), env = process.env) {
   }
 
   const selfTest = selfTestConfigured(compiled);
+  if (baselineOperations && selfTest.failed.length) {
+    reportConfiguredSelfTestFailures(selfTest.failed);
+    return 2;
+  }
   const configured = compiled.map((entry) => entry.regex);
 
   const derived = deriveIdentityPatterns(readIdentities(head, cwd), allowlist);
@@ -942,6 +991,19 @@ export function main(argv = process.argv.slice(2), env = process.env) {
       return 2;
     }
     const ciEntries = generateCiEntries({ head, derived, configured, allowlist, cwd });
+    process.stdout.write(formatBaseline({ ...baseline, ciEntries }));
+    return 0;
+  }
+
+  if (options.convergeBaseline) {
+    if (!baseline) {
+      console.error("::error::disclosure-scan: cannot converge ciEntries without an existing baseline.");
+      return 2;
+    }
+    const measured = generateCiEntries({ head, derived, configured, allowlist, cwd });
+    const ciEntries = reconcileCiEntries(baseline.ciEntries, measured, {
+      configuredAvailable: configuredEntries.length > 0,
+    });
     process.stdout.write(formatBaseline({ ...baseline, ciEntries }));
     return 0;
   }
@@ -1026,16 +1088,7 @@ export function main(argv = process.argv.slice(2), env = process.env) {
   }
 
   if (selfTest.failed.length) {
-    for (const entryLine of selfTest.failed) {
-      console.error(
-        `::error::disclosure-scan: DISCLOSURE_PATTERNS entry ${entryLine} does not match its own probe. ` +
-          "Neither the entry nor its probe is ever printed — this log is public, and a probe is by construction " +
-          "a string that matches a forbidden pattern.",
-      );
-    }
-    console.error(
-      `disclosure-scan: failing closed on ${selfTest.failed.length} configured entry/entries that match nothing they claim to.`,
-    );
+    reportConfiguredSelfTestFailures(selfTest.failed);
     return 2;
   }
 

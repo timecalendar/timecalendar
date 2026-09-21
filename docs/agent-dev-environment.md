@@ -719,14 +719,34 @@ at or below its pin; a larger count, an unpinned class, or an unpinned dirty pat
 The added-line layer is deliberately baseline-free, so deleting one old occurrence and
 adding a different occurrence cannot pass merely because the total stayed constant.
 
-Regenerate the CI lane at the branch's landing commit, after rebasing, and review every
-change to its counts:
+Use full generation only after a deliberate detector or source change that requires a fresh CI
+census. Run it at the branch's landing commit, after rebasing, and review every change to its
+counts:
 
 ```bash
 node ci/disclosure-scan.mjs --generate-baseline > disclosure-baseline.next.json
 mv disclosure-baseline.next.json ci/disclosure-baseline.json
 node ci/disclosure-scan.mjs --check-baseline
 ```
+
+After a legitimate occurrence removal, use reduction-only convergence instead. It carries the
+preflight `entries` lane through unchanged and considers only keys already committed in
+`ciEntries`: equal counts stay equal, lower counts shrink, zero counts disappear, and measured
+increases retain the lower committed pin. Newly measured keys are omitted, so new and increased
+findings remain unpinned and continue to fail the existing enforcement layers.
+
+Generate and review the candidate before replacing the committed file:
+
+```bash
+node ci/disclosure-scan.mjs --converge-baseline > disclosure-baseline.next.json
+diff -u ci/disclosure-baseline.json disclosure-baseline.next.json
+mv disclosure-baseline.next.json ci/disclosure-baseline.json
+node ci/disclosure-scan.mjs --check-baseline
+```
+
+Convergence preserves configured-source pins when `DISCLOSURE_PATTERNS` is absent because their
+counts cannot be remeasured in that state. Use full generation for intentional additions; never use
+convergence to accept a new detector finding or a count increase.
 
 The invariant is non-increasing: a pin that grows is a review finding, while a pin that
 shrinks records completed cleanup. CI remeasures `ciEntries`; it cannot claim to

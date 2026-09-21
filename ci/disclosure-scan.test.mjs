@@ -8,7 +8,7 @@
 // is exactly the hole someone would later hide a real disclosure in.
 
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -29,6 +29,7 @@ import {
   parseAddedLines,
   parseBaseline,
   parseConfiguredPatterns,
+  reconcileCiEntries,
   scanRecords,
   scanWholeFiles,
   selfTestConfigured,
@@ -622,6 +623,7 @@ test("attributes each file's hunks to that file", () => {
 // ---------------------------------------------------------------------------
 
 const WORKFLOW = resolve(REPO, ".github/workflows/ci-build-deploy.yml");
+const SCANNER = resolve(REPO, "ci/disclosure-scan.mjs");
 
 // An empty range: the entry point runs end to end over real git, and the only
 // thing under test is what it decides, not what the branch happens to contain.
@@ -788,11 +790,14 @@ test("personal commit metadata passes while the same values in files remain scan
   assert.ok(!output.includes(token));
 });
 
-test("CI invokes the scan and checks out enough history to derive from", () => {
+test("CI checks the invariant and ordinary scan, never baseline convergence", () => {
   const workflow = readFileSync(WORKFLOW, "utf8");
-  assert.match(workflow, /node ci\/disclosure-scan\.mjs/);
   const job = workflow.slice(workflow.indexOf("scan-disclosure:"));
-  assert.match(job.slice(0, job.indexOf("\n  build-server:")), /fetch-depth: 0/);
+  const disclosureJob = job.slice(0, job.indexOf("\n  build-server:"));
+  assert.match(disclosureJob, /fetch-depth: 0/);
+  assert.match(disclosureJob, /node ci\/disclosure-scan\.mjs --check-baseline/);
+  assert.match(disclosureJob, /node ci\/disclosure-scan\.mjs --base origin\/main/);
+  assert.doesNotMatch(disclosureJob, /--converge-baseline/);
 });
 
 test("the gate's own sources would pass the gate", () => {
@@ -959,6 +964,12 @@ test("the path lane narrows an existing path but not one created or renamed", ()
 
 const baseline = (ciEntries = [], entries = []) => ({ version: 1, entries, ciEntries });
 
+const runCli = (repo, args, env = {}) =>
+  spawnSync(process.execPath, [SCANNER, ...args, "--cwd", repo], {
+    encoding: "utf8",
+    env: { ...process.env, ...env },
+  });
+
 test("baseline lanes require exact fields, positive counts and independent keys", () => {
   assert.deepEqual(parseBaseline(baseline()).ciEntries, []);
   for (const entry of [
@@ -1054,6 +1065,176 @@ test("baseline invariant reports stale pins and a newly configured class", () =>
       { kind: "unpinned-configured", path: "other.md", id: FINDING_CLASSES.CONFIGURED },
     ],
   );
+});
+
+test("convergence reconciles committed keys only and returns canonical ordering", () => {
+  const committed = [
+    { path: "z.md", id: FINDING_CLASSES.DERIVED, count: 3 },
+    { path: "a.md", id: FINDING_CLASSES.HOME_PATH, count: 2 },
+    { path: "a.md", id: FINDING_CLASSES.DERIVED, count: 4 },
+    { path: "removed.md", id: FINDING_CLASSES.EMAIL, count: 1 },
+  ];
+  const measured = [
+    { path: "fresh.md", id: FINDING_CLASSES.EMAIL, count: 5 },
+    { path: "z.md", id: FINDING_CLASSES.DERIVED, count: 7 },
+    { path: "a.md", id: FINDING_CLASSES.DERIVED, count: 2 },
+    { path: "a.md", id: FINDING_CLASSES.HOME_PATH, count: 2 },
+  ];
+
+  const reconciled = reconcileCiEntries(committed, measured);
+  assert.deepEqual(reconciled, [
+    { path: "a.md", id: FINDING_CLASSES.DERIVED, count: 2 },
+    { path: "a.md", id: FINDING_CLASSES.HOME_PATH, count: 2 },
+    { path: "z.md", id: FINDING_CLASSES.DERIVED, count: 3 },
+  ]);
+
+  const committedByKey = new Map(
+    committed.map((entry) => [`${entry.path}\0${entry.id}`, entry.count]),
+  );
+  for (const entry of reconciled) {
+    const committedCount = committedByKey.get(`${entry.path}\0${entry.id}`);
+    assert.notEqual(committedCount, undefined);
+    assert.ok(entry.count <= committedCount);
+  }
+});
+
+test("convergence preserves configured pins when their source is unavailable", () => {
+  const configured = {
+    path: "fixture.md",
+    id: FINDING_CLASSES.CONFIGURED,
+    count: 2,
+  };
+  assert.deepEqual(
+    reconcileCiEntries([configured], [], { configuredAvailable: false }),
+    [configured],
+  );
+  assert.deepEqual(reconcileCiEntries([configured], [], { configuredAvailable: true }), []);
+});
+
+test("convergence preserves entries and emits deterministic canonical output", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-converge-format-");
+  mkdirSync(join(repo, "ci"));
+  writeFileSync(join(repo, "fixture.md"), "safe fixture\n");
+  const entries = [
+    { path: "z.md", id: "safe-z", count: 2 },
+    { path: "a.md", id: "safe-a", count: 1 },
+  ];
+  const configured = {
+    path: "fixture.md",
+    id: FINDING_CLASSES.CONFIGURED,
+    count: 1,
+  };
+  writeFileSync(
+    join(repo, "ci", "disclosure-baseline.json"),
+    `${JSON.stringify(baseline([configured], entries), null, 2)}\n`,
+  );
+  runGit("add", ".");
+  runGit("commit", "--quiet", "-m", "fixture");
+
+  const first = runCli(repo, ["--converge-baseline"]);
+  const second = runCli(repo, ["--converge-baseline"]);
+  assert.equal(first.status, 0, first.stderr);
+  assert.equal(second.status, 0, second.stderr);
+  assert.equal(first.stdout, second.stdout);
+  assert.match(first.stdout, /\n$/);
+  assert.doesNotMatch(first.stdout, /\n\n$/);
+  const candidate = JSON.parse(first.stdout);
+  assert.deepEqual(candidate.entries, entries);
+  assert.deepEqual(candidate.ciEntries, [configured]);
+});
+
+test("CLI convergence turns a stale baseline into a passing candidate", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-converge-cli-");
+  mkdirSync(join(repo, "ci"));
+  writeFileSync(join(repo, "fixture.md"), `${homePath("fixture-user")}\n`);
+  writeFileSync(
+    join(repo, "ci", "disclosure-baseline.json"),
+    `${JSON.stringify(
+      baseline([{ path: "fixture.md", id: FINDING_CLASSES.HOME_PATH, count: 2 }]),
+      null,
+      2,
+    )}\n`,
+  );
+  runGit("add", ".");
+  runGit("commit", "--quiet", "-m", "fixture");
+
+  const stale = runCli(repo, ["--check-baseline"]);
+  assert.equal(stale.status, 1, stale.stdout + stale.stderr);
+  assert.match(stale.stderr, /stale-pin/);
+
+  const converged = runCli(repo, ["--converge-baseline"]);
+  assert.equal(converged.status, 0, converged.stderr);
+  const candidatePath = join(repo, "ci", "disclosure-baseline.next.json");
+  writeFileSync(candidatePath, converged.stdout);
+  const checked = runCli(repo, ["--check-baseline", "--baseline", candidatePath]);
+  assert.equal(checked.status, 0, checked.stdout + checked.stderr);
+});
+
+test("convergence rejects simultaneous baseline operations without candidate output", () => {
+  for (const operation of ["--generate-baseline", "--check-baseline"]) {
+    const result = runCli(REPO, ["--converge-baseline", operation]);
+    assert.equal(result.status, 2, result.stdout + result.stderr);
+    assert.equal(result.stdout, "");
+    assert.match(result.stderr, /mutually exclusive/);
+  }
+});
+
+test("convergence fails closed before emitting a candidate when a configured probe fails", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-converge-probe-");
+  mkdirSync(join(repo, "ci"));
+  writeFileSync(join(repo, "fixture.md"), "safe fixture\n");
+  writeFileSync(
+    join(repo, "ci", "disclosure-baseline.json"),
+    `${JSON.stringify(
+      baseline([
+        { path: "fixture.md", id: FINDING_CLASSES.CONFIGURED, count: 1 },
+      ]),
+      null,
+      2,
+    )}\n`,
+  );
+  runGit("add", ".");
+  runGit("commit", "--quiet", "-m", "fixture");
+
+  const pattern = ["configured", "fixture", "[0-9]+"].join("-");
+  const probe = ["configured", "fixture", "none"].join("-");
+  const result = runCli(repo, ["--converge-baseline"], {
+    DISCLOSURE_PATTERNS: withProbe(pattern, probe),
+  });
+
+  assert.equal(result.status, 2, result.stdout + result.stderr);
+  assert.equal(result.stdout, "");
+  assert.ok(!result.stderr.includes(pattern), "the entry is the secret");
+  assert.ok(!result.stderr.includes(probe), "the probe is sensitive by construction");
+  assert.match(result.stderr, /entry 1 does not match its own probe/);
+});
+
+test("convergence retains an over-pin finding and cannot excuse an added line", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-converge-enforcement-");
+  writeFileSync(join(repo, "fixture.md"), "Aline Fixture and Aline Fixture again\n");
+  runGit("add", "fixture.md");
+  runGit("commit", "--quiet", "-m", "fixture");
+  const pin = { path: "fixture.md", id: FINDING_CLASSES.DERIVED, count: 1 };
+  const candidate = baseline(
+    reconcileCiEntries([pin], [{ ...pin, count: 2 }]),
+  );
+  const wholeFile = scanWholeFiles({
+    files: ["fixture.md"],
+    head: "HEAD",
+    baseline: candidate,
+    derived: ["Aline Fixture"],
+    configured: [],
+    allowlist,
+    cwd: repo,
+  });
+  assert.ok(wholeFile.some((finding) => finding.class === FINDING_CLASSES.DERIVED));
+
+  const addedLine = scanRecords([record("Aline Fixture added")], {
+    derived: ["Aline Fixture"],
+    configured: [],
+    allowlist,
+  });
+  assert.deepEqual(classesOf(addedLine), [FINDING_CLASSES.DERIVED]);
 });
 
 test("baseline invariant degrades cleanly when configured pins cannot be remeasured", (t) => {
