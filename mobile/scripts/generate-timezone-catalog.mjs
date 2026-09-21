@@ -96,7 +96,7 @@ const content = await format(
       .join(", ")}\n` +
     `export const TIMEZONE_CATALOG_PROVENANCE = ${JSON.stringify(provenance, null, 2)} as const\n\n` +
     `export const GENERATED_TIMEZONE_CATALOG = ${JSON.stringify(records, null, 2)} as const\n`,
-  { parser: "typescript" },
+  { parser: "typescript", semi: false },
 )
 
 if (process.argv.includes("--check")) {
