@@ -49,6 +49,34 @@ The app SHALL preserve the existing notification permission request timing and b
 - **WHEN** the notification settings route closes while synchronization is pending or failed
 - **THEN** the root runtime, durable intent, and shared status remain active
 
+### Requirement: Failed subscription PUT is recorded and surfaced for retry
+A rejected current-generation subscription PUT SHALL be recorded through the `@/firebase` unknown-error seam with a static notification context and no token, calendar identifier, DTO, input signature, or payload. The shared runtime SHALL surface retryable error on the preferences screen and SHALL retain dirty intent. A stale-generation failure SHALL perform no status, retry, acknowledgment, or diagnostic side effect for newer work. Reactive preference reads SHALL remain total and infallible.
+
+#### Scenario: Current failure records and surfaces
+- **WHEN** the current subscription PUT rejects
+- **THEN** one sanitized error is recorded and shared status exposes Retry without clearing dirty intent
+
+#### Scenario: Stale failure is inert
+- **WHEN** an older request rejects after generation or runtime identity changed
+- **THEN** it cannot replace current status, schedule a retry, or clear acknowledgment
+
+### Requirement: Subscription synchronization wiring proven in CI; real server push is device-only
+Automated tests SHALL use an injected transport with controlled promises, recreated storage/runtime instances, fake timers, and root integration mounts to prove dirty-before-write crash recovery, restart replay, A-to-B coalescing, stale success/failure, token rotation, unloaded versus loaded-empty calendars, route unmount/remount, foreground/manual recovery, retry exhaustion, disposal, and reset during a request. A contract proof SHALL establish one PUT source and one token listener. Confirming real server delivery, OS authorization, or exact notification arrival remains device-only and SHALL NOT be inferred from these tests.
+
+#### Scenario: Race and recovery transitions are deterministic
+- **WHEN** focused controller tests settle controlled A and B requests in either order and advance retry timers
+- **THEN** only the current generation can acknowledge intent and exhausted work stops without losing dirty state
+
+#### Scenario: Integration owns one request source
+- **WHEN** root and screen integration tests mount, navigate, rotate token, load calendars, foreground, and reset
+- **THEN** all PUT triggers pass through the one runtime and old-environment completions are inert
+
+#### Scenario: Real delivery is not asserted in CI
+- **WHEN** the mobile test gate runs
+- **THEN** it makes no claim that the OS authorized notifications or a real server push reached a device
+
+## ADDED Requirements
+
 ### Requirement: Durable latest-state synchronization is serialized and generation-safe
 The runtime SHALL persist only backend-bound dirty and monotonic-generation bookkeeping, SHALL keep at most one client request active, and SHALL coalesce changes during a request into the next latest current snapshot. It SHALL persist no FCM token, calendar identifier set, DTO, request payload, or job queue. A success SHALL clear dirty intent only when its captured generation and live runtime/environment epoch still equal the current values; failure SHALL never clear dirty intent.
 
@@ -89,28 +117,11 @@ The notifications feature SHALL expose one route-independent status distinguishi
 - **WHEN** token or calendar readiness is missing
 - **THEN** the runtime schedules no retry timer and resumes only when a prerequisite/input/startup/foreground/manual trigger occurs
 
-### Requirement: Failed subscription PUT is recorded and surfaced for retry
-A rejected current-generation subscription PUT SHALL be recorded through the `@/firebase` unknown-error seam with a static notification context and no token, calendar identifier, DTO, input signature, or payload. The shared runtime SHALL surface retryable error on the preferences screen and SHALL retain dirty intent. A stale-generation failure SHALL perform no status, retry, acknowledgment, or diagnostic side effect for newer work. Reactive preference reads SHALL remain total and infallible.
+## RENAMED Requirements
 
-#### Scenario: Current failure records and surfaces
-- **WHEN** the current subscription PUT rejects
-- **THEN** one sanitized error is recorded and shared status exposes Retry without clearing dirty intent
-
-#### Scenario: Stale failure is inert
-- **WHEN** an older request rejects after generation or runtime identity changed
-- **THEN** it cannot replace current status, schedule a retry, or clear acknowledgment
-
-### Requirement: Subscription synchronization wiring proven in CI; real server push is device-only
-Automated tests SHALL use an injected transport with controlled promises, recreated storage/runtime instances, fake timers, and root integration mounts to prove dirty-before-write crash recovery, restart replay, A-to-B coalescing, stale success/failure, token rotation, unloaded versus loaded-empty calendars, route unmount/remount, foreground/manual recovery, retry exhaustion, disposal, and reset during a request. A contract proof SHALL establish one PUT source and one token listener. Confirming real server delivery, OS authorization, or exact notification arrival remains device-only and SHALL NOT be inferred from these tests.
-
-#### Scenario: Race and recovery transitions are deterministic
-- **WHEN** focused controller tests settle controlled A and B requests in either order and advance retry timers
-- **THEN** only the current generation can acknowledge intent and exhausted work stops without losing dirty state
-
-#### Scenario: Integration owns one request source
-- **WHEN** root and screen integration tests mount, navigate, rotate token, load calendars, foreground, and reset
-- **THEN** all PUT triggers pass through the one runtime and old-environment completions are inert
-
-#### Scenario: Real delivery is not asserted in CI
-- **WHEN** the mobile test gate runs
-- **THEN** it makes no claim that the OS authorized notifications or a real server push reached a device
+- FROM: `### Requirement: Re-registration on preference change and on token refresh`
+- TO: `### Requirement: Re-registration on preference change and on current-input change`
+- FROM: `### Requirement: First registration triggered after permission grant and token acquisition`
+- TO: `### Requirement: First registration triggered after existing permission request behavior`
+- FROM: `### Requirement: Subscription write wiring proven in CI; real server push is device-only`
+- TO: `### Requirement: Subscription synchronization wiring proven in CI; real server push is device-only`

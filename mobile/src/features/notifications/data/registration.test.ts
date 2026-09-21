@@ -123,6 +123,29 @@ it("does not start after permission failure", async () => {
   await view.unmount()
 })
 
+it("keeps a background snapshot when permission resolves after startup", async () => {
+  let resolvePermission!: () => void
+  mockPermission.mockReturnValueOnce(
+    new Promise<void>((resolve) => {
+      resolvePermission = resolve
+    }),
+  )
+  const view = await renderHook(() => useNotificationSyncRuntime())
+
+  appStateListener?.("background")
+  expect(runtime.setActive).toHaveBeenLastCalledWith(false)
+  expect(runtime.start).not.toHaveBeenCalled()
+
+  await act(async () => resolvePermission())
+  expect(runtime.start).toHaveBeenCalledTimes(1)
+  expect(runtime.foreground).not.toHaveBeenCalled()
+  expect(runtime.setActive.mock.invocationCallOrder.at(-1)).toBeLessThan(
+    runtime.start.mock.invocationCallOrder[0]!,
+  )
+
+  await view.unmount()
+})
+
 it("does not start when permission settles after owner disposal", async () => {
   let resolvePermission!: () => void
   mockPermission.mockReturnValueOnce(

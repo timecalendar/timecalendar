@@ -253,7 +253,6 @@ export function createNotificationSyncRuntime(
     start() {
       if (live) return
       live = true
-      active = true
       unsubscribeIntent = dependencies.subscribeIntent?.(acceptIntent)
       markAndAccept()
     },

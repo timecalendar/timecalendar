@@ -293,6 +293,21 @@ describe("notification sync runtime", () => {
     expect(h.transport).toHaveBeenCalledTimes(3)
   })
 
+  it("preserves an inactive lifecycle snapshot supplied before start", async () => {
+    const h = harness()
+    h.ready()
+    h.runtime.setActive(false)
+    h.runtime.start()
+    await flush()
+    expect(h.transport).not.toHaveBeenCalled()
+    expect(h.runtime.getSnapshot()).toEqual({ state: "pending" })
+
+    h.runtime.foreground()
+    await flush()
+    expect(h.transport).toHaveBeenCalledTimes(1)
+    expect(h.runtime.getSnapshot()).toEqual({ state: "acknowledged" })
+  })
+
   it("does not schedule a retry when a current request fails in background", async () => {
     jest.useFakeTimers()
     const request = deferred<void>()
