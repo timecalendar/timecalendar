@@ -36,8 +36,8 @@ export default function NotificationSettingsScreen() {
     setFrequency,
     setNbDaysAhead,
     setIsActive,
-    register,
-    isError,
+    status,
+    retry,
   } = useNotificationPreferences()
   return (
     <>
@@ -143,23 +143,30 @@ export default function NotificationSettingsScreen() {
           />
         </View>
 
-        {isError && (
-          <View style={styles.errorBlock}>
-            <ThemedText
-              themeColor="textSecondary"
-              accessibilityLiveRegion="polite"
-              accessibilityRole="alert"
-            >
-              {t("notifications.error.message")}
-            </ThemedText>
+        <View
+          style={styles.statusBlock}
+          testID={`notifications-sync-${status.state}`}
+        >
+          <ThemedText
+            themeColor="textSecondary"
+            accessibilityLiveRegion="polite"
+            accessibilityRole={status.state === "error" ? "alert" : undefined}
+          >
+            {status.state === "pending"
+              ? t("notifications.sync.pending")
+              : status.state === "waiting"
+                ? t(`notifications.sync.waiting.${status.reason}`)
+                : status.state === "error"
+                  ? t("notifications.sync.error")
+                  : t("notifications.sync.acknowledged")}
+          </ThemedText>
+          {status.state === "error" && (
             <Pressable
               testID="notifications-retry"
               accessibilityRole="button"
               accessibilityLabel={t("notifications.error.retryLabel")}
               hitSlop={Spacing.two}
-              onPress={() => {
-                void register().catch(() => {})
-              }}
+              onPress={retry}
               style={[
                 styles.cta,
                 {
@@ -172,8 +179,8 @@ export default function NotificationSettingsScreen() {
                 {t("notifications.error.retry")}
               </ThemedText>
             </Pressable>
-          </View>
-        )}
+          )}
+        </View>
       </RootPage>
     </>
   )
@@ -204,7 +211,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  errorBlock: {
+  statusBlock: {
     gap: Spacing.three,
   },
   cta: {

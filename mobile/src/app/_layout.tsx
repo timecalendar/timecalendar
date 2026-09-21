@@ -23,7 +23,7 @@ import {
 import { useStartupSync } from "@/features/calendar"
 import { EnvironmentRuntimeGate } from "@/features/environment"
 import {
-  useNotificationRegistration,
+  useNotificationSyncRuntime,
   useNotificationTapRouting,
 } from "@/features/notifications"
 import { persistOptions } from "@/features/school-selection"
@@ -64,8 +64,8 @@ function StartupSync() {
 // notification permission, PUTs the assembled subscription DTO once a non-null
 // token exists, and re-PUTs on token-refresh. Goes through the feature data/
 // hook (@/features/notifications), never the generated client / @/db (B-3/B-4).
-function NotificationRegistration() {
-  useNotificationRegistration()
+function NotificationRuntime() {
+  useNotificationSyncRuntime()
   return null
 }
 
@@ -122,7 +122,7 @@ export default function RootLayout() {
           <OtaUpdateRuntime />
           <StartupSync />
           <ActivityRuntime />
-          <NotificationRegistration />
+          <NotificationRuntime />
           <NotificationTapRouting />
           <ThemeProvider value={navTheme}>
             <Stack screenOptions={rootScreenOptions}>

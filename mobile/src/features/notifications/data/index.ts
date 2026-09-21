@@ -2,7 +2,12 @@ export {
   type UseNotificationPreferences,
   useNotificationPreferences,
 } from "./hooks"
-export { useNotificationRegistration } from "./registration"
+export {
+  type NotificationSyncStatus,
+  type NotificationSyncWaitingReason,
+} from "./notification-sync-runtime"
+export { useNotificationSyncRuntime } from "./registration"
+export { resetNotificationRuntimeState } from "./runtime-instance"
 export {
   parseNotificationRoute,
   type TapRoute,

@@ -11,6 +11,10 @@ import {
 } from "@/storage"
 
 import {
+  markNotificationIntentDirty,
+  publishNotificationIntent,
+} from "./intent"
+import {
   NOTIFICATION_KEYS,
   type NotificationFrequency,
   parseFrequency,
@@ -30,7 +34,9 @@ export function getFrequency(): NotificationFrequency {
 }
 
 export function setFrequency(frequency: NotificationFrequency): void {
+  const intent = markNotificationIntentDirty()
   setString(NOTIFICATION_KEYS.frequency, frequency)
+  publishNotificationIntent(intent)
 }
 
 export function getNbDaysAhead(): number {
@@ -38,8 +44,10 @@ export function getNbDaysAhead(): number {
 }
 
 export function setNbDaysAhead(nbDaysAhead: number): void {
+  const intent = markNotificationIntentDirty()
   // Persist the clamped value so the store never holds an out-of-range number.
   setNumber(NOTIFICATION_KEYS.nbDaysAhead, parseNbDaysAhead(nbDaysAhead))
+  publishNotificationIntent(intent)
 }
 
 export function getIsActive(): boolean {
@@ -47,7 +55,9 @@ export function getIsActive(): boolean {
 }
 
 export function setIsActive(isActive: boolean): void {
+  const intent = markNotificationIntentDirty()
   setBoolean(NOTIFICATION_KEYS.isActive, isActive)
+  publishNotificationIntent(intent)
 }
 
 // Reactive reads over the seam's useStored* (re-render consumers on a change),

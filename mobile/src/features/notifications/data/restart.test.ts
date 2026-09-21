@@ -15,11 +15,20 @@ const loadPrefs = (): Prefs =>
 
 // The "disk": a Map<key, value> that persists across module resets.
 const mockDisk = new Map<string, unknown>()
+let mockInterruptPreferenceWrite = false
+
+const mockStorageKeys = {
+  notificationSyncDirty: "notifications.sync.dirty",
+  notificationSyncGeneration: "notifications.sync.generation",
+}
 
 jest.mock("@/storage", () => ({
   getString: (key: string): string | undefined =>
     mockDisk.get(key) as string | undefined,
   setString: (key: string, value: string): void => {
+    if (mockInterruptPreferenceWrite && key === "notifications.frequency") {
+      throw new Error("interrupted preference write")
+    }
     mockDisk.set(key, value)
   },
   getNumber: (key: string): number | undefined =>
@@ -32,10 +41,15 @@ jest.mock("@/storage", () => ({
   setBoolean: (key: string, value: boolean): void => {
     mockDisk.set(key, value)
   },
+  remove: (key: string): void => {
+    mockDisk.delete(key)
+  },
+  STORAGE_KEYS: mockStorageKeys,
 }))
 
 beforeEach(() => {
   mockDisk.clear()
+  mockInterruptPreferenceWrite = false
 })
 
 describe("notification prefs restart durability", () => {
@@ -51,6 +65,21 @@ describe("notification prefs restart durability", () => {
     expect(second.getFrequency()).toBe("daily")
     expect(second.getNbDaysAhead()).toBe(14)
     expect(second.getIsActive()).toBe(false)
+  })
+
+  it("leaves durable dirty intent when interrupted before the preference write", () => {
+    const first = loadPrefs()
+    mockInterruptPreferenceWrite = true
+    expect(() => first.setFrequency("daily")).toThrow(
+      "interrupted preference write",
+    )
+    expect(mockDisk.get("notifications.sync.dirty")).toBe(true)
+    expect(mockDisk.get("notifications.sync.generation")).toBe(1)
+    expect(mockDisk.has("notifications.frequency")).toBe(false)
+
+    mockInterruptPreferenceWrite = false
+    jest.resetModules()
+    expect(loadPrefs().getFrequency()).toBe("immediately")
   })
 
   it("the persisted nbDaysAhead is the clamped value across the restart", () => {
