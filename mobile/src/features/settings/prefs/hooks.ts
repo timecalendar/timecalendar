@@ -10,6 +10,7 @@ import {
 
 import {
   classifyTimezonePreference,
+  parseTimezonePreference,
   resolveLanguage,
   resolveTimezone,
   setCalendarView,
@@ -77,12 +78,10 @@ export function useTimezonePreference(): {
   preference: TimezonePreference
   setPreference: (preference: TimezonePreference) => void
 } {
-  const preference = useParsedStoredString(SETTINGS_KEYS.timezone, (raw) => {
-    const read = classifyTimezonePreference(raw)
-    return read.kind === "available" || read.kind === "unavailable"
-      ? read.identifier
-      : "system"
-  })
+  const preference = useParsedStoredString(
+    SETTINGS_KEYS.timezone,
+    parseTimezonePreference,
+  )
   // setTimezonePreference is a stable module-level function (see the theme hook).
   return { preference, setPreference: setTimezonePreference }
 }
@@ -91,12 +90,10 @@ export function useTimezonePreference(): {
 // reactive parsed read) and, under "system", on a device-zone change
 // (useCalendars re-renders and feeds the fresh device zone into the resolver).
 export function useDisplayZone(): string {
-  const preference = useParsedStoredString(SETTINGS_KEYS.timezone, (raw) => {
-    const read = classifyTimezonePreference(raw)
-    return read.kind === "available" || read.kind === "unavailable"
-      ? read.identifier
-      : "system"
-  })
+  const preference = useParsedStoredString(
+    SETTINGS_KEYS.timezone,
+    parseTimezonePreference,
+  )
   const deviceZone = useCalendars()[0]?.timeZone ?? null
   return resolveTimezone(preference, deviceZone)
 }

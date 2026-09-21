@@ -99,6 +99,17 @@ interface IndexedRecord {
   readonly record: TimezoneCatalogRecord
   readonly fields: readonly string[]
   readonly haystack: string
+  readonly normalizedId: string
+  readonly sortKeys: Readonly<Record<TimezoneCatalogLocale, string>>
+}
+
+function localeSortKey(
+  record: TimezoneCatalogRecord,
+  locale: TimezoneCatalogLocale,
+): string {
+  return normalizeTimezoneSearch(
+    `${getTimezoneTerritoryLabel(record, locale) ?? ""} ${getTimezoneCityLabel(record, locale)} ${record.id}`,
+  )
 }
 
 const searchIndex: readonly IndexedRecord[] = catalog.map((record) => {
@@ -115,17 +126,17 @@ const searchIndex: readonly IndexedRecord[] = catalog.map((record) => {
   ]
     .filter((value): value is string => Boolean(value))
     .map(normalizeTimezoneSearch)
-  return { record, fields, haystack: fields.join(" ") }
+  return {
+    record,
+    fields,
+    haystack: fields.join(" "),
+    normalizedId: normalizeTimezoneSearch(record.id),
+    sortKeys: {
+      en: localeSortKey(record, "en"),
+      fr: localeSortKey(record, "fr"),
+    },
+  }
 })
-
-function localeSortKey(
-  record: TimezoneCatalogRecord,
-  locale: TimezoneCatalogLocale,
-): string {
-  return normalizeTimezoneSearch(
-    `${getTimezoneTerritoryLabel(record, locale) ?? ""} ${getTimezoneCityLabel(record, locale)} ${record.id}`,
-  )
-}
 
 export function searchTimezones(
   query: string,
@@ -142,7 +153,7 @@ export function searchTimezones(
     .sort((a, b) => {
       if (normalizedQuery) {
         const score = (entry: IndexedRecord) =>
-          normalizeTimezoneSearch(entry.record.id) === normalizedQuery
+          entry.normalizedId === normalizedQuery
             ? 0
             : entry.fields.includes(normalizedQuery)
               ? 1
@@ -153,9 +164,8 @@ export function searchTimezones(
         if (difference !== 0) return difference
       }
       return (
-        localeSortKey(a.record, locale).localeCompare(
-          localeSortKey(b.record, locale),
-        ) || a.record.id.localeCompare(b.record.id)
+        a.sortKeys[locale].localeCompare(b.sortKeys[locale]) ||
+        a.record.id.localeCompare(b.record.id)
       )
     })
   if (!normalizedQuery && pinnedIdentifier) {

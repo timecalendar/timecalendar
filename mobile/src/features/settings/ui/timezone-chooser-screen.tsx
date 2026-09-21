@@ -16,7 +16,6 @@ import {
   formatTimezoneOffset,
   getTimezoneCityLabel,
   getTimezoneTerritoryLabel,
-  isTimezoneRuntimeSupported,
   searchTimezones,
   type TimezoneCatalogLocale,
   type TimezoneCatalogRecord,
@@ -70,10 +69,10 @@ export default function TimezoneChooserScreen() {
   }
 
   const renderItem = ({ item }: { item: TimezoneCatalogRecord }) => {
-    const available = isTimezoneRuntimeSupported(item.id)
     const city = getTimezoneCityLabel(item, locale)
     const territory = getTimezoneTerritoryLabel(item, locale)
     const offset = formatTimezoneOffset(item.id, now)
+    const available = offset !== undefined
     const isSelected = item.id === selected
     return (
       <Pressable

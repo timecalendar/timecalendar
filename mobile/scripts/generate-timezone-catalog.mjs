@@ -6,7 +6,6 @@ import { rawTimeZones, timeZonesNames } from "@vvo/tzdb"
 import { format } from "prettier"
 
 const require = createRequire(import.meta.url)
-const root = fileURLToPath(new URL("..", import.meta.url))
 const outputPath = fileURLToPath(
   new URL(
     "../src/features/settings/data/timezone-catalog.generated.ts",

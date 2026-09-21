@@ -18,6 +18,7 @@ export {
   getShowWeekends,
   getThemePreference,
   getTimezonePreference,
+  parseTimezonePreference,
   readTimezonePreference,
   resolveLanguage,
   resolveTimezone,

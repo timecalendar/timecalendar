@@ -50,7 +50,13 @@ export function setLanguagePreference(preference: LanguagePreference): void {
 }
 
 export function getTimezonePreference(): TimezonePreference {
-  const read = readTimezonePreference()
+  return parseTimezonePreference(getString(SETTINGS_KEYS.timezone))
+}
+
+export function parseTimezonePreference(
+  raw: string | undefined,
+): TimezonePreference {
+  const read = classifyTimezonePreference(raw)
   return read.kind === "available" || read.kind === "unavailable"
     ? read.identifier
     : "system"
