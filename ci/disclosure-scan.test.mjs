@@ -1179,6 +1179,36 @@ test("convergence rejects simultaneous baseline operations without candidate out
   }
 });
 
+test("convergence fails closed before emitting a candidate when a configured probe fails", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-converge-probe-");
+  mkdirSync(join(repo, "ci"));
+  writeFileSync(join(repo, "fixture.md"), "safe fixture\n");
+  writeFileSync(
+    join(repo, "ci", "disclosure-baseline.json"),
+    `${JSON.stringify(
+      baseline([
+        { path: "fixture.md", id: FINDING_CLASSES.CONFIGURED, count: 1 },
+      ]),
+      null,
+      2,
+    )}\n`,
+  );
+  runGit("add", ".");
+  runGit("commit", "--quiet", "-m", "fixture");
+
+  const pattern = ["configured", "fixture", "[0-9]+"].join("-");
+  const probe = ["configured", "fixture", "none"].join("-");
+  const result = runCli(repo, ["--converge-baseline"], {
+    DISCLOSURE_PATTERNS: withProbe(pattern, probe),
+  });
+
+  assert.equal(result.status, 2, result.stdout + result.stderr);
+  assert.equal(result.stdout, "");
+  assert.ok(!result.stderr.includes(pattern), "the entry is the secret");
+  assert.ok(!result.stderr.includes(probe), "the probe is sensitive by construction");
+  assert.match(result.stderr, /entry 1 does not match its own probe/);
+});
+
 test("convergence retains an over-pin finding and cannot excuse an added line", (t) => {
   const { repo, runGit } = createGitRepo(t, "disclosure-converge-enforcement-");
   writeFileSync(join(repo, "fixture.md"), "Aline Fixture and Aline Fixture again\n");

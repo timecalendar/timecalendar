@@ -255,6 +255,19 @@ export function selfTestConfigured(compiled) {
   return { covered, failed };
 }
 
+function reportConfiguredSelfTestFailures(failed) {
+  for (const entryLine of failed) {
+    console.error(
+      `::error::disclosure-scan: DISCLOSURE_PATTERNS entry ${entryLine} does not match its own probe. ` +
+        "Neither the entry nor its probe is ever printed — this log is public, and a probe is by construction " +
+        "a string that matches a forbidden pattern.",
+    );
+  }
+  console.error(
+    `disclosure-scan: failing closed on ${failed.length} configured entry/entries that match nothing they claim to.`,
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Matching
 // ---------------------------------------------------------------------------
@@ -957,6 +970,10 @@ export function main(argv = process.argv.slice(2), env = process.env) {
   }
 
   const selfTest = selfTestConfigured(compiled);
+  if (baselineOperations && selfTest.failed.length) {
+    reportConfiguredSelfTestFailures(selfTest.failed);
+    return 2;
+  }
   const configured = compiled.map((entry) => entry.regex);
 
   const derived = deriveIdentityPatterns(readIdentities(head, cwd), allowlist);
@@ -1071,16 +1088,7 @@ export function main(argv = process.argv.slice(2), env = process.env) {
   }
 
   if (selfTest.failed.length) {
-    for (const entryLine of selfTest.failed) {
-      console.error(
-        `::error::disclosure-scan: DISCLOSURE_PATTERNS entry ${entryLine} does not match its own probe. ` +
-          "Neither the entry nor its probe is ever printed — this log is public, and a probe is by construction " +
-          "a string that matches a forbidden pattern.",
-      );
-    }
-    console.error(
-      `disclosure-scan: failing closed on ${selfTest.failed.length} configured entry/entries that match nothing they claim to.`,
-    );
+    reportConfiguredSelfTestFailures(selfTest.failed);
     return 2;
   }
 
