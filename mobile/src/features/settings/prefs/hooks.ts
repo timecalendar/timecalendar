@@ -105,6 +105,13 @@ export function useTimezonePreferenceRead(): TimezonePreferenceRead {
   )
 }
 
+export function useLastManualTimezoneRead(): TimezonePreferenceRead {
+  return useParsedStoredString(
+    SETTINGS_KEYS.lastManualTimezone,
+    classifyTimezonePreference,
+  )
+}
+
 export function useShowWeekendsPreference(): {
   showWeekends: boolean
   setShowWeekends: (showWeekends: boolean) => void

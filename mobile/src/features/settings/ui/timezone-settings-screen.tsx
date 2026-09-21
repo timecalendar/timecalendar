@@ -22,7 +22,11 @@ export default function TimezoneSettingsScreen() {
   const manualIdentifier =
     preference.kind === "available" || preference.kind === "unavailable"
       ? preference.identifier
-      : displayZone
+      : preference.kind === "invalid"
+        ? preference.raw
+        : displayZone
+  const usesFallback =
+    preference.kind === "unavailable" || preference.kind === "invalid"
 
   return (
     <>
@@ -46,19 +50,27 @@ export default function TimezoneSettingsScreen() {
               testID="settings-timezone-effective-row"
             />
           ) : (
-            <NativeSettingsRow
-              kind="navigation"
-              label={t("settings.timezone.manual")}
-              value={manualIdentifier}
-              badge={
-                preference.kind === "unavailable"
-                  ? t("settings.timezone.unavailable")
-                  : undefined
-              }
-              hint={t("settings.timezone.openChooserHint")}
-              href="/timezone-chooser"
-              testID="settings-timezone-manual-row"
-            />
+            <>
+              <NativeSettingsRow
+                kind="navigation"
+                label={t("settings.timezone.manual")}
+                value={manualIdentifier}
+                badge={
+                  usesFallback ? t("settings.timezone.unavailable") : undefined
+                }
+                hint={t("settings.timezone.openChooserHint")}
+                href="/timezone-chooser"
+                testID="settings-timezone-manual-row"
+              />
+              {usesFallback ? (
+                <NativeSettingsRow
+                  kind="value"
+                  label={t("settings.timezone.fallback")}
+                  value={displayZone}
+                  testID="settings-timezone-fallback-row"
+                />
+              ) : null}
+            </>
           )}
         </NativeSettingsSection>
       </NativeSettingsHost>

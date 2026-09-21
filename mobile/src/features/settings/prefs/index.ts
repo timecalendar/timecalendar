@@ -3,6 +3,7 @@ export {
   useCalendarZoomPreference,
   useDisplayZone,
   useLanguagePreference,
+  useLastManualTimezoneRead,
   useShowWeekendsPreference,
   useThemePreference,
   useTimezonePreference,

@@ -159,14 +159,14 @@ describe("notification sync runtime", () => {
     const h = harness()
     h.ready()
     h.runtime.updateLocale("en")
-    h.runtime.updateTimezone("America/Montreal")
+    h.runtime.updateTimezone("Asia/Kathmandu")
     h.runtime.start()
     await flush()
     expect(h.transport).toHaveBeenCalledWith(
       expect.objectContaining({
         calendarIds: [],
         locale: "en",
-        timezone: "America/Montreal",
+        timezone: "Asia/Kathmandu",
       }),
       expect.any(AbortSignal),
     )

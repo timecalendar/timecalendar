@@ -162,6 +162,7 @@
   "settings.timezone.openChooserHint": "Ouvre la recherche mondiale de fuseaux horaires",
   "settings.timezone.selected": "Sélectionné",
   "settings.timezone.unavailable": "Indisponible sur cet appareil",
+  "settings.timezone.fallback": "Fuseau horaire de secours",
   "settings.timezone.noResults": "Aucun fuseau horaire trouvé",
   "notifications.title": "Notifications",
   "notifications.section.subscription": "Abonnement",

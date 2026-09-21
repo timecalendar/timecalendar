@@ -184,8 +184,8 @@ export function setCalendarZoomPixelsPerHour(pixelsPerHour: number): void {
   )
 }
 
-// Resolve a timezone preference to the effective display zone: an explicit
-// curated zone wins, "system" falls through to the device IANA zone, and
+// Resolve a timezone preference to the effective display zone: an available
+// catalog identifier wins, "system" falls through to the device IANA zone, and
 // "Europe/Paris" backstops a device that yields none (some simulators). The
 // `deviceZone` parameter defaults to the imperative expo-localization read;
 // the reactive hook passes `useCalendars()`'s value so a device-zone change

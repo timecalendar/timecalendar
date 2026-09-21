@@ -108,6 +108,21 @@ describe("generated timezone catalog", () => {
     expect(isTimezoneRuntimeSupported("Not/A_Zone")).toBe(false)
   })
 
+  it("keeps a catalog alias while reporting an Intl-incompatible runtime", () => {
+    const DateTimeFormat = Intl.DateTimeFormat
+    const runtime = jest
+      .spyOn(Intl, "DateTimeFormat")
+      .mockImplementation((locale, options) => {
+        if (options?.timeZone === "US/Eastern")
+          throw new RangeError("unsupported")
+        return new DateTimeFormat(locale, options)
+      })
+
+    expect(getTimezoneRecord("US/Eastern")?.id).toBe("US/Eastern")
+    expect(isTimezoneRuntimeSupported("US/Eastern")).toBe(false)
+    runtime.mockRestore()
+  })
+
   it.each([
     ["UTC", "2026-01-15T00:00:00Z", "UTC+00:00"],
     ["Europe/Paris", "2026-01-15T00:00:00Z", "UTC+01:00"],

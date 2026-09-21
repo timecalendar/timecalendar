@@ -22,6 +22,7 @@ import {
 } from "@/features/settings/data"
 import {
   selectManualTimezone,
+  useLastManualTimezoneRead,
   useTimezonePreferenceRead,
 } from "@/features/settings/prefs"
 import { Spacing, useTheme } from "@/theme"
@@ -37,10 +38,16 @@ function supportsBottomSearch(): boolean {
 export default function TimezoneChooserScreen() {
   const { t, i18n } = useTranslation()
   const preference = useTimezonePreferenceRead()
-  const selected =
+  const remembered = useLastManualTimezoneRead()
+  const activeSelection =
     preference.kind === "available" || preference.kind === "unavailable"
       ? preference.identifier
       : undefined
+  const rememberedSelection =
+    remembered.kind === "available" || remembered.kind === "unavailable"
+      ? remembered.identifier
+      : undefined
+  const pinned = activeSelection ?? rememberedSelection
   const locale: TimezoneCatalogLocale =
     i18n.resolvedLanguage === "fr" ? "fr" : "en"
   const [query, setQuery] = useState("")
@@ -48,7 +55,7 @@ export default function TimezoneChooserScreen() {
   const navigating = useRef(false)
   const borderColor = useTheme().separator
   const bottomSearch = supportsBottomSearch()
-  const results = searchTimezones(query, locale, selected)
+  const results = searchTimezones(query, locale, pinned)
 
   useFocusEffect(() => {
     navigating.current = false
@@ -73,7 +80,7 @@ export default function TimezoneChooserScreen() {
     const territory = getTimezoneTerritoryLabel(item, locale)
     const offset = formatTimezoneOffset(item.id, now)
     const available = offset !== undefined
-    const isSelected = item.id === selected
+    const isSelected = item.id === activeSelection
     return (
       <Pressable
         accessibilityRole="button"

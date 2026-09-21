@@ -16,9 +16,9 @@ export type ThemePreference = "system" | "light" | "dark"
 export type LanguagePreference = "system" | "fr" | "en"
 export type CalendarView = "day" | "week" | "agenda"
 
-// The curated display-timezone union (timezone design D1): Europe/Paris + the
-// French outre-mer zones. A closed union keeps the parser total and the picker
-// buildable; extending the list later is additive.
+// Legacy identifiers retained as a regression inventory. The active preference
+// accepts exact identifiers from the generated worldwide catalog; this list is
+// not the validation boundary.
 export const CURATED_TIMEZONES = [
   "Europe/Paris",
   "America/Guadeloupe",

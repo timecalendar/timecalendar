@@ -26,6 +26,12 @@ describe("dayKey", () => {
     // …but still 13:30 March 1 in Tahiti (UTC−10).
     expect(dayKey(lateEvening, "Pacific/Tahiti")).toBe("2026-03-01")
   })
+
+  it("preserves exact alias and fractional-offset calendar projections", () => {
+    const instant = new Date("2026-01-01T04:45:00.000Z")
+    expect(dayKey(instant, "US/Eastern")).toBe("2025-12-31")
+    expect(dayKey(instant, "Asia/Kathmandu")).toBe("2026-01-01")
+  })
 })
 
 describe("dayKeyToDate / startOfDayInZone", () => {
