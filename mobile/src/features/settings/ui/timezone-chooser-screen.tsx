@@ -1,5 +1,5 @@
 import { router, Stack, useFocusEffect } from "expo-router"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
   AppState,
@@ -49,17 +49,12 @@ export default function TimezoneChooserScreen() {
   const navigating = useRef(false)
   const borderColor = useTheme().separator
   const bottomSearch = supportsBottomSearch()
-  const results = useMemo(
-    () => searchTimezones(query, locale, selected),
-    [locale, query, selected],
-  )
+  const results = searchTimezones(query, locale, selected)
 
-  useFocusEffect(
-    useCallback(() => {
-      navigating.current = false
-      setNow(new Date())
-    }, []),
-  )
+  useFocusEffect(() => {
+    navigating.current = false
+    setNow(new Date())
+  })
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
@@ -68,54 +63,51 @@ export default function TimezoneChooserScreen() {
     return () => subscription.remove()
   }, [])
 
-  const select = useCallback((identifier: string) => {
+  const select = (identifier: string) => {
     if (navigating.current || !selectManualTimezone(identifier)) return
     navigating.current = true
     router.back()
-  }, [])
+  }
 
-  const renderItem = useCallback(
-    ({ item }: { item: TimezoneCatalogRecord }) => {
-      const available = isTimezoneRuntimeSupported(item.id)
-      const city = getTimezoneCityLabel(item, locale)
-      const territory = getTimezoneTerritoryLabel(item, locale)
-      const offset = formatTimezoneOffset(item.id, now)
-      const isSelected = item.id === selected
-      return (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${city}, ${territory ?? item.id}, ${offset ?? t("settings.timezone.unavailable")}`}
-          accessibilityState={{ disabled: !available, selected: isSelected }}
-          disabled={!available}
-          onPress={() => select(item.id)}
-          style={({ pressed }) => [
-            styles.row,
-            { borderBottomColor: borderColor },
-            pressed && styles.pressed,
-            !available && styles.disabled,
-          ]}
-          testID={`timezone-result-${item.id}`}
-        >
-          <View style={styles.labelColumn}>
-            <ThemedText>{city}</ThemedText>
-            <ThemedText type="small">{territory ?? item.id}</ThemedText>
-            <ThemedText type="small">{item.id}</ThemedText>
-          </View>
-          <View style={styles.valueColumn}>
-            {isSelected ? (
-              <ThemedText type="smallBold">
-                {t("settings.timezone.selected")}
-              </ThemedText>
-            ) : null}
-            <ThemedText type="small">
-              {offset ?? t("settings.timezone.unavailable")}
+  const renderItem = ({ item }: { item: TimezoneCatalogRecord }) => {
+    const available = isTimezoneRuntimeSupported(item.id)
+    const city = getTimezoneCityLabel(item, locale)
+    const territory = getTimezoneTerritoryLabel(item, locale)
+    const offset = formatTimezoneOffset(item.id, now)
+    const isSelected = item.id === selected
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${city}, ${territory ?? item.id}, ${offset ?? t("settings.timezone.unavailable")}`}
+        accessibilityState={{ disabled: !available, selected: isSelected }}
+        disabled={!available}
+        onPress={() => select(item.id)}
+        style={({ pressed }) => [
+          styles.row,
+          { borderBottomColor: borderColor },
+          pressed && styles.pressed,
+          !available && styles.disabled,
+        ]}
+        testID={`timezone-result-${item.id}`}
+      >
+        <View style={styles.labelColumn}>
+          <ThemedText>{city}</ThemedText>
+          <ThemedText type="small">{territory ?? item.id}</ThemedText>
+          <ThemedText type="small">{item.id}</ThemedText>
+        </View>
+        <View style={styles.valueColumn}>
+          {isSelected ? (
+            <ThemedText type="smallBold">
+              {t("settings.timezone.selected")}
             </ThemedText>
-          </View>
-        </Pressable>
-      )
-    },
-    [borderColor, locale, now, select, selected, t],
-  )
+          ) : null}
+          <ThemedText type="small">
+            {offset ?? t("settings.timezone.unavailable")}
+          </ThemedText>
+        </View>
+      </Pressable>
+    )
+  }
 
   return (
     <>
