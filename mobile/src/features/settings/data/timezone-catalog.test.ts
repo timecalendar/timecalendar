@@ -3,6 +3,8 @@ import {
   formatTimezoneOffset,
   getTimezoneCityLabel,
   getTimezoneRecord,
+  getTimezoneTerritoryLabel,
+  hasTimezoneRecord,
   isTimezoneRuntimeSupported,
   normalizeTimezoneSearch,
   searchTimezones,
@@ -46,6 +48,28 @@ describe("generated timezone catalog", () => {
     expect(getTimezoneCityLabel(getTimezoneRecord("Europe/Paris")!, "fr")).toBe(
       "Paris",
     )
+    expect(
+      getTimezoneCityLabel(
+        {
+          id: "Test/Readable_Name",
+          mainCities: [],
+          labels: { en: {}, fr: {} },
+        },
+        "en",
+      ),
+    ).toBe("Readable Name")
+    expect(
+      getTimezoneTerritoryLabel(
+        {
+          id: "Test/City",
+          countryName: "Fallback country",
+          mainCities: [],
+          labels: { en: {}, fr: {} },
+        },
+        "en",
+      ),
+    ).toBe("Fallback country")
+    expect(hasTimezoneRecord("Not/A_Zone")).toBe(false)
   })
 
   it.each([
@@ -72,6 +96,11 @@ describe("generated timezone catalog", () => {
     expect(searchTimezones("   ", "fr", "Asia/Kathmandu")[0]?.id).toBe(
       "Asia/Kathmandu",
     )
+    const firstIdentifier = searchTimezones("", "en")[0]!.id
+    expect(searchTimezones("", "en", firstIdentifier)[0]?.id).toBe(
+      firstIdentifier,
+    )
+    expect(searchTimezones("france paris", "en")[0]?.id).toBe("Europe/Paris")
   })
 
   it("classifies runtime support totally", () => {
@@ -85,7 +114,13 @@ describe("generated timezone catalog", () => {
     ["Europe/Paris", "2026-07-15T00:00:00Z", "UTC+02:00"],
     ["Asia/Kathmandu", "2026-01-15T00:00:00Z", "UTC+05:45"],
     ["Australia/Adelaide", "2026-07-15T00:00:00Z", "UTC+09:30"],
+    ["America/New_York", "2026-01-15T00:00:00Z", "UTC−05:00"],
   ])("formats %s at the supplied instant", (id, instant, expected) => {
     expect(formatTimezoneOffset(id, new Date(instant))).toBe(expected)
+  })
+
+  it("does not format unsupported runtime identifiers", () => {
+    expect(formatTimezoneOffset("Not/A_Zone", new Date(0))).toBeUndefined()
+    expect(isTimezoneRuntimeSupported("Not/A_Zone")).toBe(false)
   })
 })

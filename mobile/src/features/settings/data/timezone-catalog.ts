@@ -35,7 +35,7 @@ export function hasTimezoneRecord(identifier: string): boolean {
 }
 
 function readableIdentifier(identifier: string): string {
-  return (identifier.split("/").at(-1) ?? identifier).replaceAll("_", " ")
+  return identifier.split("/").at(-1)!.replaceAll("_", " ")
 }
 
 export function getTimezoneCityLabel(
