@@ -151,6 +151,7 @@
   "settings.language.fr": "Français",
   "settings.language.en": "English",
   "settings.cancel": "Annuler",
+  "settings.selected": "Sélectionné",
   "settings.timezone.title": "Fuseau horaire",
   "settings.timezone.label": "Fuseau horaire affiché",
   "settings.timezone.automatic": "Automatique (fuseau de l'appareil)",

@@ -29,6 +29,7 @@ export function LanguageSettingsScreen() {
               key={option.value}
               label={option.label}
               selected={language.preference === option.value}
+              selectedAccessibilityLabel={t("settings.selected")}
               testID={`settings-language-choice-${option.value}`}
               onSelect={() => language.setPreference(option.value)}
             />

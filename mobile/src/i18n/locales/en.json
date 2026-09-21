@@ -151,6 +151,7 @@
   "settings.language.fr": "Français",
   "settings.language.en": "English",
   "settings.cancel": "Cancel",
+  "settings.selected": "Selected",
   "settings.timezone.title": "Time zone",
   "settings.timezone.label": "Displayed time zone",
   "settings.timezone.automatic": "Automatic (device time zone)",

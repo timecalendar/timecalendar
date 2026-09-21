@@ -44,6 +44,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme"
 export type NativeSettingsRowProps = {
   kind: "navigation" | "action" | "value"
   label: string
+  accessibilityLabel?: string | undefined
   testID: string
   hint?: string | undefined
   value?: string | undefined
@@ -60,6 +61,7 @@ type NativeSettingsSectionProps = PropsWithChildren<{
 type NativeSettingsChoiceRowProps = {
   label: string
   selected: boolean
+  selectedAccessibilityLabel: string
   testID: string
   onSelect: () => void
 }
@@ -70,6 +72,11 @@ type NativeSettingsSwitchRowProps = {
   testID: string
   switchTestID?: string
   onValueChange: (value: boolean) => void
+}
+
+type NativeSettingsTextProps = {
+  children: string
+  testID?: string
 }
 
 type NativeSettingsRadioDialogOption<Value extends string> = {
@@ -153,6 +160,28 @@ export function NativeSettingsSection({
   )
 }
 
+export function NativeSettingsText({
+  children,
+  testID: textTestID,
+}: NativeSettingsTextProps) {
+  if (Platform.OS === "ios") {
+    return (
+      <SwiftText
+        {...(textTestID
+          ? { modifiers: [accessibilityIdentifier(textTestID)] }
+          : {})}
+      >
+        {children}
+      </SwiftText>
+    )
+  }
+  return (
+    <MaterialText {...(textTestID ? { modifiers: [testID(textTestID)] } : {})}>
+      {children}
+    </MaterialText>
+  )
+}
+
 function activateRow(props: NativeSettingsRowProps) {
   if (props.kind === "navigation" && props.href) {
     router.push(props.href)
@@ -192,7 +221,7 @@ export function NativeSettingsRow(props: NativeSettingsRowProps) {
   if (Platform.OS === "ios") {
     const modifiers = [
       accessibilityIdentifier(props.testID),
-      accessibilityLabel(props.label),
+      accessibilityLabel(props.accessibilityLabel ?? props.label),
       ...(props.hint ? [accessibilityHint(props.hint)] : []),
       ...(props.value ? [accessibilityValue(props.value)] : []),
     ]
@@ -274,7 +303,6 @@ export function NativeSettingsSwitchRow({
       <ListItem.TrailingContent>
         <MaterialSwitch
           value={value}
-          onCheckedChange={onValueChange}
           {...(switchTestID ? { modifiers: [testID(switchTestID)] } : {})}
         />
       </ListItem.TrailingContent>
@@ -285,6 +313,7 @@ export function NativeSettingsSwitchRow({
 export function NativeSettingsChoiceRow({
   label,
   selected,
+  selectedAccessibilityLabel,
   testID: rowTestID,
   onSelect,
 }: NativeSettingsChoiceRowProps) {
@@ -295,7 +324,7 @@ export function NativeSettingsChoiceRow({
         modifiers={[
           accessibilityIdentifier(rowTestID),
           accessibilityLabel(label),
-          accessibilityValue(selected ? "selected" : ""),
+          accessibilityValue(selected ? selectedAccessibilityLabel : ""),
         ]}
       >
         <SwiftRowContent label={label} selected={selected} />
@@ -313,7 +342,7 @@ export function NativeSettingsChoiceRow({
         <MaterialText>{label}</MaterialText>
       </ListItem.HeadlineContent>
       <ListItem.TrailingContent>
-        <RadioButton selected={selected} onClick={onSelect} />
+        <RadioButton selected={selected} />
       </ListItem.TrailingContent>
     </ListItem>
   )
@@ -347,10 +376,7 @@ export function NativeSettingsRadioDialog<Value extends string>({
               onClick={() => onSelect(option.value)}
               modifiers={[testID(`${dialogTestID}-${option.value}`)]}
             >
-              <RadioButton
-                selected={option.value === value}
-                onClick={() => onSelect(option.value)}
-              />
+              <RadioButton selected={option.value === value} />
               <MaterialText>{option.label}</MaterialText>
             </MaterialButton>
           ))}

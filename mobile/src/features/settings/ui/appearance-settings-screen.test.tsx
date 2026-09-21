@@ -77,6 +77,19 @@ describe("AppearanceSettingsScreen on Android", () => {
     expect(getString(SETTINGS_KEYS.theme)).toBeUndefined()
   })
 
+  it("does not persist language on Cancel, outside tap, or Back dismissal", async () => {
+    const view = await render(<AppearanceSettingsScreen />)
+    await fireEvent.press(view.getByTestId("settings-language-row"))
+    await fireEvent.press(view.getByTestId("settings-language-dialog-cancel"))
+    expect(getString(SETTINGS_KEYS.language)).toBeUndefined()
+
+    await fireEvent.press(view.getByTestId("settings-language-row"))
+    await act(() =>
+      view.getByTestId("settings-language-dialog").props.onDismissRequest(),
+    )
+    expect(getString(SETTINGS_KEYS.language)).toBeUndefined()
+  })
+
   it("translates the mounted page after a language selection", async () => {
     const view = await render(<AppearanceSettingsScreen />)
     await fireEvent.press(view.getByTestId("settings-language-row"))

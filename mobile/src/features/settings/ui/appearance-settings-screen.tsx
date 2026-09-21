@@ -48,6 +48,7 @@ export default function AppearanceSettingsScreen() {
                 key={option.value}
                 label={option.label}
                 selected={theme.preference === option.value}
+                selectedAccessibilityLabel={t("settings.selected")}
                 testID={`settings-theme-choice-${option.value}`}
                 onSelect={() => theme.setPreference(option.value)}
               />

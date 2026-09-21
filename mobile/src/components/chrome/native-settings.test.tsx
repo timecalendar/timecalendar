@@ -1,4 +1,4 @@
-import { fireEvent, render } from "@testing-library/react-native"
+import { fireEvent, render, within } from "@testing-library/react-native"
 import { router } from "expo-router"
 
 import { usePlatform } from "@/test-support/platform"
@@ -6,6 +6,7 @@ import { usePlatform } from "@/test-support/platform"
 import {
   NativeSettingsChoiceRow,
   NativeSettingsHost,
+  NativeSettingsRadioDialog,
   NativeSettingsRow,
   NativeSettingsSection,
   NativeSettingsSwitchRow,
@@ -25,6 +26,7 @@ describe.each(["ios", "android"] as const)(
       const action = jest.fn()
       const toggle = jest.fn()
       const select = jest.fn()
+      const dialogSelect = jest.fn()
       const view = await render(
         <NativeSettingsHost>
           <NativeSettingsSection title="Section" testID="section">
@@ -56,16 +58,29 @@ describe.each(["ios", "android"] as const)(
             <NativeSettingsChoiceRow
               label="Choice"
               selected
+              selectedAccessibilityLabel="Selected"
               onSelect={select}
               testID="choice"
             />
           </NativeSettingsSection>
+          <NativeSettingsRadioDialog
+            visible
+            title="Dialog"
+            cancelLabel="Cancel"
+            value="system"
+            options={[{ label: "System", value: "system" }]}
+            testID="dialog"
+            onSelect={dialogSelect}
+            onDismiss={jest.fn()}
+          />
         </NativeSettingsHost>,
       )
-      const host = view.getByTestId(
+      const hosts = view.getAllByTestId(
         platform === "ios" ? "swiftui-host" : "compose-host",
       )
-      expect(host.props.colorScheme).toBe("dark")
+      expect(hosts.every((host) => host.props.colorScheme === "dark")).toBe(
+        true,
+      )
       expect(
         view.getAllByTestId(
           platform === "ios"
@@ -78,11 +93,38 @@ describe.each(["ios", "android"] as const)(
       await fireEvent.press(view.getByTestId("action"))
       expect(action).toHaveBeenCalledTimes(1)
       expect(view.getByTestId("value").props.accessibilityRole).toBeFalsy()
-      await fireEvent.press(view.getByTestId("switch"))
-      expect(toggle).toHaveBeenCalledTimes(1)
+      const switchTarget = view.getByTestId("switch")
+      if (platform === "ios") {
+        await fireEvent.press(switchTarget)
+        expect(toggle).toHaveBeenCalledTimes(1)
+      } else {
+        expect(switchTarget.props.onPress).toBeUndefined()
+        await fireEvent.press(view.getByTestId("toggle"))
+        expect(toggle).toHaveBeenCalledTimes(1)
+      }
+      await fireEvent.press(view.getByTestId("choice"))
+      expect(select).toHaveBeenCalledTimes(1)
       expect(view.getByTestId("choice").props.accessibilityState.selected).toBe(
         true,
       )
+      if (platform === "ios") {
+        expect(view.getByTestId("choice").props.accessibilityValue.text).toBe(
+          "Selected",
+        )
+      } else {
+        const choiceTargets = within(view.getByTestId("choice")).getAllByRole(
+          "radio",
+        )
+        expect(choiceTargets).toHaveLength(1)
+        expect(choiceTargets[0]?.props.onPress).toBeUndefined()
+
+        const dialogOption = view.getByTestId("dialog-system")
+        const dialogIndicators = within(dialogOption).getAllByRole("radio")
+        expect(dialogIndicators).toHaveLength(1)
+        expect(dialogIndicators[0]?.props.onPress).toBeUndefined()
+        await fireEvent.press(dialogOption)
+        expect(dialogSelect).toHaveBeenCalledTimes(1)
+      }
     })
   },
 )

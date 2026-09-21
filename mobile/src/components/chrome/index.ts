@@ -41,4 +41,5 @@ export {
   type NativeSettingsRowProps,
   NativeSettingsSection,
   NativeSettingsSwitchRow,
+  NativeSettingsText,
 } from "@/components/chrome/native-settings"

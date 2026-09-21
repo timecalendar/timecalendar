@@ -16,19 +16,25 @@ The mobile app SHALL initialize an i18next runtime (via `react-i18next`) once at
 - **THEN** the i18next instance is not re-initialized (one module-scoped instance for the app lifetime)
 
 ### Requirement: Locale follows the device with EN fallback
-The app SHALL resolve the active locale from the device locale (via `expo-localization`), selecting `fr` or `en` when the device's preferred locale matches one of them, and SHALL fall back to `en` otherwise. There SHALL be no in-app language switcher and no persisted locale override in this capability.
+The app SHALL resolve its active locale from the persisted language preference. Explicit `fr` or `en` SHALL remain authoritative regardless of device locale changes. `system` SHALL select the first supported French or English device locale and SHALL fall back to English when none is supported. One app-lifetime observer SHALL refresh the effective language when the device locales change in system mode, without adding OS app-language integration or a new locale dependency.
 
-#### Scenario: French device
-- **WHEN** the device's preferred locale is French
-- **THEN** the active locale is `fr` and UI text renders in French
+#### Scenario: Explicit language overrides device changes
+- **WHEN** the stored preference is French or English and the device locale list changes
+- **THEN** the active language remains the explicit stored choice
+- **AND** i18next receives no device-driven language change
 
-#### Scenario: English device
-- **WHEN** the device's preferred locale is English
-- **THEN** the active locale is `en` and UI text renders in English
+#### Scenario: System mode follows a supported runtime change
+- **WHEN** the stored preference is `system` and the preferred supported device locale changes from English to French
+- **THEN** the active language changes once to French
+- **AND** mounted translated screens and native-control labels update without losing selection
 
-#### Scenario: Unsupported device locale
-- **WHEN** the device's preferred locale is neither French nor English (e.g. German)
-- **THEN** the active locale falls back to `en`
+#### Scenario: Unsupported system locale falls back to English
+- **WHEN** system mode resolves a device locale list containing neither French nor English
+- **THEN** the effective language is English
+
+#### Scenario: Duplicate locale events are inert
+- **WHEN** system mode receives repeated locale updates that resolve to the already-active supported language
+- **THEN** i18next is not changed again
 
 ### Requirement: Flat, greppable translation keys
 Translation keys SHALL be flat literal dotted strings, identical in source code and in the catalog JSON. The i18next runtime SHALL be configured with `keySeparator: false` and `nsSeparator: false` so a key string is never split into nested object lookups or namespace lookups.
@@ -72,9 +78,20 @@ The `i18next/no-literal-string` lint rule SHALL remain active as an error, and t
 - **THEN** the lint rule reports an error and CI fails
 
 ### Requirement: i18n wiring is verified by an automated test
-The unit test suite SHALL include a test that renders a localized component through the real i18next instance and asserts that a translated string (not the raw key) is displayed, so the wiring is proven in CI rather than merely present.
+The unit suite SHALL prove synchronous startup selection, manual preference changes, and app-lifetime system-locale refresh through the installed public `expo-localization` contract. Tests SHALL cover all three stored choices, supported and unsupported locale lists, duplicate updates, current-page translation, explicit-override protection, and listener cleanup. Mocks SHALL model `getLocales()` and `useLocales()` as installed and SHALL NOT invent a public event emitter that the package does not export.
 
-#### Scenario: Translated string renders in test
-- **WHEN** the i18n proof test renders a component that calls `t()` for a known key under the default locale
-- **THEN** the rendered output contains the translated value, not the key string
+#### Scenario: Public reactive locale contract drives refresh
+- **WHEN** the mocked `useLocales()` result changes while preference is `system`
+- **THEN** the synchronizer resolves the new list through the production resolver
+- **AND** calls `changeLanguage` only if the supported result differs
+
+#### Scenario: Listener lifetime is bounded by the app root
+- **WHEN** the root synchronizer unmounts
+- **THEN** the public Expo hook's subscription lifecycle is released
+- **AND** the app installs no second locale listener
+
+#### Scenario: Startup and manual behavior remain compatible
+- **WHEN** the app starts or the user explicitly selects Use device language, Français, or English
+- **THEN** the existing synchronous startup fallback and persisted setter behavior remain correct
+- **AND** English remains the fallback for unsupported device locales
 

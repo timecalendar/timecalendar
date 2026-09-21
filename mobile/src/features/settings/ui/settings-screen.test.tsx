@@ -83,7 +83,13 @@ describe.each(["ios", "android"] as const)(
       const view = await render(<SettingsScreen />)
       await fireEvent.press(view.getByTestId("settings-appearance"))
       expect(mockPush).toHaveBeenCalledWith("/appearance-settings")
-      await fireEvent.press(view.getByTestId("settings-show-weekends-switch"))
+      await fireEvent.press(
+        view.getByTestId(
+          platform === "ios"
+            ? "settings-show-weekends-switch"
+            : "settings-show-weekends-row",
+        ),
+      )
       expect(getShowWeekends()).toBe(false)
     })
   },
@@ -97,6 +103,9 @@ it("preserves loading, empty, populated, badge, and environment states", async (
   ).toBeOnTheScreen()
 
   mockLoaded.mockReturnValue(true)
+  await view.rerender(<SettingsScreen />)
+  expect(view.getByText("Add your first calendar")).toBeOnTheScreen()
+
   mockCalendars.mockReturnValue([{ visible: true }, { visible: false }])
   mockActivityState.mockReturnValue({ unreadCount: 100 })
   mockCapability = "development"

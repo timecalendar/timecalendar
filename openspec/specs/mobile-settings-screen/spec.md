@@ -4,84 +4,65 @@
 TBD - created by archiving change add-mobile-settings-screen. Update Purpose after archive.
 ## Requirements
 ### Requirement: Settings screen is a presentational component with a thin route
-The Settings screen SHALL be a **presentational** component at `mobile/src/components/settings-screen.tsx`
-(tested beside it), reachable through a thin route `mobile/src/app/settings.tsx` that only re-exports
-it (`export { default } from "@/components/settings-screen"`). The screen SHALL own no preference
-logic, persistence, or validation — it SHALL delegate all preference state to the Settings feature's
-existing hooks (`useThemePreference`, `useLanguagePreference`). Because it is presentational, it SHALL
-fall under the 70% global coverage floor and SHALL NOT be subject to the 90% per-path logic threshold
-(ADR 003).
+The Appearance & language screen SHALL remain a presentational component under `mobile/src/features/settings/ui/` with a thin `mobile/src/app/appearance-settings.tsx` route re-export. The iOS language choice page SHALL likewise live under the feature UI layer with a thin `mobile/src/app/language-settings.tsx` route. These screens SHALL own no preference validation or persistence and SHALL delegate all state transitions to `useThemePreference` and `useLanguagePreference`.
 
-#### Scenario: The screen lives in components with a thin route
-- **WHEN** the Settings screen and its colocated test are located
-- **THEN** the screen is at `mobile/src/components/settings-screen.tsx` and its test beside it
-- **AND** `mobile/src/app/settings.tsx` only re-exports the screen (no logic, no colocated test)
+#### Scenario: Routes remain thin and tests stay outside the route tree
+- **WHEN** Appearance & language and the iOS language page are implemented
+- **THEN** each route file only re-exports its feature screen
+- **AND** behavior tests remain colocated with feature UI rather than in `src/app/`
 
-#### Scenario: The screen owns no preference logic
-- **WHEN** the Settings screen reads or writes a preference
-- **THEN** it does so through the existing `useThemePreference` / `useLanguagePreference` hooks
-- **AND** it adds no new preference store, validator, or persistence
+#### Scenario: Presentation does not duplicate preference logic
+- **WHEN** either screen reads or changes theme or language
+- **THEN** it uses the existing Settings preference hooks
+- **AND** it adds no preference key, parser, or storage path
 
 ### Requirement: Native controls reached only through the @expo/ui chrome wrapper
-The Settings screen's native controls SHALL be rendered through a chrome wrapper
-`mobile/src/components/chrome/expo-ui.tsx` that is the single import site for `@expo/ui`, exported from
-the chrome barrel (`mobile/src/components/chrome/index.ts`). The screen (and any other feature/route
-code) SHALL import the controls from `@/components/chrome` and SHALL NOT import `@expo/ui` directly,
-keeping the alpha API's blast radius inside the chrome seam (the existing chrome lint boundary).
+All Expo UI primitives used by the settings journeys SHALL be imported only within `mobile/src/components/chrome/`. Feature and route code SHALL consume project-owned native settings contracts from the chrome barrel. The wrapper SHALL contain platform-specific SwiftUI and Compose composition and SHALL keep Expo Router as the navigation owner.
 
-#### Scenario: The screen imports controls from the chrome seam
-- **WHEN** the Settings screen renders a native picker control
-- **THEN** it imports the control from `@/components/chrome`
-- **AND** it does not import `@expo/ui` directly
+#### Scenario: Settings features use project-owned contracts
+- **WHEN** a settings screen renders a form, list, row, switch, choice, or dialog
+- **THEN** it imports that contract from `@/components/chrome`
+- **AND** it contains no direct `@expo/ui` import
 
-#### Scenario: @expo/ui is imported only inside the chrome wrapper
-- **WHEN** `@expo/ui` is imported anywhere in the app
-- **THEN** the only import site is `mobile/src/components/chrome/expo-ui.tsx`
-- **AND** the chrome barrel re-exports the wrapped control(s)
+#### Scenario: Platform navigation is not nested
+- **WHEN** an iOS selection page is pushed or an Android dialog is opened
+- **THEN** Expo Router remains the only navigation stack owner
+- **AND** no SwiftUI or Compose navigation container is introduced
 
 ### Requirement: Theme and language preferences are set through native picker controls
-The Settings screen SHALL present a theme control (options `system` / `light` / `dark`) and a language
-control (options `system` / `fr` / `en`), each a native single-select picker. Selecting an option
-SHALL immediately drive the matching feature hook's setter (`useThemePreference().setPreference` /
-`useLanguagePreference().setPreference`), so the change takes effect without a separate confirm step:
-a theme selection re-themes the app through the color-scheme seam, and a language selection persists
-the preference and switches the active language.
+Theme SHALL offer System, Light, and Dark through inline native checkmarked rows on iOS and a cancellable Material single-choice radio dialog on Android. Language SHALL offer exactly Use device language, Français, and English through an iOS pushed native checkmarked page and a cancellable Material single-choice radio dialog on Android. Each committed selection SHALL immediately call the matching preference hook setter, persist the choice, update selected state, and apply the effective theme or language to the mounted app without a separate confirmation action.
 
-#### Scenario: Selecting a theme option drives the theme preference setter
-- **WHEN** the user selects `dark` in the theme control
-- **THEN** the theme preference setter is called with `dark`
-- **AND** the app resolves the dark token set through the color-scheme seam
+#### Scenario: iOS theme selection is inline and live
+- **WHEN** the user selects Dark from the iOS Appearance form
+- **THEN** Dark becomes the sole checked choice and the theme setter receives `dark`
+- **AND** the current form and navigation adopt the resolved dark scheme
 
-#### Scenario: Selecting a language option drives the language preference setter
-- **WHEN** the user selects `fr` in the language control
-- **THEN** the language preference setter is called with `fr`
-- **AND** the preference is persisted and the active language switches
+#### Scenario: Android theme selection uses a cancellable radio dialog
+- **WHEN** the user opens Theme on Android and selects Light
+- **THEN** the theme setter receives `light`, the dialog closes, and the row shows Light
+- **AND** dismissing the dialog by Cancel, outside tap, or Back without selecting changes no preference
 
-#### Scenario: Each control reflects the current preference
-- **WHEN** the Settings screen renders
-- **THEN** the theme control's selected value is the current theme preference
-- **AND** the language control's selected value is the current language preference
+#### Scenario: iOS language selection uses one pushed list
+- **WHEN** the user opens Language on iOS
+- **THEN** one page lists Use device language, Français, and English with exactly the stored choice checked
+- **AND** choosing Français persists `fr` and translates the currently mounted page and native labels
+
+#### Scenario: Android language selection uses one radio dialog
+- **WHEN** the user opens Language on Android
+- **THEN** one Material dialog lists the same three choices with the stored choice selected
+- **AND** selecting English persists `en`, translates the current page, and retains English as selected
 
 ### Requirement: Appearance & language is reachable from Settings and via a deep link
-The Appearance & language route SHALL be registered as a `Stack` sibling of the `(tabs)` group
-(so a non-tab route is navigable). The Settings tab SHALL provide an accessible
-Appearance & language entry that navigates to `/appearance-settings`, declaring an
-accessibility role and a translated accessibility label and providing a touch
-target of at least 44pt (iOS) / 48dp (Android). The screen SHALL remain reachable
-via the development deep link `timecalendar-dev://appearance-settings`.
+The `/appearance-settings` route SHALL remain registered as a root Stack sibling of `(tabs)` and reachable from the Settings hub and development deep link. The `/language-settings` route SHALL be registered as a root sibling for the iOS pushed language journey. Existing hub destinations and Router back behavior SHALL remain unchanged, and translated route titles/back context SHALL update with the active language.
 
-#### Scenario: Appearance settings is registered under the root Stack
-- **WHEN** the root layout declares its routes
-- **THEN** `appearance-settings` is a `Stack` screen sibling of the `(tabs)` group
+#### Scenario: Existing appearance entry remains stable
+- **WHEN** the user activates Appearance & language from the hub or opens its development deep link
+- **THEN** the existing appearance route opens with an accessible native row and Router-owned back behavior
 
-#### Scenario: An accessible Settings control navigates to Settings
-- **WHEN** the Settings tab renders its Appearance & language entry
-- **THEN** the control declares an accessibility role and a translated accessibility label
-- **AND** activating it navigates to the Appearance & language route
-
-#### Scenario: Appearance settings is reachable via the dev deep link
-- **WHEN** the development-variant app is cold-launched with `timecalendar-dev://appearance-settings`
-- **THEN** the Appearance & language screen is shown
+#### Scenario: iOS language page is Router-owned
+- **WHEN** the user activates Language from Appearance on iOS
+- **THEN** Router pushes `/language-settings` with one native scroll owner
+- **AND** returning uses the existing stack rather than a nested native navigation container
 
 ### Requirement: Settings UI strings are fully localized (FR + EN)
 Every user-facing string on the Settings screen and its Settings entry control SHALL be
@@ -102,39 +83,15 @@ fails the typecheck).
 - **AND** `tsc` fails if a key is missing or extra in either direction
 
 ### Requirement: The Settings screen and control wiring are verified by an automated test
-The unit-test suite SHALL include a test that renders the Settings screen through the real theme and
-i18n trees and asserts: the localized title and both control labels render (translated values, not raw
-keys); each control reflects the current preference; and driving a control's selection calls the
-matching feature hook's setter with the selected value. The native controls (`@expo/ui`) SHALL be
-mocked suite-wide so the universal control renders and its selection callback can be driven under
-Jest. The test SHALL run under the existing `test-mobile` CI job (tsc + lint + Jest).
+The automated suite SHALL exercise both platform compositions through the real preference-hook and i18n boundaries with native chrome mocked to the installed API contracts. It SHALL verify every theme and language choice, current selected state, immediate current-page translation, Android cancellation paths, resolved host scheme, route wiring, and preservation of selection after language changes.
 
-#### Scenario: The screen renders localized strings in CI
-- **WHEN** the proof test renders the Settings screen
-- **THEN** the localized title and control labels render (not raw keys)
+#### Scenario: Theme journey is the first native proof
+- **WHEN** the implementation reaches its first checkpoint
+- **THEN** focused tests prove a complete System/Light/Dark journey on both platform branches
+- **AND** real-host scroll/navigation/theme observations are recorded before language reuses the composition
 
-#### Scenario: Driving a control drives the matching preference setter
-- **WHEN** the proof test drives the theme control's selection to `dark`
-- **THEN** the theme preference setter is called with `dark`
-
-#### Scenario: The coverage gate stays green
-- **WHEN** the suite runs with coverage
-- **THEN** all configured thresholds still pass (the screen is presentational, under the 70% floor)
-
-### Requirement: A Maestro flow proves the Settings screen is reachable and renders
-The e2e suite SHALL include a Maestro flow that cold-launches the development-variant app, deep-links
-to `timecalendar-dev://settings`, and asserts the localized title and the controls render. The flow
-SHALL NOT depend on driving a native picker's selection (native picker popups are not reliably
-addressable across iOS and Android); the control-to-hook wiring is proven instead by the automated
-unit test.
-
-#### Scenario: The Maestro flow asserts the screen renders
-- **WHEN** the Maestro Settings flow runs on iOS or Android
-- **THEN** it deep-links to `timecalendar-dev://settings`
-- **AND** asserts the localized Settings title and controls are visible
-
-#### Scenario: The flow does not drive the native picker
-- **WHEN** the Maestro Settings flow is authored
-- **THEN** it asserts render and reachability only
-- **AND** it does not assert a preference changed by toggling a native picker
+#### Scenario: Every choice and cancellation path is deterministic
+- **WHEN** tests drive each theme and language option and dismiss Android dialogs without selection
+- **THEN** committed options call the corresponding setter once and update selected state
+- **AND** cancellation calls no setter and preserves the prior state
 

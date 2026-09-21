@@ -42,46 +42,21 @@ summary and named content sections below native navigation chrome.
 - **AND** the calendar summary is the first meaningful content
 
 ### Requirement: Settings presents a grouped hierarchy of live destinations
+Settings SHALL render through the project-owned native settings chrome contract. iOS SHALL use one SwiftUI Form with native Sections and Android SHALL use one Material list with native section and row composition. The hub SHALL preserve the ordered Calendars summary, Events, Preferences, App, Support, and capability-gated Environment groups; the existing Activity, Personal events, Hidden events, Appearance & language, Time zone, Notifications, About, and Feedback destinations; the unread Activity badge; and the Show weekends preference. No destination SHALL become dead, reordered across its established group, or silently converted from navigation to a plain action.
 
-The Settings screen SHALL be a scrollable, platform-appropriate grouped list. It SHALL present the calendar summary followed by an Events section containing Activity, Personal events, and Hidden events, a Preferences section containing Appearance & language, Time zone, and Notifications, an App section containing About, a Support section containing Feedback, and—only when the normalized backend capability is development or preview—an ordinary Environment control. Each destination row SHALL navigate to its working route. The Activity row SHALL be first in the Events section, SHALL be present regardless of notification preferences or held-calendar count, and SHALL carry the reactive unread badge defined by the `mobile-activity-ui` capability. The environment control SHALL expose only choices allowed by the capability and SHALL require destructive confirmation before invoking the reset. Production or malformed capability SHALL render no environment control. Settings SHALL NOT render a hidden tap ritual, free-text URL, disabled placeholder, duplicate Calendars row, or Changelog until corresponding requirements introduce those live destinations.
+#### Scenario: Hub uses one platform-native scroll owner
+- **WHEN** Settings renders on iOS or Android
+- **THEN** the native Form or Material list owns scrolling and content insets
+- **AND** no React Native ScrollView or nested native list also owns the page scroll
 
-#### Scenario: Switchable builds show the ordinary environment control
+#### Scenario: Existing destinations and live state survive composition
+- **WHEN** Settings renders with calendars, an unread activity count, a weekend preference, and a non-production environment capability
+- **THEN** the established destinations remain in their established groups
+- **AND** the calendar summary, badge, switch state, and environment row reflect their live sources
 
-- **WHEN** Settings renders with a valid development or preview backend capability
-- **THEN** a localized accessible Environment control is visible with only allowed named choices
-- **AND** selecting a different choice opens the destructive confirmation before any state changes
-
-#### Scenario: Production exposes no selector
-
-- **WHEN** Settings renders with production, missing, or malformed backend capability
-- **THEN** no environment control, hidden unlock, or custom URL field is rendered
-- **AND** invoking any retained deep link or handler cannot activate another backend
-
-#### Scenario: Existing groups contain only working routes
-
-- **WHEN** Settings renders after the environment feature ships
-- **THEN** Activity, Personal events, and Hidden events appear under Events, in that order
-- **AND** Appearance & language, Time zone, and Notifications appear under Preferences
-- **AND** About appears under App and Feedback appears under Support
-- **AND** Changelog and a duplicate Calendars row do not appear
-
-#### Scenario: The Activity row opens the Activity route
-
-- **WHEN** the user activates the full-width accessible Activity row
-- **THEN** the app navigates to `/activity`
-- **AND** the row provides platform-appropriate pressed feedback, a localized label and hint, and a minimum 44pt iOS / 48dp Android target
-
-#### Scenario: Feedback row opens the root feedback route
-
-- **WHEN** the user activates the full-width accessible Feedback row
-- **THEN** the app navigates to `/feedback` without iCal context parameters
-- **AND** the row provides platform-appropriate pressed feedback, a localized label and hint, and a minimum 44pt iOS / 48dp Android target
-
-#### Scenario: A row navigates through its entire touch target
-
-- **WHEN** the user activates any destination row
-- **THEN** the app navigates to that row's configured route
-- **AND** the row provides platform-appropriate pressed feedback
+#### Scenario: Production capability still hides environment controls
+- **WHEN** the backend-environment capability is production
+- **THEN** the Environment section and control do not render
 
 ### Requirement: Calendar summary derives from the full held-calendar collection
 
@@ -121,47 +96,35 @@ calendars without school metadata SHALL not create school identities.
 - **THEN** it remains included in the summary's total calendar count and school derivation
 
 ### Requirement: Settings rows and summary are accessible and resilient to large text
+Every Settings row SHALL expose exactly one semantic row target or one noninteractive value. Navigation rows SHALL activate across the full row and alone display a navigation disclosure; action rows SHALL activate without a disclosure; value rows SHALL expose their value without claiming interactivity; switch rows SHALL toggle once from either the row or control activation path; and selection rows SHALL expose selected state. Native geometry SHALL retain platform minimum targets, translated labels and supporting values SHALL grow without clipping, and decorative icons/disclosures SHALL not become separate assistive-technology targets.
 
-Every Settings navigation row and the calendar summary SHALL be one reachable link with
-a localized accessibility label, an appropriate hint, and a minimum 44pt iOS / 48dp
-Android target. Decorative leading icons and disclosure glyphs SHALL be hidden from
-assistive technology. Rows SHALL use minimum rather than fixed heights and SHALL
-permit translated labels and dynamic type to wrap without clipping or overlapping
-trailing content.
+#### Scenario: Whole navigation and action rows activate correctly
+- **WHEN** the user activates empty space within a navigation or action row
+- **THEN** the row performs its route or action exactly once
+- **AND** only the navigation row presents a disclosure affordance
 
-#### Scenario: Assistive technology encounters one target per destination
-- **WHEN** VoiceOver or TalkBack focuses a Settings destination
-- **THEN** it announces one localized link target rather than separate decorative icon,
-  text, and chevron elements
+#### Scenario: Value and switch rows retain distinct semantics
+- **WHEN** assistive technology focuses a value row and a switch row
+- **THEN** the value row announces its current value without a link or button action
+- **AND** the switch row announces checked state and changes state once per activation
 
-#### Scenario: Large text remains operable
-- **WHEN** the app uses an accessibility text size and a long localized label
-- **THEN** the row grows to contain the label without clipping
-- **AND** its full touch target remains operable
+#### Scenario: Large localized content remains operable
+- **WHEN** the app uses an accessibility text size and a long translated label
+- **THEN** the native row grows without clipping or overlapping trailing content
+- **AND** its whole minimum-size target remains operable
 
 ### Requirement: Settings behavior is covered by automated and on-device proofs
+Automated tests SHALL cover native host/section/row contracts, group order, all hub routes, calendar-summary loading and empty states, unread badge, weekend switch, environment gating, localized normal-case section labels, and compatibility action/value/navigation consumers in About and Environment. Tests SHALL verify both platform branches and one-scroll-owner structure without claiming rendered native fidelity. The project owner SHALL perform device acceptance on iOS and Android for grouped/list geometry, ripple and whole-row activation, both themes, French and English, large text, screen-reader traversal, and phone/tablet sizing.
 
-The pure summary selector SHALL be covered under the 90% logic threshold, including
-loading, empty, ID/name aliasing, multiple schools, unknown metadata, hidden calendars,
-and order independence. The presentational screen SHALL meet the 70% floor and test
-group order, route wiring including `/about` and `/feedback`, localization,
-accessibility, and platform row branches. The tab trigger, About and Feedback route
-structures, and legacy redirect SHALL have automated coverage. Maestro flows and the
-manual iOS/Android pass SHALL prove tab navigation, calendar-management, appearance,
-About, and mail-safe Feedback validation destinations, safe-area/tab behavior,
-screen-reader traversal, dark mode, large text, and a multi-school fixture.
+#### Scenario: Automated gates protect behavior and consumers
+- **WHEN** the mobile typecheck, lint, and affected Jest suites run
+- **THEN** hub behavior and native chrome contracts pass
+- **AND** About and Environment consumers render and act without native-host errors
 
-#### Scenario: Automated gates verify Settings
-- **WHEN** the mobile typecheck, lint, and Jest coverage suite run
-- **THEN** Settings passes all gates and the selector clears the 90% logic threshold
-- **AND** the About row is proven to navigate to its registered route
-- **AND** the Feedback row is proven to navigate to its registered route
-
-#### Scenario: Both platforms verify native behavior
-- **WHEN** the Settings device checklist is completed on iOS and Android
-- **THEN** tab/header behavior, interactions, accessibility, dark mode, and the
-  multi-school summary are verified without dead destinations
-- **AND** About and Feedback are reachable from Settings on both platforms
+#### Scenario: Device acceptance owns visual fidelity
+- **WHEN** the owner evaluates the implementation build on iOS and Android
+- **THEN** platform geometry, scrolling, navigation, themes, localization, large text, and assistive behavior are evaluated on real native hosts
+- **AND** host tests are not cited as proof of pixel fidelity
 
 ### Requirement: Environment confirmation and reset status are accessible
 
@@ -190,3 +153,16 @@ Settings grouped-section labels SHALL render the casing supplied by the active l
 - **WHEN** Settings renders on iOS or Android in English
 - **THEN** section labels use normal localized casing
 - **AND** their semantic typography, spacing, and grouped containers distinguish them from rows without forced uppercase
+
+### Requirement: Native settings chrome is reusable and theme-aware
+The mobile chrome boundary SHALL own the only application imports of the Expo UI primitives used for settings composition and SHALL expose stable native host, section, row, switch, checkmarked-choice, and radio-dialog contracts to features. Every native host and dialog SHALL receive the app scheme resolved through `@/hooks/use-color-scheme`, while platform geometry and system typography remain native.
+
+#### Scenario: Feature code stays behind the chrome seam
+- **WHEN** a settings feature composes a native row, section, selection list, or dialog
+- **THEN** it imports the project-owned contract from `@/components/chrome`
+- **AND** it does not import an Expo UI platform subpath directly
+
+#### Scenario: Explicit scheme reaches native controls
+- **WHEN** the app preference resolves dark while the device scheme is light
+- **THEN** the native settings host, controls, dialogs, and Router navigation render with the resolved dark scheme
+- **AND** switching the preference updates the mounted surfaces live

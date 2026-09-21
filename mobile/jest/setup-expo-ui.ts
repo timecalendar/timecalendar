@@ -237,8 +237,22 @@ jest.mock("@expo/ui/swift-ui", () => {
   function Stack({ children, ...props }: { children?: unknown }) {
     return React.createElement(View, props, children)
   }
-  function Text({ children, ...props }: { children?: unknown }) {
-    return React.createElement(NativeText, props, children)
+  function Text({
+    children,
+    modifiers,
+    ...props
+  }: {
+    children?: unknown
+    modifiers?: { $type: string; value: unknown }[]
+  }) {
+    return React.createElement(
+      NativeText,
+      {
+        ...props,
+        testID: modifierValue(modifiers, "accessibilityIdentifier"),
+      },
+      children,
+    )
   }
   function TextField(props: {
     testID?: string
@@ -285,8 +299,9 @@ jest.mock("@expo/ui/swift-ui", () => {
         },
         accessibilityState: {
           disabled: isDisabled,
-          selected:
-            modifierValue(props.modifiers, "accessibilityValue") === "selected",
+          selected: Boolean(
+            modifierValue(props.modifiers, "accessibilityValue"),
+          ),
         },
         disabled: isDisabled,
         onPress: props.onPress,

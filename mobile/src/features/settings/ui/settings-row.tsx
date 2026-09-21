@@ -51,7 +51,8 @@ export function SettingsRow(props: SettingsRowProps) {
     return (
       <NativeSettingsRow
         kind="value"
-        label={props.accessibilityLabel ?? props.label}
+        label={props.label}
+        accessibilityLabel={props.accessibilityLabel}
         value={props.value}
         testID={props.testID}
       />
@@ -61,7 +62,8 @@ export function SettingsRow(props: SettingsRowProps) {
     return (
       <NativeSettingsRow
         kind="action"
-        label={props.accessibilityLabel ?? props.label}
+        label={props.label}
+        accessibilityLabel={props.accessibilityLabel}
         value={props.secondary}
         badge={props.badge}
         hint={props.hint}
@@ -73,7 +75,8 @@ export function SettingsRow(props: SettingsRowProps) {
   return (
     <NativeSettingsRow
       kind="navigation"
-      label={props.accessibilityLabel ?? props.label}
+      label={props.label}
+      accessibilityLabel={props.accessibilityLabel}
       value={props.secondary}
       badge={props.badge}
       hint={props.hint}

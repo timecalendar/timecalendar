@@ -2,13 +2,14 @@ import * as Linking from "expo-linking"
 import { Stack } from "expo-router"
 import * as WebBrowser from "expo-web-browser"
 import type { TFunction } from "i18next"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { AccessibilityInfo } from "react-native"
 
 import {
   NativeSettingsHost,
-  NativeSettingsRow,
   NativeSettingsSection,
+  NativeSettingsText,
 } from "@/components/chrome"
 import { readApplicationInfo } from "@/features/about/data"
 import {
@@ -40,6 +41,10 @@ function formatApplicationInfo(t: TFunction): string {
 export function AboutScreen() {
   const { t } = useTranslation()
   const [linkFailed, setLinkFailed] = useState(false)
+  const linkError = t("about.linkError")
+  useEffect(() => {
+    if (linkFailed) AccessibilityInfo.announceForAccessibility(linkError)
+  }, [linkError, linkFailed])
   const versionValue = formatApplicationInfo(t)
   const openLink = async (
     context: string,
@@ -161,18 +166,16 @@ export function AboutScreen() {
       <Stack.Screen options={{ title: t("about.title") }} />
       <NativeSettingsHost>
         <NativeSettingsSection testID="about-readable-copy">
-          <NativeSettingsRow
-            kind="value"
-            label={t("about.blurb.access")}
-            value={t("about.blurb.created")}
-            testID="about-blurb"
-          />
+          <NativeSettingsText testID="about-blurb-access">
+            {t("about.blurb.access")}
+          </NativeSettingsText>
+          <NativeSettingsText testID="about-blurb-created">
+            {t("about.blurb.created")}
+          </NativeSettingsText>
           {linkFailed ? (
-            <NativeSettingsRow
-              kind="value"
-              label={t("about.linkError")}
-              testID="about-link-error"
-            />
+            <NativeSettingsText testID="about-link-error">
+              {linkError}
+            </NativeSettingsText>
           ) : null}
         </NativeSettingsSection>
         {sections.map((section) => (
