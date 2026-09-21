@@ -98,9 +98,14 @@ describe.each(["ios", "android"] as const)(
         await fireEvent.press(switchTarget)
         expect(toggle).toHaveBeenCalledTimes(1)
       } else {
-        expect(switchTarget.props.onPress).toBeUndefined()
         await fireEvent.press(view.getByTestId("toggle"))
         expect(toggle).toHaveBeenCalledTimes(1)
+        expect(toggle).toHaveBeenLastCalledWith(false)
+
+        toggle.mockClear()
+        await fireEvent.press(switchTarget)
+        expect(toggle).toHaveBeenCalledTimes(1)
+        expect(toggle).toHaveBeenLastCalledWith(false)
       }
       await fireEvent.press(view.getByTestId("choice"))
       expect(select).toHaveBeenCalledTimes(1)

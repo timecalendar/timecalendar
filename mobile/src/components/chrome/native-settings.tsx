@@ -303,6 +303,7 @@ export function NativeSettingsSwitchRow({
       <ListItem.TrailingContent>
         <MaterialSwitch
           value={value}
+          onCheckedChange={onValueChange}
           {...(switchTestID ? { modifiers: [testID(switchTestID)] } : {})}
         />
       </ListItem.TrailingContent>

@@ -584,12 +584,14 @@ jest.mock("@expo/ui/jetpack-compose", () => {
     onCheckedChange?: (value: boolean) => void
     modifiers?: { $type: string; value: unknown }[]
   }) {
+    const onNativeCheckedChange = (value: boolean) =>
+      props.onCheckedChange?.(value)
     return React.createElement(Pressable, {
       testID: testID(props.modifiers),
       accessibilityRole: "switch",
       accessibilityState: { checked: props.value },
-      onPress: () => props.onCheckedChange?.(!props.value),
-      onValueChange: props.onCheckedChange,
+      onPress: () => onNativeCheckedChange(!props.value),
+      onValueChange: onNativeCheckedChange,
     })
   }
   function Column(props: {
