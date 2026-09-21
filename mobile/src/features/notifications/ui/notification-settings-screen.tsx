@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Switch, View } from "react-native"
 import { Host, Picker } from "@/components/chrome"
 import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
+import { WriteErrorNotice } from "@/components/write-error-notice"
 import {
   type NotificationFrequency,
   useNotificationPreferences,
@@ -147,19 +148,20 @@ export default function NotificationSettingsScreen() {
           style={styles.statusBlock}
           testID={`notifications-sync-${status.state}`}
         >
-          <ThemedText
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            accessibilityRole={status.state === "error" ? "alert" : undefined}
-          >
-            {status.state === "pending"
-              ? t("notifications.sync.pending")
-              : status.state === "waiting"
-                ? t(`notifications.sync.waiting.${status.reason}`)
-                : status.state === "error"
-                  ? t("notifications.sync.error")
+          {status.state === "error" ? (
+            <WriteErrorNotice message={t("notifications.sync.error")} />
+          ) : (
+            <ThemedText
+              themeColor="textSecondary"
+              accessibilityLiveRegion="polite"
+            >
+              {status.state === "pending"
+                ? t("notifications.sync.pending")
+                : status.state === "waiting"
+                  ? t(`notifications.sync.waiting.${status.reason}`)
                   : t("notifications.sync.acknowledged")}
-          </ThemedText>
+            </ThemedText>
+          )}
           {status.state === "error" && (
             <Pressable
               testID="notifications-retry"
