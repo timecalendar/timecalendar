@@ -48,7 +48,7 @@
 
 ## 7. Verification and handoff
 
-- [ ] 7.1 Run the full mobile local gate from `mobile/`: `npx tsc --noEmit`, `npm run lint`, and `npm test -- --coverage`; record exact results and ensure notification logic remains above the 90% logic threshold and the project above the 70% global floor.
+- [x] 7.1 Run the full mobile local gate from `mobile/`: `npx tsc --noEmit`, `npm run lint`, and `npm test -- --coverage`; record exact results and ensure notification logic remains above the 90% logic threshold and the project above the 70% global floor.
 - [x] 7.2 Verify `git diff -- openapi/openapi.json mobile/src/api/generated mobile/firebase mobile/app.config.ts mobile/eas.json server/src/migrations .github/workflows app` is empty, confirming every declared sensitive/out-of-scope surface remains untouched.
 - [x] 7.3 Review final diagnostics and persisted-key inventory to confirm no FCM token, calendar identifier, request/response payload, or user data can be logged or stored by the runtime.
-- [ ] 7.4 Record the owner-led device acceptance surfaces for pre-release review—understandable local-versus-remote status, navigation away/back, Retry, FR/EN, themes, large text, VoiceOver/TalkBack—without treating that D05 check as a repository merge gate or creating a separate ticket.
+- [x] 7.4 Record the owner-led device acceptance surfaces for pre-release review—understandable local-versus-remote status, navigation away/back, Retry, FR/EN, themes, large text, VoiceOver/TalkBack—without treating that D05 check as a repository merge gate or creating a separate ticket.
