@@ -1,4 +1,6 @@
+import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
+import { AccessibilityInfo } from "react-native"
 
 import {
   NativeSettingsRow,
@@ -23,6 +25,11 @@ export function NotificationSyncStatus({
         : status.state === "error"
           ? t("notifications.sync.error")
           : t("notifications.sync.acknowledged")
+
+  useEffect(() => {
+    AccessibilityInfo.announceForAccessibility(message)
+  }, [message])
+
   return (
     <NativeSettingsSection
       title={t("notifications.section.status")}
