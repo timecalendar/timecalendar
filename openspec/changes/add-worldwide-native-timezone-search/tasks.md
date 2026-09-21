@@ -46,5 +46,5 @@
 ## 8. Local green and CI proof
 
 - [x] 8.1 Run the focused generator, catalog/search, prefs/hooks, route, settings/chooser, calendar/event, notification, i18n, and server-validator tests after their final edits; record exact successful commands and ensure the committed Jest tests are discovered by the existing mobile/server CI jobs without changing workflow files.
-- [ ] 8.2 From `mobile/`, run `npm run generate:timezone-catalog -- --check`, `npx tsc --noEmit`, `npm run lint`, `npm run react-doctor:changed`, and `npm test -- --coverage`; fix only failures caused by this change and record the exact tested commit.
-- [ ] 8.3 Review the generated catalog and mobile bundle inputs for bounded CLDR imports, run the repository disclosure scan/preflight, and confirm the diff does not touch OpenAPI/generated clients, native/store/EAS configuration, migrations, deploy/CI, or legacy Flutter surfaces.
+- [x] 8.2 From `mobile/`, run `npm run generate:timezone-catalog -- --check`, `npx tsc --noEmit`, `npm run lint`, `npm run react-doctor:changed`, and `npm test -- --coverage`; fix only failures caused by this change and record the exact tested commit.
+- [x] 8.3 Review the generated catalog and mobile bundle inputs for bounded CLDR imports, run the repository disclosure scan/preflight, and confirm the diff does not touch OpenAPI/generated clients, native/store/EAS configuration, migrations, deploy/CI, or legacy Flutter surfaces.
