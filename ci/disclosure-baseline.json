@@ -32,7 +32,6 @@
     { "path": "mobile/EAS.md", "id": "derived-identity", "count": 1 },
     { "path": "mobile/firebase/google-services.json", "id": "derived-identity", "count": 2 },
     { "path": "mobile/firebase/GoogleService-Info.plist", "id": "derived-identity", "count": 2 },
-    { "path": "mobile/src/features/about/ui/about-screen.test.tsx", "id": "derived-identity", "count": 6 },
     { "path": "mobile/src/features/about/ui/about-screen.tsx", "id": "derived-identity", "count": 7 },
     { "path": "mobile/src/i18n/locales/en.json", "id": "derived-identity", "count": 3 },
     { "path": "mobile/src/i18n/locales/fr.json", "id": "derived-identity", "count": 3 },
