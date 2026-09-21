@@ -2,12 +2,15 @@ import * as Linking from "expo-linking"
 import { Stack } from "expo-router"
 import * as WebBrowser from "expo-web-browser"
 import type { TFunction } from "i18next"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Platform, ScrollView, StyleSheet, View } from "react-native"
+import { AccessibilityInfo } from "react-native"
 
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
+import {
+  NativeSettingsHost,
+  NativeSettingsSection,
+  NativeSettingsText,
+} from "@/components/chrome"
 import { readApplicationInfo } from "@/features/about/data"
 import {
   SettingsRow,
@@ -15,7 +18,6 @@ import {
   SettingsSection,
 } from "@/features/settings/ui"
 import { recordUnknownError } from "@/firebase"
-import { ResponsiveContentWidths, Spacing, useTheme } from "@/theme"
 
 const PRIVACY_URL = "https://timecalendar.app/privacy-policy"
 const CONTACT_URL = "mailto:hello@timecalendar.app"
@@ -38,8 +40,11 @@ function formatApplicationInfo(t: TFunction): string {
 
 export function AboutScreen() {
   const { t } = useTranslation()
-  const theme = useTheme()
   const [linkFailed, setLinkFailed] = useState(false)
+  const linkError = t("about.linkError")
+  useEffect(() => {
+    if (linkFailed) AccessibilityInfo.announceForAccessibility(linkError)
+  }, [linkError, linkFailed])
   const versionValue = formatApplicationInfo(t)
   const openLink = async (
     context: string,
@@ -159,67 +164,32 @@ export function AboutScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("about.title") }} />
-      <RootPage testID="about-safe-area" lane="standard">
-        {(standardLayout) => (
-          <ScrollView
-            testID="about-scroll-owner"
-            style={{ backgroundColor: theme.background }}
-            contentContainerStyle={styles.scrollContent}
+      <NativeSettingsHost>
+        <NativeSettingsSection testID="about-readable-copy">
+          <NativeSettingsText testID="about-blurb-access">
+            {t("about.blurb.access")}
+          </NativeSettingsText>
+          <NativeSettingsText testID="about-blurb-created">
+            {t("about.blurb.created")}
+          </NativeSettingsText>
+          {linkFailed ? (
+            <NativeSettingsText testID="about-link-error">
+              {linkError}
+            </NativeSettingsText>
+          ) : null}
+        </NativeSettingsSection>
+        {sections.map((section) => (
+          <SettingsSection
+            key={section.key}
+            title={section.title}
+            testID={`about-section-${section.key}`}
           >
-            <View
-              testID="about-responsive-content"
-              style={[standardLayout.laneStyle, styles.content]}
-            >
-              <View
-                testID="about-readable-copy"
-                style={[styles.readableCopy, styles.blurb]}
-              >
-                <ThemedText>{t("about.blurb.access")}</ThemedText>
-                <ThemedText themeColor="textSecondary">
-                  {t("about.blurb.created")}
-                </ThemedText>
-              </View>
-              {linkFailed && (
-                <ThemedText
-                  accessibilityLiveRegion="polite"
-                  accessibilityRole="alert"
-                  themeColor="textSecondary"
-                  style={styles.readableCopy}
-                >
-                  {t("about.linkError")}
-                </ThemedText>
-              )}
-              {sections.map((section) => (
-                <SettingsSection
-                  key={section.key}
-                  title={section.title}
-                  testID={`about-section-${section.key}`}
-                >
-                  {section.rows.map((row) => (
-                    <SettingsRow key={row.testID} {...row} />
-                  ))}
-                </SettingsSection>
-              ))}
-            </View>
-          </ScrollView>
-        )}
-      </RootPage>
+            {section.rows.map((row) => (
+              <SettingsRow key={row.testID} {...row} />
+            ))}
+          </SettingsSection>
+        ))}
+      </NativeSettingsHost>
     </>
   )
 }
-
-const styles = StyleSheet.create({
-  scrollContent: {
-    paddingTop: Spacing.four,
-    paddingBottom: Spacing.six,
-  },
-  content: {
-    gap: Platform.OS === "ios" ? Spacing.four : Spacing.five,
-  },
-  readableCopy: {
-    alignSelf: "center",
-    width: "100%",
-    maxWidth: ResponsiveContentWidths.readable,
-  },
-  blurb: { gap: Spacing.two },
-})

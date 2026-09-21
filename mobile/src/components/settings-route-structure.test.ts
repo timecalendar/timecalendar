@@ -92,6 +92,18 @@ describe("Settings route structure", () => {
     expect(rootLayout).toContain('initialRouteName: "(tabs)"')
   })
 
+  it("keeps Language as a thin Router-owned root destination", () => {
+    expect(route("language-settings.tsx").trim()).toBe(
+      'export { LanguageSettingsScreen as default } from "@/features/settings/ui"',
+    )
+    expect(route("_layout.tsx")).toContain(
+      '<Stack.Screen name="language-settings" />',
+    )
+    expect(
+      route("../features/settings/ui/language-settings-screen.tsx"),
+    ).toContain('title: t("settings.language.label")')
+  })
+
   it("keeps Activity as a thin feature route registered in the root Stack", () => {
     expect(route("activity.tsx").trim()).toBe(
       'export { ActivityScreen as default } from "@/features/activity/ui"',

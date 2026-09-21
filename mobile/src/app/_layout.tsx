@@ -29,6 +29,7 @@ import {
 import { persistOptions } from "@/features/school-selection"
 import { SplashScreen } from "@/features/splash/ui"
 import { useColorScheme } from "@/hooks/use-color-scheme"
+import { LocaleSynchronizer } from "@/i18n/locale-synchronizer"
 import { buildNavTheme } from "@/theme"
 import { OtaUpdateRuntime } from "@/updates"
 
@@ -124,6 +125,7 @@ export default function RootLayout() {
           <ActivityRuntime />
           <NotificationRuntime />
           <NotificationTapRouting />
+          <LocaleSynchronizer />
           <ThemeProvider value={navTheme}>
             <Stack screenOptions={rootScreenOptions}>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -134,6 +136,7 @@ export default function RootLayout() {
                 options={{ headerShown: false }}
               />
               <Stack.Screen name="appearance-settings" />
+              <Stack.Screen name="language-settings" />
               <Stack.Screen name="about" />
               <Stack.Screen name="changelog" />
               <Stack.Screen

@@ -1,8 +1,5 @@
-# mobile-settings-screen Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change add-mobile-settings-screen. Update Purpose after archive.
-## Requirements
 ### Requirement: Settings screen is a presentational component with a thin route
 The Appearance & language screen SHALL remain a presentational component under `mobile/src/features/settings/ui/` with a thin `mobile/src/app/appearance-settings.tsx` route re-export. The iOS language choice page SHALL likewise live under the feature UI layer with a thin `mobile/src/app/language-settings.tsx` route. These screens SHALL own no preference validation or persistence and SHALL delegate all state transitions to `useThemePreference` and `useLanguagePreference`.
 
@@ -64,24 +61,6 @@ The `/appearance-settings` route SHALL remain registered as a root Stack sibling
 - **THEN** Router pushes `/language-settings` with one native scroll owner
 - **AND** returning uses the existing stack rather than a nested native navigation container
 
-### Requirement: Settings UI strings are fully localized (FR + EN)
-Every user-facing string on the Settings screen and its Settings entry control SHALL be
-a translation key with complete FR and EN catalog entries. This covers the title,
-each control's label, each option's label, and the Settings Appearance & language entry
-label. Localization SHALL be enforced by the no-hardcoded-strings lint rule and by
-`tsc`-typed bidirectional FR/EN parity (a missing or extra key in either catalog
-fails the typecheck).
-
-#### Scenario: No hardcoded user-facing string on the screen
-- **WHEN** the Settings screen or its Settings entry control renders text or an accessibility label
-- **THEN** that string comes from a translation key
-- **AND** the no-hardcoded-strings lint rule passes
-
-#### Scenario: FR and EN catalogs are complete and in parity
-- **WHEN** a Settings or Settings-entry UI key is added to one catalog
-- **THEN** the same key exists in the other catalog
-- **AND** `tsc` fails if a key is missing or extra in either direction
-
 ### Requirement: The Settings screen and control wiring are verified by an automated test
 The automated suite SHALL exercise both platform compositions through the real preference-hook and i18n boundaries with native chrome mocked to the installed API contracts. It SHALL verify every theme and language choice, current selected state, immediate current-page translation, Android cancellation paths, resolved host scheme, route wiring, and preservation of selection after language changes.
 
@@ -95,3 +74,9 @@ The automated suite SHALL exercise both platform compositions through the real p
 - **THEN** committed options call the corresponding setter once and update selected state
 - **AND** cancellation calls no setter and preserves the prior state
 
+## REMOVED Requirements
+
+### Requirement: A Maestro flow proves the Settings screen is reachable and renders
+**Reason**: The repository now permits exactly three durable top-level Maestro journeys, and detailed settings variants are assigned to focused host tests plus owner-led native acceptance rather than an additional smoke flow.
+
+**Migration**: Keep route/deep-link wiring under automated route tests; cover native form/list/dialog rendering, back behavior, large text, and accessibility in the owner device checklist defined by this change.

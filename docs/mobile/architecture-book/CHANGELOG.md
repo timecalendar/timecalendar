@@ -9,6 +9,15 @@
 - Backend environment reset aborts current work, cancels retries, clears synchronization metadata,
   and makes prior-runtime completions inert.
 
+## 2026-09-21 — Platform-native settings, theme, and language
+
+- Moved the Settings hub and About consumers onto one theme-aware SwiftUI Form or Material list
+  behind the chrome boundary, preserving destinations, summary, badge, weekend, and environment state.
+- Added inline iOS theme/language choices, cancellable Android radio dialogs, and a Router-owned iOS
+  language page without introducing a second navigation or scroll owner.
+- Added one root `useLocales()` synchronizer for system language mode; explicit choices remain
+  authoritative and duplicate supported-locale events are inert.
+
 ## 2026-09-20 — Calendar timeline visual hierarchy QA
 
 - Refined date headers with localized narrow weekday glyphs, larger numbers, dark secondary date
