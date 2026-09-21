@@ -42,8 +42,8 @@
 
 ## 7. Local green, scope proof, and handoff evidence
 
-- [ ] 7.1 Run edited pure, chrome, notification UI/data, route-structure, localization, and runtime integration suites directly; record exact commands, results, and tested commit in the implementation handoff.
-- [ ] 7.2 Run the complete mobile gate from `mobile/`: `npx tsc --noEmit`, `npm run lint`, and `npm test -- --coverage`; confirm notification logic meets the 90% logic threshold and the project retains the 70% global floor.
-- [ ] 7.3 Run applicable device-free checks from `.github/workflows/ci-mobile.yml`, including generated-client drift and the existing harness/workflow contract tests, without adding or editing CI workflow files.
-- [ ] 7.4 Verify `git diff -- openapi/openapi.json mobile/src/api/generated server mobile/app.config.ts mobile/eas.json mobile/firebase server/src/migrations terraform k8s .github/workflows app` shows no sensitive or out-of-scope change; separately confirm the DTO enum/range and server five-minute/hourly/19:00 Europe/Paris schedules are unchanged.
+- [x] 7.1 Run edited pure, chrome, notification UI/data, route-structure, localization, and runtime integration suites directly; record exact commands, results, and tested commit in the implementation handoff.
+- [x] 7.2 Run the complete mobile gate from `mobile/`: `npx tsc --noEmit`, `npm run lint`, and `npm test -- --coverage`; confirm notification logic meets the 90% logic threshold and the project retains the 70% global floor.
+- [x] 7.3 Run applicable device-free checks from `.github/workflows/ci-mobile.yml`, including generated-client drift and the existing harness/workflow contract tests, without adding or editing CI workflow files.
+- [x] 7.4 Verify `git diff -- openapi/openapi.json mobile/src/api/generated server mobile/app.config.ts mobile/eas.json mobile/firebase server/src/migrations terraform k8s .github/workflows app` shows no sensitive or out-of-scope change; separately confirm the DTO enum/range and server five-minute/hourly/19:00 Europe/Paris schedules are unchanged.
 - [x] 7.5 Record the owner-led release acceptance surfaces—iOS grouped lists/form sheet/swipe, Android rows/radio and numeric dialogs/Back, keyboard confirmation reachability, phone/tablet, FR/EN, themes and app/device mismatch, large text, accessible selected/errors, VoiceOver/TalkBack—without claiming those checks from mocks or making them a repository merge gate.
