@@ -1,4 +1,7 @@
-import type { NotificationSubscriptionCreate } from "@/api/generated/timeCalendar.schemas"
+import type {
+  NotificationSubscriptionCreate,
+  NotificationSubscriptionCreateLocale,
+} from "@/api/generated/timeCalendar.schemas"
 
 import type { NotificationIntentVersion } from "./intent"
 import type { NotificationSubscriptionTransport } from "./transport"
@@ -52,7 +55,7 @@ export interface NotificationSyncRuntime {
   setActive: (active: boolean) => void
   updateToken: (token: string | null) => void
   updateCalendars: (snapshot: NotificationCalendarsSnapshot) => void
-  updateLocale: (locale: string) => void
+  updateLocale: (locale: NotificationSubscriptionCreateLocale) => void
   updateTimezone: (timezone: string) => void
   dispose: () => void
   resetForEnvironment: () => void
@@ -88,7 +91,7 @@ export function createNotificationSyncRuntime(
     ready: false,
     revision: "pending",
   }
-  let locale = "fr"
+  let locale: NotificationSubscriptionCreateLocale = "fr"
   let timezone = "Europe/Paris"
 
   const publish = (next: NotificationSyncStatus): void => {
@@ -119,6 +122,7 @@ export function createNotificationSyncRuntime(
   const scheduleRetry = (): void => {
     if (!live || !active || retryIndex >= RETRY_DELAYS.length) return
     const delay = RETRY_DELAYS[retryIndex]
+    if (delay === undefined) return
     retryIndex += 1
     timer = setTimer(() => {
       timer = undefined

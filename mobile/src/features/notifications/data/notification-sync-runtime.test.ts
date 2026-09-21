@@ -220,7 +220,7 @@ describe("notification sync runtime", () => {
     expect(h.transport).toHaveBeenCalledTimes(3)
   })
 
-  it("dispose and reset abort old work and suppress every late side effect", async () => {
+  it("reset aborts old work and its completion cannot acknowledge target work", async () => {
     const request = deferred<void>()
     const h = harness()
     h.transport.mockImplementationOnce(() => request.promise)
@@ -231,10 +231,31 @@ describe("notification sync runtime", () => {
     h.runtime.resetForEnvironment()
     expect(signal?.aborted).toBe(true)
     expect(h.resetIntent).toHaveBeenCalledTimes(1)
+    h.ready()
+    h.runtime.updateToken("target-token")
+    h.runtime.start()
     request.reject(new Error("late payload"))
     await flush()
     expect(h.recordError).not.toHaveBeenCalled()
     expect(h.runtime.getSnapshot()).toEqual({ state: "acknowledged" })
+    expect(h.transport).toHaveBeenCalledTimes(2)
+    expect(h.transport.mock.calls[1]?.[0].fcmToken).toBe("target-token")
+  })
+
+  it("dispose aborts transport and makes its completion inert", async () => {
+    const request = deferred<void>()
+    const h = harness()
+    h.transport.mockImplementationOnce(() => request.promise)
+    h.ready()
+    h.runtime.start()
+    await flush()
+    const signal = h.transport.mock.calls[0]?.[1]
+    h.runtime.dispose()
+    expect(signal?.aborted).toBe(true)
+    request.reject(new Error("late failure"))
+    await flush()
+    expect(h.recordError).not.toHaveBeenCalled()
+    expect(h.isDirty()).toBe(true)
   })
 
   it("recreated runtime replays durable intent from current canonical inputs", async () => {

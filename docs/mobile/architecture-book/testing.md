@@ -20,6 +20,12 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   mock `customFetchResponse` and drive the real generated plain operation. Only
   `src/api/mutator.test.ts` mocks `globalThis.fetch`; it owns status/header/body parsing, byte
   ceiling, timeout/cancellation, and payload-free transport diagnostics.
+- Notification synchronization controller tests use controlled promises to hold generation A while
+  generation B invalidates it, then settle success and failure in both current and stale runtime
+  epochs. Fake timers prove the finite active retry sequence. Restart tests keep only a Map-backed
+  storage disk across `jest.resetModules()` and recreate the preferences/runtime modules, proving
+  dirty replay is rebuilt from canonical inputs rather than a persisted token or DTO. The generated
+  plain PUT is exercised by mocking `customFetch`, never the network.
 - **Mock the `@/db` seam via the shared `src/test-support/fake-db.ts` (`createFakeDb`).** Repository + restart tests `jest.mock("@/db", () => mockFake.module)` against one stateful, spy-instrumented Map-backed fake instead of hand-rolling the query-builder per file — its `spies` serve the query-shape assertions, its per-table stores survive `jest.resetModules()` for the on-disk-survives-a-restart proof, and `seed()`/`reset()` drive read rows and `beforeEach`. Consumers MUST name the instance `mock`-prefixed (`const mockFake = …`) so `babel-plugin-jest-hoist` lets the hoisted factory close over it.
 - **Checklist-progress tests prove both ownership and renderer identity.** The feature
   data suite asserts one projected UID-set live read, imported-row semantics, and

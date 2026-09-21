@@ -1,5 +1,14 @@
 # Architecture Book changelog
 
+## 2026-09-21 — Durable notification preference synchronization
+
+- One app-lifetime notification runtime now owns token listening, current-snapshot subscription
+  PUTs, serialized coalescing, bounded active retries, and route-independent save status.
+- Backend-bound dirty/generation metadata survives restart without persisting tokens, calendar IDs,
+  DTOs, errors, timers, or queued payloads; generation and runtime identity guard acknowledgment.
+- Backend environment reset aborts current work, cancels retries, clears synchronization metadata,
+  and makes prior-runtime completions inert.
+
 ## 2026-09-20 — Calendar timeline visual hierarchy QA
 
 - Refined date headers with localized narrow weekday glyphs, larger numbers, dark secondary date

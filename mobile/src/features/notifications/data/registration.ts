@@ -6,6 +6,7 @@ import { useDisplayZone } from "@/features/settings/prefs"
 import { onFcmTokenRefresh, requestNotificationPermission } from "@/firebase"
 import i18n from "@/i18n"
 
+import { getEffectiveLocale } from "./localization"
 import { notificationSyncRuntime } from "./runtime-instance"
 
 export function useNotificationSyncRuntime(): void {
@@ -22,14 +23,14 @@ export function useNotificationSyncRuntime(): void {
 
   useEffect(() => {
     let mounted = true
-    notificationSyncRuntime.updateLocale(i18n.language)
+    notificationSyncRuntime.updateLocale(getEffectiveLocale())
     notificationSyncRuntime.setActive(AppState.currentState === "active")
 
     const unsubscribeToken = onFcmTokenRefresh((token) => {
       notificationSyncRuntime.updateToken(token)
     })
-    const onLanguageChanged = (language: string) => {
-      notificationSyncRuntime.updateLocale(language)
+    const onLanguageChanged = () => {
+      notificationSyncRuntime.updateLocale(getEffectiveLocale())
     }
     i18n.on("languageChanged", onLanguageChanged)
     const appStateSubscription = AppState.addEventListener(
@@ -40,9 +41,11 @@ export function useNotificationSyncRuntime(): void {
       },
     )
 
-    void requestNotificationPermission().finally(() => {
-      if (mounted) notificationSyncRuntime.start()
-    })
+    void requestNotificationPermission()
+      .then(() => {
+        if (mounted) notificationSyncRuntime.start()
+      })
+      .catch(() => {})
 
     return () => {
       mounted = false

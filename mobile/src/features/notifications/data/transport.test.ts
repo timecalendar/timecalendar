@@ -1,3 +1,4 @@
+import type { NotificationSubscriptionCreate } from "@/api/generated/timeCalendar.schemas"
 import { customFetch } from "@/api/mutator"
 
 import { putNotificationSubscription } from "./transport"
@@ -15,7 +16,7 @@ it("uses the generated PUT contract and forwards caller cancellation", async () 
     fcmToken: "current-token",
     locale: "fr",
     timezone: "Europe/Paris",
-  }
+  } satisfies NotificationSubscriptionCreate
 
   await putNotificationSubscription(body, controller.signal)
 

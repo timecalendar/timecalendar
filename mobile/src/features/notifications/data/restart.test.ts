@@ -16,6 +16,7 @@ const loadPrefs = (): Prefs =>
 // The "disk": a Map<key, value> that persists across module resets.
 const mockDisk = new Map<string, unknown>()
 let mockInterruptPreferenceWrite = false
+let mockWriteOrder: string[] = []
 
 const mockStorageKeys = {
   notificationSyncDirty: "notifications.sync.dirty",
@@ -30,16 +31,19 @@ jest.mock("@/storage", () => ({
       throw new Error("interrupted preference write")
     }
     mockDisk.set(key, value)
+    mockWriteOrder.push(key)
   },
   getNumber: (key: string): number | undefined =>
     mockDisk.get(key) as number | undefined,
   setNumber: (key: string, value: number): void => {
     mockDisk.set(key, value)
+    mockWriteOrder.push(key)
   },
   getBoolean: (key: string): boolean | undefined =>
     mockDisk.get(key) as boolean | undefined,
   setBoolean: (key: string, value: boolean): void => {
     mockDisk.set(key, value)
+    mockWriteOrder.push(key)
   },
   remove: (key: string): void => {
     mockDisk.delete(key)
@@ -50,6 +54,7 @@ jest.mock("@/storage", () => ({
 beforeEach(() => {
   mockDisk.clear()
   mockInterruptPreferenceWrite = false
+  mockWriteOrder = []
 })
 
 describe("notification prefs restart durability", () => {
@@ -80,6 +85,16 @@ describe("notification prefs restart durability", () => {
     mockInterruptPreferenceWrite = false
     jest.resetModules()
     expect(loadPrefs().getFrequency()).toBe("immediately")
+  })
+
+  it("writes generation and dirty state before each canonical preference", () => {
+    const prefs = loadPrefs()
+    prefs.setIsActive(false)
+    expect(mockWriteOrder).toEqual([
+      "notifications.sync.generation",
+      "notifications.sync.dirty",
+      "notifications.isActive",
+    ])
   })
 
   it("the persisted nbDaysAhead is the clamped value across the restart", () => {
