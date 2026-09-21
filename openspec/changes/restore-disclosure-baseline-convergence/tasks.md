@@ -42,28 +42,28 @@
 
 ## 4. Prove repository and motivating-revision behavior
 
-- [ ] 4.1 Run `node --test ci/disclosure-scan.test.mjs` and record the exact passing test count at
+- [x] 4.1 Run `node --test ci/disclosure-scan.test.mjs` and record the exact passing test count at
   the implementation commit.
-- [ ] 4.2 Run `node ci/disclosure-scan.mjs --check-baseline`, then generate a convergence candidate
+- [x] 4.2 Run `node ci/disclosure-scan.mjs --check-baseline`, then generate a convergence candidate
   from current `main` into run-owned scratch space and use a byte comparison to prove it is
   identical to `ci/disclosure-baseline.json`.
-- [ ] 4.3 Against immutable revision `f7a3d35624515e5e3baa3880f7a9e28b3e75bb11` in an isolated
+- [x] 4.3 Against immutable revision `f7a3d35624515e5e3baa3880f7a9e28b3e75bb11` in an isolated
   read-only checkout, generate a convergence candidate with the implemented scanner. Prove by
   structured JSON comparison that the only baseline difference is removal of
   `mobile/src/features/about/ui/about-screen.test.tsx` / `derived-identity` at 6→0, and prove
   `--check-baseline --baseline <candidate>` passes. Report only the path, safe id, and counts.
-- [ ] 4.4 Run the ordinary disclosure scan against the branch merge base and confirm the added-line,
+- [x] 4.4 Run the ordinary disclosure scan against the branch merge base and confirm the added-line,
   path, rename, commit-metadata, and whole-file verdict remains green without changing
   `ci/disclosure-baseline.json` or `.github/workflows/`.
-- [ ] 4.5 Inspect the final diff and status: only the OpenSpec change, scanner, focused tests, and
+- [x] 4.5 Inspect the final diff and status: only the OpenSpec change, scanner, focused tests, and
   repository environment documentation may change. Confirm no detector, allowlist, matched value,
   product file, external tooling, or enumerated sensitive product/deploy surface entered scope.
 
 ## 5. Prepare the review handoff
 
-- [ ] 5.1 Update the Architecture Book disposition, local-green commands, exact-revision proof,
+- [x] 5.1 Update the Architecture Book disposition, local-green commands, exact-revision proof,
   unchanged sensitive-surface assessment, and any skipped path-gated jobs in the PR body without
   publishing matched text.
-- [ ] 5.2 Run the required contributor disclosure preflight over the complete branch and exact PR
+- [x] 5.2 Run the required contributor disclosure preflight over the complete branch and exact PR
   title/body before review handoff; stop on every finding and report only safe ids, paths, and
   occurrence counts.
