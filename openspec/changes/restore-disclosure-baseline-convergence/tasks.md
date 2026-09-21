@@ -1,41 +1,41 @@
 ## 1. Specify the convergence seam with focused tests
 
-- [ ] 1.1 Add table-driven tests for the pure CI-lane reconciliation helper covering equal and
+- [x] 1.1 Add table-driven tests for the pure CI-lane reconciliation helper covering equal and
   decreased counts, zero/removal, measured increases, fresh-only keys, and deterministic
   `(path, id)` ordering; verify every emitted count is at most its committed count and every emitted
   key existed in the committed lane.
-- [ ] 1.2 Add coverage proving convergence carries the preflight `entries` array through unchanged
+- [x] 1.2 Add coverage proving convergence carries the preflight `entries` array through unchanged
   and preserves committed `configured-pattern` keys when the configured detector input is absent;
   verify canonical formatting and its single trailing newline are deterministic.
-- [ ] 1.3 Add a black-box CLI test that builds a synthetic stale baseline, proves
+- [x] 1.3 Add a black-box CLI test that builds a synthetic stale baseline, proves
   `--check-baseline` fails before convergence, captures `--converge-baseline` output, and proves the
   check passes with that candidate supplied through `--baseline`.
-- [ ] 1.4 Extend the enforcement regression cases so a measured increase remains over its retained
+- [x] 1.4 Extend the enforcement regression cases so a measured increase remains over its retained
   pin and a newly added occurrence still hard-fails through the baseline-free layer after a
   convergence candidate is generated.
-- [ ] 1.5 Strengthen the workflow contract test to prove CI still runs
+- [x] 1.5 Strengthen the workflow contract test to prove CI still runs
   `--check-baseline` and the ordinary branch scan, never the maintenance-only convergence mode;
   make no `.github/workflows/` edit.
 
 ## 2. Implement reduction-only generation
 
-- [ ] 2.1 Add and export a small reconciliation helper in `ci/disclosure-scan.mjs` that iterates
+- [x] 2.1 Add and export a small reconciliation helper in `ci/disclosure-scan.mjs` that iterates
   committed `ciEntries` only, lowers reproducibly measured counts, drops reproducibly measured zero
   counts, retains lower committed counts on increases, preserves unmeasurable configured-source
   pins, and returns canonical ordering; run the focused helper tests from section 1.
-- [ ] 2.2 Add `--converge-baseline` to CLI parsing as a baseline operation mutually exclusive with
+- [x] 2.2 Add `--converge-baseline` to CLI parsing as a baseline operation mutually exclusive with
   `--generate-baseline` and `--check-baseline`; verify invalid operation combinations fail closed
   without writing candidate output.
-- [ ] 2.3 Wire convergence through the existing baseline parser, CI census, and canonical formatter,
+- [x] 2.3 Wire convergence through the existing baseline parser, CI census, and canonical formatter,
   preserving the complete version-1 document and `entries` lane; run the black-box tests from
   section 1 and inspect output to confirm it contains only paths, safe ids, and counts.
 
 ## 3. Document the maintenance boundary
 
-- [ ] 3.1 Update `docs/agent-dev-environment.md` beside the full regeneration recipe with the
+- [x] 3.1 Update `docs/agent-dev-environment.md` beside the full regeneration recipe with the
   reduction-only command, when to use each mode, the generated-candidate review flow, and the rule
   that new or increased findings remain unpinned.
-- [ ] 3.2 Re-read `docs/mobile/architecture-book/architecture.md` and `testing.md` after
+- [x] 3.2 Re-read `docs/mobile/architecture-book/architecture.md` and `testing.md` after
   implementation. Record in the PR handoff that no Architecture Book file changes because the new
   maintenance command does not alter the mobile architecture or test contract; if that conclusion
   no longer holds, update the topical page and `CHANGELOG.md` in the same commit.
