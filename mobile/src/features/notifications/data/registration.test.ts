@@ -114,3 +114,24 @@ it("owns one lifecycle runtime and feeds every current-input trigger", async () 
   expect(removeAppState).toHaveBeenCalledTimes(1)
   expect(runtime.dispose).toHaveBeenCalledTimes(1)
 })
+
+it("does not start after permission failure", async () => {
+  mockPermission.mockRejectedValueOnce(new Error("permission unavailable"))
+  const view = await renderHook(() => useNotificationSyncRuntime())
+  await act(async () => {})
+  expect(runtime.start).not.toHaveBeenCalled()
+  await view.unmount()
+})
+
+it("does not start when permission settles after owner disposal", async () => {
+  let resolvePermission!: () => void
+  mockPermission.mockReturnValueOnce(
+    new Promise<void>((resolve) => {
+      resolvePermission = resolve
+    }),
+  )
+  const view = await renderHook(() => useNotificationSyncRuntime())
+  await view.unmount()
+  await act(async () => resolvePermission())
+  expect(runtime.start).not.toHaveBeenCalled()
+})

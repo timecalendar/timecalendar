@@ -75,6 +75,10 @@ function harness(overrides: Partial<NotificationSyncRuntimeDependencies> = {}) {
     resetIntent,
     isDirty: () => dirty,
     generation: () => generation,
+    setMetadata: (nextGeneration: number, nextDirty: boolean) => {
+      generation = nextGeneration
+      dirty = nextDirty
+    },
   }
 }
 
@@ -116,6 +120,39 @@ describe("notification sync runtime", () => {
       reason: "registration",
     })
     expect(noToken.transport).not.toHaveBeenCalled()
+  })
+
+  it("records a sanitized current token-resolution failure", async () => {
+    const h = harness({
+      getToken: async () => {
+        throw new Error("secret-token calendar-id request-body")
+      },
+    })
+    h.ready()
+    h.runtime.start()
+    await flush()
+    expect(h.runtime.getSnapshot()).toEqual({ state: "error" })
+    expect(h.recordError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: "Notification subscription synchronization failed",
+      }),
+      "notifications/subscription",
+    )
+    expect(JSON.stringify(h.recordError.mock.calls)).not.toContain(
+      "secret-token",
+    )
+    h.runtime.dispose()
+  })
+
+  it("publishes acknowledged when a requested drain finds no dirty work", async () => {
+    const h = harness({
+      markDirty: () => ({ generation: 0, rolledOver: false }),
+    })
+    h.ready()
+    h.runtime.start()
+    await flush()
+    expect(h.runtime.getSnapshot()).toEqual({ state: "acknowledged" })
+    expect(h.transport).not.toHaveBeenCalled()
   })
 
   it("sends loaded-empty calendars as an empty array", async () => {
@@ -184,6 +221,42 @@ describe("notification sync runtime", () => {
     expect(h.runtime.getSnapshot()).toEqual({ state: "acknowledged" })
   })
 
+  it("does not acknowledge when durable validation rejects the candidate", async () => {
+    const h = harness({ acknowledge: () => false })
+    h.ready()
+    h.runtime.start()
+    await flush()
+    expect(h.isDirty()).toBe(true)
+    expect(h.runtime.getSnapshot()).toEqual({ state: "pending" })
+  })
+
+  it("advances epoch and aborts active work on generation rollover", async () => {
+    const request = deferred<void>()
+    let intentListener:
+      | ((version: { generation: number; rolledOver: boolean }) => void)
+      | undefined
+    const unsubscribe = jest.fn()
+    const h = harness({
+      subscribeIntent: (listener) => {
+        intentListener = listener
+        return unsubscribe
+      },
+    })
+    h.transport.mockImplementationOnce(() => request.promise)
+    h.ready()
+    h.runtime.start()
+    await flush()
+    const signal = h.transport.mock.calls[0]?.[1]
+    h.setMetadata(0, true)
+    intentListener?.({ generation: 0, rolledOver: true })
+    expect(signal?.aborted).toBe(true)
+    request.resolve(undefined)
+    await flush()
+    expect(h.transport).toHaveBeenCalledTimes(2)
+    h.runtime.dispose()
+    expect(unsubscribe).toHaveBeenCalledTimes(1)
+  })
+
   it("uses three active retry delays and then stops with dirty error", async () => {
     jest.useFakeTimers()
     const h = harness()
@@ -218,6 +291,45 @@ describe("notification sync runtime", () => {
     h.runtime.retry()
     await flush()
     expect(h.transport).toHaveBeenCalledTimes(3)
+  })
+
+  it("does not schedule a retry when a current request fails in background", async () => {
+    jest.useFakeTimers()
+    const request = deferred<void>()
+    const h = harness()
+    h.transport.mockImplementationOnce(() => request.promise)
+    h.ready()
+    h.runtime.start()
+    await flush()
+    h.runtime.setActive(false)
+    request.reject(new Error("network"))
+    await flush()
+    expect(h.runtime.getSnapshot()).toEqual({ state: "error" })
+    expect(jest.getTimerCount()).toBe(0)
+  })
+
+  it("makes duplicate and unchanged lifecycle/input commands inert", async () => {
+    const h = harness()
+    const listener = jest.fn()
+    const unsubscribe = h.runtime.subscribe(listener)
+    h.runtime.invalidate()
+    h.runtime.updateToken(null)
+    h.runtime.updateToken(null)
+    h.runtime.updateLocale("fr")
+    h.runtime.updateTimezone("Europe/Paris")
+    h.runtime.updateCalendars({
+      calendars: [],
+      ready: false,
+      revision: "pending",
+    })
+    expect(listener).not.toHaveBeenCalled()
+
+    h.ready()
+    h.runtime.start()
+    h.runtime.start()
+    await flush()
+    expect(h.transport).not.toHaveBeenCalled()
+    unsubscribe()
   })
 
   it("reset aborts old work and its completion cannot acknowledge target work", async () => {

@@ -3,6 +3,8 @@
 // in-memory Jest mock (mirroring storage.test.ts). The restart-simulation
 // (read-back across a process restart) lives in restart.test.ts with a stateful
 // Map-backed @/storage fake that survives resetModules().
+import { act, renderHook } from "@testing-library/react-native"
+
 import { remove } from "@/storage"
 
 import {
@@ -12,6 +14,9 @@ import {
   setFrequency,
   setIsActive,
   setNbDaysAhead,
+  useFrequency,
+  useIsActive,
+  useNbDaysAhead,
 } from "./prefs"
 import {
   NOTIFICATION_KEYS,
@@ -86,5 +91,30 @@ describe("notification prefs store (write-then-read-back)", () => {
     expect(getIsActive()).toBe(false)
     setIsActive(true)
     expect(getIsActive()).toBe(true)
+  })
+})
+
+describe("reactive notification preference reads", () => {
+  it("total-decodes and reacts to all three canonical values", async () => {
+    const view = await renderHook(() => ({
+      frequency: useFrequency(),
+      nbDaysAhead: useNbDaysAhead(),
+      isActive: useIsActive(),
+    }))
+    expect(view.result.current).toEqual({
+      frequency: "immediately",
+      nbDaysAhead: 7,
+      isActive: true,
+    })
+    await act(() => {
+      setFrequency("hourly")
+      setNbDaysAhead(9)
+      setIsActive(false)
+    })
+    expect(view.result.current).toEqual({
+      frequency: "hourly",
+      nbDaysAhead: 9,
+      isActive: false,
+    })
   })
 })

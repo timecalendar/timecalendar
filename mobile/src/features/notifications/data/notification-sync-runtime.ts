@@ -121,8 +121,7 @@ export function createNotificationSyncRuntime(
 
   const scheduleRetry = (): void => {
     if (!live || !active || retryIndex >= RETRY_DELAYS.length) return
-    const delay = RETRY_DELAYS[retryIndex]
-    if (delay === undefined) return
+    const delay = RETRY_DELAYS[retryIndex]!
     retryIndex += 1
     timer = setTimer(() => {
       timer = undefined
@@ -180,11 +179,6 @@ export function createNotificationSyncRuntime(
       timezone,
     }
 
-    if (!identitiesMatch(generation, capturedEpoch)) {
-      drainRequested = dependencies.isDirty()
-      return
-    }
-
     const requestController = new AbortController()
     controller = requestController
     try {
@@ -214,7 +208,6 @@ export function createNotificationSyncRuntime(
   }
 
   async function drain(): Promise<void> {
-    if (draining) return
     draining = true
     try {
       while (live && active && drainRequested && timer === undefined) {
@@ -223,9 +216,6 @@ export function createNotificationSyncRuntime(
       }
     } finally {
       draining = false
-      if (live && active && drainRequested && timer === undefined) {
-        void drain()
-      }
     }
   }
 
