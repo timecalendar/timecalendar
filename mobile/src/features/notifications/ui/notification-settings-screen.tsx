@@ -18,6 +18,7 @@ import {
 } from "@/features/notifications/data"
 
 import {
+  type CustomDaysValidationError,
   NOTIFICATION_DAY_CHOICES,
   NOTIFICATION_FREQUENCIES,
   type NotificationDaysChoice,
@@ -40,9 +41,8 @@ export default function NotificationSettingsScreen() {
   const [frequencyOpen, setFrequencyOpen] = useState(false)
   const [daysOpen, setDaysOpen] = useState(false)
   const [customOpen, setCustomOpen] = useState(false)
-  const [customValidation, setCustomValidation] = useState<
-    "empty" | "invalid" | "range" | null
-  >(null)
+  const [customValidation, setCustomValidation] =
+    useState<CustomDaysValidationError | null>(null)
   const selectedDays = selectedDaysChoice(preferences.nbDaysAhead)
   const dayValue = t("notifications.days.value", {
     count: preferences.nbDaysAhead,

@@ -5,7 +5,10 @@ import { useTranslation } from "react-i18next"
 import { NativeSettingsNumericEditor } from "@/components/chrome"
 import { useNotificationPreferences } from "@/features/notifications/data"
 
-import { validateCustomDays } from "./notification-choices"
+import {
+  type CustomDaysValidationError,
+  validateCustomDays,
+} from "./notification-choices"
 
 const IDS = {
   container: "notifications-custom-sheet",
@@ -18,9 +21,8 @@ const IDS = {
 export function NotificationDaysCustomScreen() {
   const { t } = useTranslation()
   const preferences = useNotificationPreferences()
-  const [validation, setValidation] = useState<
-    "empty" | "invalid" | "range" | null
-  >(null)
+  const [validation, setValidation] =
+    useState<CustomDaysValidationError | null>(null)
   return (
     <>
       <Stack.Screen options={{ title: t("notifications.custom.title") }} />

@@ -40,6 +40,11 @@ export type CustomDaysValidation =
   | { state: "invalid" }
   | { state: "range" }
 
+export type CustomDaysValidationError = Exclude<
+  CustomDaysValidation["state"],
+  "valid"
+>
+
 export function validateCustomDays(input: string): CustomDaysValidation {
   const value = input.trim()
   if (value.length === 0) return { state: "empty" }
