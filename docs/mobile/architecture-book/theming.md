@@ -175,6 +175,10 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
   adapts SwiftUI and Material 3 text fields, progress, native buttons, observable buffers, keyboard
   insets, selectors, and explicit dismissal. Features keep validation, data, copy, and lifecycle;
   ordinary controls remain thin re-exports. Native controls follow system appearance and typography.
+- **`chrome/native-settings.tsx`** — the bounded settings-composition exception in ADR
+  [060](./decisions/060-platform-native-settings-composition.md). SwiftUI Form/Section and Material
+  LazyColumn/ListItem remain private; the stable host, row, switch, selection, and radio-dialog
+  contracts receive the app-resolved light/dark scheme while retaining platform geometry and fonts.
 - **`chrome/index.ts`** — the barrel. Exports `NativeTabs`, `GlassSurface`, `Host`, `Picker`, `DateTimePicker`, `MenuView`, and `MenuComponentRef`.
 
 ## Lint boundary — the R-1 enforcement
@@ -192,6 +196,8 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
 ## What CI proves vs. what's manual
 
 - `src/theme/theme.test.tsx` (gated by `test-mobile`: tsc + lint + Jest, R-1) asserts: (a) `useTheme` resolves a token to its expected **light** and **dark** values (mocking `@/hooks/use-color-scheme`), plus the brand **`primary`** per scheme; (b) `GlassSurface` renders its children in Jest, where `isLiquidGlassAvailable()` is `false`, exercising the **fallback** path (a real `View`, not a throw); (c) **`buildNavTheme`** maps `colors.background` / `colors.primary` to the scheme-appropriate `@/theme` tokens for both schemes — the nav↔token contract.
+- `src/components/chrome/native-settings.test.tsx` asserts that the same resolved scheme reaches the
+  SwiftUI and Material hosts and that each platform composition contains one native scroll owner.
 - CI **cannot** prove and is therefore **manual** (DoD / splash visual pass): that Liquid Glass renders on iOS 26+, that the fallback looks right on iOS 16.4–25 / Android, and that the contrast pairs read correctly on-device.
 
 ## Deferred (live debt — not built)

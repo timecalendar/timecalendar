@@ -51,6 +51,7 @@ decision changes; use Git for its history.
 | [056](./056-compose-native-dialog-behind-chrome.md)                   | Compose divergent native dialogs behind the chrome seam                                           |
 | [057](./057-three-journey-native-smoke-budget.md)                     | Limit daily native smoke to three durable business journeys                                       |
 | [058](./058-activity-virtual-fragment-pagination.md)                  | Page Activity as stable byte-bounded virtual fragments                                            |
+| [060](./060-platform-native-settings-composition.md)                  | Compose platform-native settings behind the chrome boundary                                       |
 
 > `045` is intentionally left free: the open source-recovery PR carries an ADR
 > numbered `044` that collides with the merged one above and renumbers to `045`

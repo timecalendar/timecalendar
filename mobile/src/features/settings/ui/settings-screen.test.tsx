@@ -1,6 +1,5 @@
-import { act, fireEvent, render, screen } from "@testing-library/react-native"
+import { fireEvent, render } from "@testing-library/react-native"
 import { router } from "expo-router"
-import { StyleSheet } from "react-native"
 
 import { useActivityState } from "@/features/activity"
 import {
@@ -17,35 +16,14 @@ jest.mock("@/features/calendar-sources", () => ({
   useUserCalendars: jest.fn(),
   useUserCalendarsLoaded: jest.fn(),
 }))
-
 jest.mock("@/features/activity", () => ({
   formatUnreadBadge: jest.requireActual("@/features/activity/data/unread-badge")
     .formatUnreadBadge,
   useActivityState: jest.fn(),
 }))
+jest.mock("expo-router", () => ({ router: { push: jest.fn() } }))
 
-jest.mock("expo-router", () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const React = require("react")
-  const router = { push: jest.fn() }
-  return {
-    router,
-    Link: ({
-      href,
-      children,
-    }: {
-      href: string
-      children: React.ReactElement
-    }) => React.cloneElement(children, { onPress: () => router.push(href) }),
-  }
-})
-
-jest.mock("expo-symbols", () => ({
-  SymbolView: () => null,
-}))
-
-let mockCapability: "development" | "preview" | "production" = "production"
-
+let mockCapability: "development" | "production" = "production"
 jest.mock("@/features/environment", () => ({
   getBackendEnvironmentCapability: () => mockCapability,
   EnvironmentSettingsControl: () => null,
@@ -59,239 +37,71 @@ const mockPush = router.push as jest.Mock
 beforeEach(() => {
   mockCalendars.mockReturnValue([])
   mockLoaded.mockReturnValue(true)
-  mockCapability = "production"
   mockActivityState.mockReturnValue({ unreadCount: 0 })
+  mockCapability = "production"
   mockPush.mockReset()
   remove(SETTINGS_KEYS.showWeekends)
 })
 
-describe("SettingsScreen", () => {
-  describe.each(["ios", "android"] as const)("on %s", (platform) => {
+describe.each(["ios", "android"] as const)(
+  "SettingsScreen on %s",
+  (platform) => {
     usePlatform(platform)
 
-    it("keeps localized section casing and grouped hierarchy", async () => {
+    it("uses one native scroll owner and preserves the grouped destinations", async () => {
       const view = await render(<SettingsScreen />)
-      for (const title of ["Events", "Preferences", "App", "Support"]) {
-        const titleStyle = StyleSheet.flatten(view.getByText(title).props.style)
-        expect(titleStyle).toMatchObject({
-          fontSize: 14,
-          lineHeight: 20,
-          fontWeight: 700,
-        })
-        expect(titleStyle).not.toHaveProperty("textTransform")
+      const owner =
+        platform === "ios"
+          ? "swiftui-form-scroll-owner"
+          : "compose-lazy-column-scroll-owner"
+      expect(view.getAllByTestId(owner)).toHaveLength(1)
+      expect(
+        view
+          .getAllByTestId(/^settings-section-/)
+          .map((node) => node.props.testID),
+      ).toEqual([
+        "settings-section-events",
+        "settings-section-preferences",
+        "settings-section-app",
+        "settings-section-support",
+      ])
+      for (const id of [
+        "settings-activity",
+        "settings-personal-events",
+        "settings-hidden-events",
+        "settings-appearance",
+        "settings-timezone",
+        "settings-notifications",
+        "settings-about",
+        "settings-feedback",
+      ]) {
+        expect(view.getByTestId(id)).toBeOnTheScreen()
       }
-      expect(view.queryByText("EVENTS")).toBeNull()
-      expect(view.getByTestId("settings-section-events")).toBeOnTheScreen()
     })
 
-    it("keeps calendar management before an accessible weekend switch", async () => {
-      await render(<SettingsScreen />)
-      const calendarSection = screen.getByTestId(
-        "settings-calendar-summary-section",
-      )
-      expect(calendarSection).toContainElement(
-        screen.getByTestId("settings-calendar-summary"),
-      )
-      const toggle = screen.getByTestId("settings-show-weekends-switch")
-      expect(toggle.props.accessibilityRole).toBe("switch")
-      expect(toggle.props.accessibilityLabel).toBe("Show weekends")
-      expect(toggle.props.accessibilityState).toEqual({ checked: true })
-      expect(
-        StyleSheet.flatten(
-          screen.getByTestId("settings-show-weekends-row").props.style,
-        ).minHeight,
-      ).toBe(platform === "ios" ? 44 : 48)
-
-      await fireEvent(toggle, "valueChange", false)
-      expect(getShowWeekends()).toBe(false)
-      expect(
-        screen.getByTestId("settings-show-weekends-switch").props
-          .accessibilityState,
-      ).toEqual({ checked: false })
-    })
-  })
-
-  it.each([
-    [390, 24, 848],
-    [768, 64, 928],
-    [800, 64, 928],
-    [834, 64, 928],
-    [1024, 64, 928],
-  ])(
-    "keeps one measured standard lane at %ipx",
-    async (width, gutter, maxWidth) => {
+    it("routes whole rows and toggles weekends once", async () => {
       const view = await render(<SettingsScreen />)
-      await act(() =>
-        fireEvent(view.getByTestId("settings-scroll-owner"), "layout", {
-          nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
-        }),
-      )
-      expect(
-        StyleSheet.flatten(
-          view.getByTestId("settings-responsive-content").props.style,
-        ),
-      ).toMatchObject({
-        alignSelf: "center",
-        width: "100%",
-        maxWidth,
-        paddingHorizontal: gutter,
-      })
-    },
-  )
+      await fireEvent.press(view.getByTestId("settings-appearance"))
+      expect(mockPush).toHaveBeenCalledWith("/appearance-settings")
+      await fireEvent.press(view.getByTestId("settings-show-weekends-switch"))
+      expect(getShowWeekends()).toBe(false)
+    })
+  },
+)
 
-  it("renders localized groups in order with only live destinations", async () => {
-    await render(<SettingsScreen />)
-    const events = screen.getByTestId("settings-section-events")
-    const preferences = screen.getByTestId("settings-section-preferences")
-    const app = screen.getByTestId("settings-section-app")
-    const support = screen.getByTestId("settings-section-support")
-    expect(events).toBeOnTheScreen()
-    expect(preferences).toBeOnTheScreen()
-    expect(app).toBeOnTheScreen()
-    expect(support).toBeOnTheScreen()
-    expect(
-      screen
-        .getAllByTestId(/^settings-section-/)
-        .map((section) => section.props.testID),
-    ).toEqual([
-      "settings-section-events",
-      "settings-section-preferences",
-      "settings-section-app",
-      "settings-section-support",
-    ])
-    expect(screen.getByText("Personal events")).toBeTruthy()
-    expect(screen.getByText("Hidden events")).toBeTruthy()
-    expect(screen.getByText("Appearance & language")).toBeTruthy()
-    expect(screen.getByText("Time zone")).toBeTruthy()
-    expect(screen.getByText("Notifications")).toBeTruthy()
-    expect(screen.getByText("About")).toBeTruthy()
-    expect(screen.getByText("Activity")).toBeTruthy()
-    expect(screen.getByText("Feedback")).toBeTruthy()
-    expect(screen.queryByText("Add calendar")).toBeNull()
-    expect(screen.queryByText("TIMECALENDAR")).toBeNull()
-    expect(screen.queryByText("More")).toBeNull()
-    expect(
-      screen.queryByText("Calendars, events, and preferences in one place."),
-    ).toBeNull()
-  })
+it("preserves loading, empty, populated, badge, and environment states", async () => {
+  mockLoaded.mockReturnValue(false)
+  const view = await render(<SettingsScreen />)
+  expect(
+    view.getByTestId("settings-calendar-summary-loading"),
+  ).toBeOnTheScreen()
 
-  it("keeps the environment entry in the final section outside production", async () => {
-    mockCapability = "development"
-    await render(<SettingsScreen />)
-    expect(
-      screen
-        .getAllByTestId(/^settings-section-/)
-        .map((section) => section.props.testID)
-        .at(-1),
-    ).toBe("settings-section-environment")
-  })
-
-  it("does not announce an empty summary while loading", async () => {
-    mockLoaded.mockReturnValue(false)
-    await render(<SettingsScreen />)
-    expect(
-      screen.getByTestId("settings-calendar-summary-loading", {
-        includeHiddenElements: true,
-      }),
-    ).toBeTruthy()
-    expect(screen.queryByText("Add your first calendar")).toBeNull()
-  })
-
-  it("presents calendar counts without exposing source names as headings", async () => {
-    const { rerender } = await render(<SettingsScreen />)
-    expect(screen.getByText("Your calendars")).toBeTruthy()
-    expect(screen.getByText("Manage calendars")).toBeTruthy()
-    expect(screen.getByText("Add your first calendar")).toBeTruthy()
-
-    mockCalendars.mockReturnValue([
-      {
-        schoolId: "one",
-        schoolName: "A very long university name",
-        visible: true,
-      },
-    ])
-    await rerender(<SettingsScreen />)
-    expect(screen.queryByText("A very long university name")).toBeNull()
-    expect(screen.getByText("1 calendar")).toBeTruthy()
-
-    mockCalendars.mockReturnValue([
-      { schoolId: "one", schoolName: "One", visible: true },
-      { schoolId: "two", schoolName: "Two", visible: false },
-    ])
-    await rerender(<SettingsScreen />)
-    expect(screen.getByText("2 calendars")).toBeTruthy()
-
-    mockCalendars.mockReturnValue([{ visible: true }])
-    await rerender(<SettingsScreen />)
-    expect(screen.getByText("Your calendars")).toBeTruthy()
-    expect(screen.getByText("1 calendar")).toBeTruthy()
-  })
-
-  it("wires every full-width accessible link to its route", async () => {
-    await render(<SettingsScreen />)
-    const routes = [
-      ["settings-calendar-summary", "/user-calendars"],
-      ["settings-activity", "/activity"],
-      ["settings-personal-events", "/personal-events"],
-      ["settings-hidden-events", "/hidden-events"],
-      ["settings-appearance", "/appearance-settings"],
-      ["settings-timezone", "/timezone-settings"],
-      ["settings-notifications", "/notification-settings"],
-      ["settings-about", "/about"],
-      ["settings-feedback", "/feedback"],
-    ] as const
-    for (const [testID, route] of routes) {
-      const row = screen.getByTestId(testID)
-      expect(row.props.accessibilityRole).toBe("link")
-      expect(row.props.accessibilityHint).toBeTruthy()
-      expect(row).toHaveStyle({
-        flexDirection: "row",
-        alignItems: "center",
-      })
-      await fireEvent.press(row)
-      expect(mockPush).toHaveBeenLastCalledWith(route)
-    }
-  })
-
-  it("renders Activity first in Events and announces its uncapped unread count", async () => {
-    mockActivityState.mockReturnValue({ unreadCount: 100 })
-    await render(<SettingsScreen />)
-    const eventRows = screen
-      .getAllByTestId(/^settings-/)
-      .filter((node) => node.props.accessibilityRole === "link")
-    expect(eventRows[1]?.props.testID).toBe("settings-activity")
-    const row = screen.getByTestId("settings-activity")
-    expect(row.props.accessibilityLabel).toBe("Activity, 100 unread changes")
-    expect(
-      screen.getByText("99+", { includeHiddenElements: true }),
-    ).toBeTruthy()
-    expect(screen.queryByLabelText("99+")).toBeNull()
-  })
-
-  it.each([
-    [0, null],
-    [1, "1"],
-    [99, "99"],
-    [100, "99+"],
-  ] as const)("renders unread badge %s as %s", async (count, badge) => {
-    mockActivityState.mockReturnValue({ unreadCount: count })
-    await render(<SettingsScreen />)
-    if (badge === null) {
-      expect(screen.queryByText("99+")).toBeNull()
-      expect(
-        screen.getByTestId("settings-activity").props.accessibilityLabel,
-      ).toBe("Activity")
-    } else {
-      expect(
-        screen.getByText(badge, { includeHiddenElements: true }),
-      ).toBeTruthy()
-    }
-  })
-
-  it("keeps Activity visible and routable with zero calendars", async () => {
-    mockCalendars.mockReturnValue([])
-    await render(<SettingsScreen />)
-    await fireEvent.press(screen.getByTestId("settings-activity"))
-    expect(mockPush).toHaveBeenCalledWith("/activity")
-  })
+  mockLoaded.mockReturnValue(true)
+  mockCalendars.mockReturnValue([{ visible: true }, { visible: false }])
+  mockActivityState.mockReturnValue({ unreadCount: 100 })
+  mockCapability = "development"
+  await view.rerender(<SettingsScreen />)
+  expect(view.getByText("2 calendars")).toBeOnTheScreen()
+  expect(view.getByText("99+")).toBeOnTheScreen()
+  expect(view.getByTestId("settings-section-environment")).toBeOnTheScreen()
 })

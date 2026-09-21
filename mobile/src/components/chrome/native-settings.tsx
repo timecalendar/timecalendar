@@ -45,11 +45,11 @@ export type NativeSettingsRowProps = {
   kind: "navigation" | "action" | "value"
   label: string
   testID: string
-  hint?: string
-  value?: string
-  badge?: string
-  href?: Href
-  onPress?: () => void
+  hint?: string | undefined
+  value?: string | undefined
+  badge?: string | undefined
+  href?: Href | undefined
+  onPress?: (() => void) | undefined
 }
 
 type NativeSettingsSectionProps = PropsWithChildren<{
@@ -129,10 +129,10 @@ export function NativeSettingsSection({
   if (Platform.OS === "ios") {
     return (
       <SwiftSection
-        title={title}
-        modifiers={
-          sectionTestID ? [accessibilityIdentifier(sectionTestID)] : undefined
-        }
+        {...(title ? { title } : {})}
+        {...(sectionTestID
+          ? { modifiers: [accessibilityIdentifier(sectionTestID)] }
+          : {})}
       >
         {children}
       </SwiftSection>
@@ -143,7 +143,7 @@ export function NativeSettingsSection({
       {title ? (
         <MaterialText
           style={{ typography: "titleSmall" }}
-          modifiers={sectionTestID ? [testID(sectionTestID)] : undefined}
+          {...(sectionTestID ? { modifiers: [testID(sectionTestID)] } : {})}
         >
           {title}
         </MaterialText>
@@ -169,8 +169,8 @@ function SwiftRowContent({
   selected,
 }: {
   label: string
-  value?: string
-  badge?: string
+  value?: string | undefined
+  badge?: string | undefined
   disclosure?: boolean
   selected?: boolean
 }) {
@@ -275,7 +275,7 @@ export function NativeSettingsSwitchRow({
         <MaterialSwitch
           value={value}
           onCheckedChange={onValueChange}
-          modifiers={switchTestID ? [testID(switchTestID)] : undefined}
+          {...(switchTestID ? { modifiers: [testID(switchTestID)] } : {})}
         />
       </ListItem.TrailingContent>
     </ListItem>

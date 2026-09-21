@@ -147,7 +147,7 @@
   "settings.theme.light": "Light",
   "settings.theme.dark": "Dark",
   "settings.language.label": "Language",
-  "settings.language.system": "System",
+  "settings.language.system": "Use device language",
   "settings.language.fr": "Français",
   "settings.language.en": "English",
   "settings.cancel": "Cancel",

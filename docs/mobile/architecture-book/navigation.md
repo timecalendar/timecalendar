@@ -17,6 +17,11 @@ Root content uses `RootPage` only for non-header safe areas, vertical rhythm, an
 It never wraps a virtualized list in another scroller. `PageIntro` may be caption-only when the
 native header is the route heading.
 
+Settings pages are the native-list exception defined by ADR
+[060](./decisions/060-platform-native-settings-composition.md): Expo Router still owns the root
+header and `/language-settings` push, while the page's SwiftUI Form or Material LazyColumn owns the
+only content scroll/insets. No nested native navigation container is allowed.
+
 The nested onboarding Stack follows the same compact defaults while its root container stays
 headerless. Its explicit inventory is `index`, `school`, `institution-name`, `programme`,
 `connect`, `export-guide/providers`, `export-guide/[pageIndex]`, `import`, `qr-scan`, `ical-url`,

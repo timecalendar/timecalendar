@@ -73,6 +73,11 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   3 primitive selection, current-buffer submission, retained draft, outside/Back policy, and
   keyboard/focus layout ownership. They do not claim rendered keyboard, rotation, Dynamic Type, or
   screen-reader behavior; those remain the linked device-evidence pass under ADR 056.
+- **Native settings chrome has a focused contract suite.** It proves SwiftUI versus Material host
+  selection, resolved-scheme propagation, one Form/LazyColumn scroll owner, closed row semantics,
+  switch single activation, checkmarked/radio selection, and dialog cancellation. Settings, About,
+  Environment, language, and locale-synchronizer suites own feature behavior. Geometry, ripple,
+  large text, and screen-reader traversal remain the owner device checklist under ADR 060.
 
 ## E2E — Maestro, real round-trip
 

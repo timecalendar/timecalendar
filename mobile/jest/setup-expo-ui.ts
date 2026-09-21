@@ -228,7 +228,11 @@ jest.mock("@expo/ui/swift-ui", () => {
   }
 
   function Host({ children, ...props }: { children?: unknown }) {
-    return React.createElement(View, props, children)
+    return React.createElement(
+      View,
+      { testID: "swiftui-host", ...props },
+      children,
+    )
   }
   function Stack({ children, ...props }: { children?: unknown }) {
     return React.createElement(View, props, children)
@@ -261,6 +265,7 @@ jest.mock("@expo/ui/swift-ui", () => {
   function Button(props: {
     testID?: string
     label?: string
+    children?: unknown
     onPress?: () => void
     modifiers?: { $type: string; value: unknown }[]
   }) {
@@ -424,7 +429,7 @@ jest.mock("@expo/ui/jetpack-compose", () => {
   }) {
     return React.createElement(
       View,
-      { ...props, testID: testID(modifiers) },
+      { ...props, testID: testID(modifiers) ?? "compose-host" },
       children,
     )
   }
