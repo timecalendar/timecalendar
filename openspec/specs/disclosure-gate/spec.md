@@ -283,4 +283,3 @@ remain subject to the existing enforcement layers.
 - **WHEN** a deliberate detector or source change requires a complete fresh census
 - **THEN** the existing full-generation mode remains separately available and convergence does not
   replace it
-
