@@ -1,14 +1,14 @@
 ## 1. Pin and generate the worldwide catalog
 
-- [ ] 1.1 From `mobile/`, install exact `@vvo/tzdb@6.198.0`, `cldr-dates-full@48.2.0`, and `cldr-localenames-full@48.2.0` development inputs through npm so `package.json` and `package-lock.json` agree; verify `npm ls @vvo/tzdb cldr-dates-full cldr-localenames-full` reports only the intended versions.
-- [ ] 1.2 Add `mobile/scripts/generate-timezone-catalog.mjs` and package scripts that extract only en/fr exemplar-city and territory labels, preserve every tzdb name/group member plus UTC as an exact record, and support deterministic write/`--check` modes; verify two writes are byte-identical and `npm run generate:timezone-catalog -- --check` passes.
-- [ ] 1.3 Commit the generated feature artifact under `mobile/src/features/settings/data/` with package-version provenance and no full CLDR runtime imports; add a generator proof covering all former curated identifiers, UTC, aliases, Lyon, London/Londres, and missing-label fallback, then run that focused Jest suite.
+- [x] 1.1 From `mobile/`, install exact `@vvo/tzdb@6.198.0`, `cldr-dates-full@48.2.0`, and `cldr-localenames-full@48.2.0` development inputs through npm so `package.json` and `package-lock.json` agree; verify `npm ls @vvo/tzdb cldr-dates-full cldr-localenames-full` reports only the intended versions.
+- [x] 1.2 Add `mobile/scripts/generate-timezone-catalog.mjs` and package scripts that extract only en/fr exemplar-city and territory labels, preserve every tzdb name/group member plus UTC as an exact record, and support deterministic write/`--check` modes; verify two writes are byte-identical and `npm run generate:timezone-catalog -- --check` passes.
+- [x] 1.3 Commit the generated feature artifact under `mobile/src/features/settings/data/` with package-version provenance and no full CLDR runtime imports; add a generator proof covering all former curated identifiers, UTC, aliases, Lyon, London/Londres, and missing-label fallback, then run that focused Jest suite.
 
 ## 2. Build the feature-owned catalog and search boundary
 
-- [ ] 2.1 Add typed catalog records, exact-ID lookup, locale label fallback, cached `Intl` runtime-support checks, and current-offset formatting in `settings/data/`; test canonical IDs, a supported alias, a mocked unsupported alias, UTC, Kathmandu, and a half-hour zone with the focused data suite.
-- [ ] 2.2 Add immutable pre-normalized FR/EN search tokens and deterministic all-token ranking across identifiers, path components, alternative names, common cities, exemplar aliases, and territory labels; test case/accent normalization plus Lyon, London/Londres, Montreal/Montréal, country, and identifier queries.
-- [ ] 2.3 Implement the useful empty-query projection (current/remembered selection pinned, deterministic localized browse order) without logging or external access; test empty, whitespace-only, multiple-token, and no-result queries and assert the returned records retain exact identifiers.
+- [x] 2.1 Add typed catalog records, exact-ID lookup, locale label fallback, cached `Intl` runtime-support checks, and current-offset formatting in `settings/data/`; test canonical IDs, a supported alias, a mocked unsupported alias, UTC, Kathmandu, and a half-hour zone with the focused data suite.
+- [x] 2.2 Add immutable pre-normalized FR/EN search tokens and deterministic all-token ranking across identifiers, path components, alternative names, common cities, exemplar aliases, and territory labels; test case/accent normalization plus Lyon, London/Londres, Montreal/Montréal, country, and identifier queries.
+- [x] 2.3 Implement the useful empty-query projection (current/remembered selection pinned, deterministic localized browse order) without logging or external access; test empty, whitespace-only, multiple-token, and no-result queries and assert the returned records retain exact identifiers.
 
 ## 3. Widen preferences and preserve manual memory
 
