@@ -179,6 +179,17 @@ export default function RootLayout() {
                 accessible back affordance + the screen's own title.
                 Deep-linkable: timecalendar-dev://notification-settings. */}
               <Stack.Screen name="notification-settings" />
+              <Stack.Screen name="notification-frequency" />
+              <Stack.Screen name="notification-days-ahead" />
+              <Stack.Screen
+                name="notification-days-custom"
+                options={{
+                  presentation:
+                    Platform.OS === "ios" ? "formSheet" : "fullScreenModal",
+                  sheetAllowedDetents: [0.5],
+                  sheetGrabberVisible: true,
+                }}
+              />
               <Stack.Screen name="feedback" />
               {/* The user-calendars management screen ("Mes calendriers") — a
                 Stack sibling of (tabs), reached from the Settings summary, where

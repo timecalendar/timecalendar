@@ -1,5 +1,20 @@
 # Architecture Book changelog
 
+## 2026-09-21 — Native notification frequency and horizon controls
+
+- Replaced the notification picker and stepper with Router-pushed SwiftUI choice pages and
+  Material radio dialogs while retaining the existing preference keys and shared save runtime.
+- Added a settings-specific buffered numeric editor: an iOS Router form sheet and Android dialog
+  validate an explicit 1–30 draft and commit only on Done or Save.
+- Recorded truthful five-minute and 19:00 Paris processing copy plus the host-test/device-evidence
+  boundary. ADRs [056](./decisions/056-compose-native-dialog-behind-chrome.md) and
+  [060](./decisions/060-platform-native-settings-composition.md), with project decisions
+  [D01](../../projects/native-settings/decisions/D01-native-presentation.md),
+  [D03](../../projects/native-settings/decisions/D03-notification-sync.md),
+  [D04](../../projects/native-settings/decisions/D04-permission-language-boundaries.md), and
+  [D05](../../projects/native-settings/decisions/D05-schedule-and-acceptance.md), remain the
+  load-bearing decisions.
+
 ## 2026-09-21 — Durable notification preference synchronization
 
 - One app-lifetime notification runtime now owns token listening, current-snapshot subscription

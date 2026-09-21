@@ -83,6 +83,11 @@ backend reset removes both. Tokens, calendar identifiers, locale/zone signatures
 retry timestamps, and request queues are never stored; every retry rebuilds from canonical current
 sources.
 
+The canonical `frequency`, `nbDaysAhead`, and `isActive` preference values remain independent:
+turning subscription intent off does not clear frequency or horizon. Native choice surfaces and
+custom drafts add no storage path. A confirmed preset or valid custom value uses the existing
+setter once; draft edits and every dismissal path remain memory-only.
+
 The versioned export-guide LKG registry is a backend-bound rebuildable cache behind `@/storage`.
 Each logical record is isolated by requested locale, client schema, and active or exact-version
 selector, then revalidates its strong ETag, response/body locale, resolved version, timestamp, and

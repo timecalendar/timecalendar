@@ -43,3 +43,8 @@ export {
   NativeSettingsSwitchRow,
   NativeSettingsText,
 } from "@/components/chrome/native-settings"
+export {
+  NativeSettingsNumericEditor,
+  type NativeSettingsNumericEditorIds,
+  type NativeSettingsNumericEditorProps,
+} from "@/components/chrome/native-settings-numeric-editor"

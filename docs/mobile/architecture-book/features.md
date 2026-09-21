@@ -126,6 +126,12 @@ Environment retain typed compatibility adapters, and root i18n owns system-local
   effective locale/zone, startup, foreground, and manual Retry all invalidate that owner; screen
   hooks only expose local preferences and its shared status. A current generation and runtime epoch
   must match before acknowledgment can clear durable dirty intent.
+- Notification UI keeps frequency and horizon editable and retained while subscription intent is
+  off. Presets are 1, 3, 7, 14, and 30 days; other valid stored values remain Custom. Custom uses a
+  fresh local draft, exact digit-only 1–30 validation, and one explicit Done/Save commit. Cancel,
+  Back, swipe dismissal, opening a choice, and invalid submission never write. Chrome owns the
+  SwiftUI/Compose primitives and native buffers; the feature owns options, localized validation,
+  commit policy, and the reusable presentation of the shared route-independent sync status.
 - Local preference parsers are total: absent, corrupt, or legacy values return safe
   defaults instead of throwing.
 - UI failures are accessible. Unexpected native, persistence, and background failures are

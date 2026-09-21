@@ -8,6 +8,11 @@ import { act, renderHook } from "@testing-library/react-native"
 import { remove } from "@/storage"
 
 import {
+  isNotificationIntentDirty,
+  resetNotificationIntent,
+  subscribeNotificationIntent,
+} from "./intent"
+import {
   getFrequency,
   getIsActive,
   getNbDaysAhead,
@@ -26,6 +31,7 @@ import {
 } from "./types"
 
 beforeEach(() => {
+  resetNotificationIntent()
   remove(NOTIFICATION_KEYS.frequency)
   remove(NOTIFICATION_KEYS.nbDaysAhead)
   remove(NOTIFICATION_KEYS.isActive)
@@ -91,6 +97,25 @@ describe("notification prefs store (write-then-read-back)", () => {
     expect(getIsActive()).toBe(false)
     setIsActive(true)
     expect(getIsActive()).toBe(true)
+  })
+
+  it("retains frequency and horizon while subscription intent is off", () => {
+    setFrequency("hourly")
+    setNbDaysAhead(29)
+    setIsActive(false)
+    expect(getFrequency()).toBe("hourly")
+    expect(getNbDaysAhead()).toBe(29)
+    expect(getIsActive()).toBe(false)
+  })
+
+  it("publishes one dirty intent for one confirmed custom value", () => {
+    const listener = jest.fn()
+    const unsubscribe = subscribeNotificationIntent(listener)
+    setNbDaysAhead(12)
+    unsubscribe()
+    expect(isNotificationIntentDirty()).toBe(true)
+    expect(listener).toHaveBeenCalledTimes(1)
+    expect(getNbDaysAhead()).toBe(12)
   })
 })
 

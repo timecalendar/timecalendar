@@ -1,22 +1,20 @@
-import { act, fireEvent, render } from "@testing-library/react-native"
-import { StyleSheet } from "react-native"
+import { fireEvent, render } from "@testing-library/react-native"
+import { router } from "expo-router"
 
 import { useNotificationPreferences } from "@/features/notifications/data"
+import { usePlatform } from "@/test-support/platform"
 
 import NotificationSettingsScreen from "./notification-settings-screen"
 
-jest.mock("expo-router", () => ({ Stack: { Screen: () => null } }))
-
-// Proof the screen resolves through the real theme + i18n trees and is wired to
-// the feature data hook (mocked here): a control change drives the matching
-// mutator (which the data layer's own tests prove persists + re-PUTs), and the
-// failure surface + Retry render and re-fire register(). @expo/ui's native
-// picker is mocked suite-wide (jest/setup-expo-ui.ts). The native feel /
-// VoiceOver / contrast are the on-device half (inbox, task 8.1).
+jest.mock("expo-router", () => ({
+  router: { push: jest.fn(), back: jest.fn() },
+  Stack: { Screen: () => null },
+}))
 jest.mock("@/features/notifications/data")
 
-const mockUseNotificationPreferences = useNotificationPreferences as jest.Mock
+const mockPush = router.push as jest.Mock
 
+const mockUseNotificationPreferences = useNotificationPreferences as jest.Mock
 const setFrequency = jest.fn()
 const setNbDaysAhead = jest.fn()
 const setIsActive = jest.fn()
@@ -41,129 +39,117 @@ beforeEach(() => {
   mockPrefs()
 })
 
-describe("NotificationSettingsScreen", () => {
+describe("NotificationSettingsScreen on iOS", () => {
+  usePlatform("ios")
+
+  it("uses one native form and pushes choice routes without writing", async () => {
+    const view = await render(<NotificationSettingsScreen />)
+    expect(view.getAllByTestId("swiftui-form-scroll-owner")).toHaveLength(1)
+
+    await fireEvent.press(view.getByTestId("notifications-frequency-row"))
+    expect(mockPush).toHaveBeenCalledWith("/notification-frequency")
+    await fireEvent.press(view.getByTestId("notifications-days-row"))
+    expect(mockPush).toHaveBeenCalledWith("/notification-days-ahead")
+    expect(setFrequency).not.toHaveBeenCalled()
+    expect(setNbDaysAhead).not.toHaveBeenCalled()
+  })
+
   it.each([
-    [599, 24, 688],
-    [600, 64, 768],
-  ])(
-    "switches readable-lane gutters at %ipx",
-    async (width, gutter, maxWidth) => {
-      const view = await render(<NotificationSettingsScreen />)
-      await act(() =>
-        fireEvent(view.getByTestId("notifications-layout-owner"), "layout", {
-          nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
-        }),
-      )
-      expect(
-        StyleSheet.flatten(
-          view.getByTestId("notifications-layout-owner").props.children.props
-            .style,
-        ),
-      ).toMatchObject({ maxWidth, paddingHorizontal: gutter })
-    },
-  )
+    [1, "1 day"],
+    [2, "2 days"],
+    [12, "12 days"],
+    [30, "30 days"],
+  ])("shows the effective %i-day summary", async (days, label) => {
+    mockPrefs({ nbDaysAhead: days })
+    const view = await render(<NotificationSettingsScreen />)
+    expect(view.getByText(label)).toBeTruthy()
+  })
 
-  it("renders localized controls without a duplicate page title", async () => {
-    const { getByText, queryByText } = await render(
-      <NotificationSettingsScreen />,
+  it("retains rows and their values while subscription intent is off", async () => {
+    mockPrefs({ isActive: false, frequency: "daily", nbDaysAhead: 29 })
+    const view = await render(<NotificationSettingsScreen />)
+    expect(view.getByText("Daily")).toBeTruthy()
+    expect(view.getByText("29 days")).toBeTruthy()
+    expect(
+      view.getByTestId("notifications-is-active-switch").props
+        .accessibilityState.checked,
+    ).toBe(false)
+  })
+})
+
+describe("NotificationSettingsScreen on Android", () => {
+  usePlatform("android")
+
+  it("commits one frequency choice and dismisses the dialog", async () => {
+    const view = await render(<NotificationSettingsScreen />)
+    await fireEvent.press(view.getByTestId("notifications-frequency-row"))
+    await fireEvent.press(
+      view.getByTestId("notifications-frequency-dialog-daily"),
     )
-    expect(queryByText("Notifications")).toBeNull()
-    expect(getByText("Notification frequency")).toBeTruthy()
-    expect(getByText("Enable notifications")).toBeTruthy()
-  })
-
-  it("reflects the store: the current nbDaysAhead value", async () => {
-    mockPrefs({ nbDaysAhead: 7 })
-    const { getByText } = await render(<NotificationSettingsScreen />)
-    expect(getByText("7 days")).toBeTruthy()
-  })
-
-  it("drives setFrequency when a frequency option is selected", async () => {
-    const { getByTestId } = await render(<NotificationSettingsScreen />)
-    fireEvent.press(getByTestId("notifications-frequency-picker-item-daily"))
+    expect(setFrequency).toHaveBeenCalledTimes(1)
     expect(setFrequency).toHaveBeenCalledWith("daily")
+    expect(view.queryByTestId("notifications-frequency-dialog")).toBeNull()
   })
 
-  it("increments nbDaysAhead by one", async () => {
-    mockPrefs({ nbDaysAhead: 10 })
-    const { getByTestId } = await render(<NotificationSettingsScreen />)
-    fireEvent.press(getByTestId("notifications-nb-days-increment"))
-    expect(setNbDaysAhead).toHaveBeenCalledWith(11)
-  })
-
-  it("decrements nbDaysAhead by one", async () => {
-    mockPrefs({ nbDaysAhead: 10 })
-    const { getByTestId } = await render(<NotificationSettingsScreen />)
-    fireEvent.press(getByTestId("notifications-nb-days-decrement"))
-    expect(setNbDaysAhead).toHaveBeenCalledWith(9)
-  })
-
-  it("disables the decrement at the floor (1)", async () => {
-    mockPrefs({ nbDaysAhead: 1 })
-    const { getByTestId } = await render(<NotificationSettingsScreen />)
-    expect(
-      getByTestId("notifications-nb-days-decrement").props.accessibilityState
-        .disabled,
-    ).toBe(true)
-  })
-
-  it("disables the increment at the ceiling (30)", async () => {
-    mockPrefs({ nbDaysAhead: 30 })
-    const { getByTestId } = await render(<NotificationSettingsScreen />)
-    expect(
-      getByTestId("notifications-nb-days-increment").props.accessibilityState
-        .disabled,
-    ).toBe(true)
-  })
-
-  it("drives setIsActive when the toggle changes", async () => {
-    const { getByTestId } = await render(<NotificationSettingsScreen />)
-    fireEvent(
-      getByTestId("notifications-is-active-switch"),
-      "valueChange",
-      false,
+  it("cancels a frequency choice without a write", async () => {
+    const view = await render(<NotificationSettingsScreen />)
+    await fireEvent.press(view.getByTestId("notifications-frequency-row"))
+    await fireEvent.press(
+      view.getByTestId("notifications-frequency-dialog-cancel"),
     )
-    expect(setIsActive).toHaveBeenCalledWith(false)
+    expect(setFrequency).not.toHaveBeenCalled()
   })
 
-  it("does not render the failure surface when there is no error", async () => {
-    const { queryByTestId } = await render(<NotificationSettingsScreen />)
-    expect(queryByTestId("notifications-retry")).toBeNull()
+  it("commits one preset immediately", async () => {
+    const view = await render(<NotificationSettingsScreen />)
+    await fireEvent.press(view.getByTestId("notifications-days-row"))
+    await fireEvent.press(view.getByTestId("notifications-days-dialog-14"))
+    expect(setNbDaysAhead).toHaveBeenCalledTimes(1)
+    expect(setNbDaysAhead).toHaveBeenCalledWith(14)
   })
 
-  it("renders the accessible failure surface + Retry and re-fires register", async () => {
-    mockPrefs({ status: { state: "error" } })
-    const { getByText, getByTestId } = await render(
-      <NotificationSettingsScreen />,
+  it("opens Custom write-free and validates before one save", async () => {
+    mockPrefs({ nbDaysAhead: 12 })
+    const view = await render(<NotificationSettingsScreen />)
+    await fireEvent.press(view.getByTestId("notifications-days-row"))
+    await fireEvent.press(view.getByTestId("notifications-days-dialog-custom"))
+    expect(setNbDaysAhead).not.toHaveBeenCalled()
+
+    await fireEvent.changeText(
+      view.getByTestId("notifications-custom-field"),
+      "1.5",
     )
+    await fireEvent.press(view.getByTestId("notifications-custom-save"))
+    expect(setNbDaysAhead).not.toHaveBeenCalled()
     expect(
-      getByText(
-        "Notification settings are saved on this device but not yet remotely.",
-      ),
+      view.getByText("Enter a whole number using digits only."),
     ).toBeTruthy()
-    fireEvent.press(getByTestId("notifications-retry"))
-    expect(retry).toHaveBeenCalledTimes(1)
+
+    await fireEvent.changeText(
+      view.getByTestId("notifications-custom-field"),
+      " 30 ",
+    )
+    await fireEvent.press(view.getByTestId("notifications-custom-save"))
+    expect(setNbDaysAhead).toHaveBeenCalledTimes(1)
+    expect(setNbDaysAhead).toHaveBeenCalledWith(30)
   })
 
-  it.each([
-    ["pending", undefined, "Saving notification settings…"],
-    [
-      "waiting",
-      "registration",
-      "Waiting for notification registration before saving remotely.",
-    ],
-    [
-      "waiting",
-      "calendars",
-      "Waiting for calendars to load before saving remotely.",
-    ],
-    ["acknowledged", undefined, "Notification settings saved remotely."],
-  ])("renders shared %s status", async (state, reason, message) => {
-    mockPrefs({ status: reason === undefined ? { state } : { state, reason } })
-    const { getByText, queryByTestId } = await render(
-      <NotificationSettingsScreen />,
+  it("discards a Custom draft on Cancel", async () => {
+    const view = await render(<NotificationSettingsScreen />)
+    await fireEvent.press(view.getByTestId("notifications-days-row"))
+    await fireEvent.press(view.getByTestId("notifications-days-dialog-custom"))
+    await fireEvent.changeText(
+      view.getByTestId("notifications-custom-field"),
+      "22",
     )
-    expect(getByText(message)).toBeTruthy()
-    expect(queryByTestId("notifications-retry")).toBeNull()
+    await fireEvent.press(view.getByTestId("notifications-custom-cancel"))
+    expect(setNbDaysAhead).not.toHaveBeenCalled()
+  })
+
+  it("keeps shared error and Retry on the parent", async () => {
+    mockPrefs({ status: { state: "error" } })
+    const view = await render(<NotificationSettingsScreen />)
+    await fireEvent.press(view.getByTestId("notifications-retry"))
+    expect(retry).toHaveBeenCalledTimes(1)
   })
 })
