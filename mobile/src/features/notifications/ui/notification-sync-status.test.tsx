@@ -31,10 +31,11 @@ describe("NotificationSyncStatus", () => {
       [{ state: "acknowledged" }, "Notification settings saved remotely."],
     ]
 
+    const [initialStatus, initialMessage] = states[0]!
     const view = await render(
-      <NotificationSyncStatus status={states[0][0]} retry={retry} />,
+      <NotificationSyncStatus status={initialStatus} retry={retry} />,
     )
-    expect(announce).toHaveBeenLastCalledWith(states[0][1])
+    expect(announce).toHaveBeenLastCalledWith(initialMessage)
 
     for (const [status, message] of states.slice(1)) {
       await view.rerender(
