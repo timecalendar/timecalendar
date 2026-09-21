@@ -150,4 +150,3 @@ The expanded chooser SHALL continue using the existing effective-zone resolver, 
 - **WHEN** representative canonical, alias, UTC, and fractional-offset selections are checked with the unchanged server validator
 - **THEN** every identifier claimed selectable by that compatibility fixture is accepted
 - **AND** the test does not assume every mobile OS supports every catalog alias
-
