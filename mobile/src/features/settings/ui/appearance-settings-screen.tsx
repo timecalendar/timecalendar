@@ -1,107 +1,113 @@
 import { Stack } from "expo-router"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { StyleSheet, View } from "react-native"
+import { Platform } from "react-native"
 
-import { Host, Picker } from "@/components/chrome"
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
 import {
+  NativeSettingsChoiceRow,
+  NativeSettingsHost,
+  NativeSettingsRadioDialog,
+  NativeSettingsRow,
+  NativeSettingsSection,
+} from "@/components/chrome"
+import {
+  type LanguagePreference,
+  type ThemePreference,
   useLanguagePreference,
   useThemePreference,
 } from "@/features/settings/prefs"
-import { Spacing } from "@/theme"
 
-// The Settings feature's presentational screen (A2 / TIM-131). It owns NO
-// preference logic — all state comes from A1's reactive hooks
-// (useThemePreference / useLanguagePreference), so it lives under
-// src/features/settings/ui/ (behavior-tested under the 70% floor, exempt from
-// the 90% logic gate per ADR 003) with a thin src/app/appearance-settings.tsx re-export
-// (route-structure rule; the colocated test stays out of the Metro route tree).
-//
-// Native controls are reached through the @/components/chrome seam (the first
-// @expo/ui consumer, ADR 010), never @expo/ui directly. Each Picker is a
-// single-select native control: selecting an option drives the matching hook's
-// setPreference immediately (no apply step — the reactive hooks re-theme /
-// re-language the app live). The picker is OS-chromed and not force-themed (R-3).
 export default function AppearanceSettingsScreen() {
   const { t } = useTranslation()
   const theme = useThemePreference()
   const language = useLanguagePreference()
+  const [themeDialog, setThemeDialog] = useState(false)
+  const [languageDialog, setLanguageDialog] = useState(false)
+  const themeOptions: readonly { label: string; value: ThemePreference }[] = [
+    { label: t("settings.theme.system"), value: "system" },
+    { label: t("settings.theme.light"), value: "light" },
+    { label: t("settings.theme.dark"), value: "dark" },
+  ]
+  const languageOptions: readonly {
+    label: string
+    value: LanguagePreference
+  }[] = [
+    { label: t("settings.language.system"), value: "system" },
+    { label: t("settings.language.fr"), value: "fr" },
+    { label: t("settings.language.en"), value: "en" },
+  ]
+
   return (
     <>
       <Stack.Screen options={{ title: t("settings.title") }} />
-      <RootPage
-        lane="readable"
-        testID="appearance-layout-owner"
-        contentContainerStyle={styles.content}
-      >
-        <View style={styles.control}>
-          <ThemedText type="smallBold">{t("settings.theme.label")}</ThemedText>
-          {/* The testID lives on this RN-core View, not on <Picker>, because
-              @expo/ui's Jetpack-Compose Picker (Picker.android.tsx) drops the
-              `testID` prop entirely — it only forwards selectedValue /
-              onValueChange / enabled / children to the native view, so on
-              Android the picker renders as an unidentified EditText and the
-              e2e `id: settings-theme-picker` assertion never matches (iOS's
-              SwiftUI Picker does forward it, which is why only Android failed).
-              RN-core View reliably maps testID → resource-id (Android) /
-              accessibilityIdentifier (iOS), giving Maestro a stable, shared,
-              cross-platform anchor. The inner <Picker testID> is kept because
-              the Jest mock derives each item's testID
-              (`settings-theme-picker-item-<value>`) from it. */}
-          <View testID="settings-theme-picker">
-            <Host matchContents>
-              <Picker
-                testID="settings-theme-picker"
-                appearance="menu"
-                selectedValue={theme.preference}
-                onValueChange={theme.setPreference}
-              >
-                <Picker.Item
-                  label={t("settings.theme.system")}
-                  value="system"
-                />
-                <Picker.Item label={t("settings.theme.light")} value="light" />
-                <Picker.Item label={t("settings.theme.dark")} value="dark" />
-              </Picker>
-            </Host>
-          </View>
-        </View>
-
-        <View style={styles.control}>
-          <ThemedText type="smallBold">
-            {t("settings.language.label")}
-          </ThemedText>
-          {/* See the theme picker above: the @expo/ui Android Picker drops
-              testID, so the cross-platform anchor lives on this RN-core View. */}
-          <View testID="settings-language-picker">
-            <Host matchContents>
-              <Picker
-                testID="settings-language-picker"
-                appearance="menu"
-                selectedValue={language.preference}
-                onValueChange={language.setPreference}
-              >
-                <Picker.Item
-                  label={t("settings.language.system")}
-                  value="system"
-                />
-                <Picker.Item label={t("settings.language.fr")} value="fr" />
-                <Picker.Item label={t("settings.language.en")} value="en" />
-              </Picker>
-            </Host>
-          </View>
-        </View>
-      </RootPage>
+      <NativeSettingsHost>
+        <NativeSettingsSection title={t("settings.theme.label")}>
+          {Platform.OS === "ios" ? (
+            themeOptions.map((option) => (
+              <NativeSettingsChoiceRow
+                key={option.value}
+                label={option.label}
+                selected={theme.preference === option.value}
+                testID={`settings-theme-choice-${option.value}`}
+                onSelect={() => theme.setPreference(option.value)}
+              />
+            ))
+          ) : (
+            <NativeSettingsRow
+              kind="action"
+              label={t("settings.theme.label")}
+              value={
+                themeOptions.find((o) => o.value === theme.preference)?.label
+              }
+              testID="settings-theme-row"
+              onPress={() => setThemeDialog(true)}
+            />
+          )}
+        </NativeSettingsSection>
+        <NativeSettingsSection title={t("settings.language.label")}>
+          <NativeSettingsRow
+            kind={Platform.OS === "ios" ? "navigation" : "action"}
+            label={t("settings.language.label")}
+            value={
+              languageOptions.find((o) => o.value === language.preference)
+                ?.label
+            }
+            href={Platform.OS === "ios" ? "/language-settings" : undefined}
+            testID="settings-language-row"
+            onPress={
+              Platform.OS === "android"
+                ? () => setLanguageDialog(true)
+                : undefined
+            }
+          />
+        </NativeSettingsSection>
+      </NativeSettingsHost>
+      <NativeSettingsRadioDialog
+        visible={themeDialog}
+        title={t("settings.theme.label")}
+        cancelLabel={t("settings.cancel")}
+        value={theme.preference}
+        options={themeOptions}
+        testID="settings-theme-dialog"
+        onDismiss={() => setThemeDialog(false)}
+        onSelect={(value) => {
+          theme.setPreference(value)
+          setThemeDialog(false)
+        }}
+      />
+      <NativeSettingsRadioDialog
+        visible={languageDialog}
+        title={t("settings.language.label")}
+        cancelLabel={t("settings.cancel")}
+        value={language.preference}
+        options={languageOptions}
+        testID="settings-language-dialog"
+        onDismiss={() => setLanguageDialog(false)}
+        onSelect={(value) => {
+          language.setPreference(value)
+          setLanguageDialog(false)
+        }}
+      />
     </>
   )
 }
-
-const styles = StyleSheet.create({
-  content: {
-    gap: Spacing.four,
-  },
-  control: {
-    gap: Spacing.two,
-  },
-})

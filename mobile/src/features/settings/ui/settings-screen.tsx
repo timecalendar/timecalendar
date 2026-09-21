@@ -1,9 +1,11 @@
 import { useTranslation } from "react-i18next"
-import { Platform, ScrollView, StyleSheet, Switch, View } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 
-import { useAdaptiveLayout } from "@/components/adaptive-content"
-import { ThemedText } from "@/components/themed-text"
+import {
+  NativeSettingsHost,
+  NativeSettingsRow,
+  NativeSettingsSection,
+  NativeSettingsSwitchRow,
+} from "@/components/chrome"
 import { formatUnreadBadge, useActivityState } from "@/features/activity"
 import {
   useUserCalendars,
@@ -15,20 +17,11 @@ import {
 } from "@/features/environment"
 import { deriveCalendarSummary } from "@/features/settings/data"
 import { useShowWeekendsPreference } from "@/features/settings/prefs"
-import { Spacing, useTheme } from "@/theme"
-
-import { SettingsRow } from "./settings-row"
-import { SettingsSection } from "./settings-section"
 
 const destinations = [
   {
     section: "events" as const,
     href: "/activity" as const,
-    icon: {
-      ios: "clock.arrow.circlepath",
-      android: "history",
-      web: "history",
-    } as const,
     label: "settingsHub.activity.label" as const,
     hint: "settingsHub.activity.hint" as const,
     testID: "settings-activity",
@@ -37,11 +30,6 @@ const destinations = [
   {
     section: "events" as const,
     href: "/personal-events" as const,
-    icon: {
-      ios: "calendar.badge.plus",
-      android: "event_note",
-      web: "event_note",
-    } as const,
     label: "settingsHub.personalEvents.label" as const,
     hint: "settingsHub.personalEvents.hint" as const,
     testID: "settings-personal-events",
@@ -49,11 +37,6 @@ const destinations = [
   {
     section: "events" as const,
     href: "/hidden-events" as const,
-    icon: {
-      ios: "eye.slash",
-      android: "visibility_off",
-      web: "visibility_off",
-    } as const,
     label: "settingsHub.hiddenEvents.label" as const,
     hint: "settingsHub.hiddenEvents.hint" as const,
     testID: "settings-hidden-events",
@@ -61,11 +44,6 @@ const destinations = [
   {
     section: "preferences" as const,
     href: "/appearance-settings" as const,
-    icon: {
-      ios: "paintpalette",
-      android: "palette",
-      web: "palette",
-    } as const,
     label: "settingsHub.appearance.label" as const,
     hint: "settingsHub.appearance.hint" as const,
     testID: "settings-appearance",
@@ -73,11 +51,6 @@ const destinations = [
   {
     section: "preferences" as const,
     href: "/timezone-settings" as const,
-    icon: {
-      ios: "globe",
-      android: "public",
-      web: "public",
-    } as const,
     label: "settingsHub.timezone.label" as const,
     hint: "settingsHub.timezone.hint" as const,
     testID: "settings-timezone",
@@ -85,11 +58,6 @@ const destinations = [
   {
     section: "preferences" as const,
     href: "/notification-settings" as const,
-    icon: {
-      ios: "bell",
-      android: "notifications",
-      web: "notifications",
-    } as const,
     label: "settingsHub.notifications.label" as const,
     hint: "settingsHub.notifications.hint" as const,
     testID: "settings-notifications",
@@ -97,11 +65,6 @@ const destinations = [
   {
     section: "app" as const,
     href: "/about" as const,
-    icon: {
-      ios: "info.circle",
-      android: "info",
-      web: "info",
-    } as const,
     label: "settingsHub.about.label" as const,
     hint: "settingsHub.about.hint" as const,
     testID: "settings-about",
@@ -109,11 +72,6 @@ const destinations = [
   {
     section: "support" as const,
     href: "/feedback" as const,
-    icon: {
-      ios: "bubble.left.and.text.bubble.right",
-      android: "feedback",
-      web: "feedback",
-    } as const,
     label: "settingsHub.feedback.label" as const,
     hint: "settingsHub.feedback.hint" as const,
     testID: "settings-feedback",
@@ -124,7 +82,6 @@ const sections = ["events", "preferences", "app", "support"] as const
 
 export function SettingsScreen() {
   const { t } = useTranslation()
-  const theme = useTheme()
   const calendars = useUserCalendars()
   const loaded = useUserCalendarsLoaded()
   const { unreadCount } = useActivityState()
@@ -132,9 +89,7 @@ export function SettingsScreen() {
   const summary = deriveCalendarSummary(calendars, loaded)
   const showEnvironmentControl =
     getBackendEnvironmentCapability() !== "production"
-  const { laneStyle, onLayout } = useAdaptiveLayout("standard")
-
-  const secondary =
+  const summaryValue =
     summary.state === "loaded" && summary.calendarCount === 0
       ? t("settingsHub.summary.empty")
       : summary.state === "loaded"
@@ -142,169 +97,71 @@ export function SettingsScreen() {
         : undefined
 
   return (
-    <SafeAreaView
-      edges={["left", "right"]}
-      style={[styles.safeArea, { backgroundColor: theme.background }]}
-    >
-      <ScrollView
-        testID="settings-scroll-owner"
-        onLayout={onLayout}
-        style={{ backgroundColor: theme.background }}
-        contentContainerStyle={styles.scrollContent}
+    <NativeSettingsHost>
+      <NativeSettingsSection
+        title={t("settingsHub.summary.title")}
+        testID="settings-calendar-summary-section"
       >
-        <View
-          testID="settings-responsive-content"
-          style={[laneStyle, styles.content]}
+        {summary.state === "loading" ? (
+          <NativeSettingsRow
+            kind="value"
+            label={t("settingsHub.summary.title")}
+            testID="settings-calendar-summary-loading"
+          />
+        ) : (
+          <NativeSettingsRow
+            kind="navigation"
+            href="/user-calendars"
+            label={t("settingsHub.summary.manage")}
+            value={summaryValue}
+            hint={t("settingsHub.summary.hint")}
+            testID="settings-calendar-summary"
+          />
+        )}
+        <NativeSettingsSwitchRow
+          label={t("settingsHub.summary.showWeekends")}
+          value={showWeekends}
+          onValueChange={setShowWeekends}
+          testID="settings-show-weekends-row"
+          switchTestID="settings-show-weekends-switch"
+        />
+      </NativeSettingsSection>
+      {sections.map((section) => (
+        <NativeSettingsSection
+          key={section}
+          title={t(`settingsHub.section.${section}`)}
+          testID={`settings-section-${section}`}
         >
-          {summary.state === "loading" ? (
-            <View
-              testID="settings-calendar-summary-loading"
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-              style={[
-                styles.loading,
-                { backgroundColor: theme.backgroundElement },
-              ]}
-            />
-          ) : (
-            <SettingsSection
-              title={t("settingsHub.summary.title")}
-              testID="settings-calendar-summary-section"
-            >
-              <SettingsRow
-                first
-                href="/user-calendars"
-                icon={{
-                  ios: "calendar",
-                  android: "calendar_month",
-                  web: "calendar_month",
-                }}
-                label={t("settingsHub.summary.manage")}
-                accessibilityLabel={t(
-                  "settingsHub.summary.accessibilityLabel",
-                  {
-                    primary: t("settingsHub.summary.manage"),
-                    secondary,
-                  },
-                )}
-                hint={t("settingsHub.summary.hint")}
-                testID="settings-calendar-summary"
-                {...(secondary ? { secondary } : {})}
-              />
-              <View
-                testID="settings-show-weekends-row"
-                style={[
-                  styles.toggleRow,
-                  {
-                    minHeight: Platform.OS === "ios" ? 44 : 48,
-                    backgroundColor: theme.backgroundElement,
-                  },
-                ]}
-              >
-                <View
-                  pointerEvents="none"
-                  style={[
-                    styles.toggleSeparator,
-                    { backgroundColor: theme.separator },
-                  ]}
+          {destinations
+            .filter((destination) => destination.section === section)
+            .map((destination) => {
+              const hasUnreadBadge = "unreadBadge" in destination
+              return (
+                <NativeSettingsRow
+                  key={destination.href}
+                  kind="navigation"
+                  href={destination.href}
+                  label={t(destination.label)}
+                  hint={t(destination.hint)}
+                  badge={
+                    hasUnreadBadge
+                      ? (formatUnreadBadge(unreadCount) ?? undefined)
+                      : undefined
+                  }
+                  testID={destination.testID}
                 />
-                <ThemedText style={styles.toggleLabel}>
-                  {t("settingsHub.summary.showWeekends")}
-                </ThemedText>
-                <Switch
-                  testID="settings-show-weekends-switch"
-                  accessibilityRole="switch"
-                  accessibilityLabel={t("settingsHub.summary.showWeekends")}
-                  accessibilityState={{ checked: showWeekends }}
-                  value={showWeekends}
-                  onValueChange={setShowWeekends}
-                />
-              </View>
-            </SettingsSection>
-          )}
-
-          {sections.map((section) => (
-            <SettingsSection
-              key={section}
-              title={t(`settingsHub.section.${section}`)}
-              testID={`settings-section-${section}`}
-            >
-              {destinations
-                .filter((destination) => destination.section === section)
-                .map((destination, index) => {
-                  const hasUnreadBadge = "unreadBadge" in destination
-                  const label = t(destination.label)
-                  const badge = hasUnreadBadge
-                    ? formatUnreadBadge(unreadCount)
-                    : null
-                  const accessibilityLabel =
-                    hasUnreadBadge && unreadCount > 0
-                      ? t("settingsHub.activity.accessibilityLabel", {
-                          primary: label,
-                          secondary: t("settingsHub.activity.unread", {
-                            count: unreadCount,
-                          }),
-                        })
-                      : null
-                  return (
-                    <SettingsRow
-                      first={index === 0}
-                      key={destination.href}
-                      href={destination.href}
-                      icon={destination.icon}
-                      label={label}
-                      hint={t(destination.hint)}
-                      testID={destination.testID}
-                      {...(accessibilityLabel !== null
-                        ? { accessibilityLabel }
-                        : {})}
-                      {...(badge !== null ? { badge } : {})}
-                    />
-                  )
-                })}
-            </SettingsSection>
-          ))}
-          {showEnvironmentControl ? (
-            <SettingsSection
-              title={t("environment.selector.section")}
-              testID="settings-section-environment"
-            >
-              <EnvironmentSettingsControl />
-            </SettingsSection>
-          ) : null}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+              )
+            })}
+        </NativeSettingsSection>
+      ))}
+      {showEnvironmentControl ? (
+        <NativeSettingsSection
+          title={t("environment.selector.section")}
+          testID="settings-section-environment"
+        >
+          <EnvironmentSettingsControl />
+        </NativeSettingsSection>
+      ) : null}
+    </NativeSettingsHost>
   )
 }
-
-const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
-  scrollContent: {
-    paddingTop: Spacing.three,
-    paddingBottom: Spacing.six,
-  },
-  content: {
-    gap: Platform.OS === "ios" ? Spacing.four : Spacing.five,
-  },
-  loading: {
-    height: 72,
-    borderRadius: 16,
-    opacity: 0.6,
-  },
-  toggleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: 6,
-  },
-  toggleLabel: { flex: 1 },
-  toggleSeparator: {
-    position: "absolute",
-    top: 0,
-    left: Spacing.three,
-    right: 0,
-    height: StyleSheet.hairlineWidth,
-  },
-})

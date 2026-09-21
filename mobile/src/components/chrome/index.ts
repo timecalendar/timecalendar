@@ -33,3 +33,12 @@ export {
   MenuView,
   Picker,
 } from "@/components/chrome/expo-ui"
+export {
+  NativeSettingsChoiceRow,
+  NativeSettingsHost,
+  NativeSettingsRadioDialog,
+  NativeSettingsRow,
+  type NativeSettingsRowProps,
+  NativeSettingsSection,
+  NativeSettingsSwitchRow,
+} from "@/components/chrome/native-settings"
