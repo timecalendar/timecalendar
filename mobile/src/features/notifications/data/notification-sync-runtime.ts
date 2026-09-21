@@ -119,6 +119,12 @@ export function createNotificationSyncRuntime(
     void drain()
   }
 
+  const resumeDrain = (): void => {
+    retryIndex = 0
+    cancelTimer()
+    requestDrain()
+  }
+
   const scheduleRetry = (): void => {
     if (!live || !active || retryIndex >= RETRY_DELAYS.length) return
     const delay = RETRY_DELAYS[retryIndex]!
@@ -127,6 +133,19 @@ export function createNotificationSyncRuntime(
       timer = undefined
       requestDrain()
     }, delay)
+  }
+
+  const handleFailure = (generation: number, capturedEpoch: number): void => {
+    if (!identitiesMatch(generation, capturedEpoch)) {
+      drainRequested = dependencies.isDirty()
+      return
+    }
+    dependencies.recordError(
+      new Error(SANITIZED_SYNC_ERROR),
+      "notifications/subscription",
+    )
+    publish(ERROR)
+    scheduleRetry()
   }
 
   const attempt = async (): Promise<void> => {
@@ -148,16 +167,7 @@ export function createNotificationSyncRuntime(
     try {
       currentToken = token === undefined ? await dependencies.getToken() : token
     } catch {
-      if (!identitiesMatch(generation, capturedEpoch)) {
-        drainRequested = dependencies.isDirty()
-        return
-      }
-      dependencies.recordError(
-        new Error(SANITIZED_SYNC_ERROR),
-        "notifications/subscription",
-      )
-      publish(ERROR)
-      scheduleRetry()
+      handleFailure(generation, capturedEpoch)
       return
     }
 
@@ -192,16 +202,7 @@ export function createNotificationSyncRuntime(
         publish(ACKNOWLEDGED)
       }
     } catch {
-      if (!identitiesMatch(generation, capturedEpoch)) {
-        drainRequested = dependencies.isDirty()
-        return
-      }
-      dependencies.recordError(
-        new Error(SANITIZED_SYNC_ERROR),
-        "notifications/subscription",
-      )
-      publish(ERROR)
-      scheduleRetry()
+      handleFailure(generation, capturedEpoch)
     } finally {
       if (controller === requestController) controller = undefined
     }
@@ -224,10 +225,8 @@ export function createNotificationSyncRuntime(
       epoch += 1
       controller?.abort()
     }
-    retryIndex = 0
-    cancelTimer()
     if (live) publish(PENDING)
-    requestDrain()
+    resumeDrain()
   }
 
   const markAndAccept = (): void => acceptIntent(dependencies.markDirty())
@@ -262,15 +261,11 @@ export function createNotificationSyncRuntime(
       markAndAccept()
     },
     retry() {
-      retryIndex = 0
-      cancelTimer()
-      requestDrain()
+      resumeDrain()
     },
     foreground() {
       active = true
-      retryIndex = 0
-      cancelTimer()
-      requestDrain()
+      resumeDrain()
     },
     setActive(nextActive) {
       active = nextActive

@@ -22,7 +22,9 @@ export function isNotificationIntentDirty(): boolean {
 
 export function getNotificationIntentGeneration(): number {
   const value = getNumber(STORAGE_KEYS.notificationSyncGeneration)
-  return Number.isSafeInteger(value) && (value ?? -1) >= 0 ? value! : 0
+  return value !== undefined && Number.isSafeInteger(value) && value >= 0
+    ? value
+    : 0
 }
 
 export function markNotificationIntentDirty(): NotificationIntentVersion {
