@@ -32,6 +32,14 @@ These rules guard real product touchables (interactive controls declare `accessi
   persistence-gated success, and expose stable native identifiers on both platforms. Back is an
   explicit cancel on Android; outside taps are inert on both platforms. Jest proves callbacks,
   identifiers, and structure; VoiceOver/TalkBack focus and announcement quality remain device proof.
+- Native notification choices expose one selected checkmark/radio state, localized labels and
+  plural values. The custom-days editor exposes stable field/action/error identifiers and an
+  understandable validation message without treating its numeric keyboard as validation. Shared
+  synchronization state changes use the platform accessibility announcer because SwiftUI/Compose
+  text cannot carry React Native live-region props; focused tests prove every state message and
+  the localized Retry action. Host tests prove the remaining semantics and callbacks; large text,
+  focus order, sheet/dialog feel, themes, and VoiceOver/TalkBack announcement quality remain
+  owner-led device acceptance.
 
 ## Proof in CI
 

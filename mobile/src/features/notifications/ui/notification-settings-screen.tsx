@@ -1,228 +1,174 @@
 import { Stack } from "expo-router"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Pressable, StyleSheet, Switch, View } from "react-native"
+import { Platform } from "react-native"
 
-import { Host, Picker } from "@/components/chrome"
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
-import { WriteErrorNotice } from "@/components/write-error-notice"
+import {
+  NativeSettingsHost,
+  NativeSettingsNumericEditor,
+  NativeSettingsRadioDialog,
+  NativeSettingsRow,
+  NativeSettingsSection,
+  NativeSettingsSwitchRow,
+  NativeSettingsText,
+} from "@/components/chrome"
 import {
   type NotificationFrequency,
   useNotificationPreferences,
 } from "@/features/notifications/data"
-import { Radii, Spacing, useTheme } from "@/theme"
 
-// The notification subscription preferences screen (design Decision 5) —
-// PRESENTATIONAL (70% floor): a frequency Picker (immediately/hourly/daily via
-// the @/components/chrome seam, mirroring settings-screen), a bounded 1..30
-// nbDaysAhead stepper, and an isActive Switch, each bound to the feature data
-// hook so a change persists locally + drives the idempotent re-PUT. A failed PUT
-// surfaces an accessible alert + Retry (mirror ical-url-screen, Decision 6).
-//
-// It consumes its sibling data sub-barrel (@/features/notifications/data), never
-// its own feature barrel (B-2) and never the generated hook / @/storage / firebase
-// seams directly (B-1) — the data/ layer owns those. Tested beside this file; the
-// route (src/app/notification-settings.tsx) is a thin re-export (route-structure rule).
+import {
+  type CustomDaysValidationError,
+  NOTIFICATION_DAY_CHOICES,
+  NOTIFICATION_FREQUENCIES,
+  type NotificationDaysChoice,
+  selectedDaysChoice,
+  validateCustomDays,
+} from "./notification-choices"
+import { NotificationSyncStatus } from "./notification-sync-status"
 
-const NB_DAYS_MIN = 1
-const NB_DAYS_MAX = 30
+const CUSTOM_EDITOR_IDS = {
+  container: "notifications-custom-dialog",
+  field: "notifications-custom-field",
+  cancel: "notifications-custom-cancel",
+  submit: "notifications-custom-save",
+  message: "notifications-custom-validation",
+} as const
 
 export default function NotificationSettingsScreen() {
   const { t } = useTranslation()
-  const theme = useTheme()
-  const {
-    frequency,
-    nbDaysAhead,
-    isActive,
-    setFrequency,
-    setNbDaysAhead,
-    setIsActive,
-    status,
-    retry,
-  } = useNotificationPreferences()
+  const preferences = useNotificationPreferences()
+  const [frequencyOpen, setFrequencyOpen] = useState(false)
+  const [daysOpen, setDaysOpen] = useState(false)
+  const [customOpen, setCustomOpen] = useState(false)
+  const [customValidation, setCustomValidation] =
+    useState<CustomDaysValidationError | null>(null)
+  const selectedDays = selectedDaysChoice(preferences.nbDaysAhead)
+  const dayValue = t("notifications.days.value", {
+    count: preferences.nbDaysAhead,
+  })
+  const frequencyLabel = t(`notifications.frequency.${preferences.frequency}`)
+
+  const submitCustom = (draft: string) => {
+    const result = validateCustomDays(draft)
+    if (result.state !== "valid") {
+      setCustomValidation(result.state)
+      return
+    }
+    preferences.setNbDaysAhead(result.value)
+    setCustomValidation(null)
+    setCustomOpen(false)
+  }
+
+  const chooseDays = (choice: NotificationDaysChoice) => {
+    if (choice === "custom") {
+      setDaysOpen(false)
+      setCustomValidation(null)
+      setCustomOpen(true)
+      return
+    }
+    preferences.setNbDaysAhead(Number(choice))
+    setDaysOpen(false)
+  }
+
   return (
     <>
       <Stack.Screen options={{ title: t("notifications.title") }} />
-      <RootPage
-        lane="readable"
-        testID="notifications-layout-owner"
-        contentContainerStyle={styles.content}
-      >
-        <View style={styles.control}>
-          <ThemedText type="smallBold">
-            {t("notifications.frequency.label")}
-          </ThemedText>
-          {/* The testID lives on this RN-core View (the @expo/ui Android Picker
-              drops testID) — see settings-screen for the full rationale. */}
-          <View testID="notifications-frequency-picker">
-            <Host matchContents>
-              <Picker
-                testID="notifications-frequency-picker"
-                appearance="menu"
-                selectedValue={frequency}
-                onValueChange={(value) =>
-                  setFrequency(value as NotificationFrequency)
-                }
-              >
-                <Picker.Item
-                  label={t("notifications.frequency.immediately")}
-                  value="immediately"
-                />
-                <Picker.Item
-                  label={t("notifications.frequency.hourly")}
-                  value="hourly"
-                />
-                <Picker.Item
-                  label={t("notifications.frequency.daily")}
-                  value="daily"
-                />
-              </Picker>
-            </Host>
-          </View>
-        </View>
-
-        <View style={styles.control}>
-          <ThemedText type="smallBold">
-            {t("notifications.nbDaysAhead.label")}
-          </ThemedText>
-          <View style={styles.stepper}>
-            <Pressable
-              testID="notifications-nb-days-decrement"
-              accessibilityRole="button"
-              accessibilityLabel={t("notifications.nbDaysAhead.decrement")}
-              accessibilityState={{ disabled: nbDaysAhead <= NB_DAYS_MIN }}
-              disabled={nbDaysAhead <= NB_DAYS_MIN}
-              hitSlop={Spacing.two}
-              onPress={() => setNbDaysAhead(nbDaysAhead - 1)}
-              style={[
-                styles.stepperButton,
-                {
-                  backgroundColor: theme.backgroundElement,
-                  borderColor: theme.primary,
-                },
-              ]}
-            >
-              <ThemedText type="smallBold">−</ThemedText>
-            </Pressable>
-            <ThemedText
-              testID="notifications-nb-days-value"
-              accessibilityLiveRegion="polite"
-            >
-              {t("notifications.nbDaysAhead.value", { count: nbDaysAhead })}
-            </ThemedText>
-            <Pressable
-              testID="notifications-nb-days-increment"
-              accessibilityRole="button"
-              accessibilityLabel={t("notifications.nbDaysAhead.increment")}
-              accessibilityState={{ disabled: nbDaysAhead >= NB_DAYS_MAX }}
-              disabled={nbDaysAhead >= NB_DAYS_MAX}
-              hitSlop={Spacing.two}
-              onPress={() => setNbDaysAhead(nbDaysAhead + 1)}
-              style={[
-                styles.stepperButton,
-                {
-                  backgroundColor: theme.backgroundElement,
-                  borderColor: theme.primary,
-                },
-              ]}
-            >
-              <ThemedText type="smallBold">+</ThemedText>
-            </Pressable>
-          </View>
-        </View>
-
-        <View style={styles.toggleRow}>
-          <ThemedText type="smallBold">
-            {t("notifications.isActive.label")}
-          </ThemedText>
-          <Switch
-            testID="notifications-is-active-switch"
-            accessibilityRole="switch"
-            accessibilityLabel={t("notifications.isActive.label")}
-            value={isActive}
-            onValueChange={setIsActive}
+      <NativeSettingsHost>
+        <NativeSettingsSection title={t("notifications.section.subscription")}>
+          <NativeSettingsSwitchRow
+            label={t("notifications.subscription.label")}
+            value={preferences.isActive}
+            testID="notifications-subscription-row"
+            switchTestID="notifications-is-active-switch"
+            onValueChange={preferences.setIsActive}
           />
-        </View>
+          <NativeSettingsText testID="notifications-subscription-help">
+            {t("notifications.subscription.help")}
+          </NativeSettingsText>
+        </NativeSettingsSection>
+        <NativeSettingsSection title={t("notifications.section.delivery")}>
+          <NativeSettingsRow
+            kind={Platform.OS === "ios" ? "navigation" : "action"}
+            label={t("notifications.frequency.label")}
+            value={frequencyLabel}
+            testID="notifications-frequency-row"
+            href="/notification-frequency"
+            onPress={() => setFrequencyOpen(true)}
+          />
+          <NativeSettingsText testID="notifications-frequency-help">
+            {t("notifications.frequency.help")}
+          </NativeSettingsText>
+          <NativeSettingsRow
+            kind={Platform.OS === "ios" ? "navigation" : "action"}
+            label={t("notifications.days.label")}
+            value={dayValue}
+            testID="notifications-days-row"
+            href="/notification-days-ahead"
+            onPress={() => setDaysOpen(true)}
+          />
+          <NativeSettingsText testID="notifications-days-help">
+            {t("notifications.days.help")}
+          </NativeSettingsText>
+        </NativeSettingsSection>
+        <NotificationSyncStatus
+          status={preferences.status}
+          retry={preferences.retry}
+        />
+      </NativeSettingsHost>
 
-        <View
-          style={styles.statusBlock}
-          testID={`notifications-sync-${status.state}`}
-        >
-          {status.state === "error" ? (
-            <WriteErrorNotice message={t("notifications.sync.error")} />
-          ) : (
-            <ThemedText
-              themeColor="textSecondary"
-              accessibilityLiveRegion="polite"
-            >
-              {status.state === "pending"
-                ? t("notifications.sync.pending")
-                : status.state === "waiting"
-                  ? t(`notifications.sync.waiting.${status.reason}`)
-                  : t("notifications.sync.acknowledged")}
-            </ThemedText>
-          )}
-          {status.state === "error" && (
-            <Pressable
-              testID="notifications-retry"
-              accessibilityRole="button"
-              accessibilityLabel={t("notifications.error.retryLabel")}
-              hitSlop={Spacing.two}
-              onPress={retry}
-              style={[
-                styles.cta,
-                {
-                  backgroundColor: theme.backgroundElement,
-                  borderColor: theme.primary,
-                },
-              ]}
-            >
-              <ThemedText type="smallBold">
-                {t("notifications.error.retry")}
-              </ThemedText>
-            </Pressable>
-          )}
-        </View>
-      </RootPage>
+      <NativeSettingsRadioDialog
+        visible={frequencyOpen}
+        title={t("notifications.frequency.title")}
+        cancelLabel={t("notifications.action.cancel")}
+        value={preferences.frequency}
+        options={NOTIFICATION_FREQUENCIES.map(({ value, labelKey }) => ({
+          value,
+          label: t(labelKey),
+        }))}
+        testID="notifications-frequency-dialog"
+        onDismiss={() => setFrequencyOpen(false)}
+        onSelect={(value: NotificationFrequency) => {
+          preferences.setFrequency(value)
+          setFrequencyOpen(false)
+        }}
+      />
+      <NativeSettingsRadioDialog
+        visible={daysOpen}
+        title={t("notifications.days.title")}
+        cancelLabel={t("notifications.action.cancel")}
+        value={selectedDays}
+        options={NOTIFICATION_DAY_CHOICES.map(({ value, days }) => ({
+          value,
+          label:
+            days === null
+              ? t("notifications.days.customWithValue", { value: dayValue })
+              : t("notifications.days.value", { count: days }),
+        }))}
+        testID="notifications-days-dialog"
+        onDismiss={() => setDaysOpen(false)}
+        onSelect={chooseDays}
+      />
+      {customOpen ? (
+        <NativeSettingsNumericEditor
+          title={t("notifications.custom.title")}
+          label={t("notifications.custom.label")}
+          initialValue={String(preferences.nbDaysAhead)}
+          cancelLabel={t("notifications.action.cancel")}
+          submitLabel={t("notifications.action.save")}
+          validationMessage={
+            customValidation
+              ? t(`notifications.custom.validation.${customValidation}`)
+              : undefined
+          }
+          ids={CUSTOM_EDITOR_IDS}
+          onCancel={() => {
+            setCustomValidation(null)
+            setCustomOpen(false)
+          }}
+          onSubmit={submitCustom}
+        />
+      ) : null}
     </>
   )
 }
-
-const styles = StyleSheet.create({
-  content: {
-    gap: Spacing.four,
-  },
-  control: {
-    gap: Spacing.two,
-  },
-  stepper: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.four,
-  },
-  stepperButton: {
-    minHeight: 48,
-    minWidth: 48,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: Radii.medium,
-    borderWidth: 2,
-  },
-  toggleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  statusBlock: {
-    gap: Spacing.three,
-  },
-  cta: {
-    minHeight: 48,
-    paddingHorizontal: Spacing.four,
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "stretch",
-    borderRadius: Radii.medium,
-    borderWidth: 2,
-  },
-})

@@ -189,6 +189,8 @@ jest.mock("@expo/ui/swift-ui/modifiers", () => {
     accessibilityHint: (value: string) => modifier("accessibilityHint", value),
     accessibilityValue: (value: string) =>
       modifier("accessibilityValue", value),
+    keyboardType: (value: string) => modifier("keyboardType", value),
+    submitLabel: (value: string) => modifier("submitLabel", value),
     buttonStyle: (value: string) => modifier("buttonStyle", value),
     disabled: (value = true) => modifier("disabled", value),
     font: (value: unknown) => modifier("font", value),
@@ -264,11 +266,15 @@ jest.mock("@expo/ui/swift-ui", () => {
     const [value, setValue] = React.useState(props.text.get())
     const isDisabled = modifierValue(props.modifiers, "disabled") === true
     return React.createElement(TextInput, {
-      testID: props.testID,
+      testID:
+        props.testID ??
+        modifierValue(props.modifiers, "accessibilityIdentifier"),
       value,
       placeholder: props.placeholder,
       editable: !isDisabled,
       accessibilityLabel: modifierValue(props.modifiers, "accessibilityLabel"),
+      keyboardType: modifierValue(props.modifiers, "keyboardType"),
+      returnKeyType: modifierValue(props.modifiers, "submitLabel"),
       onChangeText: (nextValue: string) => {
         props.text.set(nextValue)
         setValue(nextValue)
@@ -276,6 +282,7 @@ jest.mock("@expo/ui/swift-ui", () => {
       },
     })
   }
+  Object.assign(TextField, { Placeholder: Stack })
   function Button(props: {
     testID?: string
     label?: string
@@ -480,6 +487,9 @@ jest.mock("@expo/ui/jetpack-compose", () => {
     onValueChange?: (value: string) => void
     modifiers?: { $type: string; value: unknown }[]
     children?: unknown
+    keyboardOptions?: { keyboardType?: string; imeAction?: string }
+    keyboardActions?: { onDone?: (value: string) => void }
+    isError?: boolean
   }) {
     const [value, setValue] = React.useState(props.value.get())
     return React.createElement(
@@ -489,6 +499,11 @@ jest.mock("@expo/ui/jetpack-compose", () => {
         testID: testID(props.modifiers),
         value,
         editable: props.enabled,
+        keyboardType: props.keyboardOptions?.keyboardType,
+        returnKeyType: props.keyboardOptions?.imeAction,
+        accessibilityState: { invalid: props.isError },
+        onSubmitEditing: () =>
+          props.keyboardActions?.onDone?.(props.value.get()),
         onChangeText: (nextValue: string) => {
           props.value.set(nextValue)
           setValue(nextValue)

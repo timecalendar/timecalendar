@@ -22,6 +22,14 @@ Settings pages are the native-list exception defined by ADR
 header and `/language-settings` push, while the page's SwiftUI Form or Material LazyColumn owns the
 only content scroll/insets. No nested native navigation container is allowed.
 
+Notification settings follows that exception completely. On iOS, `/notification-frequency` and
+`/notification-days-ahead` are Router pushes and `/notification-days-custom` is a Router-owned
+form sheet; each thin route renders exactly one SwiftUI Form. Android keeps the same parent route
+and presents chrome-owned Material dialogs. Feature code owns choices, validation, and commits,
+while Router remains the sole navigation/presentation owner and native chrome the sole scroll and
+inset owner (ADRs [056](./decisions/056-compose-native-dialog-behind-chrome.md) and
+[060](./decisions/060-platform-native-settings-composition.md)).
+
 The nested onboarding Stack follows the same compact defaults while its root container stays
 headerless. Its explicit inventory is `index`, `school`, `institution-name`, `programme`,
 `connect`, `export-guide/providers`, `export-guide/[pageIndex]`, `import`, `qr-scan`, `ical-url`,

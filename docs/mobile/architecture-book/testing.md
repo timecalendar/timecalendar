@@ -26,6 +26,12 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   storage disk across `jest.resetModules()` and recreate the preferences/runtime modules, proving
   dirty replay is rebuilt from canonical inputs rather than a persisted token or DTO. The generated
   plain PUT is exercised by mocking `customFetch`, never the network.
+- Native notification-control proof layers pure preset/validation tables, SwiftUI/Compose numeric
+  editor contracts, iOS child-route and Android dialog behavior, localized summaries, retained
+  off-state values, setter cardinality, route inventory, and a repository ownership contract.
+  Automation does not claim form-sheet geometry, keyboard reachability, Back/swipe feel, physical
+  phone/tablet layout, themes, large text, or VoiceOver/TalkBack quality; those remain owner-led
+  device acceptance under project decision D05.
 - **Mock the `@/db` seam via the shared `src/test-support/fake-db.ts` (`createFakeDb`).** Repository + restart tests `jest.mock("@/db", () => mockFake.module)` against one stateful, spy-instrumented Map-backed fake instead of hand-rolling the query-builder per file — its `spies` serve the query-shape assertions, its per-table stores survive `jest.resetModules()` for the on-disk-survives-a-restart proof, and `seed()`/`reset()` drive read rows and `beforeEach`. Consumers MUST name the instance `mock`-prefixed (`const mockFake = …`) so `babel-plugin-jest-hoist` lets the hoisted factory close over it.
 - **Checklist-progress tests prove both ownership and renderer identity.** The feature
   data suite asserts one projected UID-set live read, imported-row semantics, and
