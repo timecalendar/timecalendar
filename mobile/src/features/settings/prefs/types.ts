@@ -16,9 +16,9 @@ export type ThemePreference = "system" | "light" | "dark"
 export type LanguagePreference = "system" | "fr" | "en"
 export type CalendarView = "day" | "week" | "agenda"
 
-// The curated display-timezone union (timezone design D1): Europe/Paris + the
-// French outre-mer zones. A closed union keeps the parser total and the picker
-// buildable; extending the list later is additive.
+// Legacy identifiers retained as a regression inventory. The active preference
+// accepts exact identifiers from the generated worldwide catalog; this list is
+// not the validation boundary.
 export const CURATED_TIMEZONES = [
   "Europe/Paris",
   "America/Guadeloupe",
@@ -33,7 +33,13 @@ export const CURATED_TIMEZONES = [
 ] as const
 
 export type CuratedTimezone = (typeof CURATED_TIMEZONES)[number]
-export type TimezonePreference = "system" | CuratedTimezone
+export type TimezonePreference = "system" | (string & {})
+
+export type TimezonePreferenceRead =
+  | { readonly kind: "system" }
+  | { readonly kind: "available"; readonly identifier: string }
+  | { readonly kind: "unavailable"; readonly identifier: string }
+  | { readonly kind: "invalid"; readonly raw: string | undefined }
 
 // Flat namespaced storage keys (the i18n flat-key convention applied to storage
 // for greppability — the string in code is the string in the store).
@@ -41,6 +47,7 @@ export const SETTINGS_KEYS = {
   theme: "settings.themePreference",
   language: "settings.languagePreference",
   timezone: "settings.timezonePreference",
+  lastManualTimezone: "settings.lastManualTimezone",
   showWeekends: "settings.showWeekends",
   calendarView: "settings.calendarView",
   calendarZoomPixelsPerHour: "settings.calendarZoomPixelsPerHour",
@@ -67,11 +74,6 @@ export const parseThemePreference = makePreferenceParser<ThemePreference>(
 
 export const parseLanguagePreference = makePreferenceParser<LanguagePreference>(
   ["system", "fr", "en"],
-  "system",
-)
-
-export const parseTimezonePreference = makePreferenceParser<TimezonePreference>(
-  ["system", ...CURATED_TIMEZONES],
   "system",
 )
 

@@ -2,19 +2,19 @@
 
 ## ADDED Requirements
 
-### Requirement: Display-timezone preference persisted as a curated closed union
-The app SHALL persist a display-timezone preference under the `@/storage` seam as a flat namespaced key (`settings.timezonePreference`) in the settings prefs layer, typed as `"system" | <curated zone>` with default `"system"`. The curated zone set SHALL be exactly: `Europe/Paris`, `America/Guadeloupe`, `America/Martinique`, `America/Cayenne`, `America/Miquelon`, `Indian/Reunion`, `Indian/Mayotte`, `Pacific/Noumea`, `Pacific/Wallis`, `Pacific/Tahiti`. Reads SHALL go through a total parser that returns `"system"` for any unset, corrupt, legacy, or out-of-union value and never throws. A reactive hook SHALL expose the validated preference and a setter.
+### Requirement: Display-timezone preference preserves supplied worldwide intent
+The app SHALL persist `"system"` or an exact identifier supplied by the generated worldwide catalog under `settings.timezonePreference`, plus remembered manual intent under `settings.lastManualTimezone`. Reads SHALL distinguish available, runtime-unavailable, and corrupt intent without throwing or rewriting storage. Selection SHALL require catalog membership and current runtime support and SHALL preserve aliases byte-for-byte.
 
 #### Scenario: Preference round-trips
-- **WHEN** a curated zone is written through the store and read back
+- **WHEN** a runtime-supported catalog identifier or alias is written through the store and read back
 - **THEN** the read returns that zone
 
-#### Scenario: Invalid stored value falls back
-- **WHEN** the stored value is not `"system"` and not in the curated set (e.g. an arbitrary IANA string or garbage)
-- **THEN** the read returns `"system"` without throwing
+#### Scenario: Unsupported stored value is recoverable
+- **WHEN** a catalog identifier is unavailable in the current runtime
+- **THEN** effective resolution falls back without deleting or rewriting that identifier
 
 ### Requirement: Effective display zone resolved at one seam
-The settings prefs layer SHALL expose the effective display zone through a single resolution (`resolveTimezone`): an explicit curated preference wins; `"system"` resolves to the device IANA zone from `expo-localization`, falling back to `"Europe/Paris"` when the device yields none. Both an imperative read and a reactive hook SHALL be exposed; the reactive read SHALL update when the preference changes and, under `"system"`, when the device zone changes. No display or notification code SHALL resolve the zone by any other path.
+The settings prefs layer SHALL expose the effective display zone through a single resolution (`resolveTimezone`): an available explicit catalog preference wins; `"system"`, corrupt, or runtime-unavailable intent resolves to a supported device IANA zone from `expo-localization`, falling back to `"Europe/Paris"` when needed. Both an imperative read and a reactive hook SHALL be exposed; the reactive read SHALL update when the preference changes and, under `"system"`, when the device zone changes. No display or notification code SHALL resolve the zone by any other path.
 
 #### Scenario: Explicit preference wins
 - **WHEN** the preference is `Indian/Reunion` and the device zone is `America/Montreal`
@@ -71,8 +71,8 @@ The home greeting (good-morning/afternoon/evening selection and weekend variant)
 - **WHEN** it is 08:00 at the device and the display zone's wall clock reads 20:00
 - **THEN** the greeting is the morning variant
 
-### Requirement: Timezone picker in Settings
-The settings hub SHALL present a timezone destination row opening a dedicated picker screen (feature `ui/` component behind a thin `src/app/` route) offering "Automatic" plus the ten curated zones as a single-select list; selecting an option SHALL persist immediately through the preference hook with no separate confirm step. All strings, including zone display labels, SHALL exist in both `en.json` and `fr.json`, and controls SHALL carry accessible labels and selected state.
+### Requirement: Native worldwide timezone search in Settings
+The stable timezone settings route SHALL own automatic/manual mode and open a thin native chooser route. The chooser SHALL search the offline generated catalog by supplied city, country, localized exemplar, alias, and identifier; use Router-native search/presentation plus one inset-aware lazy list; and expose localized selected, unavailable, empty, and no-results states. Selection SHALL validate, persist exact active and remembered identifiers, and close once; dismissal without selection SHALL not mutate preferences.
 
 #### Scenario: Selecting a zone persists and applies
 - **WHEN** the user selects `La Réunion` in the picker

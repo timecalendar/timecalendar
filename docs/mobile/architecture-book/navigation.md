@@ -30,6 +30,11 @@ while Router remains the sole navigation/presentation owner and native chrome th
 inset owner (ADRs [056](./decisions/056-compose-native-dialog-behind-chrome.md) and
 [060](./decisions/060-platform-native-settings-composition.md)).
 
+`/timezone-settings` remains the deep-linkable native automatic/manual mode owner.
+`/timezone-chooser` is its thin root sibling: iOS uses a tall Router form sheet with native
+toolbar/header search adaptation, while Android uses a full-screen modal with native back. The
+chooser has no nested navigator; one inset-aware `FlatList` owns all result scrolling.
+
 The nested onboarding Stack follows the same compact defaults while its root container stays
 headerless. Its explicit inventory is `index`, `school`, `institution-name`, `programme`,
 `connect`, `export-guide/providers`, `export-guide/[pageIndex]`, `import`, `qr-scan`, `ical-url`,

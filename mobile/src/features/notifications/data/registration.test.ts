@@ -102,12 +102,12 @@ it("owns one lifecycle runtime and feeds every current-input trigger", async () 
     ready: true,
     revision: "2",
   })
-  mockZone.mockReturnValue("America/Montreal")
+  mockZone.mockReturnValue("Asia/Kathmandu")
   await view.rerender(undefined)
   expect(runtime.updateCalendars).toHaveBeenLastCalledWith(
     expect.objectContaining({ ready: true, revision: "2" }),
   )
-  expect(runtime.updateTimezone).toHaveBeenLastCalledWith("America/Montreal")
+  expect(runtime.updateTimezone).toHaveBeenLastCalledWith("Asia/Kathmandu")
 
   await view.unmount()
   expect(unsubscribeToken).toHaveBeenCalledTimes(1)

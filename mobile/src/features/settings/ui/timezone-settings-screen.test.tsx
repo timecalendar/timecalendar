@@ -1,88 +1,85 @@
-import { act, fireEvent, render } from "@testing-library/react-native"
-import { StyleSheet } from "react-native"
+import { fireEvent, render } from "@testing-library/react-native"
+import { router } from "expo-router"
 
-import { CURATED_TIMEZONES, SETTINGS_KEYS } from "@/features/settings/prefs"
-import { getString, remove } from "@/storage"
+import { clearTimezoneRuntimeSupportCache } from "@/features/settings/data"
+import { SETTINGS_KEYS } from "@/features/settings/prefs"
+import { getString, remove, setString } from "@/storage"
 
 import TimezoneSettingsScreen from "./timezone-settings-screen"
 
-// The screen sets its localized nav title via <Stack.Screen>; no navigator is
-// mounted here (the hidden-events test pattern).
 jest.mock("expo-router", () => ({
+  router: { push: jest.fn() },
   Stack: { Screen: () => null },
 }))
 
-// Proof that the timezone picker wiring resolves through the real i18n + prefs
-// (MMKV) trees (the appearance-settings proof pattern): @expo/ui's Picker is
-// mocked suite-wide at the native seam (jest/setup-expo-ui.ts), so the
-// screen → chrome wrapper → hook → @/storage path is genuinely exercised.
-
 afterEach(() => {
   remove(SETTINGS_KEYS.timezone)
+  remove(SETTINGS_KEYS.lastManualTimezone)
+  clearTimezoneRuntimeSupportCache()
+  jest.mocked(router.push).mockClear()
+  jest.restoreAllMocks()
 })
 
 describe("TimezoneSettingsScreen", () => {
-  it.each([
-    [800, 64, 768],
-    [1024, 64, 768],
-  ])("uses a capped readable lane at %ipx", async (width, gutter, maxWidth) => {
+  it("shows automatic mode with a readable effective zone", async () => {
     const view = await render(<TimezoneSettingsScreen />)
-    await act(() =>
-      fireEvent(view.getByTestId("timezone-layout-owner"), "layout", {
-        nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
-      }),
-    )
+    expect(view.getByText("Use device time zone")).toBeTruthy()
     expect(
-      StyleSheet.flatten(
-        view.getByTestId("timezone-layout-owner").props.children.props.style,
-      ),
-    ).toMatchObject({ maxWidth, paddingHorizontal: gutter })
-  })
-
-  it("renders the localized control label and all 11 options", async () => {
-    const { getByText, getByTestId } = await render(<TimezoneSettingsScreen />)
-
-    expect(getByText("Displayed time zone")).toBeTruthy()
-    expect(getByTestId("settings-timezone-picker-item-system")).toBeTruthy()
-    for (const zone of CURATED_TIMEZONES) {
-      expect(getByTestId(`settings-timezone-picker-item-${zone}`)).toBeTruthy()
-    }
-    // Zone labels come from the catalog (with the UTC offset), not raw keys.
-    expect(getByText("Automatic (device time zone)")).toBeTruthy()
-    expect(getByText("Réunion (UTC+4)")).toBeTruthy()
-  })
-
-  it("reflects the current preference (default 'system')", async () => {
-    const { getByTestId } = await render(<TimezoneSettingsScreen />)
-
-    expect(
-      getByTestId("settings-timezone-picker-item-system").props
-        .accessibilityState.selected,
+      view.getByTestId("settings-timezone-device-switch").props
+        .accessibilityState.checked,
     ).toBe(true)
+    expect(view.getByTestId("settings-timezone-effective-row")).toBeTruthy()
   })
 
-  it("selecting Automatic restores the system preference", async () => {
-    const { getByTestId } = await render(<TimezoneSettingsScreen />)
-
-    await fireEvent.press(
-      getByTestId("settings-timezone-picker-item-Indian/Reunion"),
+  it("turning manual mode on seeds and remembers a selectable zone", async () => {
+    const view = await render(<TimezoneSettingsScreen />)
+    await fireEvent.press(view.getByTestId("settings-timezone-device-switch"))
+    expect(getString(SETTINGS_KEYS.timezone)).toBeDefined()
+    expect(getString(SETTINGS_KEYS.lastManualTimezone)).toBe(
+      getString(SETTINGS_KEYS.timezone),
     )
-    await fireEvent.press(getByTestId("settings-timezone-picker-item-system"))
+    expect(view.getByTestId("settings-timezone-manual-row")).toBeTruthy()
+  })
 
+  it("retains the last manual identifier across automatic mode", async () => {
+    setString(SETTINGS_KEYS.timezone, "Asia/Kathmandu")
+    setString(SETTINGS_KEYS.lastManualTimezone, "Asia/Kathmandu")
+    const view = await render(<TimezoneSettingsScreen />)
+    await fireEvent.press(view.getByTestId("settings-timezone-device-switch"))
     expect(getString(SETTINGS_KEYS.timezone)).toBe("system")
+    expect(getString(SETTINGS_KEYS.lastManualTimezone)).toBe("Asia/Kathmandu")
   })
 
-  it("persists a selected zone immediately through the preference hook", async () => {
-    const { getByTestId } = await render(<TimezoneSettingsScreen />)
+  it("opens the worldwide chooser from manual mode", async () => {
+    setString(SETTINGS_KEYS.timezone, "Europe/Paris")
+    const view = await render(<TimezoneSettingsScreen />)
+    await fireEvent.press(view.getByTestId("settings-timezone-manual-row"))
+    expect(router.push).toHaveBeenCalledWith("/timezone-chooser")
+  })
 
-    await fireEvent.press(
-      getByTestId("settings-timezone-picker-item-Pacific/Noumea"),
-    )
+  it("shows corrupt stored intent and its effective fallback without rewriting", async () => {
+    setString(SETTINGS_KEYS.timezone, "corrupt-zone")
+    const view = await render(<TimezoneSettingsScreen />)
 
-    expect(getString(SETTINGS_KEYS.timezone)).toBe("Pacific/Noumea")
-    expect(
-      getByTestId("settings-timezone-picker-item-Pacific/Noumea").props
-        .accessibilityState.selected,
-    ).toBe(true)
+    expect(view.getByText("corrupt-zone")).toBeTruthy()
+    expect(view.getByText("Unavailable on this device")).toBeTruthy()
+    expect(view.getByTestId("settings-timezone-fallback-row")).toBeTruthy()
+    expect(getString(SETTINGS_KEYS.timezone)).toBe("corrupt-zone")
+  })
+
+  it("shows runtime-unavailable intent separately from its fallback", async () => {
+    const DateTimeFormat = Intl.DateTimeFormat
+    jest.spyOn(Intl, "DateTimeFormat").mockImplementation((locale, options) => {
+      if (options?.timeZone === "US/Eastern")
+        throw new RangeError("unsupported")
+      return new DateTimeFormat(locale, options)
+    })
+    setString(SETTINGS_KEYS.timezone, "US/Eastern")
+    const view = await render(<TimezoneSettingsScreen />)
+
+    expect(view.getByText("US/Eastern")).toBeTruthy()
+    expect(view.getByText("Unavailable on this device")).toBeTruthy()
+    expect(view.getByTestId("settings-timezone-fallback-row")).toBeTruthy()
+    expect(getString(SETTINGS_KEYS.timezone)).toBe("US/Eastern")
   })
 })

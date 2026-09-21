@@ -9,6 +9,8 @@ import {
 } from "@/storage"
 
 import {
+  classifyTimezonePreference,
+  parseTimezonePreference,
   resolveLanguage,
   resolveTimezone,
   setCalendarView,
@@ -25,10 +27,10 @@ import {
   parseCalendarZoomPixelsPerHour,
   parseLanguagePreference,
   parseThemePreference,
-  parseTimezonePreference,
   SETTINGS_KEYS,
   type ThemePreference,
   type TimezonePreference,
+  type TimezonePreferenceRead,
 } from "./types"
 
 // Reactive preference hooks. Each reads through the seam's reactive
@@ -94,6 +96,20 @@ export function useDisplayZone(): string {
   )
   const deviceZone = useCalendars()[0]?.timeZone ?? null
   return resolveTimezone(preference, deviceZone)
+}
+
+export function useTimezonePreferenceRead(): TimezonePreferenceRead {
+  return useParsedStoredString(
+    SETTINGS_KEYS.timezone,
+    classifyTimezonePreference,
+  )
+}
+
+export function useLastManualTimezoneRead(): TimezonePreferenceRead {
+  return useParsedStoredString(
+    SETTINGS_KEYS.lastManualTimezone,
+    classifyTimezonePreference,
+  )
 }
 
 export function useShowWeekendsPreference(): {

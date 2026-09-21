@@ -5,12 +5,12 @@
 ### Requirement: Typed theme and language preferences persisted behind the storage seam
 The app SHALL persist three user preferences — a **theme preference** (`"system" | "light" | "dark"`,
 default `"system"`), a **language preference** (`"system" | "fr" | "en"`, default `"system"`), and a
-**display-timezone preference** (`"system" | <curated IANA zone>`, default `"system"`; the curated
-set is defined by the `mobile-display-timezone` capability) —
+**display-timezone preference** (`"system" | <exact generated-catalog identifier>`, default
+`"system"`) with separate remembered manual intent —
 through the `@/storage` seam under flat namespaced keys, and SHALL NOT import the storage backend
 (`react-native-mmkv`) at the feature call site. Each preference SHALL be read through a validator
-that returns the `"system"` default for any value not in the preference's union (including unset,
-corrupt, or legacy values), so a read can never produce an invalid preference.
+that keeps reads total. Timezone reads classify catalog-valid, runtime-unavailable, and corrupt
+intent without rewriting raw storage; theme and language retain their closed-union defaults.
 
 #### Scenario: Feature code reads/writes preferences through the storage seam
 - **WHEN** the Settings preference store reads or writes a preference

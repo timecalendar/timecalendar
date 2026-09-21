@@ -86,13 +86,13 @@ describe("PersonalEventsList", () => {
     expect(row.props.accessibilityHint).toBe("Opens the event to edit")
   })
 
-  it("renders a 14:00 wall-clock entry as 14:00 under an explicit display zone", async () => {
-    // The D6 round-trip proof: an event created at 14:00 Réunion wall clock
+  it("renders a 14:00 wall-clock entry as 14:00 under a worldwide display zone", async () => {
+    // The D6 round-trip proof: an event created at 14:00 Kathmandu wall clock
     // (stored as its instant) reads back 14:00 in the list when the display
-    // zone is the explicit Indian/Reunion preference — machine-TZ-independent.
-    setTimezonePreference("Indian/Reunion")
-    const startsAt = fromZonedTime("2030-01-01T14:00:00", "Indian/Reunion")
-    const endsAt = fromZonedTime("2030-01-01T15:00:00", "Indian/Reunion")
+    // zone is the explicit Asia/Kathmandu preference — machine-TZ-independent.
+    setTimezonePreference("Asia/Kathmandu")
+    const startsAt = fromZonedTime("2030-01-01T14:00:00", "Asia/Kathmandu")
+    const endsAt = fromZonedTime("2030-01-01T15:00:00", "Asia/Kathmandu")
     mockUsePersonalEvents.mockReturnValue([
       {
         uid: "u1",

@@ -75,6 +75,13 @@ shared by Calendar Day and Week. Only finite values from 40 through 120 are vali
 malformed, non-finite or out-of-range reads resolve to the 60 px/hour default. Backend reset
 preserves the per-installation value, while reinstall may remove it.
 
+Display-timezone intent uses the environment-independent compatibility key
+`settings.timezonePreference`: `system` or an exact generated-catalog identifier. The separate
+environment-independent `settings.lastManualTimezone` remembers manual intent across automatic
+mode. Reads classify corrupt and runtime-unavailable values without rewriting them; only an exact
+catalog identifier supported by the current `Intl` runtime may update both keys. Effective
+resolution uses a supported device zone and then `Europe/Paris` as non-destructive fallback.
+
 Notification synchronization persists only the backend-bound boolean
 `notifications.sync.dirty` and non-negative safe-integer
 `notifications.sync.generation`. New intent advances generation and marks dirty synchronously
@@ -129,7 +136,7 @@ an installed database is a data incident, and the mocked seam cannot catch one.
 ## Backend environment reset
 
 - `@/storage` centrally enumerates and classifies every known MMKV key. Theme, language,
-  display-timezone, Calendar view, Calendar zoom, Show weekends, and Changelog acknowledgement survive; selected backend and the temporary
+  display-timezone and remembered manual value, Calendar view, Calendar zoom, Show weekends, and Changelog acknowledgement survive; selected backend and the temporary
   reset journal are controls; school/group selection, hidden events, notification values,
   remembered feedback e-mail and persisted Query data are backend-bound. Unknown keys default to
   backend-bound and are removed. The export-guide LKG registry is also backend-bound and is removed

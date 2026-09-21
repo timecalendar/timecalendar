@@ -28,7 +28,7 @@ decision changes; use Git for its history.
 | [032](./032-calendar-kit-vendor-patch-live-anchor.md)                 | Patch calendar-kit's live scroll anchor                                                           |
 | [033](./033-calendar-renderer-module-boundary.md)                     | Own the calendar renderer boundary inside the calendar feature                                    |
 | [034](./034-settings-third-tab-identity.md)                           | Use Settings as the canonical third tab and secondary-destination hub                             |
-| [035](./035-display-timezone-preference.md)                           | Resolve the curated display-timezone preference at one seam                                       |
+| [035](./035-display-timezone-preference.md)                           | Resolve worldwide display-timezone intent at one seam                                              |
 | [036](./036-native-onboarding-pager.md)                               | Use the native pager bridge for onboarding                                                        |
 | [037](./037-self-hosted-ota-runtime.md)                               | Self-host signed OTA updates and apply them at foreground boundaries                              |
 | [038](./038-isolate-maestro-flow-lifecycles.md)                       | Isolate each Maestro flow in a fresh CLI process                                                  |

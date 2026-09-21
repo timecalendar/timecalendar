@@ -1148,16 +1148,16 @@ describe("CalendarScreen display-zone heading", () => {
 
   it("formats the selected date in the effective display zone", async () => {
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-16" })
-    setTimezonePreference("Pacific/Noumea")
+    setTimezonePreference("Asia/Kathmandu")
     await render(<CalendarScreen />)
 
     await waitFor(() => {
       expect(
         screen.getByRole("adjustable", {
           name: formatFullDay(
-            new Date("2026-06-14T13:00:00.000Z"),
+            new Date("2026-06-14T18:15:00.000Z"),
             "en",
-            "Pacific/Noumea",
+            "Asia/Kathmandu",
           ),
         }),
       ).toBeOnTheScreen()
