@@ -1,5 +1,6 @@
 import * as Localization from "expo-localization"
 
+import * as Storage from "@/storage"
 import { remove, setNumber, setString } from "@/storage"
 
 import {
@@ -7,10 +8,15 @@ import {
   getCalendarZoomPixelsPerHour,
   getInitialLocale,
   getLanguagePreference,
+  getLastManualTimezone,
   getShowWeekends,
   getThemePreference,
   getTimezonePreference,
+  readTimezonePreference,
   resolveTimezone,
+  restoreManualTimezone,
+  selectManualTimezone,
+  setAutomaticTimezone,
   setCalendarView,
   setCalendarZoomPixelsPerHour,
   setLanguagePreference,
@@ -30,6 +36,7 @@ describe("settings prefs store", () => {
     remove(SETTINGS_KEYS.theme)
     remove(SETTINGS_KEYS.language)
     remove(SETTINGS_KEYS.timezone)
+    remove(SETTINGS_KEYS.lastManualTimezone)
     remove(SETTINGS_KEYS.showWeekends)
     remove(SETTINGS_KEYS.calendarView)
     remove(SETTINGS_KEYS.calendarZoomPixelsPerHour)
@@ -134,20 +141,57 @@ describe("settings prefs store", () => {
   })
 
   describe("timezone preference", () => {
-    it("round-trips a curated zone", () => {
+    it("round-trips an exact catalog zone and alias", () => {
       setTimezonePreference("Indian/Reunion")
       expect(getTimezonePreference()).toBe("Indian/Reunion")
+      setTimezonePreference("US/Eastern")
+      expect(getTimezonePreference()).toBe("US/Eastern")
       setTimezonePreference("system")
+      expect(getTimezonePreference()).toBe("system")
+      expect(getLastManualTimezone()).toBe("US/Eastern")
+    })
+
+    it("accepts worldwide catalog values and classifies corrupt input without rewriting", () => {
+      expect(getTimezonePreference()).toBe("system")
+      setString(SETTINGS_KEYS.timezone, "America/New_York")
+      expect(getTimezonePreference()).toBe("America/New_York")
+      setString(SETTINGS_KEYS.timezone, "garbage")
+      expect(readTimezonePreference()).toEqual({
+        kind: "invalid",
+        raw: "garbage",
+      })
       expect(getTimezonePreference()).toBe("system")
     })
 
-    it("reads an unset / out-of-union value as the system default", () => {
+    it("restores remembered manual intent and seeds first use from the device", () => {
+      expect(restoreManualTimezone("Asia/Kathmandu")).toBe("Asia/Kathmandu")
+      expect(getLastManualTimezone()).toBe("Asia/Kathmandu")
+      setAutomaticTimezone()
       expect(getTimezonePreference()).toBe("system")
-      // An arbitrary IANA zone outside the curated union must not leak through.
-      setString(SETTINGS_KEYS.timezone, "America/New_York")
-      expect(getTimezonePreference()).toBe("system")
-      setString(SETTINGS_KEYS.timezone, "garbage")
-      expect(getTimezonePreference()).toBe("system")
+      expect(restoreManualTimezone("Europe/Paris")).toBe("Asia/Kathmandu")
+    })
+
+    it("rejects a non-catalog selection without mutating either key", () => {
+      expect(selectManualTimezone("Europe/Paris")).toBe(true)
+      expect(selectManualTimezone("Not/A_Zone")).toBe(false)
+      expect(getTimezonePreference()).toBe("Europe/Paris")
+      expect(getLastManualTimezone()).toBe("Europe/Paris")
+    })
+
+    it("restores both keys when persistence throws", () => {
+      setString(SETTINGS_KEYS.timezone, "Europe/Paris")
+      setString(SETTINGS_KEYS.lastManualTimezone, "Europe/Paris")
+      const setStringSpy = jest
+        .spyOn(Storage, "setString")
+        .mockImplementationOnce(() => {
+          throw new Error("write failed")
+        })
+      expect(() => selectManualTimezone("Asia/Kathmandu")).toThrow(
+        "write failed",
+      )
+      expect(getTimezonePreference()).toBe("Europe/Paris")
+      expect(getLastManualTimezone()).toBe("Europe/Paris")
+      setStringSpy.mockRestore()
     })
   })
 

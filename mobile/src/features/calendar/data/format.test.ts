@@ -151,6 +151,12 @@ describe("formatNarrowWeekday", () => {
 })
 
 describe("formatTimeRange / formatTime", () => {
+  it("uses the event instant for a worldwide compatibility alias", () => {
+    const winter = new Date("2026-01-15T12:00:00.000Z")
+    const summer = new Date("2026-07-15T12:00:00.000Z")
+    expect(formatTime(winter, "en", "US/Eastern")).toBe("07:00")
+    expect(formatTime(summer, "en", "US/Eastern")).toBe("08:00")
+  })
   it("re-projects the instants into the display zone (24-hour, zero-padded)", () => {
     const start = new Date("2026-06-15T07:00:00.000Z")
     const end = new Date("2026-06-15T11:30:00.000Z")

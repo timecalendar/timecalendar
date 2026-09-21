@@ -103,6 +103,12 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
 
 ## CI topology
 
+The time-zone catalog generator has a deterministic `--check` mode. Focused mobile proofs cover
+exact aliases, localized/accent-normalized search, runtime availability, fractional current
+offsets, preference memory, the Router native boundary, one lazy-list owner, and unchanged event
+and notification resolver seams. The unchanged server validator has a representative compatibility
+table. Native sheet/search placement remains project-owner device evidence under D05.
+
 - `test-mobile` fetches full Git history, runs the deterministic E2E harness regression, installs
   the mobile lockfile, blocks new React Doctor warnings/errors relative to `origin/main`, then runs
   gen-drift, tsc, lint, and Jest. The full React Doctor inventory remains the advisory command and

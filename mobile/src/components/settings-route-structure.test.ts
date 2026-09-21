@@ -104,6 +104,20 @@ describe("Settings route structure", () => {
     ).toContain('title: t("settings.language.label")')
   })
 
+  it("keeps the worldwide timezone chooser thin and natively presented", () => {
+    expect(route("timezone-chooser.tsx").trim()).toBe(
+      'export { TimezoneChooserScreen as default } from "@/features/settings/ui"',
+    )
+    const rootLayout = route("_layout.tsx")
+    expect(rootLayout).toContain('name="timezone-chooser"')
+    expect(rootLayout).toContain(
+      'Platform.OS === "ios" ? "formSheet" : "fullScreenModal"',
+    )
+    expect(rootLayout).toContain("sheetAllowedDetents: [0.85, 1]")
+    expect(rootLayout).toContain("sheetGrabberVisible: true")
+    expect(rootLayout).toContain('<Stack.Screen name="timezone-settings" />')
+  })
+
   it("keeps Activity as a thin feature route registered in the root Stack", () => {
     expect(route("activity.tsx").trim()).toBe(
       'export { ActivityScreen as default } from "@/features/activity/ui"',

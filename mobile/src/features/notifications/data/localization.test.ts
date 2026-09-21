@@ -1,6 +1,10 @@
 import * as Localization from "expo-localization"
 
-import { setLanguagePreference, SETTINGS_KEYS } from "@/features/settings/prefs"
+import {
+  setLanguagePreference,
+  setTimezonePreference,
+  SETTINGS_KEYS,
+} from "@/features/settings/prefs"
 
 import { getEffectiveLocale, getEffectiveTimezone } from "./localization"
 
@@ -25,6 +29,8 @@ afterEach(() => {
   calendarsSpy.mockReset()
   localesSpy.mockReset()
   remove(SETTINGS_KEYS.language)
+  remove(SETTINGS_KEYS.timezone)
+  remove(SETTINGS_KEYS.lastManualTimezone)
 })
 
 describe("getEffectiveLocale", () => {
@@ -41,6 +47,11 @@ describe("getEffectiveLocale", () => {
 })
 
 describe("getEffectiveTimezone", () => {
+  it("preserves an exact worldwide alias through the shared resolver", () => {
+    calendarsSpy.mockReturnValue(deviceCalendars("Europe/Paris"))
+    setTimezonePreference("US/Eastern")
+    expect(getEffectiveTimezone()).toBe("US/Eastern")
+  })
   it("returns the device IANA zone", () => {
     calendarsSpy.mockReturnValue(deviceCalendars("America/New_York"))
     expect(getEffectiveTimezone()).toBe("America/New_York")

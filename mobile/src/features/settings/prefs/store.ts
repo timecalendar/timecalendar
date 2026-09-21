@@ -1,10 +1,15 @@
 import { getCalendars } from "expo-localization"
 
+import {
+  hasTimezoneRecord,
+  isTimezoneRuntimeSupported,
+} from "@/features/settings/data"
 import { detectLocale, type SupportedLocale } from "@/i18n/detect-locale"
 import {
   getBoolean,
   getNumber,
   getString,
+  remove,
   setBoolean,
   setNumber,
   setString,
@@ -17,10 +22,10 @@ import {
   parseCalendarZoomPixelsPerHour,
   parseLanguagePreference,
   parseThemePreference,
-  parseTimezonePreference,
   SETTINGS_KEYS,
   type ThemePreference,
   type TimezonePreference,
+  type TimezonePreferenceRead,
 } from "./types"
 
 // Imperative get/set for the three preferences over the @/storage seam. A pure
@@ -45,11 +50,103 @@ export function setLanguagePreference(preference: LanguagePreference): void {
 }
 
 export function getTimezonePreference(): TimezonePreference {
-  return parseTimezonePreference(getString(SETTINGS_KEYS.timezone))
+  const read = readTimezonePreference()
+  return read.kind === "available" || read.kind === "unavailable"
+    ? read.identifier
+    : "system"
 }
 
 export function setTimezonePreference(preference: TimezonePreference): void {
-  setString(SETTINGS_KEYS.timezone, preference)
+  if (preference === "system") {
+    setAutomaticTimezone()
+    return
+  }
+  selectManualTimezone(preference)
+}
+
+export function classifyTimezonePreference(
+  raw: string | undefined,
+): TimezonePreferenceRead {
+  if (raw === "system" || raw === undefined) return { kind: "system" }
+  if (!hasTimezoneRecord(raw)) return { kind: "invalid", raw }
+  return isTimezoneRuntimeSupported(raw)
+    ? { kind: "available", identifier: raw }
+    : { kind: "unavailable", identifier: raw }
+}
+
+export function readTimezonePreference(): TimezonePreferenceRead {
+  return classifyTimezonePreference(getString(SETTINGS_KEYS.timezone))
+}
+
+export function getLastManualTimezone(): string | undefined {
+  return getString(SETTINGS_KEYS.lastManualTimezone)
+}
+
+function restoreRaw(key: string, value: string | undefined): void {
+  if (value === undefined) remove(key)
+  else setString(key, value)
+}
+
+function writeTimezonePair(active: string, remembered: string): void {
+  const previousActive = getString(SETTINGS_KEYS.timezone)
+  const previousRemembered = getString(SETTINGS_KEYS.lastManualTimezone)
+  try {
+    setString(SETTINGS_KEYS.timezone, active)
+    setString(SETTINGS_KEYS.lastManualTimezone, remembered)
+  } catch (error) {
+    restoreRaw(SETTINGS_KEYS.timezone, previousActive)
+    restoreRaw(SETTINGS_KEYS.lastManualTimezone, previousRemembered)
+    throw error
+  }
+}
+
+export function selectManualTimezone(identifier: string): boolean {
+  if (
+    !hasTimezoneRecord(identifier) ||
+    !isTimezoneRuntimeSupported(identifier)
+  ) {
+    return false
+  }
+  writeTimezonePair(identifier, identifier)
+  return true
+}
+
+export function setAutomaticTimezone(): void {
+  const current = readTimezonePreference()
+  if (current.kind === "available") {
+    writeTimezonePair("system", current.identifier)
+  } else {
+    setString(SETTINGS_KEYS.timezone, "system")
+  }
+}
+
+function selectableFallback(deviceZone: string | null): string {
+  if (
+    deviceZone !== null &&
+    hasTimezoneRecord(deviceZone) &&
+    isTimezoneRuntimeSupported(deviceZone)
+  )
+    return deviceZone
+  return "Europe/Paris"
+}
+
+export function restoreManualTimezone(
+  deviceZone: string | null = getCalendars()[0]?.timeZone ?? null,
+): string {
+  const remembered = getLastManualTimezone()
+  if (
+    remembered &&
+    hasTimezoneRecord(remembered) &&
+    isTimezoneRuntimeSupported(remembered)
+  ) {
+    setString(SETTINGS_KEYS.timezone, remembered)
+    return remembered
+  }
+  const fallback = selectableFallback(deviceZone)
+  setString(SETTINGS_KEYS.timezone, fallback)
+  if (remembered === undefined)
+    setString(SETTINGS_KEYS.lastManualTimezone, fallback)
+  return fallback
 }
 
 export function getShowWeekends(): boolean {
@@ -91,7 +188,13 @@ export function resolveTimezone(
   preference: TimezonePreference,
   deviceZone: string | null = getCalendars()[0]?.timeZone ?? null,
 ): string {
-  return preference === "system" ? (deviceZone ?? "Europe/Paris") : preference
+  if (
+    preference !== "system" &&
+    hasTimezoneRecord(preference) &&
+    isTimezoneRuntimeSupported(preference)
+  )
+    return preference
+  return selectableFallback(deviceZone)
 }
 
 // Resolve a language preference to a concrete locale: an explicit "fr"/"en"

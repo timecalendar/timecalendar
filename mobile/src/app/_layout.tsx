@@ -153,6 +153,16 @@ export default function RootLayout() {
                 shown for the accessible back affordance + the screen's own
                 title. Deep-linkable: timecalendar-dev://timezone-settings. */}
               <Stack.Screen name="timezone-settings" />
+              <Stack.Screen
+                name="timezone-chooser"
+                options={{
+                  presentation:
+                    Platform.OS === "ios" ? "formSheet" : "fullScreenModal",
+                  sheetAllowedDetents: [0.85, 1],
+                  sheetInitialDetentIndex: 0,
+                  sheetGrabberVisible: true,
+                }}
+              />
               <Stack.Screen name="personal-event-form" />
               {/* The standalone personal-events list, relocated off the Home tab
                 (ADR 022 — the Home tab is now the today view). A Stack sibling of

@@ -1,90 +1,67 @@
 import { Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
-import { StyleSheet, View } from "react-native"
 
-import { Host, Picker } from "@/components/chrome"
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
 import {
-  CURATED_TIMEZONES,
-  type CuratedTimezone,
-  useTimezonePreference,
+  NativeSettingsHost,
+  NativeSettingsRow,
+  NativeSettingsSection,
+  NativeSettingsSwitchRow,
+} from "@/components/chrome"
+import {
+  restoreManualTimezone,
+  setAutomaticTimezone,
+  useDisplayZone,
+  useTimezonePreferenceRead,
 } from "@/features/settings/prefs"
-import { Spacing } from "@/theme"
-
-// The display-timezone picker screen (timezone design D8) — PRESENTATIONAL
-// (70% floor): the appearance-settings <Picker>/chrome pattern scaled to 11
-// entries ("Automatic" + the 10 curated zones). It owns NO preference logic —
-// selecting an option drives useTimezonePreference's setter immediately (no
-// apply step; every zone-threaded surface re-renders through the reactive
-// seam). The route (src/app/timezone-settings.tsx) is a thin re-export.
-
-// Zone → typed label key (the closed-union analog of the theme/language item
-// labels; a template-literal key would defeat the typed-key catalog).
-const ZONE_LABEL_KEYS = {
-  "Europe/Paris": "settings.timezone.zone.paris",
-  "America/Guadeloupe": "settings.timezone.zone.guadeloupe",
-  "America/Martinique": "settings.timezone.zone.martinique",
-  "America/Cayenne": "settings.timezone.zone.guyane",
-  "America/Miquelon": "settings.timezone.zone.miquelon",
-  "Indian/Reunion": "settings.timezone.zone.reunion",
-  "Indian/Mayotte": "settings.timezone.zone.mayotte",
-  "Pacific/Noumea": "settings.timezone.zone.noumea",
-  "Pacific/Wallis": "settings.timezone.zone.wallis",
-  "Pacific/Tahiti": "settings.timezone.zone.tahiti",
-} as const satisfies Record<CuratedTimezone, string>
 
 export default function TimezoneSettingsScreen() {
   const { t } = useTranslation()
-  const timezone = useTimezonePreference()
+  const preference = useTimezonePreferenceRead()
+  const displayZone = useDisplayZone()
+  const automatic = preference.kind === "system"
+  const manualIdentifier =
+    preference.kind === "available" || preference.kind === "unavailable"
+      ? preference.identifier
+      : displayZone
+
   return (
     <>
       <Stack.Screen options={{ title: t("settings.timezone.title") }} />
-      <RootPage
-        lane="readable"
-        testID="timezone-layout-owner"
-        contentContainerStyle={styles.content}
-      >
-        <View style={styles.control}>
-          <ThemedText type="smallBold">
-            {t("settings.timezone.label")}
-          </ThemedText>
-          {/* testID on an RN-core View — the @expo/ui Android Picker drops the
-              prop (see appearance-settings-screen.tsx); the inner testID feeds
-              the Jest mock's per-item ids. */}
-          <View testID="settings-timezone-picker">
-            <Host matchContents>
-              <Picker
-                testID="settings-timezone-picker"
-                appearance="menu"
-                selectedValue={timezone.preference}
-                onValueChange={timezone.setPreference}
-              >
-                <Picker.Item
-                  label={t("settings.timezone.automatic")}
-                  value="system"
-                />
-                {CURATED_TIMEZONES.map((zone) => (
-                  <Picker.Item
-                    key={zone}
-                    label={t(ZONE_LABEL_KEYS[zone])}
-                    value={zone}
-                  />
-                ))}
-              </Picker>
-            </Host>
-          </View>
-        </View>
-      </RootPage>
+      <NativeSettingsHost>
+        <NativeSettingsSection testID="settings-timezone-section">
+          <NativeSettingsSwitchRow
+            label={t("settings.timezone.useDevice")}
+            value={automatic}
+            testID="settings-timezone-device-row"
+            switchTestID="settings-timezone-device-switch"
+            onValueChange={(next) =>
+              next ? setAutomaticTimezone() : restoreManualTimezone()
+            }
+          />
+          {automatic ? (
+            <NativeSettingsRow
+              kind="value"
+              label={t("settings.timezone.effective")}
+              value={displayZone}
+              testID="settings-timezone-effective-row"
+            />
+          ) : (
+            <NativeSettingsRow
+              kind="navigation"
+              label={t("settings.timezone.manual")}
+              value={manualIdentifier}
+              badge={
+                preference.kind === "unavailable"
+                  ? t("settings.timezone.unavailable")
+                  : undefined
+              }
+              hint={t("settings.timezone.openChooserHint")}
+              href="/timezone-chooser"
+              testID="settings-timezone-manual-row"
+            />
+          )}
+        </NativeSettingsSection>
+      </NativeSettingsHost>
     </>
   )
 }
-
-const styles = StyleSheet.create({
-  content: {
-    gap: Spacing.four,
-  },
-  control: {
-    gap: Spacing.two,
-  },
-})

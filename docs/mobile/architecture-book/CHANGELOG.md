@@ -15,6 +15,13 @@
   [D05](../../projects/native-settings/decisions/D05-schedule-and-acceptance.md), remain the
   load-bearing decisions.
 
+## 2026-09-21 — Worldwide native time-zone search
+
+- Replaced the curated display-zone picker with a generated offline tzdb/CLDR catalog, exact-ID
+  search, separate remembered manual intent, and non-destructive runtime fallback.
+- Kept one effective-zone seam and unchanged event-instant, floating all-day, and notification
+  semantics; added a native Router chooser with one inset-aware lazy-list owner (ADR 035).
+
 ## 2026-09-21 — Durable notification preference synchronization
 
 - One app-lifetime notification runtime now owns token listening, current-snapshot subscription
