@@ -138,6 +138,8 @@ describe("storage seam", () => {
       setString(STORAGE_KEYS.selectedBackendEnvironment, "preprod")
       setString(STORAGE_KEYS.backendResetJournal, "journal")
       setString(STORAGE_KEYS.schoolId, "school-1")
+      setBoolean(STORAGE_KEYS.notificationSyncDirty, true)
+      setNumber(STORAGE_KEYS.notificationSyncGeneration, 3)
       setString(STORAGE_KEYS.exportGuideLkgRegistry, "catalogue")
       setString("future.unclassified", "must be removed")
 
@@ -150,6 +152,8 @@ describe("storage seam", () => {
       expect(getString(STORAGE_KEYS.selectedBackendEnvironment)).toBe("preprod")
       expect(getString(STORAGE_KEYS.backendResetJournal)).toBe("journal")
       expect(getString(STORAGE_KEYS.schoolId)).toBeUndefined()
+      expect(getBoolean(STORAGE_KEYS.notificationSyncDirty)).toBeUndefined()
+      expect(getNumber(STORAGE_KEYS.notificationSyncGeneration)).toBeUndefined()
       expect(getString(STORAGE_KEYS.exportGuideLkgRegistry)).toBeUndefined()
       expect(getString("future.unclassified")).toBeUndefined()
     })

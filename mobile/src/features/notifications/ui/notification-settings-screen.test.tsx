@@ -20,7 +20,7 @@ const mockUseNotificationPreferences = useNotificationPreferences as jest.Mock
 const setFrequency = jest.fn()
 const setNbDaysAhead = jest.fn()
 const setIsActive = jest.fn()
-const register = jest.fn().mockResolvedValue(undefined)
+const retry = jest.fn()
 
 function mockPrefs(overrides: Record<string, unknown> = {}) {
   mockUseNotificationPreferences.mockReturnValue({
@@ -30,10 +30,8 @@ function mockPrefs(overrides: Record<string, unknown> = {}) {
     setFrequency,
     setNbDaysAhead,
     setIsActive,
-    register,
-    isPending: false,
-    isError: false,
-    reset: jest.fn(),
+    status: { state: "acknowledged" },
+    retry,
     ...overrides,
   })
 }
@@ -134,14 +132,38 @@ describe("NotificationSettingsScreen", () => {
   })
 
   it("renders the accessible failure surface + Retry and re-fires register", async () => {
-    mockPrefs({ isError: true })
+    mockPrefs({ status: { state: "error" } })
     const { getByText, getByTestId } = await render(
       <NotificationSettingsScreen />,
     )
     expect(
-      getByText("Could not save your notification preferences."),
+      getByText(
+        "Notification settings are saved on this device but not yet remotely.",
+      ),
     ).toBeTruthy()
     fireEvent.press(getByTestId("notifications-retry"))
-    expect(register).toHaveBeenCalledTimes(1)
+    expect(retry).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    ["pending", undefined, "Saving notification settings…"],
+    [
+      "waiting",
+      "registration",
+      "Waiting for notification registration before saving remotely.",
+    ],
+    [
+      "waiting",
+      "calendars",
+      "Waiting for calendars to load before saving remotely.",
+    ],
+    ["acknowledged", undefined, "Notification settings saved remotely."],
+  ])("renders shared %s status", async (state, reason, message) => {
+    mockPrefs({ status: reason === undefined ? { state } : { state, reason } })
+    const { getByText, queryByTestId } = await render(
+      <NotificationSettingsScreen />,
+    )
+    expect(getByText(message)).toBeTruthy()
+    expect(queryByTestId("notifications-retry")).toBeNull()
   })
 })

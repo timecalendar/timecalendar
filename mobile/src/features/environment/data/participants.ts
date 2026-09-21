@@ -4,7 +4,4 @@
 // registration point if calendar gains module-scoped state later.
 export function resetCalendarRuntimeState(): void {}
 
-// Notification preferences are MMKV-owned and cleared by the classified
-// storage participant. Registration hooks are unmounted during reset and a
-// reload creates a fresh registration lifecycle on the target backend.
-export function resetNotificationRuntimeState(): void {}
+export { resetNotificationRuntimeState } from "@/features/notifications/data"

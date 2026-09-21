@@ -75,6 +75,14 @@ shared by Calendar Day and Week. Only finite values from 40 through 120 are vali
 malformed, non-finite or out-of-range reads resolve to the 60 px/hour default. Backend reset
 preserves the per-installation value, while reinstall may remove it.
 
+Notification synchronization persists only the backend-bound boolean
+`notifications.sync.dirty` and non-negative safe-integer
+`notifications.sync.generation`. New intent advances generation and marks dirty synchronously
+before a notification preference write. Missing or malformed values decode to `false` and `0`;
+backend reset removes both. Tokens, calendar identifiers, locale/zone signatures, DTOs, errors,
+retry timestamps, and request queues are never stored; every retry rebuilds from canonical current
+sources.
+
 The versioned export-guide LKG registry is a backend-bound rebuildable cache behind `@/storage`.
 Each logical record is isolated by requested locale, client schema, and active or exact-version
 selector, then revalidates its strong ETag, response/body locale, resolved version, timestamp, and

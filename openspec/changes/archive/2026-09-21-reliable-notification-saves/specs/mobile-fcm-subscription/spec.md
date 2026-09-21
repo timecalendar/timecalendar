@@ -1,26 +1,4 @@
-# mobile-fcm-subscription Specification
-
-## Purpose
-TBD - created by archiving change add-mobile-fcm-subscription. Update Purpose after archive.
-## Requirements
-### Requirement: Subscription preferences persisted locally as the source of truth
-The app SHALL persist the notification-subscription preferences `frequency` (`immediately` | `hourly` | `daily`), `nbDaysAhead` (1..30), and `isActive` (boolean) in the MMKV `@/storage` seam under flat keys, as the **single source of truth**, because the server subscription API is PUT-only (create-or-update with NO GET) and therefore has no read-back. Reads SHALL go through total parsers that return the default for any unset, corrupt, legacy, or out-of-range value and SHALL never throw; `nbDaysAhead` SHALL be clamped to the range [1, 30] on read. The defaults SHALL be `frequency = "immediately"`, `nbDaysAhead = 7`, `isActive = true`. The preference store SHALL be the only place the notifications feature touches `@/storage`.
-
-#### Scenario: A stored preference reads back
-- **WHEN** a preference is written through the store and read again
-- **THEN** the read returns the written value
-
-#### Scenario: Defaults on an unset store
-- **WHEN** no preference has been written
-- **THEN** `frequency` reads `"immediately"`, `nbDaysAhead` reads `7`, and `isActive` reads `true`
-
-#### Scenario: A corrupt or out-of-range value falls back / clamps
-- **WHEN** a stored value is outside its allowed set (an unknown frequency, a non-boolean, or an `nbDaysAhead` below 1 or above 30)
-- **THEN** the read returns the default (or the clamped 1..30 bound) without throwing
-
-#### Scenario: The store survives a restart
-- **WHEN** a preference is written, the store module is reloaded, and the preference is read
-- **THEN** the previously written value is returned
+## MODIFIED Requirements
 
 ### Requirement: FCM token registered with the backend via the generated PUT client
 The app SHALL synchronize the device's notification subscription with the server through the already-generated plain `PUT /notification-subscription` function over the single `customFetch` mutator. One notification-feature runtime SHALL assemble `NotificationSubscriptionCreate` fresh for each attempt from the local preference store (`frequency` / `nbDaysAhead` / `isActive`), the current non-null FCM token, the loaded `user_calendars` rows' server ids, and the effective locale and display timezone accessors. The generated client SHALL be imported only in the feature's `data/` sublayer and SHALL NOT be regenerated or hand-edited. No screen hook SHALL own a generated mutation instance.
@@ -40,28 +18,6 @@ The app SHALL synchronize the device's notification subscription with the server
 #### Scenario: Loaded empty calendars are valid
 - **WHEN** the calendar live query is loaded and contains no rows
 - **THEN** the PUT is sent with `calendarIds: []`
-
-### Requirement: Subscription-preferences sub-screen bound to the local store
-The app SHALL provide a preferences sub-screen that lets the user set `frequency` (immediately / hourly / daily), `nbDaysAhead` (a bounded 1..30 control), and `isActive` (a toggle), each bound to the local preference store and each committed change driving an idempotent re-PUT. The screen SHALL live in the notifications feature `ui/` sublayer with a thin `src/app/` route re-export (route-structure rule) reached as a Stack sibling of `(tabs)` from a Profile entry link. All controls SHALL carry accessible labels and roles, and all user-facing strings SHALL exist in both `en.json` and `fr.json`.
-
-#### Scenario: The screen reflects the local store
-- **WHEN** the preferences screen mounts
-- **THEN** each control shows the value from the local preference store
-
-#### Scenario: A control change persists and re-PUTs
-- **WHEN** the user changes a control
-- **THEN** the local store is updated and an idempotent PUT is sent with the new DTO
-
-### Requirement: Failed subscription PUT is recorded and surfaced for retry
-A rejected current-generation subscription PUT SHALL be recorded through the `@/firebase` unknown-error seam with a static notification context and no token, calendar identifier, DTO, input signature, or payload. The shared runtime SHALL surface retryable error on the preferences screen and SHALL retain dirty intent. A stale-generation failure SHALL perform no status, retry, acknowledgment, or diagnostic side effect for newer work. Reactive preference reads SHALL remain total and infallible.
-
-#### Scenario: Current failure records and surfaces
-- **WHEN** the current subscription PUT rejects
-- **THEN** one sanitized error is recorded and shared status exposes Retry without clearing dirty intent
-
-#### Scenario: Stale failure is inert
-- **WHEN** an older request rejects after generation or runtime identity changed
-- **THEN** it cannot replace current status, schedule a retry, or clear acknowledgment
 
 ### Requirement: Re-registration on preference change and on current-input change
 The single app-lifetime notification runtime SHALL invalidate older acknowledgments whenever a notification preference, FCM token, loaded calendar revision, effective locale, or effective display timezone changes. A preference mutation SHALL mark durable intent dirty before writing the local preference. Token, locale, zone, and calendar triggers SHALL feed the same owner and SHALL NOT create independent request lifecycles or duplicate token listeners. Startup SHALL invalidate once as an idempotent full-state backstop.
@@ -93,6 +49,17 @@ The app SHALL preserve the existing notification permission request timing and b
 - **WHEN** the notification settings route closes while synchronization is pending or failed
 - **THEN** the root runtime, durable intent, and shared status remain active
 
+### Requirement: Failed subscription PUT is recorded and surfaced for retry
+A rejected current-generation subscription PUT SHALL be recorded through the `@/firebase` unknown-error seam with a static notification context and no token, calendar identifier, DTO, input signature, or payload. The shared runtime SHALL surface retryable error on the preferences screen and SHALL retain dirty intent. A stale-generation failure SHALL perform no status, retry, acknowledgment, or diagnostic side effect for newer work. Reactive preference reads SHALL remain total and infallible.
+
+#### Scenario: Current failure records and surfaces
+- **WHEN** the current subscription PUT rejects
+- **THEN** one sanitized error is recorded and shared status exposes Retry without clearing dirty intent
+
+#### Scenario: Stale failure is inert
+- **WHEN** an older request rejects after generation or runtime identity changed
+- **THEN** it cannot replace current status, schedule a retry, or clear acknowledgment
+
 ### Requirement: Subscription synchronization wiring proven in CI; real server push is device-only
 Automated tests SHALL use an injected transport with controlled promises, recreated storage/runtime instances, fake timers, and root integration mounts to prove dirty-before-write crash recovery, restart replay, A-to-B coalescing, stale success/failure, token rotation, unloaded versus loaded-empty calendars, route unmount/remount, foreground/manual recovery, retry exhaustion, disposal, and reset during a request. A contract proof SHALL establish one PUT source and one token listener. Confirming real server delivery, OS authorization, or exact notification arrival remains device-only and SHALL NOT be inferred from these tests.
 
@@ -107,6 +74,8 @@ Automated tests SHALL use an injected transport with controlled promises, recrea
 #### Scenario: Real delivery is not asserted in CI
 - **WHEN** the mobile test gate runs
 - **THEN** it makes no claim that the OS authorized notifications or a real server push reached a device
+
+## ADDED Requirements
 
 ### Requirement: Durable latest-state synchronization is serialized and generation-safe
 The runtime SHALL persist only backend-bound dirty and monotonic-generation bookkeeping, SHALL keep at most one client request active, and SHALL coalesce changes during a request into the next latest current snapshot. It SHALL persist no FCM token, calendar identifier set, DTO, request payload, or job queue. A success SHALL clear dirty intent only when its captured generation and live runtime/environment epoch still equal the current values; failure SHALL never clear dirty intent.
@@ -148,3 +117,11 @@ The notifications feature SHALL expose one route-independent status distinguishi
 - **WHEN** token or calendar readiness is missing
 - **THEN** the runtime schedules no retry timer and resumes only when a prerequisite/input/startup/foreground/manual trigger occurs
 
+## RENAMED Requirements
+
+- FROM: `### Requirement: Re-registration on preference change and on token refresh`
+- TO: `### Requirement: Re-registration on preference change and on current-input change`
+- FROM: `### Requirement: First registration triggered after permission grant and token acquisition`
+- TO: `### Requirement: First registration triggered after existing permission request behavior`
+- FROM: `### Requirement: Subscription write wiring proven in CI; real server push is device-only`
+- TO: `### Requirement: Subscription synchronization wiring proven in CI; real server push is device-only`

@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Switch, View } from "react-native"
 import { Host, Picker } from "@/components/chrome"
 import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
+import { WriteErrorNotice } from "@/components/write-error-notice"
 import {
   type NotificationFrequency,
   useNotificationPreferences,
@@ -36,8 +37,8 @@ export default function NotificationSettingsScreen() {
     setFrequency,
     setNbDaysAhead,
     setIsActive,
-    register,
-    isError,
+    status,
+    retry,
   } = useNotificationPreferences()
   return (
     <>
@@ -143,23 +144,31 @@ export default function NotificationSettingsScreen() {
           />
         </View>
 
-        {isError && (
-          <View style={styles.errorBlock}>
+        <View
+          style={styles.statusBlock}
+          testID={`notifications-sync-${status.state}`}
+        >
+          {status.state === "error" ? (
+            <WriteErrorNotice message={t("notifications.sync.error")} />
+          ) : (
             <ThemedText
               themeColor="textSecondary"
               accessibilityLiveRegion="polite"
-              accessibilityRole="alert"
             >
-              {t("notifications.error.message")}
+              {status.state === "pending"
+                ? t("notifications.sync.pending")
+                : status.state === "waiting"
+                  ? t(`notifications.sync.waiting.${status.reason}`)
+                  : t("notifications.sync.acknowledged")}
             </ThemedText>
+          )}
+          {status.state === "error" && (
             <Pressable
               testID="notifications-retry"
               accessibilityRole="button"
               accessibilityLabel={t("notifications.error.retryLabel")}
               hitSlop={Spacing.two}
-              onPress={() => {
-                void register().catch(() => {})
-              }}
+              onPress={retry}
               style={[
                 styles.cta,
                 {
@@ -172,8 +181,8 @@ export default function NotificationSettingsScreen() {
                 {t("notifications.error.retry")}
               </ThemedText>
             </Pressable>
-          </View>
-        )}
+          )}
+        </View>
       </RootPage>
     </>
   )
@@ -204,7 +213,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  errorBlock: {
+  statusBlock: {
     gap: Spacing.three,
   },
   cta: {
