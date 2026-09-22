@@ -1,6 +1,6 @@
 import { useCalendars } from "expo-localization"
-import { router } from "expo-router"
-import { useEffect, useRef } from "react"
+import { router, useLocalSearchParams } from "expo-router"
+import { useEffect, useMemo, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import {
   AccessibilityInfo,
@@ -13,13 +13,16 @@ import { SafeAreaView } from "react-native-safe-area-context"
 
 import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { ThemedView } from "@/components/themed-view"
+import { isDevVariant } from "@/config/variant"
 import {
+  buildCalendarTimelinePresentation,
   DEFAULT_PIXELS_PER_HOUR,
   eventRoute,
   formatFullDay,
   formatMonthYear,
   MAX_PIXELS_PER_HOUR,
   MIN_PIXELS_PER_HOUR,
+  planCalendarThreePageRange,
   resolveLocale,
   useCalendarEvents,
   useCalendarTimelinePresentation,
@@ -31,6 +34,11 @@ import {
 } from "@/features/calendar/renderer"
 import { useChecklistProgress } from "@/features/event-checklists"
 import { useShowWeekendsPreference } from "@/features/settings/prefs"
+import {
+  ACCESSIBILITY_PROBE_INITIAL_VERTICAL_OFFSET,
+  accessibilityProbeFixture,
+  recordAccessibilityProbeDiagnostic,
+} from "@/test-support/owned-calendar/accessibility-probe"
 import { Spacing, useTheme } from "@/theme"
 
 import { AgendaList } from "./agenda-list"
@@ -40,6 +48,11 @@ import { CalendarScreenStatus } from "./calendar-screen/calendar-screen-status"
 import { useCalendarScreenController } from "./calendar-screen/use-calendar-screen-controller"
 
 export function CalendarScreen() {
+  const { accessibilityProbe } = useLocalSearchParams<{
+    accessibilityProbe?: string
+  }>()
+  const isAccessibilityProbe =
+    isDevVariant() && accessibilityProbe === "timed-events"
   const { t, i18n } = useTranslation()
   const theme = useTheme()
   const locale = resolveLocale(i18n.language)
@@ -81,7 +94,7 @@ export function CalendarScreen() {
     announcedRevision.current = acceptedTransitionRevision
     AccessibilityInfo.announceForAccessibility(timelineHeading)
   }, [acceptedTransitionRevision, timelineHeading])
-  const events = useCalendarEvents(range)
+  const storedEvents = useCalendarEvents(range)
   const timeline = useCalendarTimelinePresentation({
     anchor: selectedDate,
     mode: timelineMode,
@@ -90,12 +103,47 @@ export function CalendarScreen() {
     showWeekends,
     generation: rendererGeneration,
   })
+  const probeEvents = useMemo(
+    () => (isAccessibilityProbe ? accessibilityProbeFixture() : null),
+    [isAccessibilityProbe],
+  )
+  const events = probeEvents === null ? storedEvents : [...probeEvents]
+  const probePresentation = useMemo(
+    () =>
+      probeEvents === null
+        ? null
+        : buildCalendarTimelinePresentation({
+            range: planCalendarThreePageRange({
+              anchor: selectedDate,
+              mode: timelineMode,
+              displayZone,
+              firstWeekday,
+              showWeekends,
+            }),
+            generation: rendererGeneration,
+            events: probeEvents,
+          }),
+    [
+      displayZone,
+      firstWeekday,
+      probeEvents,
+      rendererGeneration,
+      selectedDate,
+      showWeekends,
+      timelineMode,
+    ],
+  )
   const eventUids = events.map((event) => event.id)
   const checklistProgress = useChecklistProgress(eventUids)
   const { sync, isSyncing, isError } = useSyncCalendars()
   const agendaLayout = useAdaptiveLayout("standard")
 
-  const onPressEvent = (uid: string) => router.push(eventRoute(uid))
+  const onPressEvent = (uid: string) => {
+    if (isAccessibilityProbe) {
+      recordAccessibilityProbeDiagnostic({ kind: "route", uid })
+    }
+    router.push(eventRoute(uid))
+  }
   const onAdd = () => router.push("/personal-event-form")
   const onSync = () => {
     void sync()
@@ -183,7 +231,11 @@ export function CalendarScreen() {
               showWeekends={showWeekends}
               currentDate={now}
               uses24HourClock={uses24HourClock}
-              initialVerticalOffset={verticalOffset}
+              initialVerticalOffset={
+                isAccessibilityProbe
+                  ? ACCESSIBILITY_PROBE_INITIAL_VERTICAL_OFFSET
+                  : verticalOffset
+              }
               initialPixelsPerHour={pixelsPerHour}
               generation={rendererGeneration}
               revisionFloor={transitionRevision}
@@ -204,8 +256,13 @@ export function CalendarScreen() {
                   )
                 }
               }}
-              presentation={timeline.presentation}
+              presentation={probePresentation ?? timeline.presentation}
               onEventPress={onPressEvent}
+              onProbeDiagnostic={
+                isAccessibilityProbe
+                  ? recordAccessibilityProbeDiagnostic
+                  : undefined
+              }
             />
           )}
           {Platform.OS === "android" && <CalendarAddFab onPress={onAdd} />}

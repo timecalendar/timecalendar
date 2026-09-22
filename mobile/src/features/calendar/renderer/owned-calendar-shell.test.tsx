@@ -198,6 +198,7 @@ describe("OwnedCalendarShell", () => {
 
   it("renders a timed class at its actual time and opens its original UID", async () => {
     const onEventPress = jest.fn()
+    const onProbeDiagnostic = jest.fn()
     const event = {
       version: 1,
       kind: "timed",
@@ -233,10 +234,20 @@ describe("OwnedCalendarShell", () => {
         {...props}
         presentation={presentation}
         onEventPress={onEventPress}
+        onProbeDiagnostic={onProbeDiagnostic}
       />,
     )
 
     const anchor = screen.getByTestId("owned-calendar-event-original-42")
+    await fireEvent(anchor, "layout", {
+      nativeEvent: { layout: { x: 4, y: 600, width: 128, height: 60 } },
+    })
+    expect(onProbeDiagnostic).toHaveBeenCalledWith({
+      kind: "target-frame",
+      identity: "synced:original-42",
+      order: 0,
+      frame: { x: 4, y: 600, width: 128, height: 60 },
+    })
     expect(StyleSheet.flatten(anchor.props.style)).toMatchObject({
       top: 600,
       height: 60,

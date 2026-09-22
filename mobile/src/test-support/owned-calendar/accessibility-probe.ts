@@ -4,6 +4,22 @@ import type {
 } from "@/features/calendar/data"
 
 export const ACCESSIBILITY_PROBE_ANCHOR = new Date("2026-06-15T12:00:00.000Z")
+export const ACCESSIBILITY_PROBE_INITIAL_VERTICAL_OFFSET = 9 * 60
+
+export type AccessibilityProbeDiagnostic =
+  | {
+      kind: "target-frame"
+      identity: string
+      order: number
+      frame: Readonly<{ x: number; y: number; width: number; height: number }>
+    }
+  | { kind: "route"; uid: string }
+
+export function recordAccessibilityProbeDiagnostic(
+  diagnostic: AccessibilityProbeDiagnostic,
+): void {
+  console.log(`[calendar-accessibility-probe] ${JSON.stringify(diagnostic)}`)
+}
 
 function event(
   uid: string,

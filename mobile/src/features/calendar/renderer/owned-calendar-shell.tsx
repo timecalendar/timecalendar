@@ -21,6 +21,13 @@ import type {
   CalendarZoomSettlement,
 } from "./owned-calendar-zoom"
 
+export type OwnedCalendarProbeDiagnostic = {
+  kind: "target-frame"
+  identity: string
+  order: number
+  frame: Readonly<{ x: number; y: number; width: number; height: number }>
+}
+
 type OwnedCalendarShellProps = {
   heading: string
   mode: CalendarTimelineMode
@@ -42,6 +49,9 @@ type OwnedCalendarShellProps = {
   onTransitionCancelled: (revision: number) => void
   presentation?: CalendarTimelinePresentationV1
   onEventPress?: (uid: string) => void
+  onProbeDiagnostic?:
+    | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
+    | undefined
 }
 
 export type OwnedCalendarShellHandle = {
@@ -119,6 +129,7 @@ export const OwnedCalendarShell = forwardRef<
           )}
           t={t}
           onEventPress={onEventPress}
+          onProbeDiagnostic={props.onProbeDiagnostic}
           isEventActivationBlocked={coordinator.isEventActivationBlocked}
         />
       </GestureDetector>
