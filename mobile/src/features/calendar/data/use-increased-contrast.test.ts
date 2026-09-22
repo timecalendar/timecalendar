@@ -39,4 +39,61 @@ describe("useCalendarIncreasedContrast", () => {
     expect(result.current).toBe(false)
     expect(read).not.toHaveBeenCalled()
   })
+
+  it("falls back to false when the supported platform read rejects", async () => {
+    const read = jest
+      .spyOn(AccessibilityInfo, "isHighTextContrastEnabled")
+      .mockRejectedValue(new Error("unavailable"))
+    jest.spyOn(AccessibilityInfo, "addEventListener").mockReturnValue({
+      remove: jest.fn(),
+    })
+    const { result } = await renderHook(() =>
+      useCalendarIncreasedContrast("android"),
+    )
+    await waitFor(() => expect(read).toHaveBeenCalledTimes(1))
+    expect(result.current).toBe(false)
+  })
+
+  it("ignores a supported-platform read that settles after cleanup", async () => {
+    let resolveRead: ((value: boolean) => void) | undefined
+    jest.spyOn(AccessibilityInfo, "isHighTextContrastEnabled").mockReturnValue(
+      new Promise<boolean>((resolve) => {
+        resolveRead = resolve
+      }),
+    )
+    const remove = jest.fn()
+    jest
+      .spyOn(AccessibilityInfo, "addEventListener")
+      .mockReturnValue({ remove })
+    const view = await renderHook(() => useCalendarIncreasedContrast("android"))
+    await view.unmount()
+    await act(() => resolveRead?.(true))
+    expect(remove).toHaveBeenCalledTimes(1)
+  })
+
+  it("ignores a supported-platform failure after cleanup", async () => {
+    let rejectRead: ((reason: Error) => void) | undefined
+    jest.spyOn(AccessibilityInfo, "isHighTextContrastEnabled").mockReturnValue(
+      new Promise<boolean>((_resolve, reject) => {
+        rejectRead = reject
+      }),
+    )
+    jest.spyOn(AccessibilityInfo, "addEventListener").mockReturnValue({
+      remove: jest.fn(),
+    })
+    const view = await renderHook(() => useCalendarIncreasedContrast("android"))
+    await view.unmount()
+    await act(() => rejectRead?.(new Error("late unavailable")))
+  })
+
+  it("uses the runtime platform by default", async () => {
+    jest
+      .spyOn(AccessibilityInfo, "isHighTextContrastEnabled")
+      .mockResolvedValue(false)
+    jest.spyOn(AccessibilityInfo, "addEventListener").mockReturnValue({
+      remove: jest.fn(),
+    })
+    const { result } = await renderHook(() => useCalendarIncreasedContrast())
+    expect(result.current).toBe(false)
+  })
 })
