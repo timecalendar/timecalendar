@@ -36,7 +36,7 @@
 
 ## 7. Get local green and exact-head CI proof
 
-- [ ] 7.1 Run every edited Jest suite by exact path, including overlap/property, presentation, target-conflict, renderer, Calendar screen, i18n, fixture, and repository-contract tests; run focused coverage for introduced pure logic and record suite/test/coverage results.
+- [x] 7.1 Run every edited Jest suite by exact path, including overlap/property, presentation, target-conflict, renderer, Calendar screen, i18n, fixture, and repository-contract tests; run focused coverage for introduced pure logic and record suite/test/coverage results.
 - [ ] 7.2 From `mobile/`, run `npx tsc --noEmit`, `npm run lint`, scoped `npx prettier --check` over every changed source/test/catalog/Markdown file, `npm run react-doctor:changed`, and `npm test -- --coverage`; resolve failures without suppressions, timeout inflation, or weakened assertions.
 - [ ] 7.3 Run `npx openspec validate read-simultaneous-classes-side-by-side --strict`, the disclosure scan, and any established Maestro selector/harness static checks affected by fixture or selector changes. Keep the existing three top-level journeys and record that this host provides no physical-device evidence.
 - [ ] 7.4 Push the exact implementation head and require green CI on that same revision. Record check names/results plus the identified fabricated density/frame/node evidence and any missing native-device evidence before handing to Simplifier; no separate QA or human merge gate applies.
