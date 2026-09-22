@@ -51,6 +51,7 @@ import {
 import { useTheme } from "@/theme"
 
 import type { CalendarPage } from "./owned-calendar-coordinator"
+import type { OwnedCalendarProbeDiagnostic } from "./owned-calendar-shell"
 import {
   AnimatedPagerView,
   CENTER_PAGE,
@@ -154,6 +155,7 @@ export function OwnedCalendarCanvas({
   nowLabel,
   t,
   onEventPress,
+  onProbeDiagnostic,
   isEventActivationBlocked,
 }: {
   heading: string
@@ -191,6 +193,9 @@ export function OwnedCalendarCanvas({
   nowLabel: string
   t: TFunction
   onEventPress: (uid: string) => void
+  onProbeDiagnostic?:
+    | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
+    | undefined
   isEventActivationBlocked: () => boolean
 }) {
   const theme = useTheme()
@@ -323,6 +328,7 @@ export function OwnedCalendarCanvas({
                   locale={locale}
                   displayZone={displayZone}
                   onEventPress={onEventPress}
+                  onProbeDiagnostic={onProbeDiagnostic}
                   isEventActivationBlocked={isEventActivationBlocked}
                 />
               ))}
@@ -368,6 +374,7 @@ function CalendarPageCanvas({
   locale,
   displayZone,
   onEventPress,
+  onProbeDiagnostic,
   isEventActivationBlocked,
 }: {
   page: CalendarPage
@@ -380,6 +387,9 @@ function CalendarPageCanvas({
   locale: AppLocale
   displayZone: string
   onEventPress: (uid: string) => void
+  onProbeDiagnostic?:
+    | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
+    | undefined
   isEventActivationBlocked: () => boolean
 }) {
   const theme = useTheme()
@@ -425,6 +435,7 @@ function CalendarPageCanvas({
         pixelsPerHour={pixelsPerHour}
         settledPixelsPerHour={settledPixelsPerHour}
         onEventPress={onEventPress}
+        onProbeDiagnostic={onProbeDiagnostic}
         isEventActivationBlocked={isEventActivationBlocked}
         t={t}
       />
@@ -454,6 +465,7 @@ function CalendarTiles({
   pixelsPerHour,
   settledPixelsPerHour,
   onEventPress,
+  onProbeDiagnostic,
   isEventActivationBlocked,
   t,
 }: {
@@ -463,6 +475,9 @@ function CalendarTiles({
   pixelsPerHour: SharedValue<number>
   settledPixelsPerHour: number
   onEventPress: (uid: string) => void
+  onProbeDiagnostic?:
+    | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
+    | undefined
   isEventActivationBlocked: () => boolean
   t: TFunction
 }) {
@@ -508,6 +523,10 @@ function CalendarTiles({
                     pixelsPerHour={pixelsPerHour}
                     settledPixelsPerHour={settledPixelsPerHour}
                     accessible={page.direction === 0}
+                    accessibilityOrder={accessibilityEntries?.findIndex(
+                      (entry) => entry.key === tile.key,
+                    )}
+                    onProbeDiagnostic={onProbeDiagnostic}
                     onPress={() => onEventPress(tile.identity.uid)}
                     t={t}
                   />
@@ -628,6 +647,8 @@ function TimedCalendarTile({
   pixelsPerHour,
   settledPixelsPerHour,
   accessible,
+  accessibilityOrder,
+  onProbeDiagnostic,
   onPress,
   t,
 }: {
@@ -637,6 +658,10 @@ function TimedCalendarTile({
   pixelsPerHour: SharedValue<number>
   settledPixelsPerHour: number
   accessible: boolean
+  accessibilityOrder: number | undefined
+  onProbeDiagnostic?:
+    | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
+    | undefined
   onPress: () => void
   t: TFunction
 }) {
@@ -725,6 +750,19 @@ function TimedCalendarTile({
     <Animated.View
       testID={`owned-calendar-event-${tile.identity.uid}`}
       pointerEvents="box-none"
+      onLayout={
+        accessible &&
+        accessibilityOrder !== undefined &&
+        accessibilityOrder >= 0
+          ? ({ nativeEvent }) =>
+              onProbeDiagnostic?.({
+                kind: "target-frame",
+                identity: tile.key,
+                order: accessibilityOrder,
+                frame: nativeEvent.layout,
+              })
+          : undefined
+      }
       style={[
         styles.tileAnchor,
         horizontalRectangleStyle({ left: tile.startX, right: tile.endX }),
