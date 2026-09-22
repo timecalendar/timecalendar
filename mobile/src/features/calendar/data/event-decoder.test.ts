@@ -99,6 +99,12 @@ describe("calendar event row decoders", () => {
         startsAt: "2026-09-14T01:00:00.000Z",
       }),
       synced({
+        uid: "empty-day",
+        allDay: true,
+        startsAt: "2026-09-14T00:00:00.000Z",
+        endsAt: "2026-09-14T00:00:00.000Z",
+      }),
+      synced({
         uid: "backwards-day",
         allDay: true,
         endsAt: "2026-09-13T00:00:00.000Z",
@@ -114,7 +120,7 @@ describe("calendar event row decoders", () => {
       "invalid-start": 1,
       "invalid-end": 1,
       "reversed-range": 1,
-      "invalid-date-range": 2,
+      "invalid-date-range": 3,
     })
 
     const personalResult = decodePersonalEventRows([

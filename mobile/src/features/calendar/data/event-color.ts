@@ -68,12 +68,15 @@ function contrastingEndpoint(background: Rgb): Rgb {
 }
 
 function boundaryAccent(source: Rgb, canvas: Rgb, foreground: Rgb): Rgb {
-  if (contrastRatio(source, canvas) >= 3) return source
-  for (let step = 5; step <= 100; step += 5) {
-    const mixed = compositeRgb(foreground, source, step / 100)
-    if (contrastRatio(mixed, canvas) >= 3) return mixed
+  let accent = source
+  for (
+    let step = 5;
+    contrastRatio(accent, canvas) < 3 && step <= 100;
+    step += 5
+  ) {
+    accent = compositeRgb(foreground, source, step / 100)
   }
-  return foreground
+  return accent
 }
 
 export function resolveEventAppearance(input: {
