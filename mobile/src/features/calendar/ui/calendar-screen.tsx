@@ -1,6 +1,6 @@
 import { useCalendars } from "expo-localization"
 import { router, useLocalSearchParams } from "expo-router"
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import {
   AccessibilityInfo,
@@ -103,36 +103,22 @@ export function CalendarScreen() {
     showWeekends,
     generation: rendererGeneration,
   })
-  const probeEvents = useMemo(
-    () => (isAccessibilityProbe ? accessibilityProbeFixture() : null),
-    [isAccessibilityProbe],
-  )
+  const probeEvents = isAccessibilityProbe ? accessibilityProbeFixture() : null
   const events = probeEvents === null ? storedEvents : [...probeEvents]
-  const probePresentation = useMemo(
-    () =>
-      probeEvents === null
-        ? null
-        : buildCalendarTimelinePresentation({
-            range: planCalendarThreePageRange({
-              anchor: selectedDate,
-              mode: timelineMode,
-              displayZone,
-              firstWeekday,
-              showWeekends,
-            }),
-            generation: rendererGeneration,
-            events: probeEvents,
+  const probePresentation =
+    probeEvents === null
+      ? null
+      : buildCalendarTimelinePresentation({
+          range: planCalendarThreePageRange({
+            anchor: selectedDate,
+            mode: timelineMode,
+            displayZone,
+            firstWeekday,
+            showWeekends,
           }),
-    [
-      displayZone,
-      firstWeekday,
-      probeEvents,
-      rendererGeneration,
-      selectedDate,
-      showWeekends,
-      timelineMode,
-    ],
-  )
+          generation: rendererGeneration,
+          events: probeEvents,
+        })
   const eventUids = events.map((event) => event.id)
   const checklistProgress = useChecklistProgress(eventUids)
   const { sync, isSyncing, isError } = useSyncCalendars()
