@@ -9,6 +9,7 @@ import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import { WriteErrorNotice } from "@/components/write-error-notice"
 import {
+  displayEventTitle,
   formatTimeRange,
   resolveLocale,
   useSyncedEvents,
@@ -52,7 +53,7 @@ export function HiddenEventsScreen() {
       return [
         {
           uid,
-          title: event.title,
+          title: displayEventTitle(event.title, t("calendar.event.noTitle")),
           time: formatTimeRange(
             event.startsAt,
             event.endsAt,
@@ -62,7 +63,7 @@ export function HiddenEventsScreen() {
         },
       ]
     })
-  }, [uidHiddenEvents, syncedEvents, locale, displayZone])
+  }, [uidHiddenEvents, syncedEvents, locale, displayZone, t])
 
   const isEmpty = namedHiddenEvents.length === 0 && uidEntries.length === 0
 

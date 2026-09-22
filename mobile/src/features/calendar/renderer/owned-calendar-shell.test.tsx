@@ -228,8 +228,8 @@ describe("OwnedCalendarShell", () => {
         screen.getByTestId("owned-calendar-event-original-42").props.style,
       ),
     ).toMatchObject({
-      top: 400,
-      height: 40,
+      top: 398,
+      height: 44,
     })
     await view.rerender(
       <OwnedCalendarShell
@@ -308,7 +308,7 @@ describe("OwnedCalendarShell", () => {
     const tile = screen.getByRole("button", {
       name: `${title}, 10:00 – 11:00 ${location}`,
     })
-    expect(StyleSheet.flatten(tile.props.style)).toMatchObject({
+    expect(StyleSheet.flatten(tile.children[0]!.props.style)).toMatchObject({
       borderRadius: 2,
       overflow: "hidden",
     })
@@ -316,7 +316,7 @@ describe("OwnedCalendarShell", () => {
     const titleText = screen.getByText(title)
     const locationText = screen.getByText(location)
     expect(titleText.props).toMatchObject({ accessible: false })
-    expect(titleText.props.numberOfLines).toBeUndefined()
+    expect(titleText.props.numberOfLines).toBe(1)
     expect(titleText.props.ellipsizeMode).toBeUndefined()
     expect(StyleSheet.flatten(titleText.props.style)).toMatchObject({
       fontSize: 11,
@@ -324,7 +324,7 @@ describe("OwnedCalendarShell", () => {
       fontWeight: 600,
     })
     expect(locationText.props).toMatchObject({ accessible: false })
-    expect(locationText.props.numberOfLines).toBeUndefined()
+    expect(locationText.props.numberOfLines).toBe(1)
     expect(locationText.props.ellipsizeMode).toBeUndefined()
     expect(StyleSheet.flatten(locationText.props.style)).toMatchObject({
       fontSize: 11,

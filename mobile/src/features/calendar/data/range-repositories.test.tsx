@@ -52,6 +52,18 @@ describe("bounded local calendar repositories", () => {
         endsAt: "2026-09-17T01:00:00.000Z",
       },
       {
+        uid: "point-at-from",
+        allDay: false,
+        startsAt: "2026-09-14T00:00:00.000Z",
+        endsAt: "2026-09-14T00:00:00.000Z",
+      },
+      {
+        uid: "point-at-to",
+        allDay: false,
+        startsAt: "2026-09-17T00:00:00.000Z",
+        endsAt: "2026-09-17T00:00:00.000Z",
+      },
+      {
         uid: "date-only",
         allDay: true,
         startsAt: "2026-09-16T00:00:00.000Z",
@@ -73,6 +85,7 @@ describe("bounded local calendar repositories", () => {
     )
     expect(result.current.timedRows.map((row) => row.uid)).toEqual([
       "covers-from",
+      "point-at-from",
     ])
     expect(result.current.dateOnlyRows.map((row) => row.uid)).toEqual([
       "date-only",
@@ -106,12 +119,25 @@ describe("bounded local calendar repositories", () => {
         startsAt: "2026-09-17T00:00:00.000Z",
         endsAt: "2026-09-17T01:00:00.000Z",
       },
+      {
+        uid: "point-at-from",
+        startsAt: "2026-09-14T00:00:00.000Z",
+        endsAt: "2026-09-14T00:00:00.000Z",
+      },
+      {
+        uid: "point-at-to",
+        startsAt: "2026-09-17T00:00:00.000Z",
+        endsAt: "2026-09-17T00:00:00.000Z",
+      },
     ])
 
     const { result } = await renderHook(() =>
       usePersonalEventRowsInRange(instant),
     )
-    expect(result.current.rows.map((row) => row.uid)).toEqual(["inside"])
+    expect(result.current.rows.map((row) => row.uid)).toEqual([
+      "inside",
+      "point-at-from",
+    ])
     expect(mockFake.spies.from).toHaveBeenCalledWith(
       mockFake.module.personalEvents,
     )

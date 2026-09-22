@@ -325,5 +325,20 @@ describe("bounded calendar events seam", () => {
         to: new Date("2026-09-16T00:00:00.000Z"),
       }),
     ).toBe(false)
+
+    const point = {
+      ...dateOnly,
+      kind: "timed",
+      allDay: false,
+      startsAt: range.from,
+      endsAt: range.from,
+    } as const
+    expect(intersectsRange(point, range)).toBe(true)
+    expect(
+      intersectsRange(
+        { ...point, startsAt: range.to, endsAt: range.to },
+        range,
+      ),
+    ).toBe(false)
   })
 })

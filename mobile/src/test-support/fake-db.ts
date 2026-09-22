@@ -145,7 +145,9 @@ export function createFakeDb(config: {
     if (cond === null) return true
     const value =
       typeof ("val" in cond ? cond.val : undefined) === "string" &&
-      String((cond as { val?: unknown }).val).includes(".")
+      /^[A-Za-z][A-Za-z0-9_]*\.[A-Za-z]/.test(
+        String((cond as { val?: unknown }).val),
+      )
         ? row[fieldOf(String((cond as { val: unknown }).val))]
         : (cond as { val?: unknown }).val
     switch (cond.op) {
