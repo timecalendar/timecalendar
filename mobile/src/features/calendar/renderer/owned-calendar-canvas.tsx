@@ -39,6 +39,7 @@ import {
   HOURS_COLUMN_WIDTH,
   minuteToPixel,
   planTargetConflicts,
+  projectCalendarAccessibilityEntries,
   type TimedTileV1,
   type WeekColumn,
   type WeekDirection,
@@ -472,9 +473,16 @@ function CalendarTiles({
   } | null>(null)
   const chooserItems = chooser?.page === page ? chooser.items : null
   const platform = Platform.OS === "ios" ? "ios" : "android"
+  const accessibilityEntries =
+    page.direction === 0 ? projectCalendarAccessibilityEntries(page) : null
   const targetConflictComponents = page.columns.map((column) =>
     planTargetConflicts({
-      items: column.tiles,
+      items:
+        accessibilityEntries === null
+          ? column.tiles
+          : accessibilityEntries
+              .filter((entry) => entry.dateKey === column.key)
+              .map((entry) => entry.tile),
       pixelsPerHour: settledPixelsPerHour,
       platform,
     }),
@@ -500,7 +508,6 @@ function CalendarTiles({
                     pixelsPerHour={pixelsPerHour}
                     settledPixelsPerHour={settledPixelsPerHour}
                     accessible={page.direction === 0}
-                    interactive={component.items.length === 1}
                     onPress={() => onEventPress(tile.identity.uid)}
                     t={t}
                   />
@@ -511,14 +518,9 @@ function CalendarTiles({
                   <Pressable
                     key={`conflict:${component.key}`}
                     testID={`owned-calendar-conflict-${component.key}`}
-                    accessible={page.direction === 0}
-                    accessibilityElementsHidden={page.direction !== 0}
-                    importantForAccessibility={
-                      page.direction === 0 ? "yes" : "no-hide-descendants"
-                    }
-                    accessibilityRole="button"
-                    accessibilityLabel={t("calendar.event.chooser.trigger")}
-                    accessibilityHint={t("calendar.event.chooser.hint")}
+                    accessible={false}
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
                     onPress={() => {
                       if (!isEventActivationBlocked())
                         setChooser({ page, items: component.items })
@@ -626,7 +628,6 @@ function TimedCalendarTile({
   pixelsPerHour,
   settledPixelsPerHour,
   accessible,
-  interactive,
   onPress,
   t,
 }: {
@@ -636,7 +637,6 @@ function TimedCalendarTile({
   pixelsPerHour: SharedValue<number>
   settledPixelsPerHour: number
   accessible: boolean
-  interactive: boolean
   onPress: () => void
   t: TFunction
 }) {
@@ -731,28 +731,18 @@ function TimedCalendarTile({
         interactionStyle,
       ]}
     >
-      {interactive ? (
-        <Pressable
-          accessible={accessible}
-          accessibilityElementsHidden={!accessible}
-          importantForAccessibility={accessible ? "yes" : "no-hide-descendants"}
-          accessibilityRole="button"
-          accessibilityLabel={label}
-          accessibilityHint={t("calendar.event.hint")}
-          onPress={onPress}
-          style={styles.tileTarget}
-        >
-          {visual}
-        </Pressable>
-      ) : (
-        <View
-          accessible={false}
-          importantForAccessibility="no-hide-descendants"
-          style={styles.tileTarget}
-        >
-          {visual}
-        </View>
-      )}
+      <Pressable
+        accessible={accessible}
+        accessibilityElementsHidden={!accessible}
+        importantForAccessibility={accessible ? "yes" : "no-hide-descendants"}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityHint={t("calendar.event.hint")}
+        onPress={onPress}
+        style={styles.tileTarget}
+      >
+        {visual}
+      </Pressable>
     </Animated.View>
   )
 }
