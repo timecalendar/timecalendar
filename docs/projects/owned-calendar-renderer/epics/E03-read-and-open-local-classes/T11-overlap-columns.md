@@ -56,17 +56,17 @@ There is no claim that unimplemented product-wide capabilities are complete.
 
 **Preparation:** Agent seeds adjacent classes, two/three simultaneous classes, identical starts, and a labelled crowded stress cluster. Seed order can be reversed without changing event identity.
 
-- [ ] See simultaneous classes side by side; none covers another.
+- [x] See simultaneous classes side by side; none covers another.
 
-- [ ] See back-to-back classes share available width without an artificial overlap gap.
+- [x] See back-to-back classes share available width without an artificial overlap gap.
 
-- [ ] Tap each crowded target: the selected details are unambiguous.
+- [x] Tap each crowded target: the selected details are unambiguous.
 
-- [ ] Scroll and zoom through the cluster: columns do not reshuffle.
+- [x] Scroll and zoom through the cluster: columns do not reshuffle.
 
-- [ ] Reload the same events in another input order: layout stays the same.
+- [x] Reload the same events in another input order: layout stays the same.
 
-- [ ] Repeat the previously accepted interaction(s) touched by this slice; record regressions before acceptance.
+- [x] Repeat the previously accepted interaction(s) touched by this slice; record regressions before acceptance.
 
 ## Likely work sites and reading
 
@@ -102,16 +102,17 @@ event semantic paths (14 direct targets plus one chooser trigger), and three mod
 the two-choice conflict is open. All 16 original identities have an activation path; reverse fixture order
 preserves every placement. Gesture-frame source reads only prepared minute and fractional geometry.
 
-The tested source revision is `60fb72e5b160a9b4342d74b868f4bd91dcb292e2`:
+The repaired source revision is `49e9c2b96785cbad71675c0461f22b7546266f06`:
 
-- The ten edited/affected exact-path Jest suites passed 151 tests after the Home fixture identity was
-  corrected; focused overlap/conflict coverage is 100% statements and branches.
-- `npx tsc --noEmit`, `npm run lint`, and repository-root scoped `npx prettier --check` passed.
-- `npm run react-doctor:changed` passed with only four reviewed intentional manual-memoization warnings
-  on the presentation recomputation boundary.
-- `npm test -- --coverage` passed 209 suites and 2,006 tests at 97.55% statements / 92.56% branches
+- The focused hook and repository-contract command passed two suites and 16 tests; the behavioral proof
+  keeps prepared placement equal across viewport and zoom-only rerenders without manual memoization.
+- `npx tsc --noEmit` and `npm run lint` passed with zero warnings.
+- `npm run react-doctor:changed` passed with no issues found.
+- `npm test -- --coverage` passed 209 suites and 2,006 tests at 97.55% statements / 92.57% branches
   globally; its included Maestro selector inventory and repository contract suites passed.
-- Strict OpenSpec validation passed and the disclosure scan reported zero findings.
+- `openspec validate --all --strict --no-interactive` passed all 101 items after the completed change
+  was archived under `openspec/changes/archive/2026-09-22-read-simultaneous-classes-side-by-side/`.
+- The disclosure scan reported zero findings for the repaired source contents.
 
 This host supplies no physical target-feel, VoiceOver, or TalkBack acceptance; T28 retains that planned
 evidence. No Reviewer acceptance or merge is recorded yet.
