@@ -490,14 +490,21 @@ function CalendarTiles({
   const platform = Platform.OS === "ios" ? "ios" : "android"
   const accessibilityEntries =
     page.direction === 0 ? projectCalendarAccessibilityEntries(page) : null
+  const accessibilityTilesByDate = new Map<string, TimedTileV1[]>()
+  for (const entry of accessibilityEntries ?? []) {
+    const entriesForDate = accessibilityTilesByDate.get(entry.dateKey)
+    if (entriesForDate === undefined) {
+      accessibilityTilesByDate.set(entry.dateKey, [entry.tile])
+    } else {
+      entriesForDate.push(entry.tile)
+    }
+  }
   const targetConflictComponents = page.columns.map((column) =>
     planTargetConflicts({
       items:
         accessibilityEntries === null
           ? column.tiles
-          : accessibilityEntries
-              .filter((entry) => entry.dateKey === column.key)
-              .map((entry) => entry.tile),
+          : (accessibilityTilesByDate.get(column.key) ?? []),
       pixelsPerHour: settledPixelsPerHour,
       platform,
     }),
