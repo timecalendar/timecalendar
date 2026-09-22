@@ -171,6 +171,7 @@ export function TodayTimeline({
     range,
     displayZone,
   })
+  const timelineWidth = measuredWidth ?? 0
   const nowIndicator = isToday
     ? nowIndicatorPosition(now, displayZone, {
         pixelsPerHour: HOME_PIXELS_PER_HOUR,
@@ -303,8 +304,8 @@ export function TodayTimeline({
                 geometry.durationMinutes,
                 HOME_PIXELS_PER_HOUR,
               )
-              const left = entry.startX * measuredWidth
-              const width = (entry.endX - entry.startX) * measuredWidth
+              const left = entry.startX * timelineWidth
+              const width = (entry.endX - entry.startX) * timelineWidth
               const showText = width >= MIN_TILE_WIDTH
               const time = formatTimeRange(
                 event.startsAt,
