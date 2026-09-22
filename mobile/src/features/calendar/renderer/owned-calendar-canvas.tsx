@@ -39,6 +39,7 @@ import {
   HOURS_COLUMN_WIDTH,
   minuteToPixel,
   planTargetConflicts,
+  projectCalendarAccessibilityEntries,
   type TimedTileV1,
   type WeekColumn,
   type WeekDirection,
@@ -50,6 +51,7 @@ import {
 import { useTheme } from "@/theme"
 
 import type { CalendarPage } from "./owned-calendar-coordinator"
+import type { OwnedCalendarProbeDiagnostic } from "./owned-calendar-shell"
 import {
   AnimatedPagerView,
   CENTER_PAGE,
@@ -153,6 +155,7 @@ export function OwnedCalendarCanvas({
   nowLabel,
   t,
   onEventPress,
+  onProbeDiagnostic,
   isEventActivationBlocked,
 }: {
   heading: string
@@ -190,6 +193,9 @@ export function OwnedCalendarCanvas({
   nowLabel: string
   t: TFunction
   onEventPress: (uid: string) => void
+  onProbeDiagnostic?:
+    | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
+    | undefined
   isEventActivationBlocked: () => boolean
 }) {
   const theme = useTheme()
@@ -322,6 +328,7 @@ export function OwnedCalendarCanvas({
                   locale={locale}
                   displayZone={displayZone}
                   onEventPress={onEventPress}
+                  onProbeDiagnostic={onProbeDiagnostic}
                   isEventActivationBlocked={isEventActivationBlocked}
                 />
               ))}
@@ -367,6 +374,7 @@ function CalendarPageCanvas({
   locale,
   displayZone,
   onEventPress,
+  onProbeDiagnostic,
   isEventActivationBlocked,
 }: {
   page: CalendarPage
@@ -379,6 +387,9 @@ function CalendarPageCanvas({
   locale: AppLocale
   displayZone: string
   onEventPress: (uid: string) => void
+  onProbeDiagnostic?:
+    | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
+    | undefined
   isEventActivationBlocked: () => boolean
 }) {
   const theme = useTheme()
@@ -424,6 +435,7 @@ function CalendarPageCanvas({
         pixelsPerHour={pixelsPerHour}
         settledPixelsPerHour={settledPixelsPerHour}
         onEventPress={onEventPress}
+        onProbeDiagnostic={onProbeDiagnostic}
         isEventActivationBlocked={isEventActivationBlocked}
         t={t}
       />
@@ -453,6 +465,7 @@ function CalendarTiles({
   pixelsPerHour,
   settledPixelsPerHour,
   onEventPress,
+  onProbeDiagnostic,
   isEventActivationBlocked,
   t,
 }: {
@@ -462,6 +475,9 @@ function CalendarTiles({
   pixelsPerHour: SharedValue<number>
   settledPixelsPerHour: number
   onEventPress: (uid: string) => void
+  onProbeDiagnostic?:
+    | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
+    | undefined
   isEventActivationBlocked: () => boolean
   t: TFunction
 }) {
@@ -472,9 +488,23 @@ function CalendarTiles({
   } | null>(null)
   const chooserItems = chooser?.page === page ? chooser.items : null
   const platform = Platform.OS === "ios" ? "ios" : "android"
+  const accessibilityEntries =
+    page.direction === 0 ? projectCalendarAccessibilityEntries(page) : null
+  const accessibilityTilesByDate = new Map<string, TimedTileV1[]>()
+  for (const entry of accessibilityEntries ?? []) {
+    const entriesForDate = accessibilityTilesByDate.get(entry.dateKey)
+    if (entriesForDate === undefined) {
+      accessibilityTilesByDate.set(entry.dateKey, [entry.tile])
+    } else {
+      entriesForDate.push(entry.tile)
+    }
+  }
   const targetConflictComponents = page.columns.map((column) =>
     planTargetConflicts({
-      items: column.tiles,
+      items:
+        accessibilityEntries === null
+          ? column.tiles
+          : (accessibilityTilesByDate.get(column.key) ?? []),
       pixelsPerHour: settledPixelsPerHour,
       platform,
     }),
@@ -500,7 +530,10 @@ function CalendarTiles({
                     pixelsPerHour={pixelsPerHour}
                     settledPixelsPerHour={settledPixelsPerHour}
                     accessible={page.direction === 0}
-                    interactive={component.items.length === 1}
+                    accessibilityOrder={accessibilityEntries?.findIndex(
+                      (entry) => entry.key === tile.key,
+                    )}
+                    onProbeDiagnostic={onProbeDiagnostic}
                     onPress={() => onEventPress(tile.identity.uid)}
                     t={t}
                   />
@@ -511,14 +544,9 @@ function CalendarTiles({
                   <Pressable
                     key={`conflict:${component.key}`}
                     testID={`owned-calendar-conflict-${component.key}`}
-                    accessible={page.direction === 0}
-                    accessibilityElementsHidden={page.direction !== 0}
-                    importantForAccessibility={
-                      page.direction === 0 ? "yes" : "no-hide-descendants"
-                    }
-                    accessibilityRole="button"
-                    accessibilityLabel={t("calendar.event.chooser.trigger")}
-                    accessibilityHint={t("calendar.event.chooser.hint")}
+                    accessible={false}
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
                     onPress={() => {
                       if (!isEventActivationBlocked())
                         setChooser({ page, items: component.items })
@@ -626,7 +654,8 @@ function TimedCalendarTile({
   pixelsPerHour,
   settledPixelsPerHour,
   accessible,
-  interactive,
+  accessibilityOrder,
+  onProbeDiagnostic,
   onPress,
   t,
 }: {
@@ -636,7 +665,10 @@ function TimedCalendarTile({
   pixelsPerHour: SharedValue<number>
   settledPixelsPerHour: number
   accessible: boolean
-  interactive: boolean
+  accessibilityOrder: number | undefined
+  onProbeDiagnostic?:
+    | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
+    | undefined
   onPress: () => void
   t: TFunction
 }) {
@@ -725,34 +757,37 @@ function TimedCalendarTile({
     <Animated.View
       testID={`owned-calendar-event-${tile.identity.uid}`}
       pointerEvents="box-none"
+      onLayout={
+        accessible &&
+        accessibilityOrder !== undefined &&
+        accessibilityOrder >= 0
+          ? ({ nativeEvent }) =>
+              onProbeDiagnostic?.({
+                kind: "target-frame",
+                identity: tile.key,
+                order: accessibilityOrder,
+                frame: nativeEvent.layout,
+              })
+          : undefined
+      }
       style={[
         styles.tileAnchor,
         horizontalRectangleStyle({ left: tile.startX, right: tile.endX }),
         interactionStyle,
       ]}
     >
-      {interactive ? (
-        <Pressable
-          accessible={accessible}
-          accessibilityElementsHidden={!accessible}
-          importantForAccessibility={accessible ? "yes" : "no-hide-descendants"}
-          accessibilityRole="button"
-          accessibilityLabel={label}
-          accessibilityHint={t("calendar.event.hint")}
-          onPress={onPress}
-          style={styles.tileTarget}
-        >
-          {visual}
-        </Pressable>
-      ) : (
-        <View
-          accessible={false}
-          importantForAccessibility="no-hide-descendants"
-          style={styles.tileTarget}
-        >
-          {visual}
-        </View>
-      )}
+      <Pressable
+        accessible={accessible}
+        accessibilityElementsHidden={!accessible}
+        importantForAccessibility={accessible ? "yes" : "no-hide-descendants"}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityHint={t("calendar.event.hint")}
+        onPress={onPress}
+        style={styles.tileTarget}
+      >
+        {visual}
+      </Pressable>
     </Animated.View>
   )
 }

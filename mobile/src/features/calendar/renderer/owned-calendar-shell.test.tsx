@@ -198,6 +198,7 @@ describe("OwnedCalendarShell", () => {
 
   it("renders a timed class at its actual time and opens its original UID", async () => {
     const onEventPress = jest.fn()
+    const onProbeDiagnostic = jest.fn()
     const event = {
       version: 1,
       kind: "timed",
@@ -233,10 +234,20 @@ describe("OwnedCalendarShell", () => {
         {...props}
         presentation={presentation}
         onEventPress={onEventPress}
+        onProbeDiagnostic={onProbeDiagnostic}
       />,
     )
 
     const anchor = screen.getByTestId("owned-calendar-event-original-42")
+    await fireEvent(anchor, "layout", {
+      nativeEvent: { layout: { x: 4, y: 600, width: 128, height: 60 } },
+    })
+    expect(onProbeDiagnostic).toHaveBeenCalledWith({
+      kind: "target-frame",
+      identity: "synced:original-42",
+      order: 0,
+      frame: { x: 4, y: 600, width: 128, height: 60 },
+    })
     expect(StyleSheet.flatten(anchor.props.style)).toMatchObject({
       top: 600,
       height: 60,
@@ -439,7 +450,7 @@ describe("OwnedCalendarShell", () => {
     },
   )
 
-  it("uses one chooser target for intersecting minimum targets and routes one identity", async () => {
+  it("keeps conflict tiles semantic while a hidden pointer overlay opens the chooser", async () => {
     const events = [
       timedEvent(
         "tiny-a",
@@ -470,51 +481,57 @@ describe("OwnedCalendarShell", () => {
 
     expect(screen.getByTestId("owned-calendar-event-tiny-a")).toBeOnTheScreen()
     expect(screen.getByTestId("owned-calendar-event-tiny-b")).toBeOnTheScreen()
-    expect(screen.queryByRole("button", { name: /Tiny A/ })).toBeNull()
-    expect(screen.queryByRole("button", { name: /Tiny B/ })).toBeNull()
-    const trigger = screen.getByRole("button", {
-      name: "Choose an overlapping event",
-    })
-    expect(screen.getAllByRole("button")).toHaveLength(1)
-    expect(trigger).toHaveProp(
-      "accessibilityHint",
-      "Opens a list of events in this area",
+    const firstTile = screen.getByRole("button", { name: /Tiny A/ })
+    const secondTile = screen.getByRole("button", { name: /Tiny B/ })
+    const pointerOverlay = screen.getByTestId(
+      "owned-calendar-conflict-synced:tiny-a|synced:tiny-b",
+      { includeHiddenElements: true },
     )
+    expect(screen.getAllByRole("button")).toHaveLength(2)
+    expect(firstTile).toHaveProp("accessibilityHint", "View details")
+    expect(pointerOverlay).toHaveProp("accessible", false)
+    expect(pointerOverlay).toHaveProp("accessibilityElementsHidden", true)
+    expect(pointerOverlay.props.accessibilityLabel).toBeUndefined()
+
+    await fireEvent.press(secondTile)
+    expect(onEventPress).toHaveBeenLastCalledWith("tiny-b")
+    onEventPress.mockClear()
 
     await fireEvent(
       screen.getByTestId("owned-calendar-canvas"),
       "scrollBeginDrag",
       scrollEvent(20),
     )
-    await fireEvent.press(trigger)
+    await fireEvent.press(pointerOverlay)
     expect(screen.queryByTestId("owned-calendar-event-chooser")).toBeNull()
     await fireEvent(
       screen.getByTestId("owned-calendar-canvas"),
       "momentumScrollEnd",
       scrollEvent(20),
     )
-    await fireEvent.press(trigger)
+    await fireEvent.press(pointerOverlay)
     const chooser = screen.getByTestId("owned-calendar-event-chooser")
     expect(chooser).toHaveProp("accessibilityViewIsModal", true)
-    expect(screen.getByRole("button", { name: /Tiny A/ })).toBeOnTheScreen()
-    expect(screen.getAllByRole("button")).toHaveLength(4)
-    const second = screen.getByRole("button", { name: /Tiny B/ })
+    expect(
+      within(chooser).getByRole("button", { name: /Tiny A/ }),
+    ).toBeOnTheScreen()
+    const second = within(chooser).getByRole("button", { name: /Tiny B/ })
     await fireEvent.press(second)
     expect(onEventPress).toHaveBeenCalledTimes(1)
     expect(onEventPress).toHaveBeenCalledWith("tiny-b")
 
-    await fireEvent.press(trigger)
+    await fireEvent.press(pointerOverlay)
     await fireEvent.press(screen.getByRole("button", { name: "Cancel" }))
     expect(onEventPress).toHaveBeenCalledTimes(1)
 
-    await fireEvent.press(trigger)
+    await fireEvent.press(pointerOverlay)
     await fireEvent(
       screen.getByTestId("owned-calendar-event-chooser-modal"),
       "requestClose",
     )
     expect(screen.queryByTestId("owned-calendar-event-chooser")).toBeNull()
 
-    await fireEvent.press(trigger)
+    await fireEvent.press(pointerOverlay)
     await view.rerender(
       <OwnedCalendarShell
         {...props}

@@ -17,6 +17,7 @@ import {
 } from "react-native"
 import * as Reanimated from "react-native-reanimated"
 
+import { isDevVariant } from "@/config/variant"
 import {
   buildCalendarTimelinePresentation,
   formatFullDay,
@@ -40,6 +41,7 @@ import {
   SETTINGS_KEYS,
 } from "@/features/settings/prefs"
 import { remove } from "@/storage"
+import { recordAccessibilityProbeDiagnostic } from "@/test-support/owned-calendar/accessibility-probe"
 import { resolveResponsiveLayout } from "@/theme"
 
 import { CalendarScreen } from "./calendar-screen"
@@ -68,6 +70,15 @@ jest.mock("@/features/calendar/data", () => {
     ),
     useSyncCalendars: jest.fn(),
   }
+})
+
+jest.mock("@/config/variant", () => ({ isDevVariant: jest.fn(() => false) }))
+
+jest.mock("@/test-support/owned-calendar/accessibility-probe", () => {
+  const actual = jest.requireActual<
+    typeof import("@/test-support/owned-calendar/accessibility-probe")
+  >("@/test-support/owned-calendar/accessibility-probe")
+  return { ...actual, recordAccessibilityProbeDiagnostic: jest.fn() }
 })
 
 jest.mock("@/features/event-checklists", () => {
@@ -137,6 +148,9 @@ const mockUseCalendarClock = useCalendarClock as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
 const mockUseChecklistProgress = useChecklistProgress as jest.Mock
 const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock
+const mockIsDevVariant = isDevVariant as jest.Mock
+const mockRecordAccessibilityProbeDiagnostic =
+  recordAccessibilityProbeDiagnostic as jest.Mock
 const mockPush = router.push as jest.Mock
 const mockSetParams = router.setParams as jest.Mock
 const mockSync = jest.fn()
@@ -227,6 +241,8 @@ beforeEach(() => {
   mockUseSyncCalendars.mockReturnValue(syncState())
   mockUseChecklistProgress.mockReturnValue(new Map())
   mockUseLocalSearchParams.mockReturnValue({})
+  mockIsDevVariant.mockReturnValue(false)
+  mockRecordAccessibilityProbeDiagnostic.mockReset()
   mockSync.mockReset()
   mockPush.mockReset()
   mockSetParams.mockReset()
@@ -238,6 +254,50 @@ beforeEach(() => {
 })
 
 describe("CalendarScreen owned shell", () => {
+  it("runs the deterministic accessibility fixture only on the development route", async () => {
+    setCalendarView("day")
+    mockIsDevVariant.mockReturnValue(true)
+    mockUseLocalSearchParams.mockReturnValue({
+      accessibilityProbe: "timed-events",
+      focusDate: "2026-06-15",
+    })
+
+    await render(<CalendarScreen />)
+
+    const early = await screen.findByRole("button", {
+      name: /^Fixture probe-early,/,
+    })
+    const late = screen.getByRole("button", { name: /^Fixture probe-late,/ })
+    expect(
+      screen.getByTestId("owned-calendar-canvas").props.contentOffset,
+    ).toEqual({ x: 0, y: 540 })
+    expect(early).toBeOnTheScreen()
+    expect(late).toBeOnTheScreen()
+
+    await fireEvent.press(late)
+    expect(mockRecordAccessibilityProbeDiagnostic).toHaveBeenCalledWith({
+      kind: "route",
+      uid: "probe-late",
+    })
+    expect(mockPush).toHaveBeenLastCalledWith("/event-details/probe-late")
+  })
+
+  it("ignores the accessibility fixture flag outside the development variant", async () => {
+    setCalendarView("day")
+    mockUseLocalSearchParams.mockReturnValue({
+      accessibilityProbe: "timed-events",
+      focusDate: "2026-06-15",
+    })
+
+    await render(<CalendarScreen />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId("owned-calendar-canvas")).toBeOnTheScreen()
+    })
+    expect(screen.queryByText("Fixture probe-early")).toBeNull()
+    expect(mockRecordAccessibilityProbeDiagnostic).not.toHaveBeenCalled()
+  })
+
   it.each([
     { position: 0, destination: "2026-06-08" },
     { position: 2, destination: "2026-06-22" },
@@ -394,7 +454,7 @@ describe("CalendarScreen owned shell", () => {
     )
   })
 
-  it("opens each crowded synced and personal identity through the chooser", async () => {
+  it("opens each crowded synced and personal semantic identity directly", async () => {
     setCalendarView("day")
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-16" })
     const crowded = [
@@ -425,21 +485,22 @@ describe("CalendarScreen owned shell", () => {
     }))
 
     await render(<CalendarScreen />)
-    const trigger = await screen.findByRole("button", {
-      name: "Choose an overlapping event",
-    })
-    await fireEvent.press(trigger)
     await fireEvent.press(
-      screen.getByRole("button", { name: /^Crowded class,/ }),
+      await screen.findByRole("button", { name: /^Crowded class,/ }),
     )
     expect(mockPush).toHaveBeenLastCalledWith("/event-details/crowded-synced")
 
-    await fireEvent.press(trigger)
     await fireEvent.press(
       screen.getByRole("button", { name: /^Crowded study,/ }),
     )
     expect(mockPush).toHaveBeenLastCalledWith("/event-details/crowded-personal")
     expect(mockPush).toHaveBeenCalledTimes(2)
+    expect(
+      screen.getByTestId(
+        "owned-calendar-conflict-synced:crowded-synced|personal:crowded-personal",
+        { includeHiddenElements: true },
+      ),
+    ).toHaveProp("accessible", false)
   })
 
   it("pages away and back using only local presentation reads", async () => {
