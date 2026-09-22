@@ -99,11 +99,17 @@ export function useSyncCalendars(): UseSyncCalendars {
         const localNames = new Map(
           calendars.map((calendar) => [calendar.id, calendar.name]),
         )
-        for (const { calendar } of result) {
-          if (localNames.get(calendar.id) !== calendar.name) {
-            await updateUserCalendarName(calendar.id, calendar.name)
-          }
-        }
+        // Keep local writes serial and stop at the first failed name update.
+        // A promise chain makes that ordering explicit without overlapping DB work.
+        await result.reduce(
+          (previous, { calendar }) =>
+            previous.then(() => {
+              if (localNames.get(calendar.id) !== calendar.name) {
+                return updateUserCalendarName(calendar.id, calendar.name)
+              }
+            }),
+          Promise.resolve(),
+        )
       } catch (error) {
         recordUnknownError(error, "calendar/sync-names")
         return { status: "events-ready", metadata: "stale" }
