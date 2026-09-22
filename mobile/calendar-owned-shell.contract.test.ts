@@ -214,7 +214,7 @@ describe("owned Calendar paging repository contract", () => {
     expect(renderer).not.toMatch(/\.sort\(/)
     expect(renderer).not.toMatch(/@\/db|useCalendarEventsSnapshot/)
     expect(renderer).not.toMatch(/MAX_(?:EVENT|DENSITY)|eventLimit|slice\(0,/)
-    expect(hook).toContain("useMemo")
+    expect(hook).not.toMatch(/\buseMemo\b|\buseCallback\b/)
     expect(renderer).toContain("onEventPress(tile.identity.uid)")
     expect(renderer).toContain("planTargetConflicts")
     expect(renderer).toContain("accessibilityViewIsModal")

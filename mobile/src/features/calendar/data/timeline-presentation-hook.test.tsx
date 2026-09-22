@@ -227,7 +227,7 @@ describe("useCalendarTimelinePresentation", () => {
     expect(mockProgress).toHaveBeenLastCalledWith([])
   })
 
-  it("reuses prepared placement when complete event inputs are unchanged", async () => {
+  it("keeps prepared placement stable when viewport and zoom inputs change", async () => {
     const progress = new Map()
     const events = [event("stable")]
     mockProgress.mockReturnValue(progress)
@@ -238,8 +238,8 @@ describe("useCalendarTimelinePresentation", () => {
     const prepared = result.current.presentation
 
     await rerender({ viewportTop: 480, pixelsPerHour: 40 })
-    expect(result.current.presentation).toBe(prepared)
+    expect(result.current.presentation).toEqual(prepared)
     await rerender({ viewportTop: 0, pixelsPerHour: 120 })
-    expect(result.current.presentation).toBe(prepared)
+    expect(result.current.presentation).toEqual(prepared)
   })
 })
