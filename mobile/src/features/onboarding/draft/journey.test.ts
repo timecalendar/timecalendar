@@ -217,12 +217,19 @@ describe("journey gates and protected routes", () => {
     })
     expect(canEnterProtectedRoute(completed, "manual")).toBe(true)
     expect(canEnterProtectedRoute(completed, "qr")).toBe(false)
+    expect(recoveryRoute(completed, "/onboarding/qr-scan")).toBe(
+      "/onboarding/import",
+    )
     const qr = importJourneyReducer(completed, {
       type: "set-manual-handoff",
       target: "qr",
     })
     expect(canEnterProtectedRoute(qr, "qr")).toBe(true)
     expect(canEnterProtectedRoute(qr, "ical")).toBe(false)
+    expect(recoveryRoute(qr, "/onboarding/ical-url")).toBe(
+      "/onboarding/qr-scan",
+    )
+    expect(recoveryRoute(qr, "/onboarding/qr-scan")).toBeNull()
   })
 
   it("recovers process-death state to School and never replaces a route with itself", () => {

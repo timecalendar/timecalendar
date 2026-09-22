@@ -272,6 +272,39 @@ describe("SchoolPickerScreen", () => {
     expect(refetch).toHaveBeenCalledTimes(1)
   })
 
+  it("keeps cached schools and one recovery notice after a refresh failure", async () => {
+    const refetch = jest.fn()
+    mockUseSchools.mockReturnValue({
+      ...ready(
+        [{ id: "cached", name: "Cached University", imageUrl: "" }],
+        refetch,
+      ),
+      isError: true,
+    })
+    const { getByText, getByTestId, queryByTestId, getAllByTestId } =
+      await render(<SchoolPickerScreen />)
+    expect(getByText("Cached University")).toBeTruthy()
+    expect(getByText("Could not load schools.")).toBeTruthy()
+    expect(getByTestId("onboarding-school-cached-error")).toBeTruthy()
+    expect(queryByTestId("onboarding-school-error")).toBeNull()
+    expect(getAllByTestId("onboarding-school-retry")).toHaveLength(1)
+    await fireEvent.press(getByTestId("onboarding-school-retry"))
+    expect(refetch).toHaveBeenCalledTimes(1)
+  })
+
+  it("keeps search-empty guidance alongside a cached refresh failure", async () => {
+    mockUseSchools.mockReturnValue({
+      ...ready([{ id: "cached", name: "Cached University", imageUrl: "" }]),
+      isError: true,
+    })
+    const view = await render(<SchoolPickerScreen />)
+    await typeSearch("No match")
+    expect(view.getByTestId("onboarding-school-cached-error")).toBeTruthy()
+    expect(view.queryByTestId("onboarding-school-error")).toBeNull()
+    expect(view.getByText("I can't find my school")).toBeTruthy()
+    expect(view.getAllByTestId("onboarding-school-retry")).toHaveLength(1)
+  })
+
   // The group step is off the normal path (TIM-391 / design D10): it persisted a
   // selection and dismissed WITHOUT creating a calendar. The row now seeds the
   // import draft and opens the programme step.

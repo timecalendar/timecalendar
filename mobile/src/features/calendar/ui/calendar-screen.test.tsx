@@ -1041,6 +1041,18 @@ describe("CalendarScreen retained Agenda", () => {
     expect(screen.getByText("Algorithms")).toBeOnTheScreen()
   })
 
+  it("disables Agenda recovery while sync is running", async () => {
+    mockUseSyncCalendars.mockReturnValue(
+      syncState({ isError: true, isSyncing: true }),
+    )
+    await render(<CalendarScreen />)
+    await openAgenda()
+    const retry = screen.getByTestId("calendar-sync-retry")
+    expect(retry).toBeDisabled()
+    await fireEvent.press(retry)
+    expect(mockSync).not.toHaveBeenCalled()
+  })
+
   it("retains empty refresh and error retry only in Agenda", async () => {
     mockUseCalendarEvents.mockReturnValue([])
     mockUseSyncCalendars.mockReturnValue(syncState({ isError: true }))

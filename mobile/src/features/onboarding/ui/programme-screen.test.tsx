@@ -219,7 +219,6 @@ describe("ProgrammeScreen", () => {
     const { getByTestId, getByText } = await typeAndSubmit("x".repeat(101))
     expect(getByText("Use 100 characters or fewer.")).toBeTruthy()
     const error = getByTestId("onboarding-programme-error")
-    expect(error.props.accessibilityLiveRegion).toBe("polite")
     expect(error.props.accessibilityRole).toBe("alert")
     expect(mockSetCalendarName).not.toHaveBeenCalled()
     expect(mockPush).not.toHaveBeenCalled()

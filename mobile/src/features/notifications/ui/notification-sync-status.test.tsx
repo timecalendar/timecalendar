@@ -13,6 +13,9 @@ describe("NotificationSyncStatus", () => {
     const announce = jest
       .spyOn(AccessibilityInfo, "announceForAccessibility")
       .mockImplementation(() => undefined)
+    const queued = jest
+      .spyOn(AccessibilityInfo, "announceForAccessibilityWithOptions")
+      .mockImplementation(() => undefined)
     const retry = jest.fn()
     const states: readonly [SyncStatus, string][] = [
       [{ state: "pending" }, "Saving notification settings…"],
@@ -41,9 +44,16 @@ describe("NotificationSyncStatus", () => {
       await view.rerender(
         <NotificationSyncStatus status={status} retry={retry} />,
       )
-      expect(announce).toHaveBeenLastCalledWith(message)
+      if (status.state === "error") {
+        expect(queued).toHaveBeenLastCalledWith(
+          expect.stringContaining(message),
+          { queue: true },
+        )
+      } else expect(announce).toHaveBeenLastCalledWith(message)
     }
-    expect(announce).toHaveBeenCalledTimes(states.length)
+    expect(announce).toHaveBeenCalledTimes(states.length - 1)
+    expect(queued).toHaveBeenCalledTimes(1)
+    queued.mockRestore()
     announce.mockRestore()
   })
 

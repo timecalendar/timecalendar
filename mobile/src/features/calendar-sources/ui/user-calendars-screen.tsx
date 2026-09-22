@@ -13,8 +13,8 @@ import {
 } from "react-native"
 
 import { EmptyState } from "@/components/empty-state"
+import { ErrorNotice } from "@/components/error-surfaces"
 import { PageIntro, RootPage } from "@/components/root-page"
-import { WriteErrorNotice } from "@/components/write-error-notice"
 import {
   type UserCalendar,
   useUserCalendarActions,
@@ -36,7 +36,7 @@ import {
 // events-source seam — ADR 031), one overflow menu carrying Rename and a
 // confirm-gated Delete, and a platform-native add action routing to school
 // selection. Delete goes through useUserCalendarActions() (the observability-
-// wrapped seam); failures surface via WriteErrorNotice. Rename goes through the
+// wrapped seam); failures surface via ErrorNotice. Rename goes through the
 // dialog's own useRenameCalendar seam, since it is a server write first and a
 // local write only on success. Themed from @/theme (R-3). The route
 // (src/app/user-calendars.tsx) is a thin re-export.
@@ -110,7 +110,8 @@ export function UserCalendarsScreen() {
           <View testID="user-calendars-safe-area" style={styles.safeArea}>
             {failed && (
               <View style={layout.laneStyle}>
-                <WriteErrorNotice
+                <ErrorNotice
+                  testID="user-calendars-write-error"
                   message={t("userCalendars.error")}
                   style={styles.error}
                 />

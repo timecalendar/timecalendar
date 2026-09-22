@@ -1,6 +1,6 @@
 import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
 import { router } from "expo-router"
-import { Linking, StyleSheet } from "react-native"
+import { Linking, Platform, StyleSheet } from "react-native"
 
 import { useAddCalendar } from "@/features/calendar-sources/data"
 import type { ImportJourneyState } from "@/features/onboarding"
@@ -82,6 +82,10 @@ jest.mock("expo-camera", () => {
 })
 
 jest.mock("expo-router", () => ({
+  useFocusEffect: (effect: () => void) => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require("react").useEffect(effect, [effect])
+  },
   router: {
     back: jest.fn(),
     canDismiss: jest.fn(() => true),
@@ -407,21 +411,23 @@ describe("QrScanScreen", () => {
       ),
     )
     expect(
-      getByText("Something went wrong while scanning. Please try again."),
+      getByText(
+        "The import could not be completed. Try again or choose another import method.",
+      ),
     ).toBeTruthy()
     expect(getByTestId("qr-scan-retry")).toBeTruthy()
     expect(queryByTestId("qr-scan-camera")).toBeNull()
-    expect(getByTestId("qr-scan-another")).toBeTruthy()
-    expect(getByTestId("qr-scan-manual-url")).toBeTruthy()
-    for (const testID of [
-      "qr-scan-retry",
-      "qr-scan-another",
-      "qr-scan-manual-url",
-    ]) {
+    expect(getByText("Unable to import this calendar")).toBeTruthy()
+    expect(getByTestId("qr-scan-change-method")).toBeTruthy()
+    expect(queryByTestId("qr-scan-another")).toBeNull()
+    expect(queryByTestId("qr-scan-manual-url")).toBeNull()
+    for (const testID of ["qr-scan-retry", "qr-scan-change-method"]) {
       const control = getByTestId(testID)
       expect(control.props.accessibilityRole).toBe("button")
-      expect(control.props.accessibilityState).toEqual({ disabled: false })
-      expect(control).toHaveStyle({ minHeight: 48 })
+      expect(control).not.toBeDisabled()
+      expect(control).toHaveStyle({
+        minHeight: Platform.OS === "ios" ? 44 : 48,
+      })
     }
     expect(queryByText("https://example.com/cal.ics")).toBeNull()
     expect(queryByText("L3 Informatique")).toBeNull()
@@ -480,44 +486,52 @@ describe("QrScanScreen", () => {
     expect(mockClearDraft).not.toHaveBeenCalled()
   })
 
-  it("clears failure and deliberately re-arms for a new QR", async () => {
-    mockAddCalendarFromUrl
-      .mockRejectedValueOnce(new Error("initial failure"))
-      .mockResolvedValueOnce(undefined)
-    const { getByTestId, queryByTestId } = await render(<QrScanScreen />)
-
-    await fireEvent.press(getByTestId("qr-scan-camera-simulate-scan"))
-    await waitFor(() => expect(getByTestId("qr-scan-another")).toBeTruthy())
-    await fireEvent.press(getByTestId("qr-scan-another"))
-    expect(queryByTestId("qr-scan-retry")).toBeNull()
-
-    cameraState.nextScan = { data: "https://other.example/new.ics", type: "qr" }
-    await fireEvent.press(getByTestId("qr-scan-camera-simulate-scan"))
-
-    expect(mockAddCalendarFromUrl).toHaveBeenCalledTimes(2)
-    expect(mockAddCalendarFromUrl).toHaveBeenLastCalledWith(
-      "https://other.example/new.ics",
-      { name: "L3 Informatique", schoolId: "univeiffel" },
-    )
-    await waitFor(() => expect(mockDismissTo).toHaveBeenCalledTimes(1))
-    expect(mockClearDraft).not.toHaveBeenCalled()
-  })
-
-  it("switches to manual iCal without clearing or exposing the captured attempt", async () => {
+  it("returns to the method chooser once while preserving the draft and private attempt", async () => {
     mockAddCalendarFromUrl.mockRejectedValueOnce(
       new Error("backend unavailable"),
     )
-    const { getByTestId } = await render(<QrScanScreen />)
-
-    await fireEvent.press(getByTestId("qr-scan-camera-simulate-scan"))
-    await waitFor(() => expect(getByTestId("qr-scan-manual-url")).toBeTruthy())
-    await fireEvent.press(getByTestId("qr-scan-manual-url"))
-
-    expect(mockReplace).toHaveBeenCalledWith("/onboarding/ical-url")
+    const view = await render(<QrScanScreen />)
+    const draftBefore = mockImportDraftValue().state
+    await fireEvent.press(view.getByTestId("qr-scan-camera-simulate-scan"))
+    await waitFor(() =>
+      expect(view.getByTestId("qr-scan-change-method")).toBeTruthy(),
+    )
+    const changeMethod = view.getByTestId("qr-scan-change-method")
+    await fireEvent.press(changeMethod)
+    await fireEvent.press(changeMethod)
+    expect(mockDismissTo).toHaveBeenCalledTimes(1)
+    expect(mockDismissTo).toHaveBeenCalledWith("/onboarding/import")
+    expect(mockImportDraftValue().state).toEqual(draftBefore)
+    expect(mockDispatch).not.toHaveBeenCalled()
+    expect(mockReplace).not.toHaveBeenCalled()
     expect(mockPush).not.toHaveBeenCalled()
     expect(mockClearDraft).not.toHaveBeenCalled()
     expect(mockBack).not.toHaveBeenCalled()
     expect(mockDismissAll).not.toHaveBeenCalled()
+    expect(view.queryByText("https://example.com/cal.ics")).toBeNull()
+    expect(mockAddCalendarFromUrl).toHaveBeenCalledTimes(1)
+  })
+
+  it("starts a fresh scanner when returning from the method chooser", async () => {
+    mockAddCalendarFromUrl
+      .mockRejectedValueOnce(new Error("initial failure"))
+      .mockResolvedValueOnce(undefined)
+    const first = await render(<QrScanScreen />)
+    await fireEvent.press(first.getByTestId("qr-scan-camera-simulate-scan"))
+    await waitFor(() =>
+      expect(first.getByTestId("qr-scan-change-method")).toBeTruthy(),
+    )
+    await fireEvent.press(first.getByTestId("qr-scan-change-method"))
+    await first.unmount()
+    const next = await render(<QrScanScreen />)
+    expect(next.queryByTestId("qr-scan-failure")).toBeNull()
+    cameraState.nextScan = { data: "https://other.example/new.ics", type: "qr" }
+    await fireEvent.press(next.getByTestId("qr-scan-camera-simulate-scan"))
+    expect(mockAddCalendarFromUrl).toHaveBeenLastCalledWith(
+      "https://other.example/new.ics",
+      { name: "L3 Informatique", schoolId: "univeiffel" },
+    )
+    expect(mockClearDraft).not.toHaveBeenCalled()
   })
 
   it.each(["resolve", "reject"] as const)(

@@ -1,4 +1,10 @@
-import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react-native"
 import { router } from "expo-router"
 import { StyleSheet } from "react-native"
 
@@ -17,6 +23,10 @@ import IcalUrlScreen from "./ical-url-screen"
 // no recordError), and the persist-failure path (recordError with the ical-import
 // context + an accessible error + Retry).
 jest.mock("expo-router", () => ({
+  useFocusEffect: (effect: () => void) => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require("react").useEffect(effect, [effect])
+  },
   router: {
     back: jest.fn(),
     push: jest.fn(),
@@ -287,7 +297,7 @@ describe("IcalUrlScreen", () => {
     expect(mockAddCalendarFromUrl).not.toHaveBeenCalled()
   })
 
-  it("records the error and shows an accessible error + retry on persist failure", async () => {
+  it("keeps one Import action for checkpoint retry alongside the error and Report", async () => {
     mockAddCalendarFromUrl.mockRejectedValue(new Error("boom"))
     addState = { isPending: false, isError: true }
     const { getByTestId, getByText } = await render(<IcalUrlScreen />)
@@ -310,10 +320,11 @@ describe("IcalUrlScreen", () => {
     )
     expect(
       getByText(
-        "We couldn't import that calendar. Check the URL and try again.",
+        "The import could not be completed. Try importing again. If the problem persists, you can report it.",
       ),
     ).toBeTruthy()
-    expect(getByTestId("ical-url-retry")).toBeTruthy()
+    expect(screen.queryByTestId("ical-url-retry")).toBeNull()
+    expect(getByTestId("ical-url-submit")).toBeEnabled()
     expect(getByTestId("ical-url-report")).toBeTruthy()
     expect(mockDismissAll).not.toHaveBeenCalled()
     // A failed import spends nothing: the draft and the typed URL stay so the
@@ -326,7 +337,7 @@ describe("IcalUrlScreen", () => {
     // Retry re-runs the add; this time it resolves and leaves the journey.
     mockAddCalendarFromUrl.mockResolvedValue(undefined)
     await act(async () => {
-      fireEvent.press(getByTestId("ical-url-retry"))
+      fireEvent.press(getByTestId("ical-url-submit"))
     })
     await waitFor(() => expect(mockDismissTo).toHaveBeenCalledTimes(1))
   })

@@ -40,14 +40,19 @@ export function PrimaryAction({
       accessibilityState={{ disabled: blocked, busy }}
       disabled={blocked}
       onPress={blocked ? undefined : onPress}
-      style={[
+      android_ripple={{ color: theme.ripple }}
+      style={({ pressed }) => [
         style,
         styles.action,
         {
           backgroundColor: theme.primaryStrong,
           minHeight: Platform.OS === "ios" ? 44 : 48,
         },
-        blocked ? styles.blocked : styles.enabled,
+        blocked
+          ? styles.blocked
+          : pressed && Platform.OS === "ios"
+            ? styles.pressed
+            : styles.enabled,
       ]}
     >
       {busy ? (
@@ -59,7 +64,10 @@ export function PrimaryAction({
           importantForAccessibility="no-hide-descendants"
         />
       ) : null}
-      <ThemedText type="smallBold" style={{ color: theme.onPrimary }}>
+      <ThemedText
+        type="smallBold"
+        style={{ color: theme.onPrimary, flexShrink: 1, textAlign: "center" }}
+      >
         {label}
       </ThemedText>
     </Pressable>
@@ -69,6 +77,7 @@ export function PrimaryAction({
 const styles = StyleSheet.create({
   action: {
     paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
     borderRadius: Radii.medium,
     alignItems: "center",
     justifyContent: "center",
@@ -78,6 +87,7 @@ const styles = StyleSheet.create({
   blocked: {
     opacity: 0.55,
   },
+  pressed: { opacity: 0.65 },
   enabled: {
     opacity: 1,
   },

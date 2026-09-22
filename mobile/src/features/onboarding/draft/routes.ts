@@ -159,6 +159,13 @@ export function recoveryRoute(
   state: ImportJourneyState,
   currentRoute: ImportJourneyRoute,
 ): ImportJourneyRoute | null {
-  const target = earliestLegalRoute(state)
+  const target =
+    state.phase === "completed"
+      ? state.manualHandoff === "qr"
+        ? "/onboarding/qr-scan"
+        : state.manualHandoff === "ical"
+          ? "/onboarding/ical-url"
+          : "/onboarding/import"
+      : earliestLegalRoute(state)
   return target === currentRoute ? null : target
 }

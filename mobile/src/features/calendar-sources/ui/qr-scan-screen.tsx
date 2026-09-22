@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next"
 import { useAddCalendar } from "@/features/calendar-sources/data"
 import {
   useImportCreateFields,
-  useImportDraft,
   useProtectedImportRoute,
 } from "@/features/onboarding"
 import { recordUnknownError } from "@/firebase"
@@ -25,19 +24,14 @@ import { useQrImportController } from "./use-qr-import-controller"
 export default function QrScanScreen() {
   const { t } = useTranslation()
   const [permission, requestPermission] = useCameraPermissions()
-  const { addCalendarFromUrl, reset } = useAddCalendar()
+  const { addCalendarFromUrl } = useAddCalendar()
   const fields = useImportCreateFields()
-  const { dispatch } = useImportDraft()
   const legal = useProtectedImportRoute("qr", "/onboarding/qr-scan")
   const controller = useQrImportController({
     fields,
     addCalendarFromUrl,
-    resetAddCalendar: reset,
     complete: () => router.dismissTo("/calendar-import-result"),
-    openManualUrl: () => {
-      dispatch({ type: "set-manual-handoff", target: "ical" })
-      router.replace("/onboarding/ical-url")
-    },
+    openMethodChooser: () => router.dismissTo("/onboarding/import"),
     recordError: recordUnknownError,
   })
 
@@ -66,8 +60,7 @@ export default function QrScanScreen() {
         content = (
           <QrImportFailureView
             retry={controller.retry}
-            scanAnother={controller.scanAnother}
-            enterManualUrl={controller.enterManualUrl}
+            changeMethod={controller.changeMethod}
           />
         )
         break

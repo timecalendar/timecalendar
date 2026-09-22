@@ -1,18 +1,34 @@
-import { renderHook, waitFor } from "@testing-library/react-native"
+import { act, renderHook, waitFor } from "@testing-library/react-native"
 import { router } from "expo-router"
 
-import { useImportDraft } from "./context"
+import { ImportDraftProvider, useImportDraft } from "./context"
 import { useProtectedImportRoute } from "./protected-route"
 import { type ImportJourneyState, initialImportJourneyState } from "./types"
 
-jest.mock("expo-router", () => ({ router: { replace: jest.fn() } }))
-jest.mock("./context", () => ({ useImportDraft: jest.fn() }))
+let mockFocused = true
+jest.mock("expo-router", () => ({
+  router: { replace: jest.fn() },
+  useFocusEffect: (effect: () => void) => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require("react").useEffect(() => {
+      if (mockFocused) return effect()
+    }, [effect, mockFocused])
+  },
+}))
+jest.mock("./context", () => ({
+  ...jest.requireActual("./context"),
+  useImportDraft: jest.fn(),
+}))
 
 const mockUseImportDraft = useImportDraft as jest.Mock
 const mockReplace = router.replace as jest.Mock
 
 describe("useProtectedImportRoute", () => {
-  beforeEach(() => jest.clearAllMocks())
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockUseImportDraft.mockReset()
+    mockFocused = true
+  })
 
   const listed: ImportJourneyState = {
     phase: "draft",
@@ -147,5 +163,73 @@ describe("useProtectedImportRoute", () => {
     )
     expect(result.current).toBe(true)
     expect(mockReplace).not.toHaveBeenCalled()
+  })
+
+  it("replaces QR with iCal using the real shared draft without restarting the guide", async () => {
+    mockUseImportDraft.mockImplementation(
+      jest.requireActual("./context").useImportDraft,
+    )
+    const { result, rerender } = await renderHook(
+      ({ kind }: { kind: "qr" | "ical" }) => ({
+        ...useImportDraft(),
+        legal: useProtectedImportRoute(
+          kind,
+          kind === "qr" ? "/onboarding/qr-scan" : "/onboarding/ical-url",
+        ),
+      }),
+      { wrapper: ImportDraftProvider, initialProps: { kind: "qr" } },
+    )
+    await act(() => {
+      result.current.setUnlistedInstitution("QA School")
+      result.current.setCalendarName("L3 Informatique")
+      result.current.dispatch({
+        type: "start-guide",
+        draftRevision: 2,
+        snapshot: {
+          locale: "en",
+          catalogueVersion: "v1",
+          providerSlug: "generic",
+          providerLabel: "Generic",
+          reason: "generic",
+          pages: [{ title: "Export", description: "Export instructions" }],
+        },
+      })
+      result.current.dispatch({ type: "complete-guide", pageIndex: 0 })
+      result.current.dispatch({ type: "set-manual-handoff", target: "qr" })
+    })
+    expect(result.current.legal).toBe(true)
+    const draft = result.current.draft
+    mockReplace.mockClear()
+
+    // Keep the outgoing QR mounted while the real reducer changes its handoff.
+    await act(() => {
+      result.current.dispatch({ type: "set-manual-handoff", target: "ical" })
+    })
+    expect(result.current.legal).toBe(false)
+    expect(mockReplace.mock.calls).toEqual([["/onboarding/ical-url"]])
+    await rerender({ kind: "ical" })
+    expect(result.current.legal).toBe(true)
+    expect(result.current.draft).toEqual(draft)
+    expect(mockReplace).toHaveBeenCalledTimes(1)
+
+    // Losing completion still closes the route, including after a draft edit.
+    await act(() => result.current.setCalendarName("M1 Informatique"))
+    expect(result.current.legal).toBe(false)
+    expect(mockReplace).toHaveBeenLastCalledWith(
+      "/onboarding/export-guide/providers",
+    )
+  })
+
+  it("leaves recovery to the focused screen and guards again on focus", async () => {
+    mockFocused = false
+    mockUseImportDraft.mockReturnValue({ state: initialImportJourneyState() })
+    const { result, rerender } = await renderHook(() =>
+      useProtectedImportRoute("qr", "/onboarding/qr-scan"),
+    )
+    expect(result.current).toBe(false)
+    expect(mockReplace).not.toHaveBeenCalled()
+    mockFocused = true
+    await rerender({})
+    expect(mockReplace).toHaveBeenCalledWith("/onboarding/school")
   })
 })

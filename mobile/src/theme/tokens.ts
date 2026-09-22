@@ -16,6 +16,7 @@ export const Colors = {
     positive: "#146C43",
     informational: "#0B57D0",
     destructive: "#B3261E",
+    error: "#B3261E",
     homeHero: "#FCE4EC",
     homeHeroDate: "#AD1457",
     logoSurface: "#ffffff",
@@ -37,6 +38,7 @@ export const Colors = {
     positive: "#7EE2A8",
     informational: "#A8C7FA",
     destructive: "#FFB4AB",
+    error: "#FFB4AB",
     homeHero: "#321824",
     homeHeroDate: "#FF80AB",
     logoSurface: "#ffffff",
@@ -94,6 +96,12 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark
  *   - `actionText` selects the AA body-text brand tone for each scheme:
  *       actionText on background #C2185B on #fff → 5.87:1  (light, body ✅)
  *       actionText on background #FF4081 on #000 → 6.30:1  (dark, body ✅)
+ *
+ *   ERROR (WCAG luminance recomputed for error surfaces):
+ *   - error light on background #B3261E on #fff → 6.54:1 (body AA)
+ *   - error light on backgroundElement #B3261E on #F0F0F3 → 5.75:1 (body AA)
+ *   - error dark on background #FFB4AB on #000 → 12.37:1 (body AAA)
+ *   - error dark on backgroundElement #FFB4AB on #212225 → 9.37:1 (body AAA)
  *
  *   DESTRUCTIVE
  *   - destructive light #B3261E on backgroundElement #F0F0F3 → 5.3:1 (UI ✅)

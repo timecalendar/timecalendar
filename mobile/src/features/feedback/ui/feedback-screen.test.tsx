@@ -128,9 +128,9 @@ it("renders accessible fields and rejects an empty form locally", async () => {
   expect(getByTestId("feedback-email-input").props.returnKeyType).toBe("next")
   expect(getByTestId("feedback-message-input").props.multiline).toBe(true)
   await fireEvent.press(getByTestId("feedback-submit"))
-  expect(
-    getByText("Enter your e-mail address.").props.accessibilityLiveRegion,
-  ).toBe("polite")
+  expect(getByText("Enter your e-mail address.").props.accessibilityRole).toBe(
+    "alert",
+  )
   expect(getByText("Enter your message.").props.accessibilityRole).toBe("alert")
   expect(sendFeedback).not.toHaveBeenCalled()
 })
@@ -210,8 +210,7 @@ it.each([
     await fireEvent.press(getByTestId("feedback-submit"))
 
     const error = getByText(guidance)
-    expect(error.props.accessibilityRole).toBe("alert")
-    expect(error.props.accessibilityLiveRegion).toBe("polite")
+    expect(getByTestId("feedback-submit-error")).toContainElement(error)
     expect(getByTestId("feedback-action-region")).toContainElement(error)
     expect(getByTestId("feedback-email-input").props.value).toBe(
       "student@example.fr",

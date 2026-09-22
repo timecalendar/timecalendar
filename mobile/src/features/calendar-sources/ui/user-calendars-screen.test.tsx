@@ -794,8 +794,7 @@ describe("UserCalendarsScreen", () => {
     ).toBeTruthy()
     expect(
       StyleSheet.flatten(
-        screen.getByText("We couldn't update your calendars. Please try again.")
-          .props.style,
+        screen.getByTestId("user-calendars-write-error").props.style,
       ).marginTop,
     ).toBe(Spacing.four)
   })

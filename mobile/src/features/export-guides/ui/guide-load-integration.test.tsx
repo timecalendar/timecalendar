@@ -156,7 +156,7 @@ it("recovers the real screen from a blocking load through Retry", async () => {
   await view.rerender(<ProviderSelectionScreen />)
   expect(
     view.getByText(
-      "The guide is required before you can import your timetable.",
+      /The guide is required before you can import your timetable\./,
     ),
   ).toBeTruthy()
 

@@ -20,6 +20,11 @@ capability does not claim server exactly-once behavior when a create response it
 - **THEN** metadata is resolved by token and a durable `user_calendars` row is upserted
 - **AND** the operation reports durable completion exactly once with no ephemeral holder write
 
+#### Scenario: A failed persist is recorded and surfaced
+- **WHEN** create, token resolution, or the local durable upsert fails
+- **THEN** the failure is recorded through the Firebase error seam and surfaced accessibly
+- **AND** the source retains its draft and checkpoint for retry without reporting completion
+
 #### Scenario: Resolve retry reuses the known token
 - **WHEN** metadata resolution fails after create returned a token
 - **THEN** the failure is recorded and surfaced accessibly

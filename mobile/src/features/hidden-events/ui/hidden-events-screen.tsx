@@ -4,9 +4,9 @@ import { Pressable, ScrollView, StyleSheet, View } from "react-native"
 
 import { EmptyState } from "@/components/empty-state"
 import { noDataArtwork } from "@/components/empty-state-artwork"
+import { ErrorNotice } from "@/components/error-surfaces"
 import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
-import { WriteErrorNotice } from "@/components/write-error-notice"
 import {
   displayEventTitle,
   formatTimeRange,
@@ -74,7 +74,7 @@ export function HiddenEventsScreen() {
             contentContainerStyle={[laneStyle, styles.content]}
           >
             {failed && (
-              <WriteErrorNotice
+              <ErrorNotice
                 message={t("hiddenEvents.error")}
                 style={styles.error}
               />
