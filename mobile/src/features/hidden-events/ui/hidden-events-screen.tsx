@@ -1,4 +1,5 @@
 import { Stack } from "expo-router"
+import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { Pressable, ScrollView, StyleSheet, View } from "react-native"
 
@@ -45,22 +46,26 @@ export function HiddenEventsScreen() {
   // Resolve each hidden uid to its current synced event (title + time). Only
   // still-resolving uids are listed (Flutter parity — a uid with no current event
   // is not shown, though the blob retains it for the importer round-trip).
-  const uidEntries: UidEntry[] = uidHiddenEvents.flatMap((uid) => {
-    const event = syncedEvents.find((candidate) => candidate.id === uid)
-    if (event === undefined) return []
-    return [
-      {
-        uid,
-        title: displayEventTitle(event.title, t("calendar.event.noTitle")),
-        time: formatTimeRange(
-          event.startsAt,
-          event.endsAt,
-          locale,
-          displayZone,
-        ),
-      },
-    ]
-  })
+  const uidEntries = useMemo<UidEntry[]>(
+    () =>
+      uidHiddenEvents.flatMap((uid) => {
+        const event = syncedEvents.find((candidate) => candidate.id === uid)
+        if (event === undefined) return []
+        return [
+          {
+            uid,
+            title: displayEventTitle(event.title, t("calendar.event.noTitle")),
+            time: formatTimeRange(
+              event.startsAt,
+              event.endsAt,
+              locale,
+              displayZone,
+            ),
+          },
+        ]
+      }),
+    [displayZone, locale, syncedEvents, t, uidHiddenEvents],
+  )
 
   const isEmpty = namedHiddenEvents.length === 0 && uidEntries.length === 0
 

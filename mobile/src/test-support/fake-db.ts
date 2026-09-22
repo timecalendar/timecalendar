@@ -141,24 +141,24 @@ export function createFakeDb(config: {
     return String(x).localeCompare(String(y))
   }
 
+  const conditionValue = (row: Row, value: unknown): unknown =>
+    typeof value === "string" && /^[A-Za-z][A-Za-z0-9_]*\.[A-Za-z]/.test(value)
+      ? row[fieldOf(value)]
+      : value
+
   const matches = (row: Row, cond: Condition): boolean => {
     if (cond === null) return true
-    const value =
-      typeof ("val" in cond ? cond.val : undefined) === "string" &&
-      /^[A-Za-z][A-Za-z0-9_]*\.[A-Za-z]/.test(
-        String((cond as { val?: unknown }).val),
-      )
-        ? row[fieldOf(String((cond as { val: unknown }).val))]
-        : (cond as { val?: unknown }).val
     switch (cond.op) {
-      case "eq":
+      case "eq": {
+        const value = conditionValue(row, cond.val)
         return row[cond.field] === value
+      }
       case "lt":
-        return compare(row[cond.field], value) < 0
+        return compare(row[cond.field], conditionValue(row, cond.val)) < 0
       case "gt":
-        return compare(row[cond.field], value) > 0
+        return compare(row[cond.field], conditionValue(row, cond.val)) > 0
       case "gte":
-        return compare(row[cond.field], value) >= 0
+        return compare(row[cond.field], conditionValue(row, cond.val)) >= 0
       case "inArray":
         return cond.val.includes(row[cond.field])
       case "notInArray":
