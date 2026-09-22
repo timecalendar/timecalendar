@@ -1,14 +1,4 @@
-import {
-  and,
-  db,
-  eq,
-  gt,
-  gte,
-  lt,
-  or,
-  personalEvents,
-  useLiveQuery,
-} from "@/db"
+import { and, db, gt, gte, lt, or, personalEvents, useLiveQuery } from "@/db"
 
 import { type PersonalEvent, rowToEvent } from "./types"
 
@@ -32,11 +22,6 @@ export function usePersonalEventRowsInRange(range: { from: Date; to: Date }) {
           and(
             lt(personalEvents.startsAt, toIso),
             gt(personalEvents.endsAt, fromIso),
-          ),
-          and(
-            eq(personalEvents.startsAt, personalEvents.endsAt),
-            gte(personalEvents.startsAt, fromIso),
-            lt(personalEvents.startsAt, toIso),
           ),
           and(
             gte(personalEvents.startsAt, fromIso),
