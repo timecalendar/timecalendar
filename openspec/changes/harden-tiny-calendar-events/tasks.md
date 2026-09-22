@@ -41,6 +41,6 @@
 ## 7. Local-green and handoff evidence
 
 - [x] 7.1 From `mobile/`, run focused 100% coverage for every introduced pure decoder/range/color/geometry/presentation module, then `npm test -- --coverage`; record suite/test counts and thresholds without claiming device evidence.
-- [ ] 7.2 From `mobile/`, run `npx tsc --noEmit`, `npm run lint`, scoped `npx prettier --check` over every edited source/test/catalog file, and `npm run react-doctor:changed`; resolve findings without suppression, timeout inflation, or gate weakening.
-- [ ] 7.3 Run `npx openspec validate harden-tiny-calendar-events --strict`, the disclosure scan, and the established Maestro selector/harness static checks affected by fixture changes; do not add a fourth top-level journey or claim native execution on this host.
-- [ ] 7.4 Record the exact tested head, fabricated fixture/reset instructions, aggregate-only diagnostic proof, all command outcomes, and outstanding T28 physical-device/accessibility checks in the implementation handoff; confirm no contract, migration, native/store/EAS, deploy/CI, legacy Flutter, or infrastructure surface changed.
+- [x] 7.2 From `mobile/`, run `npx tsc --noEmit`, `npm run lint`, scoped `npx prettier --check` over every edited source/test/catalog file, and `npm run react-doctor:changed`; resolve findings without suppression, timeout inflation, or gate weakening.
+- [x] 7.3 Run `npx openspec validate harden-tiny-calendar-events --strict`, the disclosure scan, and the established Maestro selector/harness static checks affected by fixture changes; do not add a fourth top-level journey or claim native execution on this host.
+- [x] 7.4 Record the exact tested head, fabricated fixture/reset instructions, aggregate-only diagnostic proof, all command outcomes, and outstanding T28 physical-device/accessibility checks in the implementation handoff; confirm no contract, migration, native/store/EAS, deploy/CI, legacy Flutter, or infrastructure surface changed.
