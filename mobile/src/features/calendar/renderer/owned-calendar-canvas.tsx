@@ -503,9 +503,8 @@ function CalendarTiles({
                   />
                 )),
               )}
-              {components
-                .filter((component) => component.items.length > 1)
-                .map((component) => (
+              {components.map((component) =>
+                component.items.length > 1 ? (
                   <Pressable
                     key={`conflict:${component.key}`}
                     testID={`owned-calendar-conflict-${component.key}`}
@@ -531,7 +530,8 @@ function CalendarTiles({
                       },
                     ]}
                   />
-                ))}
+                ) : null,
+              )}
             </View>
           )
         })}

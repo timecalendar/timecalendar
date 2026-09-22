@@ -85,6 +85,39 @@ function visibleGeometry(
   }
 }
 
+function homeOverlapLayout(input: {
+  events: readonly CalendarEvent[]
+  measuredWidth: number | null
+  fontScale: number
+  now: Date
+  range: HourRange
+  displayZone: string
+}) {
+  if (input.measuredWidth === null || input.fontScale >= 1.3) {
+    return { placed: [], usesReflowedList: true }
+  }
+  const positiveIntervals = input.events.filter(
+    (event) => event.endsAt.getTime() > event.startsAt.getTime(),
+  )
+  if (positiveIntervals.length !== input.events.length) {
+    return { placed: [], usesReflowedList: true }
+  }
+  const measuredWidth = input.measuredWidth
+  const placed = [...layoutOverlaps(positiveIntervals).values()]
+  const usesReflowedList = placed.some((entry) => {
+    const width = (entry.endX - entry.startX) * measuredWidth
+    const geometry = visibleGeometry(
+      entry.item,
+      input.now,
+      input.range,
+      input.displayZone,
+    )
+    const height = eventHeight(geometry.durationMinutes, HOME_PIXELS_PER_HOUR)
+    return width < MIN_TARGET_SIZE || height < MIN_TARGET_SIZE
+  })
+  return { placed, usesReflowedList }
+}
+
 export function TodayTimeline({
   events,
   range,
@@ -130,23 +163,14 @@ export function TodayTimeline({
     startMinute,
   })
 
-  const canUseTimeline = measuredWidth !== null && fontScale < 1.3
-  const positiveIntervals = events.filter(
-    (event) => event.endsAt.getTime() > event.startsAt.getTime(),
-  )
-  const placed =
-    canUseTimeline && positiveIntervals.length === events.length
-      ? [...layoutOverlaps(positiveIntervals).values()]
-      : []
-  const usesReflowedList =
-    !canUseTimeline ||
-    placed.length !== events.length ||
-    placed.some((entry) => {
-      const width = (entry.endX - entry.startX) * measuredWidth
-      const geometry = visibleGeometry(entry.item, now, range, displayZone)
-      const height = eventHeight(geometry.durationMinutes, HOME_PIXELS_PER_HOUR)
-      return width < MIN_TARGET_SIZE || height < MIN_TARGET_SIZE
-    })
+  const { placed, usesReflowedList } = homeOverlapLayout({
+    events,
+    measuredWidth,
+    fontScale,
+    now,
+    range,
+    displayZone,
+  })
   const nowIndicator = isToday
     ? nowIndicatorPosition(now, displayZone, {
         pixelsPerHour: HOME_PIXELS_PER_HOUR,
