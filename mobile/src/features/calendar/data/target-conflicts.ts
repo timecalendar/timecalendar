@@ -77,8 +77,8 @@ export function planTargetConflicts<T extends TargetConflictItem>(input: {
     seen.add(root)
     const pending = [root]
     const members: typeof entries = []
-    while (pending.length > 0) {
-      const current = pending.shift()!
+    for (let next = 0; next < pending.length; next += 1) {
+      const current = pending[next]!
       const entry = entries[current]!
       members.push(entry)
       for (let candidate = 0; candidate < entries.length; candidate += 1) {

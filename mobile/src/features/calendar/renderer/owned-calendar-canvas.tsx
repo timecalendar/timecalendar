@@ -1,5 +1,5 @@
 import type { TFunction } from "i18next"
-import { type RefObject, useState } from "react"
+import { type RefObject, useMemo, useState } from "react"
 import {
   type LayoutChangeEvent,
   Modal,
@@ -472,15 +472,22 @@ function CalendarTiles({
   } | null>(null)
   const chooserItems = chooser?.page === page ? chooser.items : null
   const platform = Platform.OS === "ios" ? "ios" : "android"
+  const targetConflictComponents = useMemo(
+    () =>
+      page.columns.map((column) =>
+        planTargetConflicts({
+          items: column.tiles,
+          pixelsPerHour: settledPixelsPerHour,
+          platform,
+        }),
+      ),
+    [page.columns, platform, settledPixelsPerHour],
+  )
   return (
     <>
       <View pointerEvents="box-none" style={styles.tileColumns}>
-        {page.columns.map((column) => {
-          const components = planTargetConflicts({
-            items: column.tiles,
-            pixelsPerHour: settledPixelsPerHour,
-            platform,
-          })
+        {page.columns.map((column, columnIndex) => {
+          const components = targetConflictComponents[columnIndex]!
           return (
             <View
               key={column.key}
