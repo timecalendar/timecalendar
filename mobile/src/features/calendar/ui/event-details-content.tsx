@@ -4,6 +4,7 @@ import { StyleSheet, View } from "react-native"
 import { ThemedText } from "@/components/themed-text"
 import {
   type AppLocale,
+  displayEventTitle,
   type EventDetails,
   type EventDetailsTag,
   formatEventDateRange,
@@ -98,7 +99,7 @@ function TitleBlock({
           style={[styles.swatch, { backgroundColor: event.color }]}
         />
         <ThemedText type="title" style={styles.title}>
-          {event.title}
+          {displayEventTitle(event.title, t("calendar.event.noTitle"))}
         </ThemedText>
       </View>
       <ThemedText themeColor="textSecondary">

@@ -4,6 +4,7 @@ import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -57,6 +58,34 @@ const MAJOR_MINUTES = fullDayMajorMinutes()
 const MINOR_MINUTES = fullDayMinorMinutes()
 /** Diameter of the indicator's leading cap — its non-color shape cue. */
 const NOW_CAP_SIZE = 8
+const POINT_MARKER_SIZE = 4
+
+function liveEventVisualGeometry(
+  shape: "point" | "interval",
+  startMinute: number,
+  endMinute: number,
+  pixelsPerHour: number,
+) {
+  "worklet"
+  const top = (startMinute / 60) * pixelsPerHour
+  return shape === "point"
+    ? { top: top - POINT_MARKER_SIZE / 2, height: POINT_MARKER_SIZE }
+    : { top, height: ((endMinute - startMinute) / 60) * pixelsPerHour }
+}
+
+function liveEventInteractionGeometry(
+  visual: { top: number; height: number },
+  dayHeight: number,
+  minimum: number,
+) {
+  "worklet"
+  const height = Math.min(dayHeight, Math.max(visual.height, minimum))
+  const center = visual.top + visual.height / 2
+  return {
+    top: Math.max(0, Math.min(center - height / 2, dayHeight - height)),
+    height,
+  }
+}
 
 function renderHeight(pixelsPerHour: number) {
   "worklet"
@@ -386,6 +415,7 @@ function CalendarPageCanvas({
         locale={locale}
         displayZone={displayZone}
         pixelsPerHour={pixelsPerHour}
+        settledPixelsPerHour={settledPixelsPerHour}
         onEventPress={onEventPress}
         t={t}
       />
@@ -413,6 +443,7 @@ function CalendarTiles({
   locale,
   displayZone,
   pixelsPerHour,
+  settledPixelsPerHour,
   onEventPress,
   t,
 }: {
@@ -420,6 +451,7 @@ function CalendarTiles({
   locale: AppLocale
   displayZone: string
   pixelsPerHour: SharedValue<number>
+  settledPixelsPerHour: number
   onEventPress: (uid: string) => void
   t: TFunction
 }) {
@@ -438,6 +470,7 @@ function CalendarTiles({
               locale={locale}
               displayZone={displayZone}
               pixelsPerHour={pixelsPerHour}
+              settledPixelsPerHour={settledPixelsPerHour}
               accessible={page.direction === 0}
               onPress={() => onEventPress(tile.identity.uid)}
               t={t}
@@ -454,6 +487,7 @@ function TimedCalendarTile({
   locale,
   displayZone,
   pixelsPerHour,
+  settledPixelsPerHour,
   accessible,
   onPress,
   t,
@@ -462,17 +496,42 @@ function TimedCalendarTile({
   locale: AppLocale
   displayZone: string
   pixelsPerHour: SharedValue<number>
+  settledPixelsPerHour: number
   accessible: boolean
   onPress: () => void
   t: TFunction
 }) {
-  const positionStyle = useAnimatedStyle(() => ({
-    top: minuteToPixel(tile.startMinute, {
-      startMinute: FULL_DAY_START_MINUTE,
-      pixelsPerHour: pixelsPerHour.get(),
-    }),
-    height: ((tile.endMinute - tile.startMinute) / 60) * pixelsPerHour.get(),
-  }))
+  const platform = Platform.OS === "ios" ? "ios" : "android"
+  const minimumTarget = platform === "ios" ? 44 : 48
+  const interactionStyle = useAnimatedStyle(() => {
+    const livePixelsPerHour = pixelsPerHour.get()
+    const visual = liveEventVisualGeometry(
+      tile.shape,
+      tile.startMinute,
+      tile.endMinute,
+      livePixelsPerHour,
+    )
+    return liveEventInteractionGeometry(
+      visual,
+      24 * livePixelsPerHour,
+      minimumTarget,
+    )
+  })
+  const visualStyle = useAnimatedStyle(() => {
+    const livePixelsPerHour = pixelsPerHour.get()
+    const visual = liveEventVisualGeometry(
+      tile.shape,
+      tile.startMinute,
+      tile.endMinute,
+      livePixelsPerHour,
+    )
+    const interaction = liveEventInteractionGeometry(
+      visual,
+      24 * livePixelsPerHour,
+      minimumTarget,
+    )
+    return { top: visual.top - interaction.top, height: visual.height }
+  })
   const time = formatTimeRange(tile.startsAt, tile.endsAt, locale, displayZone)
   const progress = checklistProgressLabel(t, tile.checklist)
   const label = t(
@@ -490,7 +549,7 @@ function TimedCalendarTile({
     <Animated.View
       testID={`owned-calendar-event-${tile.identity.uid}`}
       pointerEvents="box-none"
-      style={[styles.tileAnchor, positionStyle]}
+      style={[styles.tileAnchor, interactionStyle]}
     >
       <Pressable
         accessible={accessible}
@@ -500,24 +559,55 @@ function TimedCalendarTile({
         accessibilityLabel={label}
         accessibilityHint={t("calendar.event.hint")}
         onPress={onPress}
-        style={[styles.tile, { backgroundColor: tile.surfaceColor }]}
+        style={styles.tileTarget}
       >
-        <ThemedText
+        <Animated.View
           accessible={false}
-          type="captionSmall"
-          style={styles.tileTitle}
+          importantForAccessibility="no-hide-descendants"
+          style={[
+            styles.tile,
+            {
+              backgroundColor: tile.appearance.surface,
+              borderLeftColor: tile.appearance.accent,
+              borderColor: tile.appearance.outline,
+              borderWidth: tile.appearance.increasedContrast ? 2 : 0,
+              borderLeftWidth: 3,
+            },
+            visualStyle,
+          ]}
         >
-          {tile.title}
-        </ThemedText>
-        {tile.location !== undefined && (
-          <ThemedText accessible={false} type="captionSmall">
-            {tile.location}
-          </ThemedText>
-        )}
-        <ChecklistProgressIndicator
-          progress={tile.checklist}
-          variant="compact"
-        />
+          {tile.shape === "interval" && (
+            <ThemedText
+              accessible={false}
+              type="captionSmall"
+              style={[styles.tileTitle, { color: tile.appearance.foreground }]}
+              numberOfLines={1}
+            >
+              {tile.title}
+            </ThemedText>
+          )}
+          {tile.shape === "interval" &&
+            tile.location !== undefined &&
+            ((tile.endMinute - tile.startMinute) / 60) * settledPixelsPerHour >=
+              40 && (
+              <ThemedText
+                accessible={false}
+                type="captionSmall"
+                style={{ color: tile.appearance.foreground }}
+                numberOfLines={1}
+              >
+                {tile.location}
+              </ThemedText>
+            )}
+          {tile.shape === "interval" &&
+            ((tile.endMinute - tile.startMinute) / 60) * settledPixelsPerHour >=
+              60 && (
+              <ChecklistProgressIndicator
+                progress={tile.checklist}
+                variant="compact"
+              />
+            )}
+        </Animated.View>
       </Pressable>
     </Animated.View>
   )
@@ -731,8 +821,11 @@ const styles = StyleSheet.create({
   },
   tileColumn: { flex: 1, position: "relative" },
   tileAnchor: { position: "absolute", left: 0, right: 2 },
+  tileTarget: { flex: 1 },
   tile: {
-    flex: 1,
+    position: "absolute",
+    left: 0,
+    right: 0,
     overflow: "hidden",
     borderRadius: 2,
     paddingHorizontal: 4,

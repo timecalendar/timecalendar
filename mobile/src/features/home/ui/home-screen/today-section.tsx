@@ -3,7 +3,7 @@ import { Platform, Pressable, StyleSheet, View } from "react-native"
 
 import { EmptyState } from "@/components/empty-state"
 import { ThemedText } from "@/components/themed-text"
-import { type CalendarEvent } from "@/features/calendar/data"
+import { type CalendarEvent, displayEventTitle } from "@/features/calendar/data"
 import {
   ChecklistProgressIndicator,
   type ChecklistProgressMap,
@@ -123,7 +123,7 @@ function AllDayEvents({
               ]}
             >
               <ThemedText type="smallBold" numberOfLines={2}>
-                {event.title}
+                {displayEventTitle(event.title, t("calendar.event.noTitle"))}
               </ThemedText>
               <ChecklistProgressIndicator progress={progress} />
             </Pressable>

@@ -5,6 +5,7 @@ import { ThemedText } from "@/components/themed-text"
 import {
   type AppLocale,
   type CalendarEvent,
+  displayEventTitle,
   formatTimeRange,
 } from "@/features/calendar/data"
 import {
@@ -108,7 +109,7 @@ function UpcomingCard({
       ]}
     >
       <ThemedText type="smallBold" numberOfLines={2}>
-        {event.title}
+        {displayEventTitle(event.title, t("calendar.event.noTitle"))}
       </ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
         {time}

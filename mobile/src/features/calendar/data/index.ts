@@ -14,7 +14,14 @@ export {
   startOfDayInZone,
   utcDayKey,
 } from "./day-key"
-export { eventSurfaceColor } from "./event-color"
+export {
+  contrastRatio,
+  type EventAppearance,
+  type EventAppearanceScheme,
+  eventSurfaceColor,
+  parseOpaqueHex,
+  resolveEventAppearance,
+} from "./event-color"
 export {
   CALENDAR_EVENT_REJECTION_REASONS,
   type CalendarEventDecodeResult,
@@ -31,6 +38,7 @@ export {
   type UseEventDetails,
   useEventDetails,
 } from "./event-details"
+export { displayEventTitle } from "./event-title"
 export {
   type CalendarEventsSnapshot,
   type DateRange,
@@ -109,6 +117,14 @@ export {
   classifyTimedEventSupport,
   type TimedEventSupport,
 } from "./timed-support"
+export {
+  ANDROID_MINIMUM_EVENT_TARGET,
+  eventInteractionGeometry,
+  eventVisualGeometry,
+  IOS_MINIMUM_EVENT_TARGET,
+  POINT_MARKER_SIZE,
+  type VerticalGeometry,
+} from "./timeline-geometry"
 export {
   buildCalendarTimelinePresentation,
   type CalendarTimelineColumnV1,

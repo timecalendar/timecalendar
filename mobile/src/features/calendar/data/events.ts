@@ -44,8 +44,7 @@ function addCounts(
     "invalid-identity": left["invalid-identity"] + right["invalid-identity"],
     "invalid-start": left["invalid-start"] + right["invalid-start"],
     "invalid-end": left["invalid-end"] + right["invalid-end"],
-    "non-positive-range":
-      left["non-positive-range"] + right["non-positive-range"],
+    "reversed-range": left["reversed-range"] + right["reversed-range"],
     "invalid-date-range":
       left["invalid-date-range"] + right["invalid-date-range"],
   }
@@ -58,7 +57,9 @@ function eventIntersectsRange(
 ): boolean {
   return event.kind === "date-only"
     ? event.startDay < civil.toDay && event.endDay > civil.fromDay
-    : event.startsAt < range.to && event.endsAt > range.from
+    : event.startsAt.getTime() === event.endsAt.getTime()
+      ? event.startsAt >= range.from && event.startsAt < range.to
+      : event.startsAt < range.to && event.endsAt > range.from
 }
 
 export function intersectsRange(
@@ -128,7 +129,7 @@ export function useCalendarEventsSnapshot(
     (event) =>
       !event.canceled &&
       !hiddenUids.has(event.identity.uid) &&
-      !hiddenNames.has(event.title) &&
+      (event.title === undefined || !hiddenNames.has(event.title)) &&
       (event.identity.source === "personal" ||
         (event.userCalendarId !== undefined &&
           visibleCalendarIds.has(event.userCalendarId))) &&

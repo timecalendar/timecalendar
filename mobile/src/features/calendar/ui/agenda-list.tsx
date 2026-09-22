@@ -12,6 +12,7 @@ import { ThemedText } from "@/components/themed-text"
 import {
   type AppLocale,
   type CalendarEvent,
+  displayEventTitle,
   formatDayHeaderParts,
   formatTimeRange,
   groupEventsByDay,
@@ -153,17 +154,18 @@ function EventTile({
     ? t("calendar.allDay")
     : formatTimeRange(event.startsAt, event.endsAt, locale, zone)
   const location = event.location ?? ""
+  const title = displayEventTitle(event.title, t("calendar.event.noTitle"))
 
   const progressLabel = checklistProgressLabel(t, progress)
   const label =
     progressLabel === undefined
       ? t("calendar.agenda.event.openLabel", {
-          title: event.title,
+          title,
           time,
           location,
         })
       : t("calendar.agenda.event.openLabelWithProgress", {
-          title: event.title,
+          title,
           time,
           location,
           progress: progressLabel,
@@ -200,7 +202,7 @@ function EventTile({
         ]}
       >
         <ThemedText type="smallBold" numberOfLines={2}>
-          {event.title}
+          {title}
         </ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
           {time}

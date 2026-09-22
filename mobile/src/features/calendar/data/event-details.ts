@@ -51,7 +51,7 @@ export type EventDetailsTag = EventTag
 export interface EventDetails {
   kind: "synced" | "personal"
   id: string
-  title: string
+  title: string | undefined
   /** #RRGGBB. */
   color: string
   /** #RRGGBB — the source-calendar group color (lossy domain drops it). */
@@ -82,6 +82,39 @@ function narrowType(raw: string): EventTypeEnum {
     : EventTypeEnumValues.class
 }
 
+function optionalText(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : undefined
+}
+
+function teachers(raw: unknown): string[] {
+  return parseJsonArray<unknown>(
+    typeof raw === "string" ? raw : undefined,
+  ).flatMap((value) => {
+    const teacher = optionalText(value)
+    return teacher === undefined ? [] : [teacher]
+  })
+}
+
+function tags(raw: unknown): EventDetailsTag[] {
+  return parseJsonArray<unknown>(
+    typeof raw === "string" ? raw : undefined,
+  ).flatMap((value) => {
+    if (value === null || typeof value !== "object") return []
+    const candidate = value as Record<string, unknown>
+    const name = optionalText(candidate.name)
+    const color = optionalText(candidate.color)
+    const icon = optionalText(candidate.icon)
+    return name === undefined ||
+      color === undefined ||
+      icon === undefined ||
+      !/^#[0-9A-F]{6}$/i.test(color)
+      ? []
+      : [{ name, color: color.toUpperCase(), icon }]
+  })
+}
+
 // Parse a stored row into the RICH EventDetails — TEXT ISO → Date (incl.
 // exportedAt), null location/description → undefined, the JSON columns decoded
 // DEFENSIVELY (corrupt/legacy → [] / null, never throw — the ADR-021/D2 total-read
@@ -92,7 +125,7 @@ export function rowToEventDetails(row: CalendarEventRow): EventDetails {
   return {
     kind: "synced",
     id: row.uid,
-    title: row.title,
+    title: optionalText(row.title),
     color: row.color,
     groupColor: row.groupColor,
     type: narrowType(row.type),
@@ -100,10 +133,10 @@ export function rowToEventDetails(row: CalendarEventRow): EventDetails {
     endsAt: isoToDate(row.endsAt),
     allDay: row.allDay,
     exportedAt: isoToDate(row.exportedAt),
-    location: nullToUndef(row.location),
-    description: nullToUndef(row.description),
-    teachers: parseJsonArray<string>(row.teachers),
-    tags: parseJsonArray<EventDetailsTag>(row.tags),
+    location: optionalText(nullToUndef(row.location)),
+    description: optionalText(nullToUndef(row.description)),
+    teachers: teachers(row.teachers),
+    tags: tags(row.tags),
     // `=== true` (not `?? false`) so a corrupt/legacy non-boolean `canceled`
     // degrades to false (the D2 defensive posture applied at the field level),
     // mirroring rowToCalendarEvent.
@@ -122,7 +155,7 @@ export function personalRowToEventDetails(row: PersonalEventRow): EventDetails {
   return {
     kind: "personal",
     id: row.uid,
-    title: row.title,
+    title: optionalText(row.title),
     color: row.color,
     groupColor: row.color,
     type: EventTypeEnumValues.class,
@@ -130,8 +163,8 @@ export function personalRowToEventDetails(row: PersonalEventRow): EventDetails {
     endsAt: isoToDate(row.endsAt),
     allDay: false,
     exportedAt: isoToDate(row.exportedAt),
-    location: nullToUndef(row.location),
-    description: nullToUndef(row.description),
+    location: optionalText(nullToUndef(row.location)),
+    description: optionalText(nullToUndef(row.description)),
     teachers: [],
     tags: [],
     canceled: false,

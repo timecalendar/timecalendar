@@ -1,4 +1,14 @@
-import { and, calendarEvents, db, eq, gt, lt, useLiveQuery } from "@/db"
+import {
+  and,
+  calendarEvents,
+  db,
+  eq,
+  gt,
+  gte,
+  lt,
+  or,
+  useLiveQuery,
+} from "@/db"
 import { decodeSyncedEventRows } from "@/features/calendar/data/event-decoder"
 import type { CalendarEvent } from "@/features/calendar/data/types"
 
@@ -30,8 +40,17 @@ export function useSyncedEventRowsInRange(range: SyncedEventRowRange) {
       .where(
         and(
           eq(calendarEvents.allDay, false),
-          lt(calendarEvents.startsAt, toIso),
-          gt(calendarEvents.endsAt, fromIso),
+          or(
+            and(
+              lt(calendarEvents.startsAt, toIso),
+              gt(calendarEvents.endsAt, fromIso),
+            ),
+            and(
+              eq(calendarEvents.startsAt, calendarEvents.endsAt),
+              gte(calendarEvents.startsAt, fromIso),
+              lt(calendarEvents.startsAt, toIso),
+            ),
+          ),
         ),
       ),
     [`timed:${fromIso}:${toIso}`],

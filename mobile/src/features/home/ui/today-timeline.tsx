@@ -15,6 +15,7 @@ import {
   type AppLocale,
   atHourInZone,
   type CalendarEvent,
+  displayEventTitle,
   eventHeight,
   formatTimeRange,
   hourLabels,
@@ -180,7 +181,9 @@ export function TodayTimeline({
             <ThemedText type="small" themeColor="textSecondary">
               {time}
             </ThemedText>
-            <ThemedText type="smallBold">{event.title}</ThemedText>
+            <ThemedText type="smallBold">
+              {displayEventTitle(event.title, t("calendar.event.noTitle"))}
+            </ThemedText>
             {location.length > 0 && (
               <ThemedText type="small" themeColor="textSecondary">
                 {location}
@@ -312,7 +315,10 @@ export function TodayTimeline({
                   {showText && (
                     <>
                       <ThemedText type="small" numberOfLines={2}>
-                        {event.title}
+                        {displayEventTitle(
+                          event.title,
+                          t("calendar.event.noTitle"),
+                        )}
                       </ThemedText>
                       {location.length > 0 && (
                         <ThemedText
