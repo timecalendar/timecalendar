@@ -114,6 +114,7 @@ describe("TodayTimeline", () => {
 
   it("remeasures overlap pixels and reflows when the tile owner is too narrow", async () => {
     const overlapping = event({
+      identity: { source: "synced", uid: "ev-2" },
       id: "ev-2",
       title: "Databases",
       startsAt: new Date(2026, 5, 15, 9, 15),

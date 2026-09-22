@@ -119,6 +119,7 @@ export const OwnedCalendarShell = forwardRef<
           )}
           t={t}
           onEventPress={onEventPress}
+          isEventActivationBlocked={coordinator.isEventActivationBlocked}
         />
       </GestureDetector>
     </View>

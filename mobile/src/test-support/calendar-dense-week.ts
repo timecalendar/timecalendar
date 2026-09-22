@@ -8,23 +8,22 @@ import { type CalendarEvent } from "@/features/calendar/data"
 // under src/test-support/ (out of the production calendar/data/ tree) and is
 // coverage-excluded (jest.config.js).
 //
-// Anchored to the CURRENT week (Monday 00:00 local) so the events always fall in
-// the visible range when a consumer opens on today.
+export const DENSE_WEEK_ANCHOR = new Date("2026-06-15T00:00:00.000Z")
 
-// Local Monday 00:00 of the week containing `ref` (Mon=0 … Sun=6).
+// UTC Monday 00:00 of the week containing `ref` (Mon=0 … Sun=6).
 function mondayOf(ref: Date): Date {
   const monday = new Date(ref)
-  monday.setHours(0, 0, 0, 0)
-  const isoWeekday = (monday.getDay() + 6) % 7
-  monday.setDate(monday.getDate() - isoWeekday)
+  monday.setUTCHours(0, 0, 0, 0)
+  const isoWeekday = (monday.getUTCDay() + 6) % 7
+  monday.setUTCDate(monday.getUTCDate() - isoWeekday)
   return monday
 }
 
-// A weekday (0 = Monday) at HH:MM local, relative to this week's Monday.
+// A weekday (0 = Monday) at HH:MM UTC, relative to the fixture Monday.
 function slot(monday: Date, dayOffset: number, hour: number, minute = 0): Date {
   const date = new Date(monday)
-  date.setDate(date.getDate() + dayOffset)
-  date.setHours(hour, minute, 0, 0)
+  date.setUTCDate(date.getUTCDate() + dayOffset)
+  date.setUTCHours(hour, minute, 0, 0)
   return date
 }
 
@@ -63,7 +62,9 @@ function event(
   }
 }
 
-export function denseWeekFixture(ref: Date = new Date()): CalendarEvent[] {
+export function denseWeekFixture(
+  ref: Date = DENSE_WEEK_ANCHOR,
+): CalendarEvent[] {
   const monday = mondayOf(ref)
   return [
     // Monday — back-to-back blocks (no overlap).
@@ -121,14 +122,42 @@ export function denseWeekFixture(ref: Date = new Date()): CalendarEvent[] {
       slot(monday, 1, 13),
     ),
 
-    // Wednesday — a single mid-day block.
+    // Wednesday — identical bounds make a labelled 3-way cluster.
     event(
       "fx-wed-1",
       "Project",
       COLORS.purple,
-      slot(monday, 2, 14),
-      slot(monday, 2, 17),
+      slot(monday, 2, 9),
+      slot(monday, 2, 10),
       "Lab 3",
+    ),
+    event(
+      "fx-wed-2",
+      "Studio",
+      COLORS.green,
+      slot(monday, 2, 9),
+      slot(monday, 2, 10),
+    ),
+    event(
+      "fx-wed-3",
+      "Review",
+      COLORS.orange,
+      slot(monday, 2, 9),
+      slot(monday, 2, 10),
+    ),
+    event(
+      "fx-wed-point",
+      "Noon marker",
+      COLORS.blue,
+      slot(monday, 2, 12),
+      slot(monday, 2, 12),
+    ),
+    event(
+      "fx-wed-tiny",
+      "Tiny target",
+      COLORS.pink,
+      slot(monday, 2, 12, 3),
+      slot(monday, 2, 12, 5),
     ),
 
     // Thursday — a partial overlap (two columns).

@@ -15,6 +15,8 @@ import { useCalendarIncreasedContrast } from "./use-increased-contrast"
 import type { FirstWeekday } from "./week"
 import type { CalendarTimelineMode } from "./week-transition"
 
+const EMPTY_EVENTS: readonly CalendarEvent[] = []
+
 export interface CalendarTimelinePresentationInput {
   anchor: Date
   mode: CalendarTimelineMode
@@ -31,7 +33,14 @@ export function useCalendarTimelinePresentation(
   const colorScheme = useColorScheme()
   const scheme = colorScheme === "dark" ? "dark" : "light"
   const increasedContrast = useCalendarIncreasedContrast()
-  const range = planCalendarThreePageRange(input)
+  const anchorTime = input.anchor.getTime()
+  const range = planCalendarThreePageRange({
+    anchor: new Date(anchorTime),
+    mode: input.mode,
+    displayZone: input.displayZone,
+    firstWeekday: input.firstWeekday,
+    showWeekends: input.showWeekends,
+  })
   const snapshot = useCalendarEventsSnapshot({
     ...range.instant,
     civilFromDay: range.civil.fromDay,
@@ -49,12 +58,14 @@ export function useCalendarTimelinePresentation(
 
   // Paging recenters immediately, so only event data may lag behind the anchor.
   // Reproject retained events onto the current dates instead of retaining pages.
-  const events = complete ? snapshot.events : (retained?.events ?? [])
+  const retainedEvents = retained?.events
+  const events = complete ? snapshot.events : (retainedEvents ?? EMPTY_EVENTS)
+  const localizedNoTitle = t("calendar.event.noTitle")
   const identityPresentation = buildCalendarTimelinePresentation({
     range,
     generation: input.generation,
     events,
-    localizedNoTitle: t("calendar.event.noTitle"),
+    localizedNoTitle,
     scheme,
     increasedContrast,
   })
@@ -66,7 +77,7 @@ export function useCalendarTimelinePresentation(
     generation: input.generation,
     events,
     checklistProgress,
-    localizedNoTitle: t("calendar.event.noTitle"),
+    localizedNoTitle,
     scheme,
     increasedContrast,
   })

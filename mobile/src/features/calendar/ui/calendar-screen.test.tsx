@@ -394,6 +394,54 @@ describe("CalendarScreen owned shell", () => {
     )
   })
 
+  it("opens each crowded synced and personal identity through the chooser", async () => {
+    setCalendarView("day")
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-16" })
+    const crowded = [
+      calendarEvent({
+        identity: { source: "synced", uid: "crowded-synced" },
+        id: "synced-alias",
+        title: "Crowded class",
+        startsAt: new Date("2026-06-16T10:00:00.000Z"),
+        endsAt: new Date("2026-06-16T10:02:00.000Z"),
+      }),
+      calendarEvent({
+        identity: { source: "personal", uid: "crowded-personal" },
+        id: "personal-alias",
+        title: "Crowded study",
+        startsAt: new Date("2026-06-16T10:03:00.000Z"),
+        endsAt: new Date("2026-06-16T10:05:00.000Z"),
+        userCalendarId: undefined,
+      }),
+    ]
+    mockUseCalendarTimelinePresentation.mockImplementation((input) => ({
+      presentation: buildCalendarTimelinePresentation({
+        range: planCalendarThreePageRange(input),
+        generation: input.generation,
+        events: crowded,
+      }),
+      ready: true,
+      error: undefined,
+    }))
+
+    await render(<CalendarScreen />)
+    const trigger = await screen.findByRole("button", {
+      name: "Choose an overlapping event",
+    })
+    await fireEvent.press(trigger)
+    await fireEvent.press(
+      screen.getByRole("button", { name: /^Crowded class,/ }),
+    )
+    expect(mockPush).toHaveBeenLastCalledWith("/event-details/crowded-synced")
+
+    await fireEvent.press(trigger)
+    await fireEvent.press(
+      screen.getByRole("button", { name: /^Crowded study,/ }),
+    )
+    expect(mockPush).toHaveBeenLastCalledWith("/event-details/crowded-personal")
+    expect(mockPush).toHaveBeenCalledTimes(2)
+  })
+
   it("pages away and back using only local presentation reads", async () => {
     setCalendarView("day")
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-16" })

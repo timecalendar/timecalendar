@@ -124,6 +124,71 @@ describe("buildCalendarTimelinePresentation", () => {
     expect(build([...events].reverse())).toEqual(build(events))
   })
 
+  it("packs a complete transitive day cluster before any viewport projection", () => {
+    const events = [
+      event("offscreen", "2026-09-14T04:00:00Z", "2026-09-14T09:00:00Z"),
+      event("bridge", "2026-09-14T08:00:00Z", "2026-09-14T10:00:00Z"),
+      event("visible", "2026-09-14T09:00:00Z", "2026-09-14T11:00:00Z"),
+    ]
+    const build = (ordered: CalendarEvent[]) =>
+      buildCalendarTimelinePresentation({
+        range,
+        generation: 1,
+        events: ordered,
+      }).pages[1].columns[0]!.tiles.map(
+        ({ identity, column, columns, startX, endX }) => ({
+          uid: identity.uid,
+          column,
+          columns,
+          startX,
+          endX,
+        }),
+      )
+
+    expect(build(events)).toEqual([
+      { uid: "offscreen", column: 0, columns: 2, startX: 0, endX: 0.5 },
+      { uid: "bridge", column: 1, columns: 2, startX: 0.5, endX: 1 },
+      { uid: "visible", column: 0, columns: 2, startX: 0, endX: 0.5 },
+    ])
+    expect(build([...events].reverse())).toEqual(build(events))
+  })
+
+  it("leaves point events on the full-width point path", () => {
+    const presentation = buildCalendarTimelinePresentation({
+      range,
+      generation: 1,
+      events: [
+        event("point", "2026-09-14T08:00:00Z", "2026-09-14T08:00:00Z"),
+        event("interval", "2026-09-14T08:00:00Z", "2026-09-14T09:00:00Z"),
+      ],
+    })
+    expect(presentation.pages[1].columns[0]!.tiles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          identity: { source: "synced", uid: "point" },
+          shape: "point",
+          column: 0,
+          columns: 1,
+          startX: 0,
+          endX: 1,
+        }),
+      ]),
+    )
+  })
+
+  it("rejects duplicate stable identities within one civil day", () => {
+    expect(() =>
+      buildCalendarTimelinePresentation({
+        range,
+        generation: 1,
+        events: [
+          event("same", "2026-09-14T08:00:00Z", "2026-09-14T09:00:00Z"),
+          event("same", "2026-09-14T10:00:00Z", "2026-09-14T11:00:00Z"),
+        ],
+      }),
+    ).toThrow("identities must be unique")
+  })
+
   it("excludes deferred shapes and supports an exclusive midnight end", () => {
     const dateOnly: CalendarEvent = {
       ...event("day", "2026-09-14T00:00:00Z", "2026-09-15T00:00:00Z"),
@@ -155,7 +220,7 @@ describe("buildCalendarTimelinePresentation", () => {
       events: [
         event("b", "2026-09-14T08:00:00Z", "2026-09-14T09:00:00Z"),
         event("a", "2026-09-14T10:00:00Z", "2026-09-14T11:00:00Z"),
-        event("a", "2026-09-14T12:00:00Z", "2026-09-14T13:00:00Z"),
+        event("a", "2026-09-15T12:00:00Z", "2026-09-15T13:00:00Z"),
       ],
     })
     expect(timelinePresentationUids(presentation)).toEqual(["a", "b"])

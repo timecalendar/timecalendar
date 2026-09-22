@@ -7,6 +7,7 @@ import {
   resolveEventAppearance,
 } from "./event-color"
 import { displayEventTitle } from "./event-title"
+import { layoutOverlaps, overlapIdentityKey } from "./overlap-layout"
 import type { CalendarThreePageRangeV1 } from "./range-plan"
 import { classifyTimedEventSupport } from "./timed-support"
 import type { CalendarEvent, CalendarEventIdentityV1 } from "./types"
@@ -26,6 +27,10 @@ export interface TimedTileV1 {
   startMinute: number
   endMinute: number
   checklist: TimelineChecklistProgressV1 | undefined
+  column: number
+  columns: number
+  startX: number
+  endX: number
 }
 
 export interface CalendarTimelineColumnV1 {
@@ -64,15 +69,43 @@ function endMinute(
     : 24 * 60
 }
 
+function compareOrdinal(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0
+}
+
 function compareTiles(left: TimedTileV1, right: TimedTileV1): number {
   const byStart = left.startsAt.getTime() - right.startsAt.getTime()
   if (byStart !== 0) return byStart
   const byEnd = left.endsAt.getTime() - right.endsAt.getTime()
   if (byEnd !== 0) return byEnd
-  const bySource = left.identity.source.localeCompare(right.identity.source)
+  const bySource = compareOrdinal(left.identity.source, right.identity.source)
   return bySource !== 0
     ? bySource
-    : left.identity.uid.localeCompare(right.identity.uid)
+    : compareOrdinal(left.identity.uid, right.identity.uid)
+}
+
+function placeDayTiles(tiles: readonly TimedTileV1[]): TimedTileV1[] {
+  const identities = new Set<string>()
+  for (const tile of tiles) {
+    const key = overlapIdentityKey(tile.identity)
+    if (identities.has(key)) {
+      throw new RangeError("Timeline identities must be unique within a day")
+    }
+    identities.add(key)
+  }
+  const placements = layoutOverlaps(
+    tiles.filter((tile) => tile.shape === "interval"),
+  )
+  return tiles.map((tile) => {
+    const placement = placements.get(overlapIdentityKey(tile.identity))
+    return {
+      ...tile,
+      column: placement?.column ?? 0,
+      columns: placement?.columns ?? 1,
+      startX: placement?.startX ?? 0,
+      endX: placement?.endX ?? 1,
+    }
+  })
 }
 
 function freezePresentation(
@@ -132,6 +165,10 @@ export function buildCalendarTimelinePresentation(input: {
       startMinute: minuteOfDayInZone(supported.startsAt, displayZone),
       endMinute: endMinute(supported, displayZone),
       checklist: input.checklistProgress?.get(supported.identity.uid),
+      column: 0,
+      columns: 1,
+      startX: 0,
+      endX: 1,
     }
     const current = tilesByDay.get(key)
     if (current === undefined) tilesByDay.set(key, [tile])
@@ -150,7 +187,9 @@ export function buildCalendarTimelinePresentation(input: {
           date: new Date(column.date),
           weekday: column.weekday,
           isWeekend: column.isWeekend,
-          tiles: [...(tilesByDay.get(column.key) ?? [])].sort(compareTiles),
+          tiles: placeDayTiles(tilesByDay.get(column.key) ?? []).sort(
+            compareTiles,
+          ),
         }),
       ),
     }),

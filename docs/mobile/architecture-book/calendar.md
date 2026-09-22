@@ -109,8 +109,12 @@ them at the live usable viewport center, disables them at 40/120/60, and announc
 percentage.
 
 This remains an intentionally incomplete pre-launch timeline. Ordinary positive-duration and point
-events on one display date are supported; all-day lanes, spanning/DST shapes, overlap packing, and
-populated-event density tuning remain pending until their numbered owned-renderer slices land.
+events on one display date are supported; all-day lanes, spanning/DST shapes, and final populated-event
+density tuning remain pending until their numbered owned-renderer slices land. Positive intervals are
+packed before viewport clipping from each complete retained civil day, ordered by start, end, and ordinal
+source/UID identity. Half-open adjacency frees a column, while each maximal transitive cluster keeps the
+minimum equal-width, non-covering column count. Prepared fractional columns do not change through scroll,
+page-away/back, or live and settled zoom projection.
 Timed equality is a point fact: bounded reads include its instant at the inclusive lower range edge
 and exclude it at the upper edge. A point draws a centered 4dp marker; a positive interval keeps its
 exact minute-derived height. The one event button uses separate geometry clamped to the full-day plane
@@ -119,6 +123,11 @@ title first and omit lower-priority location/checklist lines unless their comple
 committed-page button still announces the full localized title, time, optional location and checklist
 meaning and routes by original UID; neighbour visuals and child text add no semantic nodes. Native
 ScrollView, PagerView and pinch owners continue to cancel a pending press when movement takes ownership.
+If actual platform-minimum target rectangles intersect with positive area, every tile remains visible but
+the competing targets become one localized chooser trigger. Its accessible modal lists each complete event
+label exactly once in stable start/end/identity order and routes only the chosen original UID.
+Boundary-touching targets stay direct; no z-order guess, hidden event, duplicate semantic target, or
+event-count threshold determines this behavior.
 
 Imported event colors pass through the Calendar-owned deterministic appearance resolver. It validates
 six-digit sRGB input, composites an opaque scheme-aware surface, selects a foreground with at least
@@ -277,7 +286,7 @@ separate. The binding contract and regression scenarios live in the
   Header cells use localized narrow weekday glyphs, larger date numbers, and a filled circular Today
   badge. Supported
   ordinary timed tiles use live-scale minute geometry, show title/location/checklist progress, and
-  expose one localized button only on the committed page. Title and location share compact 11/13
+  expose one localized direct button or one explicit conflict chooser only on the committed page. Title and location share compact 11/13
   typography, wrap without ellipses, and clip only at the event's actual time boundary; title weight
   supplies the hierarchy. Rounded two-unit event surfaces begin flush with the left day boundary and
   retain two units before the next separator. Activation passes the original UID to the shared details
@@ -307,9 +316,10 @@ and control behavior, native scroll settlement/restoration, atomic settled scree
 Calendar remount and selection, Agenda grouping/routing, filtering, sync orchestration, failure
 states, bounded query predicates, total row validation, malformed-sibling isolation, immutable page
 models, original-UID activation, the lifecycle-scoped minute clock, fresh-open full-day clamps,
-indicator visibility, and the repository cutover contract. `calendar-owned-shell.contract.test.ts` pins the clock as the calendar's
+indicator visibility, identity-stable overlap permutations, complete transitive clusters, equal fractional
+columns, geometry-derived conflict components, chooser cancellation/routing, and the repository cutover contract. `calendar-owned-shell.contract.test.ts` pins the clock as the calendar's
 only timer owner, keeps the renderer timer-free, and rejects repeating animation work. Native held-drag mode switching, pinch
 arbitration/focal stability, visible-hour continuity, preference restart, weekend traversal,
 assistive technology, platform chrome, and physical-device presentation remain recorded owner
-checks and are not claimed by host automation. Dense-calendar and all-day-lane behavior remain
-outside this ordinary timed-event milestone.
+checks and are not claimed by host automation. Final supported-density calibration and all-day-lane
+behavior remain outside this milestone.

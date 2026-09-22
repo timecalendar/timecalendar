@@ -172,6 +172,7 @@ describe("owned Calendar paging repository contract", () => {
       "event-decoder.ts",
       "event-color.ts",
       "event-title.ts",
+      "overlap-layout.ts",
       "range-plan.ts",
       "timed-support.ts",
       "timeline-geometry.ts",
@@ -196,6 +197,7 @@ describe("owned Calendar paging repository contract", () => {
       "utf8",
     )
     const navigationBoundary = [range, presentation, hook, renderer].join("\n")
+    const overlap = readFileSync(join(dataRoot, "overlap-layout.ts"), "utf8")
 
     expect(range).toContain("const DIRECTIONS = [-1, 0, 1] as const")
     expect(range).toContain("instant: { from, to }")
@@ -204,8 +206,20 @@ describe("owned Calendar paging repository contract", () => {
     expect(presentation).toContain("Object.freeze")
     expect(presentation).toContain("shape: support.shape")
     expect(presentation).toContain("resolveEventAppearance")
+    expect(presentation).toContain("placeDayTiles")
+    expect(presentation).toContain("layoutOverlaps")
+    expect(presentation).not.toContain("localeCompare")
+    expect(overlap).not.toMatch(/\bindex\b|\btitle\b|localeCompare/)
+    expect(renderer).not.toContain("layoutOverlaps")
+    expect(renderer).not.toMatch(/\.sort\(/)
+    expect(renderer).not.toMatch(/@\/db|useCalendarEventsSnapshot/)
+    expect(renderer).not.toMatch(/MAX_(?:EVENT|DENSITY)|eventLimit|slice\(0,/)
+    expect(hook).not.toMatch(/\buseMemo\b|\buseCallback\b/)
     expect(renderer).toContain("onEventPress(tile.identity.uid)")
-    expect(renderer.match(/<Pressable/g)).toHaveLength(1)
+    expect(renderer).toContain("planTargetConflicts")
+    expect(renderer).toContain("accessibilityViewIsModal")
+    expect(renderer).toContain("component.items.length === 1")
+    expect(renderer).toContain("isEventActivationBlocked")
     expect(renderer).toContain('tile.shape === "interval"')
     expect(renderer).toContain("minimumTarget")
     expect(renderer).not.toMatch(/onEventPress\([^)]*(?:index|direction|key)/)
