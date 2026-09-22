@@ -32,6 +32,6 @@
 - [x] 6.2 Verify full test coverage, typecheck, lint/format, React Doctor and strict OpenSpec validation; inspect final diffs and preserve earlier branch fixes.
 - [x] 6.3 Verify live iOS and Android Metro bundles and backend health; document representative device QA for dark/light, large fonts, keyboard, screen readers, native dialogs and recovery navigation. Do not claim host mocks prove native rendering.
 
-Verification note: React Doctor ran and reports 14 pre-existing findings in source unchanged from HEAD (including Activity/Feedback compiler try/finally, checklist draft synchronization and existing memoization). It is not a passing check; no diagnostic was suppressed. Device-only checks are recorded in docs/mobile/error-surfaces-qa.md.
+Verification note: after rebasing onto current main, React Doctor's changed-code gate passes with no issues. Calendar-name writes retain serial execution and stop on failure using an explicit promise chain. No diagnostic was suppressed. Device-only checks are recorded in docs/mobile/error-surfaces-qa.md.
 
-Final automated result: 206 suites / 2,005 tests passed with coverage; typecheck, lint, strict validation of both active changes and git diff whitespace checks passed. iOS/Android Metro bundles returned successfully and API /health confirmed the database up. Startup scrolling received an additional 4-test focused pass. React Doctor limitation above remains.
+The error-surface implementation passed 206 suites / 2,005 tests with coverage, typecheck, lint and strict OpenSpec validation before the final rebase. Both Metro bundles built successfully and API health confirmed the database up. Final rebased-branch verification is recorded on the pull request.
