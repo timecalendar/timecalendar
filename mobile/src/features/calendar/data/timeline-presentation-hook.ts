@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { useChecklistProgress } from "@/features/event-checklists"
@@ -14,6 +14,8 @@ import type { CalendarEvent } from "./types"
 import { useCalendarIncreasedContrast } from "./use-increased-contrast"
 import type { FirstWeekday } from "./week"
 import type { CalendarTimelineMode } from "./week-transition"
+
+const EMPTY_EVENTS: readonly CalendarEvent[] = []
 
 export interface CalendarTimelinePresentationInput {
   anchor: Date
@@ -31,7 +33,24 @@ export function useCalendarTimelinePresentation(
   const colorScheme = useColorScheme()
   const scheme = colorScheme === "dark" ? "dark" : "light"
   const increasedContrast = useCalendarIncreasedContrast()
-  const range = planCalendarThreePageRange(input)
+  const anchorTime = input.anchor.getTime()
+  const range = useMemo(
+    () =>
+      planCalendarThreePageRange({
+        anchor: new Date(anchorTime),
+        mode: input.mode,
+        displayZone: input.displayZone,
+        firstWeekday: input.firstWeekday,
+        showWeekends: input.showWeekends,
+      }),
+    [
+      anchorTime,
+      input.displayZone,
+      input.firstWeekday,
+      input.mode,
+      input.showWeekends,
+    ],
+  )
   const snapshot = useCalendarEventsSnapshot({
     ...range.instant,
     civilFromDay: range.civil.fromDay,
@@ -49,27 +68,55 @@ export function useCalendarTimelinePresentation(
 
   // Paging recenters immediately, so only event data may lag behind the anchor.
   // Reproject retained events onto the current dates instead of retaining pages.
-  const events = complete ? snapshot.events : (retained?.events ?? [])
-  const identityPresentation = buildCalendarTimelinePresentation({
-    range,
-    generation: input.generation,
-    events,
-    localizedNoTitle: t("calendar.event.noTitle"),
-    scheme,
-    increasedContrast,
-  })
+  const retainedEvents = retained?.events
+  const events = useMemo(
+    () => (complete ? snapshot.events : (retainedEvents ?? EMPTY_EVENTS)),
+    [complete, retainedEvents, snapshot.events],
+  )
+  const localizedNoTitle = t("calendar.event.noTitle")
+  const identityPresentation = useMemo(
+    () =>
+      buildCalendarTimelinePresentation({
+        range,
+        generation: input.generation,
+        events,
+        localizedNoTitle,
+        scheme,
+        increasedContrast,
+      }),
+    [
+      events,
+      increasedContrast,
+      input.generation,
+      localizedNoTitle,
+      range,
+      scheme,
+    ],
+  )
   const scopedUids = timelinePresentationUids(identityPresentation)
   const checklistProgress = useChecklistProgress(scopedUids)
 
-  const presentation = buildCalendarTimelinePresentation({
-    range,
-    generation: input.generation,
-    events,
-    checklistProgress,
-    localizedNoTitle: t("calendar.event.noTitle"),
-    scheme,
-    increasedContrast,
-  })
+  const presentation = useMemo(
+    () =>
+      buildCalendarTimelinePresentation({
+        range,
+        generation: input.generation,
+        events,
+        checklistProgress,
+        localizedNoTitle,
+        scheme,
+        increasedContrast,
+      }),
+    [
+      checklistProgress,
+      events,
+      increasedContrast,
+      input.generation,
+      localizedNoTitle,
+      range,
+      scheme,
+    ],
+  )
 
   return {
     presentation,

@@ -1,5 +1,14 @@
 # Architecture Book changelog
 
+## 2026-09-22 — Stable simultaneous Calendar classes
+
+- Added complete-day, identity-stable positive-interval packing into minimum equal-width columns, with
+  adjacency reuse and unchanged placement through viewport and zoom projection.
+- Added geometry-derived target-conflict components and one localized accessible chooser without hiding
+  visual events, guessing by z-order, or imposing an event-count threshold.
+- Recorded the fixed fabricated 16-event density/frame/node proof and kept supported-density calibration
+  plus physical-device accessibility acceptance in their planned later slices; no ADR was added.
+
 ## 2026-09-21 — Native notification frequency and horizon controls
 
 - Replaced the notification picker and stepper with Router-pushed SwiftUI choice pages and

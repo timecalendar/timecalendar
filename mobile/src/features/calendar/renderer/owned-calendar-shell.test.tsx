@@ -51,6 +51,31 @@ const pagerMock = jest.requireMock<{
   }
 }>("react-native-pager-view").__pagerMock
 
+function timedEvent(
+  uid: string,
+  startsAt: string,
+  endsAt: string,
+  title = uid,
+): TimedCalendarEventV1 {
+  return {
+    version: 1,
+    kind: "timed",
+    allDay: false,
+    identity: { source: "synced", uid },
+    id: uid,
+    title,
+    color: "#112233",
+    startsAt: new Date(startsAt),
+    endsAt: new Date(endsAt),
+    location: "B12",
+    description: undefined,
+    teachers: [],
+    tags: [],
+    canceled: false,
+    userCalendarId: "calendar-1",
+  }
+}
+
 describe("OwnedCalendarShell", () => {
   const onTransitionRequest = jest.fn()
   const onTransitionSettled = jest.fn()
@@ -310,7 +335,7 @@ describe("OwnedCalendarShell", () => {
 
     const anchor = screen.getByTestId("owned-calendar-event-long-content")
     expect(StyleSheet.flatten(anchor.props.style)).toMatchObject({
-      left: 0,
+      left: "0%",
       right: 2,
     })
 
@@ -342,6 +367,167 @@ describe("OwnedCalendarShell", () => {
       lineHeight: 13,
       fontWeight: 400,
     })
+  })
+
+  it.each([1, 2, 3, 5])(
+    "projects %i simultaneous classes into stable equal columns",
+    async (count) => {
+      const events = Array.from({ length: count }, (_, index) =>
+        timedEvent(
+          `column-${count}-${index}`,
+          "2026-06-15T10:00:00.000Z",
+          "2026-06-15T11:00:00.000Z",
+        ),
+      )
+      const presentation = buildCalendarTimelinePresentation({
+        range: planCalendarThreePageRange(props),
+        generation: props.generation,
+        events,
+      })
+      const onEventPress = jest.fn()
+      const view = await render(
+        <OwnedCalendarShell
+          {...props}
+          presentation={presentation}
+          onEventPress={onEventPress}
+        />,
+      )
+
+      for (let index = 0; index < count; index += 1) {
+        const style = StyleSheet.flatten(
+          screen.getByTestId(`owned-calendar-event-column-${count}-${index}`)
+            .props.style,
+        )
+        expect(style.left).toBe(`${(index / count) * 100}%`)
+        expect(style.right).toBe(
+          index === count - 1 ? 2 : `${(1 - (index + 1) / count) * 100}%`,
+        )
+      }
+      expect(screen.queryByTestId(/^owned-calendar-conflict-/)).toBeNull()
+      expect(screen.getAllByRole("button")).toHaveLength(count)
+      for (const button of screen.getAllByRole("button"))
+        await fireEvent.press(button)
+      expect(onEventPress.mock.calls.map(([uid]) => uid)).toEqual(
+        events.map(({ identity }) => identity.uid),
+      )
+
+      if (count === 3) {
+        const before = events.map(({ identity }) =>
+          StyleSheet.flatten(
+            screen.getByTestId(`owned-calendar-event-${identity.uid}`).props
+              .style,
+          ),
+        )
+        await view.rerender(
+          <OwnedCalendarShell
+            {...props}
+            initialPixelsPerHour={120}
+            presentation={presentation}
+            onEventPress={onEventPress}
+          />,
+        )
+        const after = events.map(({ identity }) =>
+          StyleSheet.flatten(
+            screen.getByTestId(`owned-calendar-event-${identity.uid}`).props
+              .style,
+          ),
+        )
+        expect(after.map(({ left, right }) => ({ left, right }))).toEqual(
+          before.map(({ left, right }) => ({ left, right })),
+        )
+      }
+    },
+  )
+
+  it("uses one chooser target for intersecting minimum targets and routes one identity", async () => {
+    const events = [
+      timedEvent(
+        "tiny-a",
+        "2026-06-15T10:00:00.000Z",
+        "2026-06-15T10:02:00.000Z",
+        "Tiny A",
+      ),
+      timedEvent(
+        "tiny-b",
+        "2026-06-15T10:03:00.000Z",
+        "2026-06-15T10:05:00.000Z",
+        "Tiny B",
+      ),
+    ]
+    const presentation = buildCalendarTimelinePresentation({
+      range: planCalendarThreePageRange(props),
+      generation: props.generation,
+      events,
+    })
+    const onEventPress = jest.fn()
+    const view = await render(
+      <OwnedCalendarShell
+        {...props}
+        presentation={presentation}
+        onEventPress={onEventPress}
+      />,
+    )
+
+    expect(screen.getByTestId("owned-calendar-event-tiny-a")).toBeOnTheScreen()
+    expect(screen.getByTestId("owned-calendar-event-tiny-b")).toBeOnTheScreen()
+    expect(screen.queryByRole("button", { name: /Tiny A/ })).toBeNull()
+    expect(screen.queryByRole("button", { name: /Tiny B/ })).toBeNull()
+    const trigger = screen.getByRole("button", {
+      name: "Choose an overlapping event",
+    })
+    expect(screen.getAllByRole("button")).toHaveLength(1)
+    expect(trigger).toHaveProp(
+      "accessibilityHint",
+      "Opens a list of events in this area",
+    )
+
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "scrollBeginDrag",
+      scrollEvent(20),
+    )
+    await fireEvent.press(trigger)
+    expect(screen.queryByTestId("owned-calendar-event-chooser")).toBeNull()
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "momentumScrollEnd",
+      scrollEvent(20),
+    )
+    await fireEvent.press(trigger)
+    const chooser = screen.getByTestId("owned-calendar-event-chooser")
+    expect(chooser).toHaveProp("accessibilityViewIsModal", true)
+    expect(screen.getByRole("button", { name: /Tiny A/ })).toBeOnTheScreen()
+    expect(screen.getAllByRole("button")).toHaveLength(4)
+    const second = screen.getByRole("button", { name: /Tiny B/ })
+    await fireEvent.press(second)
+    expect(onEventPress).toHaveBeenCalledTimes(1)
+    expect(onEventPress).toHaveBeenCalledWith("tiny-b")
+
+    await fireEvent.press(trigger)
+    await fireEvent.press(screen.getByRole("button", { name: "Cancel" }))
+    expect(onEventPress).toHaveBeenCalledTimes(1)
+
+    await fireEvent.press(trigger)
+    await fireEvent(
+      screen.getByTestId("owned-calendar-event-chooser-modal"),
+      "requestClose",
+    )
+    expect(screen.queryByTestId("owned-calendar-event-chooser")).toBeNull()
+
+    await fireEvent.press(trigger)
+    await view.rerender(
+      <OwnedCalendarShell
+        {...props}
+        generation={1}
+        presentation={buildCalendarTimelinePresentation({
+          range: planCalendarThreePageRange(props),
+          generation: 1,
+          events,
+        })}
+        onEventPress={onEventPress}
+      />,
+    )
+    expect(screen.queryByTestId("owned-calendar-event-chooser")).toBeNull()
   })
 
   it("keeps point and two-minute visuals faithful behind one minimum target each", async () => {

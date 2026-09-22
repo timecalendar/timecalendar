@@ -2,7 +2,7 @@
 kind: ticket
 id: T11
 epic: E03
-status: planned
+status: implementing
 traces-to: [P01, P03, P04, P05, D01, D04, D05, D06]
 depends-on: [T10]
 size: M
@@ -21,7 +21,7 @@ Overlapping classes use stable equal-width columns, and tapping a crowded region
 
 - Calculate complete relevant clusters before clipping to the vertical viewport; preserve column placement while scrolling/zooming.
 
-- Resolve dense/tiny target conflicts without hiding valid events or silently inventing an aggregation threshold; expose an explicit accessible choice if targets cannot be distinct and obtain owner behavior acceptance in this slice.
+- Resolve dense/tiny target conflicts without hiding valid events or silently inventing an aggregation threshold; expose an explicit accessible choice if targets cannot be distinct and cover it with automated accessibility and interaction evidence in this slice.
 
 - Record first populated density/frame/node evidence; larger supported workload calibration remains T24/T25.
 
@@ -34,15 +34,14 @@ All-day rows, multi-day/DST splitting or declaring final supported density from 
 Technical prerequisites: T10. Their accepted contracts are used by the scope above.
 
 Execution follows the [roadmap](../../roadmap.md) and [one-brick protocol](../../delivery.md).
-All earlier scheduled slices must be accepted and merged before this implementation starts;
-that owner review gate is separate from technical dependencies.
+All earlier scheduled slices must be merged before this implementation starts; the prerequisite is merged.
 
 ## Definition of done
 
-The owner can demonstrate: overlapping classes use stable equal-width columns, and tapping a crowded region identifies the intended class unambiguously.
+A user can demonstrate: overlapping classes use stable equal-width columns, and tapping a crowded region identifies the intended class unambiguously.
 
 The scoped behavior and checklist below pass, prior accepted slices still work, relevant agent
-checks pass, and explicit owner acceptance plus the merged revision are recorded before moving on.
+checks pass, and Reviewer acceptance plus the merged revision are recorded before moving on.
 There is no claim that unimplemented product-wide capabilities are complete.
 
 ## Acceptance and verification
@@ -53,7 +52,7 @@ There is no claim that unimplemented product-wide capabilities are complete.
 
 - Follow the common checks in delivery.md, run every edited test suite, and include exact commands/results in the handoff. Keep privacy-safe evidence tied to the tested revision.
 
-## Owner QA checklist
+## Acceptance checklist
 
 **Preparation:** Agent seeds adjacent classes, two/three simultaneous classes, identical starts, and a labelled crowded stress cluster. Seed order can be reversed without changing event identity.
 
@@ -90,11 +89,21 @@ M with deterministic layout plus a native density/hit-target uncertainty. Medium
 
 ## QA and sensitive surfaces
 
-Use fabricated data and content-free diagnostics only. The handoff identifies the owner device and any missing cross-platform evidence; final device acceptance is owned by T28.
+Use fabricated data and content-free diagnostics only. The handoff identifies missing cross-platform evidence; final physical-device accessibility acceptance is owned by T28 and does not block repository merge.
 
 Follow the ticket scope and approved data/renderer boundary. Do not introduce a compatibility
 renderer, change stored event facts, or weaken a final product gate to make this slice pass.
 
 ## Execution evidence
 
-Not started. Agent checks and owner QA have not run. No owner acceptance or merge is recorded.
+Implementation proof uses the fixed UTC week anchored at `2026-06-15T00:00:00.000Z`: 16 fabricated
+events, 15 positive-interval placements, largest cluster five, 16 mounted visual nodes, 15 committed
+event semantic paths (14 direct targets plus one chooser trigger), and three modal semantic actions while
+the two-choice conflict is open. All 16 original identities have an activation path; reverse fixture order
+preserves every placement. Gesture-frame source reads only prepared minute and fractional geometry.
+
+Focused host suites cover overlap/property, presentation/hook, conflict planning, renderer, Calendar
+screen, fixture, i18n, and repository ownership. Exact-head command results and revision are recorded in
+the implementation handoff after final verification. This host supplies no physical target-feel,
+VoiceOver, or TalkBack acceptance; T28 retains that planned evidence. No Reviewer acceptance or merge is
+recorded yet.

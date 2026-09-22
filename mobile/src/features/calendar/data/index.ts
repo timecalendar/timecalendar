@@ -61,7 +61,13 @@ export {
   formatTimeRange,
   resolveLocale,
 } from "./format"
-export { type Interval, layoutOverlaps, type Placed } from "./overlap-layout"
+export {
+  type Interval,
+  layoutOverlaps,
+  type OverlapIdentity,
+  overlapIdentityKey,
+  type Placed,
+} from "./overlap-layout"
 export {
   type CalendarPageDirection,
   type CalendarRangePageV1,
@@ -76,6 +82,12 @@ export {
   useSyncedEventRowsInRange,
   useSyncedEvents,
 } from "./sync"
+export {
+  planTargetConflicts,
+  type TargetConflictComponent,
+  type TargetConflictItem,
+  type TargetRectangle,
+} from "./target-conflicts"
 export {
   clampRawOffset,
   clampVerticalOffset,

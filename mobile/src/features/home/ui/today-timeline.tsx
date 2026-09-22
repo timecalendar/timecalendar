@@ -131,9 +131,16 @@ export function TodayTimeline({
   })
 
   const canUseTimeline = measuredWidth !== null && fontScale < 1.3
-  const placed = canUseTimeline ? layoutOverlaps(events) : []
+  const positiveIntervals = events.filter(
+    (event) => event.endsAt.getTime() > event.startsAt.getTime(),
+  )
+  const placed =
+    canUseTimeline && positiveIntervals.length === events.length
+      ? [...layoutOverlaps(positiveIntervals).values()]
+      : []
   const usesReflowedList =
     !canUseTimeline ||
+    placed.length !== events.length ||
     placed.some((entry) => {
       const width = (entry.endX - entry.startX) * measuredWidth
       const geometry = visibleGeometry(entry.item, now, range, displayZone)

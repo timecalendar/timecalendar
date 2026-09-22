@@ -1,7 +1,8 @@
 import type { TFunction } from "i18next"
-import type { RefObject } from "react"
+import { type RefObject, useState } from "react"
 import {
   type LayoutChangeEvent,
+  Modal,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   Platform,
@@ -37,6 +38,7 @@ import {
   gridContentHeight,
   HOURS_COLUMN_WIDTH,
   minuteToPixel,
+  planTargetConflicts,
   type TimedTileV1,
   type WeekColumn,
   type WeekDirection,
@@ -151,6 +153,7 @@ export function OwnedCalendarCanvas({
   nowLabel,
   t,
   onEventPress,
+  isEventActivationBlocked,
 }: {
   heading: string
   mode: CalendarTimelineMode
@@ -187,6 +190,7 @@ export function OwnedCalendarCanvas({
   nowLabel: string
   t: TFunction
   onEventPress: (uid: string) => void
+  isEventActivationBlocked: () => boolean
 }) {
   const theme = useTheme()
   const fullDayRowStyle = useAnimatedStyle(() => ({
@@ -318,6 +322,7 @@ export function OwnedCalendarCanvas({
                   locale={locale}
                   displayZone={displayZone}
                   onEventPress={onEventPress}
+                  isEventActivationBlocked={isEventActivationBlocked}
                 />
               ))}
             </AnimatedPagerView>
@@ -362,6 +367,7 @@ function CalendarPageCanvas({
   locale,
   displayZone,
   onEventPress,
+  isEventActivationBlocked,
 }: {
   page: CalendarPage
   pixelsPerHour: SharedValue<number>
@@ -373,6 +379,7 @@ function CalendarPageCanvas({
   locale: AppLocale
   displayZone: string
   onEventPress: (uid: string) => void
+  isEventActivationBlocked: () => boolean
 }) {
   const theme = useTheme()
   const pageHeightStyle = useAnimatedStyle(() => ({
@@ -417,6 +424,7 @@ function CalendarPageCanvas({
         pixelsPerHour={pixelsPerHour}
         settledPixelsPerHour={settledPixelsPerHour}
         onEventPress={onEventPress}
+        isEventActivationBlocked={isEventActivationBlocked}
         t={t}
       />
       {__DEV__ && (
@@ -445,6 +453,7 @@ function CalendarTiles({
   pixelsPerHour,
   settledPixelsPerHour,
   onEventPress,
+  isEventActivationBlocked,
   t,
 }: {
   page: CalendarPage
@@ -453,32 +462,157 @@ function CalendarTiles({
   pixelsPerHour: SharedValue<number>
   settledPixelsPerHour: number
   onEventPress: (uid: string) => void
+  isEventActivationBlocked: () => boolean
   t: TFunction
 }) {
+  const theme = useTheme()
+  const [chooser, setChooser] = useState<{
+    page: CalendarPage
+    items: readonly TimedTileV1[]
+  } | null>(null)
+  const chooserItems = chooser?.page === page ? chooser.items : null
+  const platform = Platform.OS === "ios" ? "ios" : "android"
   return (
-    <View pointerEvents="box-none" style={styles.tileColumns}>
-      {page.columns.map((column) => (
-        <View
-          key={column.key}
-          pointerEvents="box-none"
-          style={styles.tileColumn}
-        >
-          {column.tiles.map((tile) => (
-            <TimedCalendarTile
-              key={tile.key}
-              tile={tile}
-              locale={locale}
-              displayZone={displayZone}
-              pixelsPerHour={pixelsPerHour}
-              settledPixelsPerHour={settledPixelsPerHour}
-              accessible={page.direction === 0}
-              onPress={() => onEventPress(tile.identity.uid)}
-              t={t}
-            />
-          ))}
+    <>
+      <View pointerEvents="box-none" style={styles.tileColumns}>
+        {page.columns.map((column) => {
+          const components = planTargetConflicts({
+            items: column.tiles,
+            pixelsPerHour: settledPixelsPerHour,
+            platform,
+          })
+          return (
+            <View
+              key={column.key}
+              pointerEvents="box-none"
+              style={styles.tileColumn}
+            >
+              {components.flatMap((component) =>
+                component.items.map((tile) => (
+                  <TimedCalendarTile
+                    key={tile.key}
+                    tile={tile}
+                    locale={locale}
+                    displayZone={displayZone}
+                    pixelsPerHour={pixelsPerHour}
+                    settledPixelsPerHour={settledPixelsPerHour}
+                    accessible={page.direction === 0}
+                    interactive={component.items.length === 1}
+                    onPress={() => onEventPress(tile.identity.uid)}
+                    t={t}
+                  />
+                )),
+              )}
+              {components
+                .filter((component) => component.items.length > 1)
+                .map((component) => (
+                  <Pressable
+                    key={`conflict:${component.key}`}
+                    testID={`owned-calendar-conflict-${component.key}`}
+                    accessible={page.direction === 0}
+                    accessibilityElementsHidden={page.direction !== 0}
+                    importantForAccessibility={
+                      page.direction === 0 ? "yes" : "no-hide-descendants"
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={t("calendar.event.chooser.trigger")}
+                    accessibilityHint={t("calendar.event.chooser.hint")}
+                    onPress={() => {
+                      if (!isEventActivationBlocked())
+                        setChooser({ page, items: component.items })
+                    }}
+                    style={[
+                      styles.conflictTarget,
+                      horizontalRectangleStyle(component.rectangle),
+                      {
+                        top: component.rectangle.top,
+                        height:
+                          component.rectangle.bottom - component.rectangle.top,
+                      },
+                    ]}
+                  />
+                ))}
+            </View>
+          )
+        })}
+      </View>
+      <Modal
+        testID="owned-calendar-event-chooser-modal"
+        visible={chooserItems !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setChooser(null)}
+      >
+        <View style={styles.chooserBackdrop}>
+          <View
+            testID="owned-calendar-event-chooser"
+            accessibilityViewIsModal
+            accessibilityLabel={t("calendar.event.chooser.title")}
+            style={[
+              styles.chooser,
+              { backgroundColor: theme.backgroundElement },
+            ]}
+          >
+            <ThemedText type="subtitle">
+              {t("calendar.event.chooser.title")}
+            </ThemedText>
+            {chooserItems?.map((tile) => (
+              <Pressable
+                key={tile.key}
+                accessibilityRole="button"
+                accessibilityLabel={eventLabel(tile, locale, displayZone, t)}
+                onPress={() => {
+                  setChooser(null)
+                  onEventPress(tile.identity.uid)
+                }}
+                style={styles.chooserOption}
+              >
+                <ThemedText>
+                  {eventLabel(tile, locale, displayZone, t)}
+                </ThemedText>
+              </Pressable>
+            ))}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("calendar.event.chooser.cancel")}
+              onPress={() => setChooser(null)}
+              style={styles.chooserOption}
+            >
+              <ThemedText>{t("calendar.event.chooser.cancel")}</ThemedText>
+            </Pressable>
+          </View>
         </View>
-      ))}
-    </View>
+      </Modal>
+    </>
+  )
+}
+
+function horizontalRectangleStyle(rectangle: { left: number; right: number }) {
+  return {
+    left: `${rectangle.left * 100}%` as const,
+    right:
+      rectangle.right === 1 ? 2 : (`${(1 - rectangle.right) * 100}%` as const),
+  }
+}
+
+function eventLabel(
+  tile: TimedTileV1,
+  locale: AppLocale,
+  displayZone: string,
+  t: TFunction,
+) {
+  const time = formatTimeRange(tile.startsAt, tile.endsAt, locale, displayZone)
+  const progress = checklistProgressLabel(t, tile.checklist)
+  return t(
+    progress === undefined
+      ? "calendar.event.label"
+      : "calendar.event.labelWithProgress",
+    {
+      title: tile.title,
+      time,
+      location: tile.location ?? "",
+      progress,
+    },
   )
 }
 
@@ -489,6 +623,7 @@ function TimedCalendarTile({
   pixelsPerHour,
   settledPixelsPerHour,
   accessible,
+  interactive,
   onPress,
   t,
 }: {
@@ -498,6 +633,7 @@ function TimedCalendarTile({
   pixelsPerHour: SharedValue<number>
   settledPixelsPerHour: number
   accessible: boolean
+  interactive: boolean
   onPress: () => void
   t: TFunction
 }) {
@@ -532,82 +668,88 @@ function TimedCalendarTile({
     )
     return { top: visual.top - interaction.top, height: visual.height }
   })
-  const time = formatTimeRange(tile.startsAt, tile.endsAt, locale, displayZone)
-  const progress = checklistProgressLabel(t, tile.checklist)
-  const label = t(
-    progress === undefined
-      ? "calendar.event.label"
-      : "calendar.event.labelWithProgress",
-    {
-      title: tile.title,
-      time,
-      location: tile.location ?? "",
-      progress,
-    },
+  const label = eventLabel(tile, locale, displayZone, t)
+  const visual = (
+    <Animated.View
+      accessible={false}
+      pointerEvents="none"
+      style={[
+        styles.tile,
+        {
+          backgroundColor: tile.appearance.surface,
+          borderLeftColor: tile.appearance.accent,
+          borderColor: tile.appearance.outline,
+          borderWidth: tile.appearance.increasedContrast ? 2 : 0,
+          borderLeftWidth: 3,
+        },
+        visualStyle,
+      ]}
+    >
+      {tile.shape === "interval" && (
+        <ThemedText
+          accessible={false}
+          type="captionSmall"
+          style={[styles.tileTitle, { color: tile.appearance.foreground }]}
+          numberOfLines={1}
+        >
+          {tile.title}
+        </ThemedText>
+      )}
+      {tile.shape === "interval" &&
+        tile.location !== undefined &&
+        ((tile.endMinute - tile.startMinute) / 60) * settledPixelsPerHour >=
+          40 && (
+          <ThemedText
+            accessible={false}
+            type="captionSmall"
+            style={{ color: tile.appearance.foreground }}
+            numberOfLines={1}
+          >
+            {tile.location}
+          </ThemedText>
+        )}
+      {tile.shape === "interval" &&
+        ((tile.endMinute - tile.startMinute) / 60) * settledPixelsPerHour >=
+          60 && (
+          <ChecklistProgressIndicator
+            progress={tile.checklist}
+            variant="compact"
+          />
+        )}
+    </Animated.View>
   )
   return (
     <Animated.View
       testID={`owned-calendar-event-${tile.identity.uid}`}
       pointerEvents="box-none"
-      style={[styles.tileAnchor, interactionStyle]}
+      style={[
+        styles.tileAnchor,
+        horizontalRectangleStyle({ left: tile.startX, right: tile.endX }),
+        interactionStyle,
+      ]}
     >
-      <Pressable
-        accessible={accessible}
-        accessibilityElementsHidden={!accessible}
-        importantForAccessibility={accessible ? "yes" : "no-hide-descendants"}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        accessibilityHint={t("calendar.event.hint")}
-        onPress={onPress}
-        style={styles.tileTarget}
-      >
-        <Animated.View
-          accessible={false}
-          style={[
-            styles.tile,
-            {
-              backgroundColor: tile.appearance.surface,
-              borderLeftColor: tile.appearance.accent,
-              borderColor: tile.appearance.outline,
-              borderWidth: tile.appearance.increasedContrast ? 2 : 0,
-              borderLeftWidth: 3,
-            },
-            visualStyle,
-          ]}
+      {interactive ? (
+        <Pressable
+          accessible={accessible}
+          accessibilityElementsHidden={!accessible}
+          importantForAccessibility={accessible ? "yes" : "no-hide-descendants"}
+          accessibilityRole="button"
+          accessibilityLabel={label}
+          accessibilityHint={t("calendar.event.hint")}
+          onPress={onPress}
+          style={styles.tileTarget}
         >
-          {tile.shape === "interval" && (
-            <ThemedText
-              accessible={false}
-              type="captionSmall"
-              style={[styles.tileTitle, { color: tile.appearance.foreground }]}
-              numberOfLines={1}
-            >
-              {tile.title}
-            </ThemedText>
-          )}
-          {tile.shape === "interval" &&
-            tile.location !== undefined &&
-            ((tile.endMinute - tile.startMinute) / 60) * settledPixelsPerHour >=
-              40 && (
-              <ThemedText
-                accessible={false}
-                type="captionSmall"
-                style={{ color: tile.appearance.foreground }}
-                numberOfLines={1}
-              >
-                {tile.location}
-              </ThemedText>
-            )}
-          {tile.shape === "interval" &&
-            ((tile.endMinute - tile.startMinute) / 60) * settledPixelsPerHour >=
-              60 && (
-              <ChecklistProgressIndicator
-                progress={tile.checklist}
-                variant="compact"
-              />
-            )}
-        </Animated.View>
-      </Pressable>
+          {visual}
+        </Pressable>
+      ) : (
+        <View
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          style={styles.tileTarget}
+        >
+          {visual}
+        </View>
+      )}
     </Animated.View>
   )
 }
@@ -819,8 +961,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   tileColumn: { flex: 1, position: "relative" },
-  tileAnchor: { position: "absolute", left: 0, right: 2 },
+  tileAnchor: { position: "absolute" },
   tileTarget: { flex: 1 },
+  conflictTarget: { position: "absolute" },
   tile: {
     position: "absolute",
     left: 0,
@@ -831,4 +974,12 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   tileTitle: { fontWeight: 600 },
+  chooserBackdrop: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 24,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+  },
+  chooser: { borderRadius: 12, padding: 16, gap: 8 },
+  chooserOption: { minHeight: 48, justifyContent: "center", padding: 8 },
 })

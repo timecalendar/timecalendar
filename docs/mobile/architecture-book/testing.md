@@ -148,3 +148,20 @@ bans vendor, compatibility, network and sensitive-surface dependencies.
 These host checks are structural evidence only. They do not certify physical 44pt/48dp target feel,
 movement cancellation feel, increased-contrast rendering, large text, VoiceOver or TalkBack; T28 owns
 that device matrix.
+
+## Simultaneous Calendar event proof
+
+T11 adds 100%-covered pure overlap and target-conflict planners. Seeded permutations prove ordinal
+source/UID ordering, half-open adjacency, lowest-column reuse, minimum concurrency, equal fractional
+bounds, and non-covering time-overlap pairs. Presentation tests prove complete off-screen/transitive day
+clusters are prepared before viewport projection and remain stable across input order, viewport, and zoom.
+
+The fixed UTC fabricated week identifies 16 events: adjacent blocks, two-, three-, and five-way clusters,
+identical bounds, a point, and a tiny interval. Renderer and Calendar-screen tests prove 16 mounted visuals,
+one direct semantic target per distinct rectangle or one chooser trigger per conflict, complete modal labels,
+Cancel/Back/replacement dismissal, movement cancellation, and exact original-UID routing for synced and
+personal events. Gesture frames project prepared minute/fraction geometry; the repository contract rejects
+renderer packing/sorting, database work, hidden density caps, compatibility renderers, and extra motion
+owners. These are first populated-surface fabricated measurements, not supported-density or p50/p95 claims.
+Host automation does not certify physical target feel or VoiceOver/TalkBack modal quality; T28 retains that
+device evidence.

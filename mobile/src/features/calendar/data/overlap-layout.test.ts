@@ -1,112 +1,161 @@
-import { type Interval, layoutOverlaps } from "./overlap-layout"
+import {
+  type Interval,
+  layoutOverlaps,
+  overlapIdentityKey,
+} from "./overlap-layout"
 
-// Build an interval from two "HH:MM" times on a fixed day (UTC, irrelevant to
-// the pure math — only relative ordering matters).
-function at(start: string, end: string): Interval {
+function at(id: string, start: number, end: number, source = "synced") {
   return {
-    startsAt: new Date(`2026-06-16T${start}:00.000Z`),
-    endsAt: new Date(`2026-06-16T${end}:00.000Z`),
+    identity: { source, uid: id },
+    startsAt: new Date(start * 60_000),
+    endsAt: new Date(end * 60_000),
   }
 }
 
+function placed(items: readonly ReturnType<typeof at>[]) {
+  return [...layoutOverlaps(items).values()].map(
+    ({ item, column, columns, startX, endX }) => ({
+      id: `${item.identity.source}:${item.identity.uid}`,
+      column,
+      columns,
+      startX,
+      endX,
+    }),
+  )
+}
+
+function permutations<T>(values: readonly T[]): T[][] {
+  if (values.length === 0) return [[]]
+  return values.flatMap((value, index) =>
+    permutations(values.filter((_, candidate) => candidate !== index)).map(
+      (rest) => [value, ...rest],
+    ),
+  )
+}
+
 describe("layoutOverlaps", () => {
-  it("returns an empty array for no items", () => {
-    expect(layoutOverlaps([])).toEqual([])
+  it("returns an empty identity map without mutating input", () => {
+    const input: Interval[] = []
+    expect(layoutOverlaps(input)).toEqual(new Map())
+    expect(input).toEqual([])
   })
 
-  it("gives a single item one full-width column", () => {
-    const [placed] = layoutOverlaps([at("09:00", "10:00")])
-    expect(placed).toMatchObject({ column: 0, columns: 1, startX: 0, endX: 1 })
-  })
-
-  it("disjoint intervals share one column at full width", () => {
-    const placed = layoutOverlaps([at("09:00", "10:00"), at("10:00", "11:00")])
-    expect(placed.every((p) => p.columns === 1)).toBe(true)
-    expect(placed.every((p) => p.startX === 0 && p.endX === 1)).toBe(true)
-  })
-
-  it("treats back-to-back intervals as non-overlapping (shared column)", () => {
-    const placed = layoutOverlaps([at("09:00", "10:00"), at("10:00", "11:00")])
-    expect(placed.map((p) => p.column)).toEqual([0, 0])
-  })
-
-  it("splits a three-way overlap into exact thirds", () => {
-    const placed = layoutOverlaps([
-      at("09:00", "12:00"),
-      at("09:30", "12:00"),
-      at("10:00", "12:00"),
-    ])
-    expect(placed.every((p) => p.columns === 3)).toBe(true)
-    expect(placed.map((p) => p.column)).toEqual([0, 1, 2])
-    expect(placed.map((p) => Number((p.endX - p.startX).toFixed(5)))).toEqual(
-      [1 / 3, 1 / 3, 1 / 3].map((w) => Number(w.toFixed(5))),
+  it.each([
+    ["point", at("point", 10, 10)],
+    ["reversed", at("reversed", 11, 10)],
+    [
+      "invalid start",
+      { ...at("invalid-start", 10, 11), startsAt: new Date(NaN) },
+    ],
+    ["invalid end", { ...at("invalid-end", 10, 11), endsAt: new Date(NaN) }],
+  ])("rejects a %s interval", (_label, interval) => {
+    expect(() => layoutOverlaps([interval])).toThrow(
+      "finite positive intervals",
     )
   })
 
-  it("packs a five-way cluster into five even columns", () => {
-    const placed = layoutOverlaps([
-      at("09:00", "13:00"),
-      at("09:15", "13:00"),
-      at("09:30", "13:00"),
-      at("09:45", "13:00"),
-      at("10:00", "13:00"),
+  it("rejects duplicate stable identities before placement", () => {
+    expect(() => layoutOverlaps([at("same", 1, 2), at("same", 3, 4)])).toThrow(
+      "identities must be unique",
+    )
+  })
+
+  it("uses collision-free source/UID keys", () => {
+    expect(overlapIdentityKey({ source: "a", uid: "bc" })).not.toBe(
+      overlapIdentityKey({ source: "ab", uid: "c" }),
+    )
+  })
+
+  it("keeps adjacent intervals in separate full-width clusters", () => {
+    expect(placed([at("b", 60, 120), at("a", 0, 60)])).toEqual([
+      { id: "synced:a", column: 0, columns: 1, startX: 0, endX: 1 },
+      { id: "synced:b", column: 0, columns: 1, startX: 0, endX: 1 },
     ])
-    expect(placed.every((p) => p.columns === 5)).toBe(true)
-    expect(placed.map((p) => p.column)).toEqual([0, 1, 2, 3, 4])
+  })
+
+  it("finalizes transitive clusters at minimum concurrency and reuses the lowest free column", () => {
     expect(
-      placed.every((p) => Number((p.endX - p.startX).toFixed(5)) === 0.2),
-    ).toBe(true)
-  })
-
-  it("reuses a freed column within a cluster", () => {
-    // A spans the whole window; B then C are stacked in column 1 (B frees it
-    // before C starts), so the cluster needs only 2 columns, not 3.
-    const placed = layoutOverlaps([
-      at("09:00", "12:00"), // A
-      at("09:30", "10:30"), // B
-      at("10:30", "11:30"), // C — starts when B ends, reuses B's column
+      placed([
+        at("long", 0, 100),
+        at("first", 10, 30),
+        at("nested", 20, 80),
+        at("reuse", 30, 90),
+      ]),
+    ).toEqual([
+      { id: "synced:long", column: 0, columns: 3, startX: 0, endX: 1 / 3 },
+      {
+        id: "synced:first",
+        column: 1,
+        columns: 3,
+        startX: 1 / 3,
+        endX: 2 / 3,
+      },
+      {
+        id: "synced:nested",
+        column: 2,
+        columns: 3,
+        startX: 2 / 3,
+        endX: 1,
+      },
+      {
+        id: "synced:reuse",
+        column: 1,
+        columns: 3,
+        startX: 1 / 3,
+        endX: 2 / 3,
+      },
     ])
-    expect(placed.every((p) => p.columns === 2)).toBe(true)
-    expect(placed.map((p) => p.column)).toEqual([0, 1, 1])
   })
 
-  it("sorts chronologically: the earlier-start item gets column 0 regardless of input order", () => {
-    const a = { ...at("09:00", "12:00"), id: "a" }
-    const b = { ...at("10:00", "12:00"), id: "b" }
-    // The output is ordered by start time (the engine's stable sort), so the
-    // earlier-start item (a) is first with column 0 for either input order.
-    for (const input of [
-      [a, b],
-      [b, a],
-    ]) {
-      const placed = layoutOverlaps(input)
-      expect(placed.map((p) => p.item.id)).toEqual(["a", "b"])
-      expect(placed.map((p) => p.column)).toEqual([0, 1])
+  it("orders identical bounds by ordinal source and UID for every permutation", () => {
+    const intervals = [
+      at("z", 0, 60),
+      at("b", 0, 60),
+      at("a", 0, 60),
+      at("p", 0, 60, "personal"),
+    ]
+    const expected = placed(intervals)
+    for (const input of permutations(intervals))
+      expect(placed(input)).toEqual(expected)
+    expect(expected.map(({ id }) => id)).toEqual([
+      "personal:p",
+      "synced:a",
+      "synced:b",
+      "synced:z",
+    ])
+  })
+
+  it("preserves deterministic non-covering invariants for seeded generated sets", () => {
+    let state = 0x561
+    const random = () => {
+      state = (state * 1_664_525 + 1_013_904_223) >>> 0
+      return state / 2 ** 32
     }
-  })
-
-  it("breaks ties by end time then by input index for equal starts", () => {
-    // Two events share a start; the shorter one sorts first (end-time tie-break),
-    // and two fully-identical events fall back to input index — all in one
-    // 3-column cluster.
-    const longer = { ...at("09:00", "12:00"), id: "longer" }
-    const shorter = { ...at("09:00", "10:00"), id: "shorter" }
-    const dupeA = { ...at("09:00", "12:00"), id: "dupeA" }
-    const placed = layoutOverlaps([longer, shorter, dupeA])
-    // shorter (earliest end) first, then longer/dupeA by input index.
-    expect(placed.map((p) => p.item.id)).toEqual(["shorter", "longer", "dupeA"])
-    expect(placed.every((p) => p.columns === 3)).toBe(true)
-  })
-
-  it("separates non-overlapping clusters", () => {
-    const placed = layoutOverlaps([
-      at("09:00", "10:00"),
-      at("09:30", "10:00"),
-      at("14:00", "15:00"),
-    ])
-    // First cluster: 2 columns. Second cluster: 1 column.
-    expect(placed[0]!.columns).toBe(2)
-    expect(placed[1]!.columns).toBe(2)
-    expect(placed[2]!.columns).toBe(1)
+    for (let sample = 0; sample < 100; sample += 1) {
+      const intervals = Array.from(
+        { length: 2 + Math.floor(random() * 12) },
+        (_, index) => {
+          const start = Math.floor(random() * 300)
+          return at(
+            `sample-${sample}-${index}`,
+            start,
+            start + 1 + Math.floor(random() * 90),
+          )
+        },
+      )
+      const output = [...layoutOverlaps(intervals).values()]
+      expect(placed([...intervals].reverse())).toEqual(placed(intervals))
+      expect(output).toHaveLength(intervals.length)
+      for (const current of output) {
+        expect(current.endX - current.startX).toBeCloseTo(1 / current.columns)
+        for (const other of output) {
+          if (current === other) continue
+          const timeOverlap =
+            current.item.startsAt < other.item.endsAt &&
+            other.item.startsAt < current.item.endsAt
+          if (timeOverlap) expect(current.column).not.toBe(other.column)
+        }
+      }
+    }
   })
 })

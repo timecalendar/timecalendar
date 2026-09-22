@@ -1,108 +1,100 @@
-// Pure overlap-layout engine — salvaged and OWNED regardless of the renderer
-// (ADR 019's salvage mandate; D4). Ported + validated in the Phase-04 spike from
-// the Flutter `EventForUI.listFromEvents` unbounded-column packing. It packs a
-// set of time intervals into the minimum number of columns such that no two
-// overlapping intervals share a column, then assigns each a fractional
-// horizontal span [startX, endX] over the cluster width.
-//
-// Pure: no React, no renderer, no @/db, no t(). The owned Calendar shell does
-// not consume overlap layout until its event-tile slice lands; today-grid is
-// the current rendering consumer.
+export interface OverlapIdentity {
+  source: string
+  uid: string
+}
 
 export interface Interval {
+  identity: OverlapIdentity
   startsAt: Date
   endsAt: Date
 }
 
 export interface Placed<T extends Interval> {
   item: T
-  /** 0-based column index assigned to the item. */
   column: number
-  /** Total columns in the item's overlap cluster. */
   columns: number
-  /** Fractional left edge over the cluster width, in [0, 1]. */
   startX: number
-  /** Fractional right edge over the cluster width, in [0, 1]. */
   endX: number
 }
 
-// Two intervals overlap when each starts strictly before the other ends; this
-// engine encodes that directly via the per-column end times below. Back-to-back
-// intervals (a.endsAt === b.startsAt) do NOT overlap — they may share a column.
-export function layoutOverlaps<T extends Interval>(items: T[]): Placed<T>[] {
-  // Stable chronological sort (earlier start first; longer first on a tie) so
-  // column assignment is deterministic.
-  const sorted = items
-    .map((item, index) => ({ item, index }))
-    .sort((a, b) => {
-      const byStart = a.item.startsAt.getTime() - b.item.startsAt.getTime()
-      if (byStart !== 0) return byStart
-      const byEnd = a.item.endsAt.getTime() - b.item.endsAt.getTime()
-      if (byEnd !== 0) return byEnd
-      return a.index - b.index
-    })
-    .map((entry) => entry.item)
+export function overlapIdentityKey(identity: OverlapIdentity): string {
+  return `${identity.source.length}:${identity.source}${identity.uid}`
+}
 
-  // Greedily place each item in the first column whose last occupant has ended
-  // (a freed column is reused); otherwise open a new column. `columnEnds[c]` is
-  // the end time of the latest item placed in column c.
-  const columnEnds: Date[] = []
-  const assigned: { item: T; column: number }[] = []
-  // Track the running cluster: a maximal run of items connected by overlap. A
-  // cluster ends when an item starts at or after every active column's end.
-  let clusterStart = 0
-  const clusters: { start: number; end: number; columns: number }[] = []
-  let clusterMaxEnd: Date | null = null
+function compareOrdinal(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0
+}
 
-  for (let i = 0; i < sorted.length; i++) {
-    const item = sorted[i]!
+function compareIntervals(left: Interval, right: Interval): number {
+  const byStart = left.startsAt.getTime() - right.startsAt.getTime()
+  if (byStart !== 0) return byStart
+  const byEnd = left.endsAt.getTime() - right.endsAt.getTime()
+  if (byEnd !== 0) return byEnd
+  const bySource = compareOrdinal(left.identity.source, right.identity.source)
+  return bySource !== 0
+    ? bySource
+    : compareOrdinal(left.identity.uid, right.identity.uid)
+}
 
-    // A new cluster begins when this item doesn't overlap the running cluster's
-    // maximal extent — flush the previous cluster's column count.
-    if (clusterMaxEnd !== null && item.startsAt >= clusterMaxEnd) {
-      clusters.push({
-        start: clusterStart,
-        end: i,
-        columns: columnEnds.length,
-      })
-      columnEnds.length = 0
-      clusterStart = i
-      clusterMaxEnd = null
+function validate<T extends Interval>(items: readonly T[]): void {
+  const identities = new Set<string>()
+  for (const item of items) {
+    const start = item.startsAt.getTime()
+    const end = item.endsAt.getTime()
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+      throw new RangeError("Overlap layout requires finite positive intervals")
     }
+    const key = overlapIdentityKey(item.identity)
+    if (identities.has(key)) {
+      throw new RangeError("Overlap layout identities must be unique")
+    }
+    identities.add(key)
+  }
+}
 
-    let column = columnEnds.findIndex((end) => end <= item.startsAt)
+// Positive intervals overlap only with positive area. An end instant therefore
+// frees its column for another interval beginning at that same instant.
+export function layoutOverlaps<T extends Interval>(
+  items: readonly T[],
+): ReadonlyMap<string, Placed<T>> {
+  validate(items)
+  const sorted = [...items].sort(compareIntervals)
+  const result = new Map<string, Placed<T>>()
+  let cluster: { item: T; column: number }[] = []
+  let columnEnds: number[] = []
+  let clusterMaxEnd = Number.NEGATIVE_INFINITY
+
+  const finishCluster = () => {
+    const columns = columnEnds.length
+    for (const entry of cluster) {
+      result.set(overlapIdentityKey(entry.item.identity), {
+        item: entry.item,
+        column: entry.column,
+        columns,
+        startX: entry.column / columns,
+        endX: (entry.column + 1) / columns,
+      })
+    }
+    cluster = []
+    columnEnds = []
+    clusterMaxEnd = Number.NEGATIVE_INFINITY
+  }
+
+  for (const item of sorted) {
+    const start = item.startsAt.getTime()
+    const end = item.endsAt.getTime()
+    if (cluster.length > 0 && start >= clusterMaxEnd) finishCluster()
+
+    let column = columnEnds.findIndex((columnEnd) => columnEnd <= start)
     if (column === -1) {
       column = columnEnds.length
-      columnEnds.push(item.endsAt)
+      columnEnds.push(end)
     } else {
-      columnEnds[column] = item.endsAt
+      columnEnds[column] = end
     }
-
-    assigned.push({ item, column })
-    if (clusterMaxEnd === null || item.endsAt > clusterMaxEnd) {
-      clusterMaxEnd = item.endsAt
-    }
+    cluster.push({ item, column })
+    clusterMaxEnd = Math.max(clusterMaxEnd, end)
   }
-
-  if (sorted.length > 0) {
-    clusters.push({
-      start: clusterStart,
-      end: sorted.length,
-      columns: columnEnds.length,
-    })
-  }
-
-  // Map each assigned item to its cluster's column count for its fractional span.
-  return assigned.map((entry, i) => {
-    const cluster = clusters.find((c) => i >= c.start && i < c.end)!
-    const columns = cluster.columns
-    const width = 1 / columns
-    return {
-      item: entry.item,
-      column: entry.column,
-      columns,
-      startX: entry.column * width,
-      endX: (entry.column + 1) * width,
-    }
-  })
+  if (cluster.length > 0) finishCluster()
+  return result
 }
