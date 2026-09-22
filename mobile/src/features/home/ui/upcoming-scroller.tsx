@@ -5,6 +5,7 @@ import { ThemedText } from "@/components/themed-text"
 import {
   type AppLocale,
   type CalendarEvent,
+  displayEventTitle,
   formatTimeRange,
 } from "@/features/calendar/data"
 import {
@@ -12,6 +13,7 @@ import {
   ChecklistProgressIndicator,
   type ChecklistProgressMap,
 } from "@/features/event-checklists"
+import { useColorScheme } from "@/hooks/use-color-scheme"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 import { homeEventOpenLabel } from "./event-accessibility"
@@ -82,6 +84,7 @@ function UpcomingCard({
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
+  const scheme = useColorScheme() === "dark" ? "dark" : "light"
   const time = event.allDay
     ? t("home.today.allDay")
     : formatTimeRange(event.startsAt, event.endsAt, locale, zone)
@@ -102,13 +105,13 @@ function UpcomingCard({
       style={({ pressed }) => [
         styles.card,
         {
-          backgroundColor: eventSurfaceColor(event.color),
+          backgroundColor: eventSurfaceColor(event.color, scheme),
         },
         Platform.OS === "ios" && pressed && styles.iosPressed,
       ]}
     >
       <ThemedText type="smallBold" numberOfLines={2}>
-        {event.title}
+        {displayEventTitle(event.title, t("calendar.event.noTitle"))}
       </ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
         {time}

@@ -1,7 +1,12 @@
 import type { ChecklistProgress } from "@/features/event-checklists"
 
 import { dayKey, minuteOfDayInZone } from "./day-key"
-import { eventSurfaceColor } from "./event-color"
+import {
+  type EventAppearance,
+  type EventAppearanceScheme,
+  resolveEventAppearance,
+} from "./event-color"
+import { displayEventTitle } from "./event-title"
 import type { CalendarThreePageRangeV1 } from "./range-plan"
 import { classifyTimedEventSupport } from "./timed-support"
 import type { CalendarEvent, CalendarEventIdentityV1 } from "./types"
@@ -12,9 +17,10 @@ export interface TimedTileV1 {
   version: 1
   identity: CalendarEventIdentityV1
   key: string
+  shape: "point" | "interval"
   title: string
   location: string | undefined
-  surfaceColor: string
+  appearance: EventAppearance
   startsAt: Date
   endsAt: Date
   startMinute: number
@@ -76,6 +82,7 @@ function freezePresentation(
     for (const column of page.columns) {
       for (const tile of column.tiles) {
         Object.freeze(tile.identity)
+        Object.freeze(tile.appearance)
         if (tile.checklist !== undefined) Object.freeze(tile.checklist)
         Object.freeze(tile)
       }
@@ -94,6 +101,9 @@ export function buildCalendarTimelinePresentation(input: {
   generation: number
   events: readonly CalendarEvent[]
   checklistProgress?: ReadonlyMap<string, TimelineChecklistProgressV1>
+  localizedNoTitle?: string
+  scheme?: EventAppearanceScheme
+  increasedContrast?: boolean
 }): CalendarTimelinePresentationV1 {
   const tilesByDay = new Map<string, TimedTileV1[]>()
   const displayZone = input.range.displayZone
@@ -106,9 +116,17 @@ export function buildCalendarTimelinePresentation(input: {
       version: 1,
       identity: { ...supported.identity },
       key: `${supported.identity.source}:${supported.identity.uid}`,
-      title: supported.title,
+      shape: support.shape,
+      title: displayEventTitle(
+        supported.title,
+        input.localizedNoTitle ?? "(No title)",
+      ),
       location: supported.location,
-      surfaceColor: eventSurfaceColor(supported.color),
+      appearance: resolveEventAppearance({
+        color: supported.color,
+        scheme: input.scheme ?? "light",
+        increasedContrast: input.increasedContrast ?? false,
+      }),
       startsAt: new Date(supported.startsAt),
       endsAt: new Date(supported.endsAt),
       startMinute: minuteOfDayInZone(supported.startsAt, displayZone),

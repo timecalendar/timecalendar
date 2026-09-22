@@ -58,7 +58,7 @@ describe("calendar event row decoders", () => {
       "invalid-identity": 0,
       "invalid-start": 0,
       "invalid-end": 0,
-      "non-positive-range": 0,
+      "reversed-range": 0,
       "invalid-date-range": 0,
     })
     expect(decoded.accepted[0]).toMatchObject({
@@ -91,14 +91,18 @@ describe("calendar event row decoders", () => {
       synced({ uid: "bad-calendar", userCalendarId: "" }),
       synced({ uid: "bad-start", startsAt: "nope" }),
       synced({ uid: "bad-end", endsAt: "nope" }),
-      synced({
-        uid: "instant",
-        endsAt: "2026-09-14T08:00:00.000Z",
-      }),
+      synced({ uid: "point", endsAt: "2026-09-14T08:00:00.000Z" }),
+      synced({ uid: "reversed", endsAt: "2026-09-14T07:59:00.000Z" }),
       synced({
         uid: "bad-day",
         allDay: true,
         startsAt: "2026-09-14T01:00:00.000Z",
+      }),
+      synced({
+        uid: "empty-day",
+        allDay: true,
+        startsAt: "2026-09-14T00:00:00.000Z",
+        endsAt: "2026-09-14T00:00:00.000Z",
       }),
       synced({
         uid: "backwards-day",
@@ -107,13 +111,16 @@ describe("calendar event row decoders", () => {
       }),
     ])
 
-    expect(syncedResult.accepted.map((event) => event.id)).toEqual(["sync-1"])
+    expect(syncedResult.accepted.map((event) => event.id)).toEqual([
+      "sync-1",
+      "point",
+    ])
     expect(syncedResult.rejectedCounts).toEqual({
       "invalid-identity": 2,
       "invalid-start": 1,
       "invalid-end": 1,
-      "non-positive-range": 1,
-      "invalid-date-range": 2,
+      "reversed-range": 1,
+      "invalid-date-range": 3,
     })
 
     const personalResult = decodePersonalEventRows([
@@ -123,15 +130,16 @@ describe("calendar event row decoders", () => {
       personal({ uid: "bad-end", endsAt: "bad" }),
       personal({
         uid: "bad-range",
-        endsAt: "2026-09-14T10:00:00.000Z",
+        endsAt: "2026-09-14T09:59:00.000Z",
       }),
+      personal({ uid: "point", endsAt: "2026-09-14T10:00:00.000Z" }),
     ])
-    expect(personalResult.accepted).toHaveLength(1)
+    expect(personalResult.accepted).toHaveLength(2)
     expect(personalResult.rejectedCounts).toMatchObject({
       "invalid-identity": 1,
       "invalid-start": 1,
       "invalid-end": 1,
-      "non-positive-range": 1,
+      "reversed-range": 1,
     })
   })
 
@@ -182,7 +190,7 @@ describe("calendar event row decoders", () => {
     ])
     expect(syncedResult.accepted[0]).toMatchObject({
       id: "defaults",
-      title: "",
+      title: undefined,
       teachers: [],
       tags: [],
       canceled: false,
@@ -199,7 +207,7 @@ describe("calendar event row decoders", () => {
     ])
     expect(personalResult.accepted[0]).toMatchObject({
       id: "defaults",
-      title: "",
+      title: undefined,
     })
     expect(personalResult.rejectedCounts).toMatchObject({
       "invalid-start": 1,

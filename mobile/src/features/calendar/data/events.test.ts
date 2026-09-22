@@ -195,7 +195,22 @@ describe("bounded calendar events seam", () => {
 
   it("isolates malformed siblings and emits aggregate-only diagnostics once per revision", async () => {
     mockSynced.mockReturnValue({
-      timedRows: [syncedRow(), syncedRow({ uid: "bad", startsAt: "private" })],
+      timedRows: [
+        syncedRow(),
+        syncedRow({
+          uid: "sentinel-uid",
+          title: "sentinel-title",
+          color: "sentinel-color",
+          startsAt: "sentinel-start",
+          endsAt: "sentinel-end",
+          location: "sentinel-location",
+          description: "sentinel-description",
+          teachers: '["sentinel-teacher"]',
+          tags: '[{"name":"sentinel-tag"}]',
+          fields: '{"sentinel-field":true}',
+          userCalendarId: "sentinel-calendar",
+        }),
+      ],
       dateOnlyRows: [],
       error: undefined,
       ready: true,
@@ -214,7 +229,7 @@ describe("bounded calendar events seam", () => {
       expect.any(Error),
       "calendar-local-read",
     )
-    expect(JSON.stringify(mockRecordError.mock.calls)).not.toContain("private")
+    expect(JSON.stringify(mockRecordError.mock.calls)).not.toContain("sentinel")
     await rerender({})
     expect(mockRecordError).toHaveBeenCalledTimes(1)
   })
@@ -324,6 +339,21 @@ describe("bounded calendar events seam", () => {
         from: new Date("2026-09-15T00:00:00.000Z"),
         to: new Date("2026-09-16T00:00:00.000Z"),
       }),
+    ).toBe(false)
+
+    const point = {
+      ...dateOnly,
+      kind: "timed",
+      allDay: false,
+      startsAt: range.from,
+      endsAt: range.from,
+    } as const
+    expect(intersectsRange(point, range)).toBe(true)
+    expect(
+      intersectsRange(
+        { ...point, startsAt: range.to, endsAt: range.to },
+        range,
+      ),
     ).toBe(false)
   })
 })

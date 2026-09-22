@@ -1,6 +1,8 @@
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 
 import { useChecklistProgress } from "@/features/event-checklists"
+import { useColorScheme } from "@/hooks/use-color-scheme"
 
 import { useCalendarEventsSnapshot } from "./events"
 import { planCalendarThreePageRange } from "./range-plan"
@@ -9,6 +11,7 @@ import {
   timelinePresentationUids,
 } from "./timeline-presentation"
 import type { CalendarEvent } from "./types"
+import { useCalendarIncreasedContrast } from "./use-increased-contrast"
 import type { FirstWeekday } from "./week"
 import type { CalendarTimelineMode } from "./week-transition"
 
@@ -24,6 +27,10 @@ export interface CalendarTimelinePresentationInput {
 export function useCalendarTimelinePresentation(
   input: CalendarTimelinePresentationInput,
 ) {
+  const { t } = useTranslation()
+  const colorScheme = useColorScheme()
+  const scheme = colorScheme === "dark" ? "dark" : "light"
+  const increasedContrast = useCalendarIncreasedContrast()
   const range = planCalendarThreePageRange(input)
   const snapshot = useCalendarEventsSnapshot({
     ...range.instant,
@@ -47,6 +54,9 @@ export function useCalendarTimelinePresentation(
     range,
     generation: input.generation,
     events,
+    localizedNoTitle: t("calendar.event.noTitle"),
+    scheme,
+    increasedContrast,
   })
   const scopedUids = timelinePresentationUids(identityPresentation)
   const checklistProgress = useChecklistProgress(scopedUids)
@@ -56,6 +66,9 @@ export function useCalendarTimelinePresentation(
     generation: input.generation,
     events,
     checklistProgress,
+    localizedNoTitle: t("calendar.event.noTitle"),
+    scheme,
+    increasedContrast,
   })
 
   return {

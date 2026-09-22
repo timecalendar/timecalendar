@@ -34,6 +34,15 @@ jest.mock("@/hooks/use-color-scheme", () => ({
 
 const mockUseColorScheme = useColorScheme as jest.Mock
 
+interface StyledTestNode {
+  props: { style: Parameters<typeof StyleSheet.flatten>[0] }
+  children: readonly unknown[]
+}
+
+function styledTestNode(node: unknown): StyledTestNode {
+  return node as StyledTestNode
+}
+
 const pagerMock = jest.requireMock<{
   __pagerMock: {
     setPage: jest.Mock
@@ -228,8 +237,8 @@ describe("OwnedCalendarShell", () => {
         screen.getByTestId("owned-calendar-event-original-42").props.style,
       ),
     ).toMatchObject({
-      top: 400,
-      height: 40,
+      top: 398,
+      height: 44,
     })
     await view.rerender(
       <OwnedCalendarShell
@@ -308,7 +317,9 @@ describe("OwnedCalendarShell", () => {
     const tile = screen.getByRole("button", {
       name: `${title}, 10:00 – 11:00 ${location}`,
     })
-    expect(StyleSheet.flatten(tile.props.style)).toMatchObject({
+    expect(
+      StyleSheet.flatten(styledTestNode(tile.children[0]).props.style),
+    ).toMatchObject({
       borderRadius: 2,
       overflow: "hidden",
     })
@@ -316,7 +327,7 @@ describe("OwnedCalendarShell", () => {
     const titleText = screen.getByText(title)
     const locationText = screen.getByText(location)
     expect(titleText.props).toMatchObject({ accessible: false })
-    expect(titleText.props.numberOfLines).toBeUndefined()
+    expect(titleText.props.numberOfLines).toBe(1)
     expect(titleText.props.ellipsizeMode).toBeUndefined()
     expect(StyleSheet.flatten(titleText.props.style)).toMatchObject({
       fontSize: 11,
@@ -324,13 +335,107 @@ describe("OwnedCalendarShell", () => {
       fontWeight: 600,
     })
     expect(locationText.props).toMatchObject({ accessible: false })
-    expect(locationText.props.numberOfLines).toBeUndefined()
+    expect(locationText.props.numberOfLines).toBe(1)
     expect(locationText.props.ellipsizeMode).toBeUndefined()
     expect(StyleSheet.flatten(locationText.props.style)).toMatchObject({
       fontSize: 11,
       lineHeight: 13,
       fontWeight: 400,
     })
+  })
+
+  it("keeps point and two-minute visuals faithful behind one minimum target each", async () => {
+    const events = [
+      {
+        version: 1,
+        kind: "timed",
+        allDay: false,
+        identity: { source: "synced", uid: "noon-point" },
+        id: "noon-point",
+        title: undefined,
+        color: "bad",
+        startsAt: new Date("2026-06-15T12:00:00.000Z"),
+        endsAt: new Date("2026-06-15T12:00:00.000Z"),
+        location: "B12",
+        description: undefined,
+        teachers: [],
+        tags: [],
+        canceled: false,
+        userCalendarId: "calendar-1",
+      },
+      {
+        version: 1,
+        kind: "timed",
+        allDay: false,
+        identity: { source: "synced", uid: "two-minutes" },
+        id: "two-minutes",
+        title: "Maths",
+        color: "#AA33CC",
+        startsAt: new Date("2026-06-15T13:00:00.000Z"),
+        endsAt: new Date("2026-06-15T13:02:00.000Z"),
+        location: "Long room name",
+        description: undefined,
+        teachers: [],
+        tags: [],
+        canceled: false,
+        userCalendarId: "calendar-1",
+      },
+    ] satisfies TimedCalendarEventV1[]
+    const presentation = buildCalendarTimelinePresentation({
+      range: planCalendarThreePageRange(props),
+      generation: props.generation,
+      events,
+      localizedNoTitle: "(No title)",
+    })
+    const onEventPress = jest.fn()
+    await render(
+      <OwnedCalendarShell
+        {...props}
+        presentation={presentation}
+        onEventPress={onEventPress}
+      />,
+    )
+
+    const pointAnchor = screen.getByTestId("owned-calendar-event-noon-point")
+    expect(StyleSheet.flatten(pointAnchor.props.style)).toMatchObject({
+      top: 698,
+      height: 44,
+    })
+    expect(
+      StyleSheet.flatten(
+        styledTestNode(styledTestNode(pointAnchor.children[0]).children[0])
+          .props.style,
+      ),
+    ).toMatchObject({
+      top: 20,
+      height: 4,
+    })
+    expect(screen.queryByText("(No title)")).toBeNull()
+    const pointButton = screen.getByRole("button", {
+      name: "(No title), 12:00 – 12:00 B12",
+    })
+    await fireEvent.press(pointButton)
+    expect(onEventPress).toHaveBeenLastCalledWith("noon-point")
+
+    const tinyAnchor = screen.getByTestId("owned-calendar-event-two-minutes")
+    expect(StyleSheet.flatten(tinyAnchor.props.style)).toMatchObject({
+      top: 759,
+      height: 44,
+    })
+    expect(
+      StyleSheet.flatten(
+        styledTestNode(styledTestNode(tinyAnchor.children[0]).children[0]).props
+          .style,
+      ),
+    ).toMatchObject({
+      top: 21,
+      height: 2,
+    })
+    expect(screen.getByText("Maths")).toBeOnTheScreen()
+    expect(screen.queryByText("Long room name")).toBeNull()
+    expect(
+      screen.getAllByRole("button", { includeHiddenElements: true }),
+    ).toHaveLength(2)
   })
 
   it("suppresses tile activation while scroll, pager, or pinch owns movement", async () => {

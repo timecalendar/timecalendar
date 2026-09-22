@@ -72,7 +72,15 @@ describe("buildCalendarTimelinePresentation", () => {
         identity: { source: "synced", uid: "maths" },
         title: "Maths",
         location: "B12",
-        surfaceColor: "#11223359",
+        shape: "interval",
+        appearance: {
+          source: "#112233",
+          surface: "#ACB2B8",
+          foreground: "#000000",
+          accent: "#112233",
+          outline: "#112233",
+          increasedContrast: false,
+        },
         startMinute: 600,
         endMinute: 660,
         checklist: { completed: 1, total: 2, isComplete: false },
@@ -158,5 +166,32 @@ describe("buildCalendarTimelinePresentation", () => {
         ),
       ),
     ).toEqual([undefined, undefined, undefined])
+  })
+
+  it("projects a localized immutable point without changing its endpoints", () => {
+    const point = event(
+      "noon-point",
+      "2026-09-14T10:00:00Z",
+      "2026-09-14T10:00:00Z",
+      { title: undefined },
+    )
+    const presentation = buildCalendarTimelinePresentation({
+      range,
+      generation: 2,
+      events: [point],
+      localizedNoTitle: "(Sans titre)",
+      scheme: "dark",
+      increasedContrast: true,
+    })
+    const tile = presentation.pages[1].columns[0]!.tiles[0]!
+    expect(tile).toMatchObject({
+      shape: "point",
+      title: "(Sans titre)",
+      startMinute: 720,
+      endMinute: 720,
+      appearance: { increasedContrast: true },
+    })
+    expect(tile.startsAt.getTime()).toBe(tile.endsAt.getTime())
+    expect(Object.isFrozen(tile.appearance)).toBe(true)
   })
 })

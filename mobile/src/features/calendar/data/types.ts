@@ -10,7 +10,7 @@ interface CalendarEventBaseV1 {
   identity: CalendarEventIdentityV1
   /** Compatibility alias used by existing Home/Agenda routes. */
   id: string
-  title: string
+  title: string | undefined
   /** Validated #RRGGBB surface input. */
   color: string
   location: string | undefined

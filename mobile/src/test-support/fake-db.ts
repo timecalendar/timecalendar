@@ -58,7 +58,9 @@ export interface FakeDb {
     desc: jest.Mock
     lt: jest.Mock
     gt: jest.Mock
+    gte: jest.Mock
     and: jest.Mock
+    or: jest.Mock
     inArray: jest.Mock
     notInArray: jest.Mock
     sql: jest.Mock
@@ -83,10 +85,11 @@ type Row = Record<string, unknown>
 // where-less read/write. Each operator resolves to its own leaf, so the
 // `spies.<op>(col, val)` contract consumers assert on is per-operator.
 type Condition =
-  | { op: "eq" | "lt" | "gt"; field: string; val: unknown }
+  | { op: "eq" | "lt" | "gt" | "gte"; field: string; val: unknown }
   | { op: "inArray"; field: string; val: readonly unknown[] }
   | { op: "notInArray"; field: string; val: readonly unknown[] }
   | { op: "and"; conditions: readonly Condition[] }
+  | { op: "or"; conditions: readonly Condition[] }
   | { op: "alwaysFalse" }
   | null
 // A resolved `asc()` / `desc()` order. `orderBy` takes one or more.
@@ -138,15 +141,24 @@ export function createFakeDb(config: {
     return String(x).localeCompare(String(y))
   }
 
+  const conditionValue = (row: Row, value: unknown): unknown =>
+    typeof value === "string" && /^[A-Za-z][A-Za-z0-9_]*\.[A-Za-z]/.test(value)
+      ? row[fieldOf(value)]
+      : value
+
   const matches = (row: Row, cond: Condition): boolean => {
     if (cond === null) return true
     switch (cond.op) {
-      case "eq":
-        return row[cond.field] === cond.val
+      case "eq": {
+        const value = conditionValue(row, cond.val)
+        return row[cond.field] === value
+      }
       case "lt":
-        return compare(row[cond.field], cond.val) < 0
+        return compare(row[cond.field], conditionValue(row, cond.val)) < 0
       case "gt":
-        return compare(row[cond.field], cond.val) > 0
+        return compare(row[cond.field], conditionValue(row, cond.val)) > 0
+      case "gte":
+        return compare(row[cond.field], conditionValue(row, cond.val)) >= 0
       case "inArray":
         return cond.val.includes(row[cond.field])
       case "notInArray":
@@ -155,6 +167,8 @@ export function createFakeDb(config: {
         return false
       case "and":
         return cond.conditions.every((child) => matches(row, child))
+      case "or":
+        return cond.conditions.some((child) => matches(row, child))
     }
   }
 
@@ -176,7 +190,9 @@ export function createFakeDb(config: {
     desc: jest.fn(),
     lt: jest.fn(),
     gt: jest.fn(),
+    gte: jest.fn(),
     and: jest.fn(),
+    or: jest.fn(),
     inArray: jest.fn(),
     notInArray: jest.fn(),
     sql: jest.fn(),
@@ -198,9 +214,17 @@ export function createFakeDb(config: {
     spies.gt(col, val)
     return { op: "gt", field: fieldOf(col), val }
   }
+  const gte = (col: string, val: unknown): Condition => {
+    spies.gte(col, val)
+    return { op: "gte", field: fieldOf(col), val }
+  }
   const and = (...conditions: Condition[]): Condition => {
     spies.and(...conditions)
     return { op: "and", conditions }
+  }
+  const or = (...conditions: Condition[]): Condition => {
+    spies.or(...conditions)
+    return { op: "or", conditions }
   }
   const inArray = (col: string, val: readonly unknown[]): Condition => {
     spies.inArray(col, val)
@@ -448,7 +472,9 @@ export function createFakeDb(config: {
     desc,
     lt,
     gt,
+    gte,
     and,
+    or,
     inArray,
     notInArray,
     sql,

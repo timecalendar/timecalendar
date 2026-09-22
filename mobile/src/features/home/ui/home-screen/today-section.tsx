@@ -3,7 +3,7 @@ import { Platform, Pressable, StyleSheet, View } from "react-native"
 
 import { EmptyState } from "@/components/empty-state"
 import { ThemedText } from "@/components/themed-text"
-import { type CalendarEvent } from "@/features/calendar/data"
+import { type CalendarEvent, displayEventTitle } from "@/features/calendar/data"
 import {
   ChecklistProgressIndicator,
   type ChecklistProgressMap,
@@ -12,6 +12,7 @@ import { type HourRange } from "@/features/home/data"
 import { homeEventOpenLabel } from "@/features/home/ui/event-accessibility"
 import { eventSurfaceColor } from "@/features/home/ui/event-surface"
 import { TodayTimeline } from "@/features/home/ui/today-timeline"
+import { useColorScheme } from "@/hooks/use-color-scheme"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 interface TodaySectionProps {
@@ -86,6 +87,7 @@ function AllDayEvents({
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
+  const scheme = useColorScheme() === "dark" ? "dark" : "light"
   return (
     <View testID="home-all-day" style={styles.allDayRow}>
       <ThemedText
@@ -118,12 +120,12 @@ function AllDayEvents({
               android_ripple={{ color: theme.ripple, foreground: true }}
               style={({ pressed }) => [
                 styles.allDayEvent,
-                { backgroundColor: eventSurfaceColor(event.color) },
+                { backgroundColor: eventSurfaceColor(event.color, scheme) },
                 Platform.OS === "ios" && pressed && styles.iosPressed,
               ]}
             >
               <ThemedText type="smallBold" numberOfLines={2}>
-                {event.title}
+                {displayEventTitle(event.title, t("calendar.event.noTitle"))}
               </ThemedText>
               <ChecklistProgressIndicator progress={progress} />
             </Pressable>

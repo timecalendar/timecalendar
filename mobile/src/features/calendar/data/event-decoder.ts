@@ -11,7 +11,7 @@ export const CALENDAR_EVENT_REJECTION_REASONS = [
   "invalid-identity",
   "invalid-start",
   "invalid-end",
-  "non-positive-range",
+  "reversed-range",
   "invalid-date-range",
 ] as const
 
@@ -31,7 +31,7 @@ function emptyCounts(): Record<CalendarEventRejectionReason, number> {
     "invalid-identity": 0,
     "invalid-start": 0,
     "invalid-end": 0,
-    "non-positive-range": 0,
+    "reversed-range": 0,
     "invalid-date-range": 0,
   }
 }
@@ -126,14 +126,16 @@ export function decodeSyncedEventRows(
     if (startsAt === undefined) return "invalid-start"
     const endsAt = parseDate(row.endsAt)
     if (endsAt === undefined) return "invalid-end"
-    if (endsAt.getTime() <= startsAt.getTime())
-      return row.allDay ? "invalid-date-range" : "non-positive-range"
+    if (endsAt.getTime() < startsAt.getTime())
+      return row.allDay ? "invalid-date-range" : "reversed-range"
+    if (row.allDay && endsAt.getTime() === startsAt.getTime())
+      return "invalid-date-range"
 
     const common = {
       version: 1 as const,
       identity: { source: "synced" as const, uid },
       id: uid,
-      title: typeof row.title === "string" ? row.title : "",
+      title: optionalString(row.title),
       color: color(row.color),
       location: optionalString(row.location),
       description: optionalString(row.description),
@@ -170,7 +172,7 @@ export function decodePersonalEventRows(
     if (startsAt === undefined) return "invalid-start"
     const endsAt = parseDate(row.endsAt)
     if (endsAt === undefined) return "invalid-end"
-    if (endsAt.getTime() <= startsAt.getTime()) return "non-positive-range"
+    if (endsAt.getTime() < startsAt.getTime()) return "reversed-range"
 
     return {
       version: 1,
@@ -178,7 +180,7 @@ export function decodePersonalEventRows(
       allDay: false,
       identity: { source: "personal", uid },
       id: uid,
-      title: typeof row.title === "string" ? row.title : "",
+      title: optionalString(row.title),
       color: color(row.color),
       startsAt,
       endsAt,

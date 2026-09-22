@@ -20,6 +20,7 @@ import { HiddenEventsScreen } from "./hidden-events-screen"
 // a no-op (it sets the header title outside a navigator).
 
 jest.mock("@/features/calendar/data", () => ({
+  ...jest.requireActual("@/features/calendar/data/event-title"),
   useSyncedEvents: jest.fn(),
   formatTimeRange: () => "09:00 – 10:30",
   resolveLocale: () => "en",

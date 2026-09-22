@@ -34,8 +34,9 @@ export function useEventDetailsAction(event: EventDetails): {
     }
   }
 
+  const title = event.title
   const hiddenByUid = uidHiddenEvents.includes(event.id)
-  const hiddenByName = namedHiddenEvents.includes(event.title)
+  const hiddenByName = title !== undefined && namedHiddenEvents.includes(title)
 
   if (hiddenByUid || hiddenByName) {
     return {
@@ -44,7 +45,7 @@ export function useEventDetailsAction(event: EventDetails): {
         text: t("eventDetails.unhide.action"),
         onPress: () => {
           if (hiddenByUid) unhideUid(event.id)
-          if (hiddenByName) unhideName(event.title)
+          if (title !== undefined && hiddenByName) unhideName(title)
         },
       },
       failed,
@@ -63,12 +64,16 @@ export function useEventDetailsAction(event: EventDetails): {
               if (hideByUid(event.id)) router.back()
             },
           },
-          {
-            text: t("eventDetails.hide.byName"),
-            onPress: () => {
-              if (hideByName(event.title)) router.back()
-            },
-          },
+          ...(title === undefined
+            ? []
+            : [
+                {
+                  text: t("eventDetails.hide.byName"),
+                  onPress: () => {
+                    if (hideByName(title)) router.back()
+                  },
+                },
+              ]),
           { text: t("eventDetails.hide.cancel"), style: "cancel" },
         ])
       },

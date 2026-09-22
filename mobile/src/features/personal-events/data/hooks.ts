@@ -1,4 +1,4 @@
-import { and, db, gt, lt, personalEvents, useLiveQuery } from "@/db"
+import { and, db, gt, gte, lt, or, personalEvents, useLiveQuery } from "@/db"
 
 import { type PersonalEvent, rowToEvent } from "./types"
 
@@ -18,9 +18,19 @@ export function usePersonalEventRowsInRange(range: { from: Date; to: Date }) {
       .select()
       .from(personalEvents)
       .where(
-        and(
-          lt(personalEvents.startsAt, toIso),
-          gt(personalEvents.endsAt, fromIso),
+        or(
+          and(
+            lt(personalEvents.startsAt, toIso),
+            gt(personalEvents.endsAt, fromIso),
+          ),
+          and(
+            gte(personalEvents.startsAt, fromIso),
+            lt(personalEvents.startsAt, toIso),
+          ),
+          and(
+            gt(personalEvents.endsAt, fromIso),
+            lt(personalEvents.endsAt, toIso),
+          ),
         ),
       ),
     [`personal:${fromIso}:${toIso}`],

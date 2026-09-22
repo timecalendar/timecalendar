@@ -15,6 +15,7 @@ import {
   type AppLocale,
   atHourInZone,
   type CalendarEvent,
+  displayEventTitle,
   eventHeight,
   formatTimeRange,
   hourLabels,
@@ -31,6 +32,7 @@ import {
   type ChecklistProgressMap,
 } from "@/features/event-checklists"
 import { type HourRange } from "@/features/home/data"
+import { useColorScheme } from "@/hooks/use-color-scheme"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 import { homeEventOpenLabel } from "./event-accessibility"
@@ -104,6 +106,7 @@ export function TodayTimeline({
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
+  const scheme = useColorScheme() === "dark" ? "dark" : "light"
   const { fontScale } = useWindowDimensions()
 
   // Overlap columns are device-independent FRACTIONS (startX/endX); only the px
@@ -172,7 +175,7 @@ export function TodayTimeline({
             style={({ pressed }) => [
               styles.reflowedEvent,
               {
-                backgroundColor: eventSurfaceColor(event.color),
+                backgroundColor: eventSurfaceColor(event.color, scheme),
               },
               Platform.OS === "ios" && pressed && styles.iosPressed,
             ]}
@@ -180,7 +183,9 @@ export function TodayTimeline({
             <ThemedText type="small" themeColor="textSecondary">
               {time}
             </ThemedText>
-            <ThemedText type="smallBold">{event.title}</ThemedText>
+            <ThemedText type="smallBold">
+              {displayEventTitle(event.title, t("calendar.event.noTitle"))}
+            </ThemedText>
             {location.length > 0 && (
               <ThemedText type="small" themeColor="textSecondary">
                 {location}
@@ -304,7 +309,7 @@ export function TodayTimeline({
                       left,
                       width,
                       height,
-                      backgroundColor: eventSurfaceColor(event.color),
+                      backgroundColor: eventSurfaceColor(event.color, scheme),
                     },
                     Platform.OS === "ios" && pressed && styles.iosPressed,
                   ]}
@@ -312,7 +317,10 @@ export function TodayTimeline({
                   {showText && (
                     <>
                       <ThemedText type="small" numberOfLines={2}>
-                        {event.title}
+                        {displayEventTitle(
+                          event.title,
+                          t("calendar.event.noTitle"),
+                        )}
                       </ThemedText>
                       {location.length > 0 && (
                         <ThemedText

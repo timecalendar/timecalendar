@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next"
 
-import type { CalendarEvent } from "@/features/calendar/data"
+import { type CalendarEvent, displayEventTitle } from "@/features/calendar/data"
 import {
   type ChecklistProgress,
   checklistProgressLabel,
@@ -13,7 +13,7 @@ export function homeEventOpenLabel(
   progress: ChecklistProgress | undefined,
 ): string {
   const values = {
-    title: event.title,
+    title: displayEventTitle(event.title, t("calendar.event.noTitle")),
     time,
     location: event.location ?? "",
   }

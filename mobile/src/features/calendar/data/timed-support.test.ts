@@ -37,7 +37,7 @@ describe("classifyTimedEventSupport", () => {
     ).toBe(true)
   })
 
-  it("classifies deferred date-only, instant, spanning, and DST shapes", () => {
+  it("classifies points and deferred date-only, spanning, and DST shapes", () => {
     const dateOnly: CalendarEvent = {
       ...timed("2026-09-14T00:00:00Z", "2026-09-15T00:00:00Z"),
       kind: "date-only",
@@ -54,7 +54,7 @@ describe("classifyTimedEventSupport", () => {
         timed("2026-09-14T08:00:00Z", "2026-09-14T08:00:00Z"),
         "UTC",
       ),
-    ).toEqual({ supported: false, reason: "instant" })
+    ).toMatchObject({ supported: true, shape: "point" })
     expect(
       classifyTimedEventSupport(
         timed("2026-09-14T22:00:00Z", "2026-09-15T01:00:00Z"),

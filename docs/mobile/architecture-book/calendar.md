@@ -108,9 +108,24 @@ nor resets it. Their native platform menu offers 10-pixel Zoom in/out and Reset 
 them at the live usable viewport center, disables them at 40/120/60, and announces one settled
 percentage.
 
-This remains an intentionally incomplete pre-launch timeline. Ordinary positive-duration,
-same-display-date timed tiles are supported; all-day lanes, instants, spanning/DST shapes, overlap
-packing, and populated-event density tuning remain pending until their numbered owned-renderer slices land.
+This remains an intentionally incomplete pre-launch timeline. Ordinary positive-duration and point
+events on one display date are supported; all-day lanes, spanning/DST shapes, overlap packing, and
+populated-event density tuning remain pending until their numbered owned-renderer slices land.
+Timed equality is a point fact: bounded reads include its instant at the inclusive lower range edge
+and exclude it at the upper edge. A point draws a centered 4dp marker; a positive interval keeps its
+exact minute-derived height. The one event button uses separate geometry clamped to the full-day plane
+and reaches 44pt on iOS or 48dp on Android without stretching either visual. Constrained tiles keep the
+title first and omit lower-priority location/checklist lines unless their complete line fits. The single
+committed-page button still announces the full localized title, time, optional location and checklist
+meaning and routes by original UID; neighbour visuals and child text add no semantic nodes. Native
+ScrollView, PagerView and pinch owners continue to cancel a pending press when movement takes ownership.
+
+Imported event colors pass through the Calendar-owned deterministic appearance resolver. It validates
+six-digit sRGB input, composites an opaque scheme-aware surface, selects a foreground with at least
+4.5:1 contrast, and adjusts a source-derived boundary cue to at least 3:1 against the canvas. Android's
+supported high-text-contrast signal strengthens the wash/outline; unsupported platforms deterministically
+use the normal policy. Host tests prove values, geometry, semantics and routing. Physical target feel,
+increased-contrast rendering, VoiceOver and TalkBack remain T28 device evidence.
 Shared time-grid helpers still default to 07:00–21:00; only the owned shell opts into
 explicit full-day bounds. Paging remains bounded to one adjacent day or week according to
 the committed mode; there is no far-date pager.

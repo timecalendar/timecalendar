@@ -170,8 +170,11 @@ describe("owned Calendar paging repository contract", () => {
     const dataRoot = join(root, "src/features/calendar/data")
     const required = [
       "event-decoder.ts",
+      "event-color.ts",
+      "event-title.ts",
       "range-plan.ts",
       "timed-support.ts",
+      "timeline-geometry.ts",
       "timeline-presentation.ts",
       "timeline-presentation-hook.ts",
     ]
@@ -199,7 +202,12 @@ describe("owned Calendar paging repository contract", () => {
     expect(range).toContain("civil: { fromDay, toDay }")
     expect(presentation).toContain("CalendarTimelinePresentationV1")
     expect(presentation).toContain("Object.freeze")
+    expect(presentation).toContain("shape: support.shape")
+    expect(presentation).toContain("resolveEventAppearance")
     expect(renderer).toContain("onEventPress(tile.identity.uid)")
+    expect(renderer.match(/<Pressable/g)).toHaveLength(1)
+    expect(renderer).toContain('tile.shape === "interval"')
+    expect(renderer).toContain("minimumTarget")
     expect(renderer).not.toMatch(/onEventPress\([^)]*(?:index|direction|key)/)
     expect(navigationBoundary).not.toMatch(
       /@\/api|generated\/|customFetch|fetch\(|useSyncCalendars|syncCalendars/,
