@@ -34,6 +34,15 @@ jest.mock("@/hooks/use-color-scheme", () => ({
 
 const mockUseColorScheme = useColorScheme as jest.Mock
 
+interface StyledTestNode {
+  props: { style: Parameters<typeof StyleSheet.flatten>[0] }
+  children: readonly unknown[]
+}
+
+function styledTestNode(node: unknown): StyledTestNode {
+  return node as StyledTestNode
+}
+
 const pagerMock = jest.requireMock<{
   __pagerMock: {
     setPage: jest.Mock
@@ -308,7 +317,9 @@ describe("OwnedCalendarShell", () => {
     const tile = screen.getByRole("button", {
       name: `${title}, 10:00 – 11:00 ${location}`,
     })
-    expect(StyleSheet.flatten(tile.children[0]!.props.style)).toMatchObject({
+    expect(
+      StyleSheet.flatten(styledTestNode(tile.children[0]).props.style),
+    ).toMatchObject({
       borderRadius: 2,
       overflow: "hidden",
     })
@@ -391,7 +402,10 @@ describe("OwnedCalendarShell", () => {
       height: 44,
     })
     expect(
-      StyleSheet.flatten(pointAnchor.children[0]!.children[0]!.props.style),
+      StyleSheet.flatten(
+        styledTestNode(styledTestNode(pointAnchor.children[0]).children[0])
+          .props.style,
+      ),
     ).toMatchObject({
       top: 20,
       height: 4,
@@ -409,7 +423,10 @@ describe("OwnedCalendarShell", () => {
       height: 44,
     })
     expect(
-      StyleSheet.flatten(tinyAnchor.children[0]!.children[0]!.props.style),
+      StyleSheet.flatten(
+        styledTestNode(styledTestNode(tinyAnchor.children[0]).children[0]).props
+          .style,
+      ),
     ).toMatchObject({
       top: 21,
       height: 2,

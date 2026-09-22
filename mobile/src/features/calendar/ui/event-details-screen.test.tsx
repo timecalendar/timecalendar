@@ -505,7 +505,7 @@ describe("EventDetailsScreen unified surface (both kinds) — checklist + Edit a
     const user = userEvent.setup()
     await user.press(screen.getByLabelText("Hide this event"))
     const buttons = alert.mock.calls[0]?.[2] ?? []
-    expect(buttons.map((button: { text: string }) => button.text)).toEqual([
+    expect(buttons.map((button) => button.text ?? "")).toEqual([
       "Hide this event",
       "Cancel",
     ])
