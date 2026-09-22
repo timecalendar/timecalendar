@@ -102,8 +102,16 @@ event semantic paths (14 direct targets plus one chooser trigger), and three mod
 the two-choice conflict is open. All 16 original identities have an activation path; reverse fixture order
 preserves every placement. Gesture-frame source reads only prepared minute and fractional geometry.
 
-Focused host suites cover overlap/property, presentation/hook, conflict planning, renderer, Calendar
-screen, fixture, i18n, and repository ownership. Exact-head command results and revision are recorded in
-the implementation handoff after final verification. This host supplies no physical target-feel,
-VoiceOver, or TalkBack acceptance; T28 retains that planned evidence. No Reviewer acceptance or merge is
-recorded yet.
+The tested source revision is `60fb72e5b160a9b4342d74b868f4bd91dcb292e2`:
+
+- The ten edited/affected exact-path Jest suites passed 151 tests after the Home fixture identity was
+  corrected; focused overlap/conflict coverage is 100% statements and branches.
+- `npx tsc --noEmit`, `npm run lint`, and repository-root scoped `npx prettier --check` passed.
+- `npm run react-doctor:changed` passed with only four reviewed intentional manual-memoization warnings
+  on the presentation recomputation boundary.
+- `npm test -- --coverage` passed 209 suites and 2,006 tests at 97.55% statements / 92.56% branches
+  globally; its included Maestro selector inventory and repository contract suites passed.
+- Strict OpenSpec validation passed and the disclosure scan reported zero findings.
+
+This host supplies no physical target-feel, VoiceOver, or TalkBack acceptance; T28 retains that planned
+evidence. No Reviewer acceptance or merge is recorded yet.
