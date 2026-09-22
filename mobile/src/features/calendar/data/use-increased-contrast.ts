@@ -2,11 +2,13 @@ import { useEffect, useState } from "react"
 import { AccessibilityInfo, Platform } from "react-native"
 
 /** Calendar-owned mapping of Android's supported high-text-contrast signal. */
-export function useCalendarIncreasedContrast(): boolean {
+export function useCalendarIncreasedContrast(
+  platform: string = Platform.OS,
+): boolean {
   const [enabled, setEnabled] = useState(false)
 
   useEffect(() => {
-    if (Platform.OS !== "android") return
+    if (platform !== "android") return
     let active = true
     void AccessibilityInfo.isHighTextContrastEnabled()
       .then((value) => {
@@ -23,7 +25,7 @@ export function useCalendarIncreasedContrast(): boolean {
       active = false
       subscription.remove()
     }
-  }, [])
+  }, [platform])
 
   return enabled
 }

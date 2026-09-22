@@ -541,3 +541,13 @@
 - Established Home · Calendar · Settings as the mobile tab hierarchy, with a nested
   Settings Stack, feature-owned grouped destination hub, derived held-calendar
   summary, and temporary `/profile` compatibility redirect (ADR 034).
+
+## 2026-09-22 — Tiny and malformed Calendar events
+
+- Calendar local reads now retain equal-endpoint timed points with exact half-open point membership,
+  isolate malformed required rows, and normalize optional content without persisted-row mutation.
+- The owned timeline separates duration-faithful point/short visuals from clamped platform-minimum event
+  targets, keeps one semantic button, and resolves localized missing titles plus contrast-safe imported
+  colors at presentation time.
+- Focused host proof covers pure policies, privacy-safe aggregate diagnostics, consumers and renderer
+  ownership; final native accessibility/device acceptance remains T28.

@@ -563,7 +563,6 @@ function TimedCalendarTile({
       >
         <Animated.View
           accessible={false}
-          importantForAccessibility="no-hide-descendants"
           style={[
             styles.tile,
             {

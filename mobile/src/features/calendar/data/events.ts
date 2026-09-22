@@ -7,6 +7,7 @@ import { recordError } from "@/firebase"
 
 import { utcDayKey } from "./day-key"
 import {
+  CALENDAR_EVENT_REJECTION_REASONS,
   type CalendarEventRejectionCounts,
   decodePersonalEventRows,
   decodeSyncedEventRows,
@@ -80,7 +81,8 @@ function useRejectedRowDiagnostics(
   const reported = useRef(new Set<string>())
   useEffect(() => {
     if (!ready) return
-    for (const [reason, count] of Object.entries(counts)) {
+    for (const reason of CALENDAR_EVENT_REJECTION_REASONS) {
+      const count = counts[reason]
       if (count === 0) continue
       const key = `${revision}:${reason}`
       if (reported.current.has(key)) continue

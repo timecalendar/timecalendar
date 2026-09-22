@@ -104,6 +104,29 @@ describe("rowToEventDetails", () => {
     expect(event.teachers).toEqual([])
   })
 
+  it("keeps only normalized optional siblings", () => {
+    const event = rowToEventDetails(
+      row({
+        title: " ",
+        location: 42,
+        description: " Notes ",
+        teachers: JSON.stringify([" Ada ", 7, " "]),
+        tags: JSON.stringify([
+          { name: " CM ", color: "#ff0000", icon: " book " },
+          { name: "bad", color: "red", icon: "book" },
+          { name: 5, color: "#00FF00", icon: "book" },
+        ]),
+      }),
+    )
+    expect(event).toMatchObject({
+      title: undefined,
+      location: undefined,
+      description: "Notes",
+      teachers: ["Ada"],
+      tags: [{ name: "CM", color: "#FF0000", icon: "book" }],
+    })
+  })
+
   it("degrades corrupt fields JSON to a false canceled without throwing", () => {
     const event = rowToEventDetails(row({ fields: "}{ broken" }))
     expect(event.canceled).toBe(false)

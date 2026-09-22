@@ -103,10 +103,13 @@ export function resolveEventAppearance(input: {
 }
 
 /** Retained Home surface helper; owned Timeline consumes the full appearance. */
-export function eventSurfaceColor(color: string): string {
+export function eventSurfaceColor(
+  color: string,
+  scheme: EventAppearanceScheme = "light",
+): string {
   return resolveEventAppearance({
     color,
-    scheme: "light",
+    scheme,
     increasedContrast: false,
   }).surface
 }

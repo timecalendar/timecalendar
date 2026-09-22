@@ -493,6 +493,24 @@ describe("EventDetailsScreen unified surface (both kinds) — checklist + Edit a
     expect(screen.getByRole("header", { name: "Dentist" })).toBeTruthy()
   })
 
+  it("uses the localized presentation fallback without enabling hide-by-name", async () => {
+    const alert = jest.spyOn(Alert, "alert")
+    mockUseEventDetails.mockReturnValue({
+      event: eventDetails({ title: undefined }),
+      loading: false,
+    })
+    await render(<EventDetailsScreen />)
+    expect(screen.getByRole("header", { name: "(No title)" })).toBeTruthy()
+
+    const user = userEvent.setup()
+    await user.press(screen.getByLabelText("Hide this event"))
+    const buttons = alert.mock.calls[0]?.[2] ?? []
+    expect(buttons.map((button: { text: string }) => button.text)).toEqual([
+      "Hide this event",
+      "Cancel",
+    ])
+  })
+
   it("offers the Edit action ONLY for a personal event, and it opens the form", async () => {
     const push = jest.fn()
     mockUseRouter.mockReturnValue({ back: jest.fn(), push })

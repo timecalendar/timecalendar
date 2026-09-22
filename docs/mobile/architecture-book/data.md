@@ -91,3 +91,17 @@
 
 - A feature's `data/` layer holds not only the query/mapper seam but **pure, reusable logic** with real edge cases that earns the 90% gate. The reference is `mobile/src/features/school-selection/data/search.ts` (Phase-3 ship 2, [ADR 016](./decisions/016-school-group-multi-select-commit.md)): a pure `normalize` + `schoolMatches(needle, school)` accent-insensitive name-or-code matcher (mirroring Flutter `stringIncludes`), unit-tested in `search.test.ts` under the 90% logic glob. The screen filters through it via `useMemo`, staying presentational — logic in a tested `data/` sublayer, not inline in the screen (the golden-path posture).
 - **Diacritic stripping without a dependency:** `normalize("NFD")` + a combining-marks **range** strip (`U+0300–U+036F`), **not** the `\p{Diacritic}` Unicode property escape — Hermes (RN 0.85.3 / SDK 56) has known gaps in RegExp Unicode property escapes (facebook/react-native#29807), so the explicit range is the safe, dependency-free equivalent. Caveat tooling can't carry (R-1): the Jest env runs on Node, where `\p{Diacritic}` would also pass — the Hermes-on-device behavior is why the range is used.
+
+## Calendar local-read normalization
+
+The bounded Calendar read is total per persisted row. Equal timed endpoints are accepted unchanged as
+points; reversed timed ranges, missing/invalid required dates, and non-positive date-only ranges reject
+only their own row through an exhaustive reason. Positive intervals retain half-open intersection, while
+points use `start >= from && start < to` in both SQL and in-memory filtering.
+
+Optional title, location and description values are trimmed and omitted when unusable. Teacher and tag
+arrays are narrowed element by element, preserving usable siblings without writing repairs to SQLite.
+The localized missing-title value is added only at Agenda, Home, Timeline and details presentation
+boundaries. Completed snapshots report at most one diagnostic per rejection reason and revision; calls
+contain only the static Calendar code, allowlisted reason, integer count and fixed subsystem tag, never a
+row, field value, identity, query or caught payload.

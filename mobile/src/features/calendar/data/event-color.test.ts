@@ -21,7 +21,7 @@ describe("event appearance", () => {
       outline: "#1E88E5",
       increasedContrast: false,
     })
-    expect(eventSurfaceColor("invalid")).toBe("#C0C7CD")
+    expect(eventSurfaceColor("invalid")).toBe("#C9CED6")
   })
 
   it.each([

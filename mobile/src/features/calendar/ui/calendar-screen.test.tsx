@@ -305,6 +305,19 @@ describe("CalendarScreen owned shell", () => {
     },
   )
 
+  it("shows and announces the missing-title fallback in Agenda", async () => {
+    mockUseCalendarEvents.mockReturnValue([
+      calendarEvent({ id: "untitled", title: undefined }),
+    ])
+    await render(<CalendarScreen />)
+    await chooseCalendarView("agenda")
+
+    expect(screen.getByText("(No title)")).toBeOnTheScreen()
+    expect(
+      screen.getByLabelText("(No title), 09:00 – 10:30 Room A1. View details"),
+    ).toBeOnTheScreen()
+  })
+
   it("rolls Today and the indicator together without changing mounted screen state", async () => {
     setShowWeekends(false)
     mockUseCalendarClock.mockReturnValue(new Date("2026-06-19T23:59:00"))
