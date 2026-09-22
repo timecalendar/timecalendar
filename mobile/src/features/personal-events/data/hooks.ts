@@ -38,6 +38,14 @@ export function usePersonalEventRowsInRange(range: { from: Date; to: Date }) {
             gte(personalEvents.startsAt, fromIso),
             lt(personalEvents.startsAt, toIso),
           ),
+          and(
+            gte(personalEvents.startsAt, fromIso),
+            lt(personalEvents.startsAt, toIso),
+          ),
+          and(
+            gt(personalEvents.endsAt, fromIso),
+            lt(personalEvents.endsAt, toIso),
+          ),
         ),
       ),
     [`personal:${fromIso}:${toIso}`],

@@ -50,6 +50,14 @@ export function useSyncedEventRowsInRange(range: SyncedEventRowRange) {
               gte(calendarEvents.startsAt, fromIso),
               lt(calendarEvents.startsAt, toIso),
             ),
+            and(
+              gte(calendarEvents.startsAt, fromIso),
+              lt(calendarEvents.startsAt, toIso),
+            ),
+            and(
+              gt(calendarEvents.endsAt, fromIso),
+              lt(calendarEvents.endsAt, toIso),
+            ),
           ),
         ),
       ),
@@ -62,8 +70,20 @@ export function useSyncedEventRowsInRange(range: SyncedEventRowRange) {
       .where(
         and(
           eq(calendarEvents.allDay, true),
-          lt(calendarEvents.startsAt, toDayIso),
-          gt(calendarEvents.endsAt, fromDayIso),
+          or(
+            and(
+              lt(calendarEvents.startsAt, toDayIso),
+              gt(calendarEvents.endsAt, fromDayIso),
+            ),
+            and(
+              gte(calendarEvents.startsAt, fromDayIso),
+              lt(calendarEvents.startsAt, toDayIso),
+            ),
+            and(
+              gt(calendarEvents.endsAt, fromDayIso),
+              lt(calendarEvents.endsAt, toDayIso),
+            ),
+          ),
         ),
       ),
     [`date-only:${fromDayIso}:${toDayIso}`],

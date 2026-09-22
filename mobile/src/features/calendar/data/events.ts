@@ -3,7 +3,6 @@ import { useEffect, useRef } from "react"
 import { useUserCalendarsSnapshot } from "@/features/calendar-sources/data"
 import { useHiddenEvents } from "@/features/hidden-events/data"
 import { usePersonalEventRowsInRange } from "@/features/personal-events"
-import { recordError } from "@/firebase"
 
 import { utcDayKey } from "./day-key"
 import {
@@ -12,6 +11,7 @@ import {
   decodePersonalEventRows,
   decodeSyncedEventRows,
 } from "./event-decoder"
+import { recordCalendarEventRejection } from "./rejection-diagnostics"
 import { useSyncedEventRowsInRange } from "./sync/hooks"
 import { type CalendarEvent } from "./types"
 
@@ -87,10 +87,7 @@ function useRejectedRowDiagnostics(
       const key = `${revision}:${reason}`
       if (reported.current.has(key)) continue
       reported.current.add(key)
-      recordError(
-        new Error(`calendar-row-rejected:${reason}:${count}`),
-        "calendar-local-read",
-      )
+      recordCalendarEventRejection(reason, count)
     }
   }, [counts, ready, revision])
 }
