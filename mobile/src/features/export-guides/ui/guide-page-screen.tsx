@@ -206,21 +206,24 @@ function GuidePageContent({
     total,
   })
   const next = () => {
-    if (state.phase !== "guide") return
     if (pageIndex < total - 1) {
-      dispatch({ type: "visit-page", pageIndex: pageIndex + 1 })
+      if (state.phase === "guide") {
+        dispatch({ type: "visit-page", pageIndex: pageIndex + 1 })
+      }
       router.push(`/onboarding/export-guide/${pageIndex + 1}`)
       return
     }
-    dispatch({ type: "complete-guide", pageIndex })
-    emitExportGuideEvent({
-      name: "export_guide_completed",
-      params: {
-        provider_slug: state.snapshot.providerSlug,
-        page_count: total,
-        catalogue_version: state.snapshot.catalogueVersion,
-      },
-    })
+    if (state.phase === "guide") {
+      dispatch({ type: "complete-guide", pageIndex })
+      emitExportGuideEvent({
+        name: "export_guide_completed",
+        params: {
+          provider_slug: state.snapshot.providerSlug,
+          page_count: total,
+          catalogue_version: state.snapshot.catalogueVersion,
+        },
+      })
+    }
     router.push("/onboarding/import")
   }
 
@@ -269,7 +272,6 @@ function GuidePageContent({
                   ? t("exportGuide.finish")
                   : t("exportGuide.next")
               }
-              disabled={state.phase !== "guide"}
               onPress={next}
             />
             <Pressable

@@ -57,7 +57,7 @@ Alternatives considered:
 
 ### 2. Sibling source switching changes mode without growing history
 
-The import-method chooser intentionally pushes one chosen source. “Scan another QR code” clears the failed attempt and re-arms the camera on the same QR route. “Enter an iCal URL instead” dispatches the guarded handoff and calls `router.replace("/onboarding/ical-url")`, replacing the QR sibling. Native Back from iCal therefore returns to the chooser. Any future iCal-to-QR shortcut MUST use the symmetric replacement.
+The import-method chooser pushes one chosen source. QR failure offers primary Retry and secondary Change method. Change method dismisses the failed QR route to `/onboarding/import`, preserving the completed journey draft; choosing QR starts a fresh scanner and choosing iCal opens the URL input directly. Native Back returns to the chooser. Source guards continue recovering completed journeys to their selected handoff.
 
 Guide pages continue to push one bounded entry per instruction page, because previous-page Back behavior is intentional and independent from source-mode switching.
 
@@ -117,7 +117,7 @@ The guide-page title and intentional per-page stack behavior remain unchanged.
 ## Risks / Trade-offs
 
 - **[Create response is ambiguous after a network loss]** → Resume only once a token is known, document the remaining server-idempotency gap, and do not claim exactly-once creation.
-- **[A student abandons a post-token pre-upsert failure]** → Keep the primary Retry checkpoint-safe and treat Scan another, editing the URL, Back, or process death as explicit abandonment; no private checkpoint enters navigation.
+- **[A student abandons a post-token pre-upsert failure]** → Keep the primary Retry checkpoint-safe and treat Change method, editing the URL, Back, or process death as explicit abandonment; no private checkpoint enters navigation.
 - **[A result-screen Back occurs while sync is active]** → The module-level coordinator continues independently of the unmounted presentation; the existing Calendar pull-to-refresh remains the visible recovery path if it later fails.
 - **[Serial sync increases latency behind a slow startup pass]** → Import requests exactly one coalesced fresh follow-up and displays progress; bounded server deadlines still apply.
 - **[Global coordinator state complicates tests]** → Expose a test reset only through the established test-module pattern and prove joining, forced follow-up, failure handoff, and write ordering with deferred requests.
@@ -137,3 +137,18 @@ The change is additive at runtime and needs no data migration. Rollback consists
 ## Open Questions
 
 None for implementation. Server-issued idempotency for create-response ambiguity is explicitly deferred to a separate change.
+
+### Device-QA corrections: revisits and source handoff
+
+Completed guide pages remain readable and navigable. Earlier pages push their next already-visited
+page without modifying completion; the final page returns to the import chooser without repeating
+completion telemetry. The existing completion action still owns the first completion only.
+
+The iCal form keeps one Import action for both initial submission and retry. It retains the error
+announcement and Report action; the unchanged add-calendar seam still resumes checkpoints.
+
+Protected import recovery runs only for the focused screen. For a completed journey it recovers to
+the selected QR/iCal handoff, or the chooser when no source has been selected, rather than restarting
+the guide. The QR fallback changes the handoff and lets that guard perform the sibling replacement;
+it does not issue a competing immediate replacement. Uncompleted/empty journeys retain their
+existing recovery rules. Tests use the real draft provider/reducer across the source transition.

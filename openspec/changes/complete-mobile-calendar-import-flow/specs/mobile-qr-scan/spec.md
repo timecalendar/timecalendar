@@ -41,7 +41,7 @@ iCal-URL screen's existing Report path remains the single support surface.
 - **AND** it does not repeat server creation when a token was already received
 - **AND** rapid camera callbacks, repeated Retry taps, or their combination do not start a concurrent duplicate request
 
-#### Scenario: Retry can fail again or hand off through the shared result seam
+#### Scenario: Retry can fail again or complete through the shared success seam
 
 - **WHEN** a retried attempt rejects
 - **THEN** the recovery state remains available with the captured attempt, checkpoint, and draft intact
@@ -50,15 +50,16 @@ iCal-URL screen's existing Report path remains the single support surface.
 
 #### Scenario: Scan another QR deliberately re-arms the camera
 
-- **WHEN** the student activates Scan another QR after a rejected valid import
-- **THEN** the failure and captured attempt are cleared in place and the scanner accepts one new camera result
-- **AND** no route is pushed and a new valid result begins a new checkpointed attempt
+- **WHEN** the student chooses Change method after a rejected import and selects QR in the chooser
+- **THEN** the failed source route has been dismissed and a fresh scanner accepts one new camera result
+- **AND** no captured attempt or checkpoint carries into the new scanner
 
-#### Scenario: Manual iCal replaces the failed QR mode
+#### Scenario: Manual iCal remains available after failure
 
-- **WHEN** the student chooses the manual iCal action from the QR failure state
-- **THEN** the app replaces the QR sibling with `/onboarding/ical-url` without clearing the import draft
-- **AND** native Back from iCal returns to the import-method chooser rather than the failed QR screen
+- **WHEN** the student chooses Change method after a rejected valid import
+- **THEN** the app dismisses to `/onboarding/import` without clearing the institution, programme, or completed guide
+- **AND** choosing QR starts a fresh scanner and choosing iCal opens `/onboarding/ical-url`
+- **AND** native Back from iCal returns to the chooser rather than the failed QR screen
 - **AND** no QR URL, token, checkpoint, or private attempt state is placed in navigation parameters
 
 #### Scenario: Non-calendar QR is recoverable
@@ -67,7 +68,7 @@ iCal-URL screen's existing Report path remains the single support surface.
 - **THEN** the screen shows an accessible "not a calendar QR" message and re-arms for another scan
 - **AND** this recoverable state is NOT recorded as an error
 
-#### Scenario: Back navigation and unmount ignore late presentation settlement
+#### Scenario: Back navigation and unmount ignore late settlement
 
 - **WHEN** the screen unmounts before an active add-calendar promise settles
 - **THEN** a late settlement does not navigate, clear the draft, record an error, or update QR screen state
@@ -82,7 +83,7 @@ iCal-URL screen's existing Report path remains the single support surface.
 ### Requirement: QR import transitions have one explicit controller owner
 
 The QR scanner SHALL delegate valid-attempt capture, synchronous scan and in-flight exclusion,
-checkpointed import execution, failure, retry, Scan another, manual URL, durable completion, and
+checkpointed import execution, failure, retry, Change method, durable completion, and
 disposal transitions to one focused controller/state machine. Its render state SHALL distinguish
 scanning, importing, failed, and completed phases; a captured attempt SHALL exist only in phases
 that own a valid normalized URL and immutable create-field snapshot. Presentation components SHALL
@@ -114,11 +115,12 @@ invoke controller commands and SHALL NOT independently mutate import-transition 
 
 #### Scenario: Scan another is the only failed-attempt reset
 
-- **WHEN** Scan another is invoked from the failed phase while no request is active
-- **THEN** the captured attempt, checkpoint, and failure are cleared and the controller returns to scanning
-- **AND** manual URL replacement does not clear the import draft
+- **WHEN** the student chooses Change method and starts a new QR scan from the chooser
+- **THEN** the new source instance starts scanning without the abandoned attempt
+- **AND** Retry on the failed source never resets its captured checkpoint
+- **AND** changing method retains the import draft for either source selection
 
-#### Scenario: Durable completion is exactly once
+#### Scenario: Completion is exactly once
 
 - **WHEN** an initial or retried add-calendar invocation commits `user_calendars` while active and incomplete
 - **THEN** the controller enters its terminal completed phase and requests the root import-result route exactly once
@@ -138,7 +140,7 @@ The root import-result route, not the QR scanner, SHALL own event-hydration fail
 success. Views SHALL receive data and commands from the screen/controller rather than importing
 persistence, draft, Firebase, generated API, or navigation infrastructure directly.
 
-#### Scenario: Permission and idle scanner behavior remain unchanged
+#### Scenario: Permission and scanner behavior remain unchanged
 
 - **WHEN** camera permission is loading, requestable, permanently denied, or granted and idle
 - **THEN** the corresponding existing guidance/control or QR-only camera view is rendered
@@ -150,10 +152,10 @@ persistence, draft, Firebase, generated API, or navigation infrastructure direct
 - **THEN** the camera view unmounts and a localized polite progress status renders in the readable layout
 - **AND** no second barcode can be delivered through a still-mounted camera
 
-#### Scenario: Pre-persistence failure retains deliberate recovery
+#### Scenario: Import and recovery phases have cohesive views
 
 - **WHEN** the controller enters failed before durable persistence
-- **THEN** the recovery presentation retains Retry, Scan another, and manual URL controls with their accessibility properties
+- **THEN** the recovery presentation retains one primary Retry and one secondary Change method control with their accessibility properties
 - **AND** the terminal success presentation is not duplicated on the QR route
 
 #### Scenario: Views do not own side effects

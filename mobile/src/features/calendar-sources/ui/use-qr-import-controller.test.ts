@@ -23,9 +23,8 @@ function deferred<T>() {
 }
 
 const addCalendarFromUrl = jest.fn<Promise<void>, [string, unknown]>()
-const resetAddCalendar = jest.fn()
 const complete = jest.fn()
-const openManualUrl = jest.fn()
+const openMethodChooser = jest.fn()
 const recordError = jest.fn()
 
 type ScanningController = Extract<QrImportController, { phase: "scanning" }>
@@ -48,9 +47,8 @@ function renderController(
       useQrImportController({
         fields: currentFields,
         addCalendarFromUrl,
-        resetAddCalendar,
         complete,
-        openManualUrl,
+        openMethodChooser,
         recordError,
       }),
     { initialProps: { currentFields: fields } },
@@ -126,9 +124,11 @@ describe("useQrImportController", () => {
     await act(async () => {
       failedController.retry()
       failedController.retry()
+      failedController.changeMethod()
       failedController.handleBarcode(scan("https://other.example/ignored.ics"))
     })
     expect(addCalendarFromUrl).toHaveBeenCalledTimes(2)
+    expect(openMethodChooser).not.toHaveBeenCalled()
 
     await act(async () => retry.reject(new Error("retry")))
     expect(result.current.phase).toBe("failed")
@@ -136,56 +136,33 @@ describe("useQrImportController", () => {
     expect(complete).not.toHaveBeenCalled()
   })
 
-  it("retries captured fields, preserves failure for manual entry, and resets only for scan another", async () => {
+  it("retries captured fields and abandons the attempt once when changing method", async () => {
     addCalendarFromUrl
       .mockRejectedValueOnce(new Error("initial"))
       .mockRejectedValueOnce(new Error("retry"))
-      .mockResolvedValueOnce(undefined)
     const { result, rerender } = await renderController()
-
     await act(async () => {
       result.current.handleBarcode(scan("webcal://example.com/original.ics"))
     })
-    await rerender({
-      currentFields: { name: "Changed", schoolId: "school-2" },
-    })
-
+    await rerender({ currentFields: { name: "Changed", schoolId: "school-2" } })
     if (result.current.phase !== "failed") throw new Error("expected failure")
     const initialFailure = result.current
-    await act(async () => {
-      initialFailure.handleBarcode(scan("https://other.example/ignored.ics"))
-      initialFailure.enterManualUrl()
-    })
-    expect(openManualUrl).toHaveBeenCalledTimes(1)
-    expect(addCalendarFromUrl).toHaveBeenCalledTimes(1)
-    expect(complete).not.toHaveBeenCalled()
-
-    if (result.current.phase !== "failed") throw new Error("expected failure")
-    const retryableFailure = result.current
-    await act(async () => retryableFailure.retry())
+    await act(async () => initialFailure.retry())
     expect(addCalendarFromUrl).toHaveBeenLastCalledWith(
       "https://example.com/original.ics",
       { name: "L3", schoolId: "school-1" },
     )
-
     if (result.current.phase !== "failed") throw new Error("expected failure")
     const finalFailure = result.current
     await act(async () => {
-      finalFailure.scanAnother()
-      finalFailure.scanAnother()
+      finalFailure.changeMethod()
+      finalFailure.changeMethod()
+      finalFailure.retry()
+      finalFailure.handleBarcode(scan("https://other.example/ignored.ics"))
     })
-    expect(result.current).toMatchObject({
-      phase: "scanning",
-      invalidPayload: false,
-    })
-    expect(resetAddCalendar).toHaveBeenCalledTimes(1)
-    await act(async () => {
-      result.current.handleBarcode(scan("https://other.example/new.ics"))
-    })
-    expect(addCalendarFromUrl).toHaveBeenLastCalledWith(
-      "https://other.example/new.ics",
-      { name: "Changed", schoolId: "school-2" },
-    )
+    expect(openMethodChooser).toHaveBeenCalledTimes(1)
+    expect(addCalendarFromUrl).toHaveBeenCalledTimes(2)
+    expect(complete).not.toHaveBeenCalled()
   })
 
   it.each(["resolve", "reject"] as const)(
@@ -207,7 +184,7 @@ describe("useQrImportController", () => {
         })
 
         expect(complete).not.toHaveBeenCalled()
-        expect(openManualUrl).not.toHaveBeenCalled()
+        expect(openMethodChooser).not.toHaveBeenCalled()
         expect(recordError).not.toHaveBeenCalled()
         expect(consoleError).not.toHaveBeenCalled()
       } finally {

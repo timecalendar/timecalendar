@@ -3,6 +3,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Platform, Pressable, StyleSheet, TextInput } from "react-native"
 
+import { FieldError } from "@/components/error-surfaces"
 import { KeyboardSafeActionLayout } from "@/components/keyboard-safe-action-layout"
 import { PrimaryAction } from "@/components/primary-action"
 import { PageIntro, RootPage } from "@/components/root-page"
@@ -169,19 +170,19 @@ export default function ProgrammeScreen() {
               onSubmitEditing={submit}
               style={[
                 stepStyles.input,
-                { color: theme.text, borderColor: theme.backgroundSelected },
+                {
+                  color: theme.text,
+                  borderColor:
+                    errorKey !== null ? theme.error : theme.backgroundSelected,
+                },
               ]}
             />
 
             {errorKey !== null && (
-              <ThemedText
+              <FieldError
                 testID="onboarding-programme-error"
-                themeColor="textSecondary"
-                accessibilityLiveRegion="polite"
-                accessibilityRole="alert"
-              >
-                {t(errorKey)}
-              </ThemedText>
+                message={t(errorKey)}
+              />
             )}
           </KeyboardSafeActionLayout>
         )}

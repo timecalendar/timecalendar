@@ -61,12 +61,6 @@ export function RenameCalendarDialog({
       ? t("userCalendars.rename.error")
       : null
 
-  useEffect(() => {
-    if (inlineMessage !== null) {
-      AccessibilityInfo.announceForAccessibility(inlineMessage)
-    }
-  }, [inlineMessage])
-
   const cancel = () => {
     active.current = false
     onClose()
@@ -112,6 +106,7 @@ export function RenameCalendarDialog({
       label={t("userCalendars.rename.label")}
       placeholder={fallback}
       message={inlineMessage}
+      messageKind={tooLong ? "validation" : "operation"}
       cancelLabel={t("common.cancel")}
       submitLabel={submitLabel}
       pending={isPending}

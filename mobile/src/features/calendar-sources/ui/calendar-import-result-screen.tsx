@@ -1,18 +1,18 @@
 import { router } from "expo-router"
 import { useTranslation } from "react-i18next"
-import { Pressable, StyleSheet, View } from "react-native"
+import { ScrollView, StyleSheet, View } from "react-native"
 
+import { ErrorState } from "@/components/error-surfaces"
 import { PrimaryAction } from "@/components/primary-action"
 import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Spacing } from "@/theme"
 
 import { ImportProgressView } from "./import-progress-view"
 import { useCalendarImportResult } from "./use-calendar-import-result"
 
 export default function CalendarImportResultScreen() {
   const { t } = useTranslation()
-  const theme = useTheme()
   const { phase, retry } = useCalendarImportResult()
   const openCalendar = () => router.dismissTo("/calendar")
 
@@ -25,6 +25,28 @@ export default function CalendarImportResultScreen() {
     )
   }
 
+  if (phase === "failed")
+    return (
+      <RootPage testID="calendar-import-result" lane="readable">
+        <ScrollView contentContainerStyle={styles.content}>
+          <ErrorState
+            title={t("calendarImport.result.failureTitle")}
+            message={t("calendarImport.result.failureBody")}
+            primaryAction={{
+              testID: "calendar-import-result-retry",
+              label: t("calendarImport.action.retry"),
+              onPress: retry,
+            }}
+            secondaryAction={{
+              testID: "calendar-import-result-continue",
+              label: t("calendarImport.action.continue"),
+              onPress: openCalendar,
+            }}
+          />
+        </ScrollView>
+      </RootPage>
+    )
+
   return (
     <RootPage
       testID="calendar-import-result"
@@ -32,55 +54,23 @@ export default function CalendarImportResultScreen() {
       contentContainerStyle={styles.content}
     >
       <View
-        accessibilityRole={phase === "failed" ? "alert" : "text"}
-        accessibilityLiveRegion={phase === "failed" ? "assertive" : "polite"}
+        accessibilityRole="text"
+        accessibilityLiveRegion="polite"
         style={styles.message}
       >
         <ThemedText type="subtitle">
-          {t(
-            phase === "failed"
-              ? "calendarImport.result.failureTitle"
-              : "calendarImport.result.successTitle",
-          )}
+          {t("calendarImport.result.successTitle")}
         </ThemedText>
         <ThemedText themeColor="textSecondary">
-          {t(
-            phase === "failed"
-              ? "calendarImport.result.failureBody"
-              : "calendarImport.result.successBody",
-          )}
+          {t("calendarImport.result.successBody")}
         </ThemedText>
       </View>
 
-      {phase === "failed" ? (
-        <>
-          <PrimaryAction
-            testID="calendar-import-result-retry"
-            label={t("calendarImport.action.retry")}
-            onPress={retry}
-          />
-          <Pressable
-            testID="calendar-import-result-continue"
-            accessibilityRole="button"
-            accessibilityLabel={t("calendarImport.action.continue")}
-            onPress={openCalendar}
-            style={[
-              styles.secondary,
-              { borderColor: theme.primary, backgroundColor: theme.background },
-            ]}
-          >
-            <ThemedText type="smallBold">
-              {t("calendarImport.action.continue")}
-            </ThemedText>
-          </Pressable>
-        </>
-      ) : (
-        <PrimaryAction
-          testID="calendar-import-result-calendar"
-          label={t("calendarImport.action.viewCalendar")}
-          onPress={openCalendar}
-        />
-      )}
+      <PrimaryAction
+        testID="calendar-import-result-calendar"
+        label={t("calendarImport.action.viewCalendar")}
+        onPress={openCalendar}
+      />
     </RootPage>
   )
 }
@@ -92,12 +82,4 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.five,
   },
   message: { gap: Spacing.two },
-  secondary: {
-    minHeight: 48,
-    borderWidth: 1,
-    borderRadius: Radii.medium,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: Spacing.three,
-  },
 })

@@ -11,6 +11,7 @@ import {
   useWindowDimensions,
 } from "react-native"
 
+import { ErrorNotice, ErrorState } from "@/components/error-surfaces"
 import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
@@ -68,7 +69,7 @@ export default function SchoolPickerScreen() {
   )
 
   const searching = filter.trim().length > 0
-  const browsing = !isLoading && !isError && schools.length > 0 && !searching
+  const browsing = !isLoading && schools.length > 0 && !searching
 
   return (
     <>
@@ -152,12 +153,26 @@ export default function SchoolPickerScreen() {
               visible.length === 0 && { paddingTop: windowHeight * 0.15 },
             ]}
             ListHeaderComponent={
-              browsing ? (
-                <PageIntro
-                  caption={t("onboarding.school.subtitle")}
-                  style={styles.listHeader}
-                />
-              ) : null
+              <>
+                {isError && schools.length > 0 ? (
+                  <ErrorNotice
+                    compact
+                    testID="onboarding-school-cached-error"
+                    message={t("onboarding.school.error")}
+                    action={{
+                      label: t("onboarding.school.retry"),
+                      testID: "onboarding-school-retry",
+                      onPress: refetch,
+                    }}
+                  />
+                ) : null}
+                {browsing ? (
+                  <PageIntro
+                    caption={t("onboarding.school.subtitle")}
+                    style={styles.listHeader}
+                  />
+                ) : null}
+              </>
             }
             ListFooterComponent={
               browsing ? (
@@ -173,26 +188,17 @@ export default function SchoolPickerScreen() {
                   message={t("onboarding.school.loading")}
                   announceKey="loading"
                 />
-              ) : isError ? (
-                <ListStatus
-                  media={<StatusSymbol name="wifi.exclamationmark" />}
+              ) : isError && schools.length === 0 ? (
+                <ErrorState
+                  testID="onboarding-school-error"
+                  title={t("errors.loadTitle")}
                   message={t("onboarding.school.error")}
-                  announceKey="error"
-                  alert
-                >
-                  <Pressable
-                    testID="onboarding-school-retry"
-                    accessibilityRole="button"
-                    accessibilityLabel={t("onboarding.school.retry")}
-                    hitSlop={Spacing.two}
-                    onPress={refetch}
-                    style={styles.retry}
-                  >
-                    <ThemedText type="smallBold" themeColor="primary">
-                      {t("onboarding.school.retry")}
-                    </ThemedText>
-                  </Pressable>
-                </ListStatus>
+                  primaryAction={{
+                    label: t("onboarding.school.retry"),
+                    testID: "onboarding-school-retry",
+                    onPress: refetch,
+                  }}
+                />
               ) : searching ? (
                 <ListStatus
                   media={<StatusSymbol name="magnifyingglass" />}
@@ -221,9 +227,6 @@ export default function SchoolPickerScreen() {
 }
 
 const styles = StyleSheet.create({
-  fill: {
-    flex: 1,
-  },
   list: {
     paddingBottom: Spacing.three,
   },
@@ -232,9 +235,6 @@ const styles = StyleSheet.create({
     minHeight: 44,
     alignItems: "flex-start",
     justifyContent: "center",
-  },
-  subtitle: {
-    fontWeight: "400",
   },
   listHeader: {
     width: "100%",
@@ -254,12 +254,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
-  },
-  retry: {
-    minHeight: 48,
-    minWidth: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: Spacing.three,
   },
 })

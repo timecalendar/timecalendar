@@ -1,9 +1,9 @@
 import type { TFunction } from "i18next"
 import { Pressable, StyleSheet, View } from "react-native"
 
+import { ErrorNotice } from "@/components/error-surfaces"
 import { PrimaryAction } from "@/components/primary-action"
 import { ThemedText } from "@/components/themed-text"
-import { WriteErrorNotice } from "@/components/write-error-notice"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 type PersonalEventActionsProps = {
@@ -32,7 +32,7 @@ export function PersonalEventActions({
   return (
     <View testID="personal-event-actions" style={styles.footer}>
       {(saveFailed || deleteFailed) && (
-        <WriteErrorNotice
+        <ErrorNotice
           message={
             saveFailed
               ? t("personalEvents.form.error.saveFailed")

@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet, View } from "react-native"
 
+import { ErrorNotice } from "@/components/error-surfaces"
 import { ThemedText } from "@/components/themed-text"
 import { Radii, Spacing, useTheme } from "@/theme"
 
@@ -50,33 +51,18 @@ export function CalendarScreenStatus({
         </View>
       )}
       {isError && (
-        <View
-          style={styles.syncError}
-          accessibilityLiveRegion="polite"
+        <ErrorNotice
+          compact
           testID="calendar-sync-error"
-        >
-          <ThemedText
-            type="small"
-            themeColor="textSecondary"
-            accessibilityRole="alert"
-            style={styles.syncErrorText}
-          >
-            {t("calendar.sync.error")}
-          </ThemedText>
-          <Pressable
-            testID="calendar-sync-retry"
-            accessibilityRole="button"
-            accessibilityLabel={t("calendar.sync.retryLabel")}
-            hitSlop={Spacing.two}
-            onPress={onRetry}
-            style={[
-              styles.retryButton,
-              { backgroundColor: theme.backgroundElement },
-            ]}
-          >
-            <ThemedText type="smallBold">{t("calendar.sync.retry")}</ThemedText>
-          </Pressable>
-        </View>
+          message={t("calendar.sync.error")}
+          action={{
+            label: t("calendar.sync.retry"),
+            accessibilityLabel: t("calendar.sync.retryLabel"),
+            testID: "calendar-sync-retry",
+            onPress: onRetry,
+            busy: isSyncing,
+          }}
+        />
       )}
     </View>
   )
@@ -89,8 +75,6 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   emptyState: { gap: Spacing.two, alignItems: "flex-start" },
-  syncError: { flexDirection: "row", alignItems: "center", gap: Spacing.two },
-  syncErrorText: { flex: 1 },
   retryButton: {
     minHeight: 44,
     paddingHorizontal: Spacing.three,

@@ -24,7 +24,7 @@
 ## 4. Rework QR and iCal source states
 
 - [x] 4.1 Add shared localized import-progress presentation and complete FR/EN typed keys for source progress, result loading, partial failure, retry/continue, success, and View my timetable.
-- [x] 4.2 Update QR so a valid claim unmounts the camera, renders progress, uses checkpointed Retry, resets Scan another in place, and replaces QR with iCal for the manual fallback.
+- [x] 4.2 Update QR so a valid claim unmounts the camera, renders progress, uses checkpointed Retry, returns Change method to the existing chooser with the completed draft retained.
 - [x] 4.3 Update the QR controller's terminal phase to request the root result exactly once and remove local camera-backed completion plus the legacy successful-import exit helper.
 - [x] 4.4 Update iCal so a valid submit replaces the form with progress across create/resolve/upsert, preserves its validation/report behavior on failure, and requests the root result only after durable completion.
 - [x] 4.5 Extend QR and iCal tests for camera unmount, progress accessibility, checkpoint reuse, rapid-input exclusion, source replacement, chooser Back behavior, late-settlement inertness, report privacy, and result handoff.
@@ -42,3 +42,14 @@
 - [x] 6.3 Run every edited focused Jest suite immediately after its test changes, then run `npm run react-doctor:changed`, Expo declaration generation with `APP_VARIANT=development npx expo customize tsconfig.json`, `npx tsc --noEmit`, and `npm run lint` from `mobile/`.
 - [x] 6.4 Run the full mobile gate with `npm test -- --coverage`, verify generated-client drift with `npm run generate` plus a clean `src/api/generated` diff, and run `openspec validate complete-mobile-calendar-import-flow --strict`.
 - [ ] 6.5 Perform the recorded iOS and Android navigation/import pass and confirm the final root stack is the existing Calendar tab with events visible without killing or relaunching the app. (HUMAN: see `docs/react-native-migration/inbox/2026-09-20-calendar-import-finalization-device-pass.md`; this host has no simulator/emulator.)
+
+## 7. Fix device-QA navigation and iCal recovery regressions
+
+- [x] 7.1 Keep completed guide pages navigable: earlier pages advance without resetting completion; the final page returns to the chooser without repeating completion telemetry. Cover Back → Next on final and earlier pages.
+- [x] 7.2 Keep Import as the sole iCal submit/retry action, preserving validation, checkpoint resume, error announcement, and Report. Assert the redundant Retry control is absent and Import retries successfully.
+- [x] 7.3 Make protected-source recovery focus-aware and follow the selected handoff after completion. Let the outgoing QR guard own replacement after the handoff update, avoiding competing navigation commands. Exercise the real draft provider/reducer, retained outgoing screen, invalid direct entry, and draft invalidation.
+- [x] 7.4 Update specs/design and device QA steps; run focused and full mobile tests, typecheck, lint, React Doctor, OpenSpec validation, and live Metro bundle checks. Leave native device gesture verification explicit.
+
+Verification for section 7: 205 suites / 1,978 tests pass with coverage thresholds; TypeScript,
+lint, React Doctor, and strict OpenSpec validation pass. Live iOS and Android Metro bundles return
+HTTP 200 and the development API health check passes. Native Back/gesture checks remain in 6.5.

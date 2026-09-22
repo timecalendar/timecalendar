@@ -30,6 +30,8 @@ import { Platform, StyleSheet } from "react-native"
 
 import { useColorScheme } from "@/hooks/use-color-scheme"
 
+import { NativeErrorNotice } from "./native-error-notice"
+
 export type NativeSettingsNumericEditorIds = {
   container: string
   field: string
@@ -80,14 +82,10 @@ function IosNumericEditor(props: NativeSettingsNumericEditorProps) {
             </SwiftTextField.Placeholder>
           </SwiftTextField>
           {props.validationMessage ? (
-            <SwiftText
-              modifiers={[
-                accessibilityIdentifier(props.ids.message),
-                accessibilityLabel(props.validationMessage),
-              ]}
-            >
-              {props.validationMessage}
-            </SwiftText>
+            <NativeErrorNotice
+              message={props.validationMessage}
+              testID={props.ids.message}
+            />
           ) : null}
           <SwiftButton
             label={props.cancelLabel}
@@ -136,9 +134,10 @@ function AndroidNumericEditor(props: NativeSettingsNumericEditorProps) {
             </OutlinedTextField.Label>
             {props.validationMessage ? (
               <OutlinedTextField.SupportingText>
-                <MaterialText modifiers={[testID(props.ids.message)]}>
-                  {props.validationMessage}
-                </MaterialText>
+                <NativeErrorNotice
+                  message={props.validationMessage}
+                  testID={props.ids.message}
+                />
               </OutlinedTextField.SupportingText>
             ) : null}
           </OutlinedTextField>

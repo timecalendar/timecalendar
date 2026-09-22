@@ -65,7 +65,11 @@ export function HomeScreen() {
                 greeting={home.greeting}
                 events={home.todayEvents}
               />
-              <HomeScreenStatus isError={home.isError} onRetry={home.sync} />
+              <HomeScreenStatus
+                isError={home.isError}
+                isSyncing={home.isSyncing}
+                onRetry={home.sync}
+              />
             </View>
             <UpcomingSection
               laneStyle={laneStyle}

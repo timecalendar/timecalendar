@@ -2,11 +2,11 @@ import * as Linking from "expo-linking"
 import { Stack } from "expo-router"
 import * as WebBrowser from "expo-web-browser"
 import type { TFunction } from "i18next"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { AccessibilityInfo } from "react-native"
 
 import {
+  NativeErrorNotice,
   NativeSettingsHost,
   NativeSettingsSection,
   NativeSettingsText,
@@ -42,9 +42,6 @@ export function AboutScreen() {
   const { t } = useTranslation()
   const [linkFailed, setLinkFailed] = useState(false)
   const linkError = t("about.linkError")
-  useEffect(() => {
-    if (linkFailed) AccessibilityInfo.announceForAccessibility(linkError)
-  }, [linkError, linkFailed])
   const versionValue = formatApplicationInfo(t)
   const openLink = async (
     context: string,
@@ -173,9 +170,11 @@ export function AboutScreen() {
             {t("about.blurb.created")}
           </NativeSettingsText>
           {linkFailed ? (
-            <NativeSettingsText testID="about-link-error">
-              {linkError}
-            </NativeSettingsText>
+            <NativeErrorNotice
+              title={t("errors.openLinkTitle")}
+              message={linkError}
+              testID="about-link-error"
+            />
           ) : null}
         </NativeSettingsSection>
         {sections.map((section) => (

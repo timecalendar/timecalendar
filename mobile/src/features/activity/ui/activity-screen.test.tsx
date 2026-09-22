@@ -6,7 +6,7 @@ import {
   waitFor,
 } from "@testing-library/react-native"
 import { router } from "expo-router"
-import { StyleSheet } from "react-native"
+import { Platform, StyleSheet } from "react-native"
 
 import type { ActivityLog, ActivityState } from "@/features/activity/data"
 import i18n from "@/i18n"
@@ -308,6 +308,29 @@ describe("ActivityScreen behavior", () => {
     },
   )
 
+  it.each([false, true])(
+    "disables refresh recovery while refreshing (cached: %s)",
+    async (cached) => {
+      mockUseActivityLogs.mockReturnValue({
+        logs: cached ? [populatedLog()] : [],
+        loaded: true,
+      })
+      mockUseActivityScreenRefresh.mockReturnValue({
+        outcome: { status: "failed", reason: "network" },
+        isRefreshing: true,
+        refresh: mockScreenRefresh,
+      })
+      await render(<ActivityScreen />)
+      const retry = screen.getByTestId(
+        cached ? "activity-refresh-retry" : "activity-empty-retry",
+      )
+      expect(retry).toBeDisabled()
+      await fireEvent.press(retry)
+      expect(mockScreenRefresh).not.toHaveBeenCalled()
+      if (cached) expect(screen.getByText("Event new")).toBeTruthy()
+    },
+  )
+
   it("marks cached Activity read on mount and when unread becomes non-zero", async () => {
     const { rerender } = await render(<ActivityScreen />)
     await waitFor(() =>
@@ -336,7 +359,12 @@ describe("ActivityScreen behavior", () => {
       screen.getByRole("header", { name: /Computer Science/ }),
     ).toBeTruthy()
     const alert = screen.getByRole("alert")
-    expect(alert.props.accessibilityLiveRegion).toBe("polite")
+    expect(alert.props.accessibilityLiveRegion).toBe(
+      Platform.OS === "android" ? "polite" : undefined,
+    )
+    expect(
+      screen.getByRole("button", { name: "Retry loading recent changes" }),
+    ).toBeTruthy()
   })
 
   it("keeps long content and hundreds of changed children flattened and unclipped", async () => {
