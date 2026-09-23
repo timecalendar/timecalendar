@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next"
 import { StyleSheet, TextInput, View } from "react-native"
 
+import { FieldError } from "@/components/error-surfaces"
 import { ThemedText } from "@/components/themed-text"
 import type { AppLocale } from "@/features/calendar/data"
 import type {
@@ -59,15 +60,7 @@ export function PersonalEventFields({
           onSubmitEditing={onSubmitTitle}
           style={inputStyle}
         />
-        {errors.title !== undefined && (
-          <ThemedText
-            themeColor="textSecondary"
-            type="small"
-            accessibilityRole="alert"
-          >
-            {t(errors.title)}
-          </ThemedText>
-        )}
+        {errors.title !== undefined && <FieldError message={t(errors.title)} />}
       </View>
 
       <View style={styles.field}>
@@ -96,15 +89,7 @@ export function PersonalEventFields({
           zone={displayZone}
           onChange={(date) => update("endsAt", date)}
         />
-        {errors.range !== undefined && (
-          <ThemedText
-            themeColor="textSecondary"
-            type="small"
-            accessibilityRole="alert"
-          >
-            {t(errors.range)}
-          </ThemedText>
-        )}
+        {errors.range !== undefined && <FieldError message={t(errors.range)} />}
       </View>
 
       <View style={styles.field}>

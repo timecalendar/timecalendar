@@ -47,6 +47,16 @@ async function expectActRejection(
   expect(rejection).toEqual(expected)
 }
 
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void
+  let reject!: (reason?: unknown) => void
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise
+    reject = rejectPromise
+  })
+  return { promise, reject, resolve }
+}
+
 beforeEach(() => {
   jest.clearAllMocks()
   mockUpsert.mockResolvedValue(undefined)
@@ -122,6 +132,58 @@ describe("useAddCalendar", () => {
     await waitFor(() => expect(result.current.isError).toBe(true))
   })
 
+  it("retries create only when no token was returned", async () => {
+    mockFetch
+      .mockRejectedValueOnce(new Error("create boom"))
+      .mockResolvedValueOnce({ token: "tok_123" })
+      .mockResolvedValueOnce(dto)
+    const { result } = await renderHook(() => useAddCalendar(), { wrapper })
+    const invoke = () =>
+      result.current.addCalendarFromUrl("https://example.com/cal.ics", {
+        name: "",
+        schoolName: "",
+      })
+
+    await expectActRejection(invoke, new Error("create boom"))
+    await act(async () => invoke())
+
+    expect(
+      mockFetch.mock.calls.filter(([path]) => path === "/calendars"),
+    ).toHaveLength(2)
+    expect(
+      mockFetch.mock.calls.filter(([path]) =>
+        String(path).includes("by-token"),
+      ),
+    ).toHaveLength(1)
+    expect(mockUpsert).toHaveBeenCalledTimes(1)
+  })
+
+  it("retries resolve without recreating after a token checkpoint", async () => {
+    mockFetch
+      .mockResolvedValueOnce({ token: "tok_123" })
+      .mockRejectedValueOnce(new Error("resolve boom"))
+      .mockResolvedValueOnce(dto)
+    const { result } = await renderHook(() => useAddCalendar(), { wrapper })
+    const invoke = () =>
+      result.current.addCalendarFromUrl("https://example.com/cal.ics", {
+        name: "",
+        schoolName: "",
+      })
+
+    await expectActRejection(invoke, new Error("resolve boom"))
+    await act(async () => invoke())
+
+    expect(
+      mockFetch.mock.calls.filter(([path]) => path === "/calendars"),
+    ).toHaveLength(1)
+    expect(
+      mockFetch.mock.calls.filter(([path]) =>
+        String(path).includes("by-token"),
+      ),
+    ).toHaveLength(2)
+    expect(mockUpsert).toHaveBeenCalledTimes(1)
+  })
+
   it("reset clears the error state", async () => {
     mockFetch
       .mockResolvedValueOnce({ token: "tok_123" })
@@ -164,6 +226,106 @@ describe("useAddCalendar", () => {
     )
 
     await waitFor(() => expect(result.current.isError).toBe(true))
+  })
+
+  it("retries only the durable upsert after the DTO checkpoint", async () => {
+    mockFetch
+      .mockResolvedValueOnce({ token: "tok_123" })
+      .mockResolvedValueOnce(dto)
+    mockUpsert
+      .mockRejectedValueOnce(new Error("upsert boom"))
+      .mockResolvedValueOnce(undefined)
+    const { result } = await renderHook(() => useAddCalendar(), { wrapper })
+    const invoke = () =>
+      result.current.addCalendarFromUrl("https://example.com/cal.ics", {
+        name: "",
+        schoolName: "",
+      })
+
+    await expectActRejection(invoke, new Error("upsert boom"))
+    await act(async () => invoke())
+
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+    expect(mockUpsert).toHaveBeenCalledTimes(2)
+  })
+
+  it("joins concurrent invocations and commits durable completion once", async () => {
+    const create = deferred<{ token: string }>()
+    mockFetch.mockReturnValueOnce(create.promise).mockResolvedValueOnce(dto)
+    const { result } = await renderHook(() => useAddCalendar(), { wrapper })
+    const invoke = () =>
+      result.current.addCalendarFromUrl("https://example.com/cal.ics", {
+        name: "",
+        schoolName: "",
+      })
+
+    let first!: Promise<void>
+    let duplicate!: Promise<void>
+    await act(async () => {
+      first = invoke()
+      duplicate = invoke()
+      await Promise.resolve()
+    })
+    expect(duplicate).toBe(first)
+    await act(async () => {
+      create.resolve({ token: "tok_123" })
+      await Promise.all([first, duplicate])
+    })
+    await act(async () => invoke())
+
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+    expect(mockUpsert).toHaveBeenCalledTimes(1)
+  })
+
+  it("ignores a failed settlement after the consumer unmounts", async () => {
+    const create = deferred<{ token: string }>()
+    mockFetch.mockReturnValueOnce(create.promise)
+    const { result, unmount } = await renderHook(() => useAddCalendar(), {
+      wrapper,
+    })
+
+    let operation!: Promise<void>
+    await act(async () => {
+      operation = result.current.addCalendarFromUrl(
+        "https://example.com/cal.ics",
+        { name: "", schoolName: "" },
+      )
+      await Promise.resolve()
+    })
+    unmount()
+    create.reject(new Error("late create failure"))
+
+    await expect(operation).rejects.toThrow("late create failure")
+    expect(mockUpsert).not.toHaveBeenCalled()
+  })
+
+  it("starts a clean checkpoint for a materially new source", async () => {
+    mockFetch
+      .mockResolvedValueOnce({ token: "tok_old" })
+      .mockRejectedValueOnce(new Error("old resolve"))
+      .mockResolvedValueOnce({ token: "tok_new" })
+      .mockResolvedValueOnce({ ...dto, token: "tok_new" })
+    const { result } = await renderHook(() => useAddCalendar(), { wrapper })
+
+    await expectActRejection(
+      () =>
+        result.current.addCalendarFromUrl("https://example.com/old.ics", {
+          name: "Old",
+          schoolName: "",
+        }),
+      new Error("old resolve"),
+    )
+    await act(async () =>
+      result.current.addCalendarFromUrl("https://example.com/new.ics", {
+        name: "New",
+        schoolName: "",
+      }),
+    )
+
+    expect(
+      mockFetch.mock.calls.filter(([path]) => path === "/calendars"),
+    ).toHaveLength(2)
+    expect(mockFetch.mock.calls[3]?.[0]).toBe("/calendars/by-token/tok_new")
   })
   // The "exactly one institution representation" contract (TIM-391 / design D3),
   // asserted on the captured body at the mutator seam — key ABSENCE, not

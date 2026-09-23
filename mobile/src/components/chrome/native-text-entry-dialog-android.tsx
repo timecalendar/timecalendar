@@ -15,6 +15,7 @@ import {
 } from "@expo/ui/jetpack-compose/modifiers"
 import { StyleSheet } from "react-native"
 
+import { NativeErrorNotice } from "./native-error-notice"
 import type { NativeTextEntryDialogProps } from "./native-text-entry-dialog"
 
 export function NativeTextEntryDialogAndroid({
@@ -23,6 +24,7 @@ export function NativeTextEntryDialogAndroid({
   label,
   placeholder,
   message,
+  messageKind = "validation",
   cancelLabel,
   submitLabel,
   pending,
@@ -74,7 +76,7 @@ export function NativeTextEntryDialogAndroid({
               autoFocus
               enabled={!pending}
               singleLine
-              isError={message !== null}
+              isError={message !== null && messageKind === "validation"}
               onValueChange={onChange}
               modifiers={[fillMaxWidth(), testID(ids.input)]}
             >
@@ -84,12 +86,15 @@ export function NativeTextEntryDialogAndroid({
               <OutlinedTextField.Placeholder>
                 <Text>{placeholder}</Text>
               </OutlinedTextField.Placeholder>
-              {message === null ? null : (
+              {message === null || messageKind !== "validation" ? null : (
                 <OutlinedTextField.SupportingText>
-                  <Text modifiers={[testID(ids.message)]}>{message}</Text>
+                  <NativeErrorNotice message={message} testID={ids.message} />
                 </OutlinedTextField.SupportingText>
               )}
             </OutlinedTextField>
+            {message !== null && messageKind === "operation" ? (
+              <NativeErrorNotice message={message} testID={ids.message} />
+            ) : null}
           </Column>
         </AlertDialog.Text>
         <AlertDialog.DismissButton>

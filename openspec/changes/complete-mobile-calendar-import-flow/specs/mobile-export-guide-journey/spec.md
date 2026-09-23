@@ -19,3 +19,17 @@ render as the page heading inside the readable content lane rather than as nativ
 #### Scenario: Compact title has French and English parity
 - **WHEN** the route renders in French or English
 - **THEN** the compact native title and the body heading resolve from typed keys present in both catalogues
+
+### Requirement: Completed export-guide pages remain navigable
+Returning to guide pages after reaching the import chooser SHALL preserve the completed guide and
+allow forward navigation. Revisits SHALL NOT reset the draft, visited bound, or completion state,
+and SHALL NOT emit a second completion event.
+
+#### Scenario: Back from the chooser does not strand the student
+- **WHEN** the student returns from the import chooser to the final guide page
+- **THEN** its primary action is enabled and opens the import chooser again
+- **AND** guide completion is not recorded a second time
+
+#### Scenario: Earlier completed pages still advance
+- **WHEN** the student goes back multiple pages in a completed guide and presses Next
+- **THEN** the next already-visited page opens with completion and draft preserved

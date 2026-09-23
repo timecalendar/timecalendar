@@ -20,13 +20,13 @@ calendar. The root import-result route SHALL own event hydration and terminal su
 - **THEN** the screen maps the validator's key through `t()` and shows the translated error inline with an alert role
 - **AND** it does not call the server or create an import checkpoint
 
-#### Scenario: Importing replaces the editable form
+#### Scenario: Importing (pending)
 
 - **WHEN** a valid URL is submitted and any create, resolve, or durable-upsert step is pending
 - **THEN** the editable form is replaced by an accessible importing status in the measured readable lane
 - **AND** duplicate submission and URL editing are unavailable during that invocation
 
-#### Scenario: Durable import hands off to the root result
+#### Scenario: Successful import
 
 - **WHEN** the add-calendar operation commits the `user_calendars` row
 - **THEN** the screen requests `/calendar-import-result` through root-targeted dismissal
@@ -43,22 +43,23 @@ calendar. The root import-result route SHALL own event hydration and terminal su
 
 A syntactically valid create, resolve, or durable-persist invocation that rejects SHALL be
 recorded exactly once through the `@/firebase` `recordError` seam and surfaced as an accessible
-error state with a retry control. Retry SHALL resume the current attempt at its first incomplete
+error state with the same Import control used to retry; no second Retry button SHALL appear.
+Resubmission SHALL resume the current attempt at its first incomplete
 checkpoint and SHALL NOT repeat `POST /calendars` when the operation already holds the returned
 token. A recoverable client-side validation error SHALL NOT be recorded. The app SHALL NOT import
 `@react-native-firebase/*` directly.
 
-#### Scenario: Operation failure is recorded and checkpoint-retryable
+#### Scenario: Server failure is recorded and retryable
 
 - **WHEN** a syntactically valid create, token-resolution, or durable-upsert invocation rejects
 - **THEN** the rejection is recorded once via `@/firebase` `recordError` with a static context breadcrumb
-- **AND** an accessible error state with a retry control is shown
-- **AND** Retry resumes the same attempt without repeating any completed checkpoint
+- **AND** an accessible error state is shown alongside the single Import action and Report
+- **AND** pressing Import again resumes the same attempt without repeating any completed checkpoint
 
 #### Scenario: A known token is not recreated
 
 - **WHEN** token resolution or durable upsert fails after server creation returned a token
-- **THEN** Retry starts at resolution or upsert respectively
+- **THEN** pressing Import again starts at resolution or upsert respectively
 - **AND** no second create request is issued for that mounted attempt
 
 #### Scenario: Validation error is not recorded

@@ -68,6 +68,15 @@
 - Kept page navigation local-only and retained later slices for overlap, all-day, spanning, instant,
   DST-transition, and density behavior; native owner acceptance remains required on the exact build.
 
+## 2026-09-20 — Complete calendar import finalization
+
+- Added attempt-bound create/resolve/upsert checkpoints and one serial calendar-sync coordinator
+  with a coalesced post-current pass for import.
+- Made a parameter-free root result own event hydration and transactional success, then reuse the
+  existing Calendar tab through root-targeted dismissal (ADR 059).
+- Replaced QR/iCal inputs with accessible progress and bounded source recovery, and stabilized
+  provider-selection chrome across loading, failure, and content.
+
 ## 2026-09-18 — Calendar opens around the current time (T08)
 
 - Added one controller-owned, lifecycle-scoped minute clock shared by Today and the owned timeline's

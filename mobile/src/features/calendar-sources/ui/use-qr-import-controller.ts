@@ -29,8 +29,7 @@ export type QrImportController =
       attempt: QrImportAttempt
       handleBarcode: HandleBarcode
       retry: () => void
-      scanAnother: () => void
-      enterManualUrl: () => void
+      changeMethod: () => void
     }
   | {
       phase: "completed"
@@ -49,9 +48,8 @@ interface UseQrImportControllerOptions {
     url: string,
     fields: CalendarImportFields,
   ) => Promise<void>
-  clearDraft: () => void
-  leaveJourney: () => void
-  openManualUrl: () => void
+  complete: () => void
+  openMethodChooser: () => void
   recordError: (error: unknown, context: string) => void
 }
 
@@ -63,9 +61,8 @@ const initialState: QrImportState = {
 export function useQrImportController({
   fields,
   addCalendarFromUrl,
-  clearDraft,
-  leaveJourney,
-  openManualUrl,
+  complete,
+  openMethodChooser,
   recordError,
 }: UseQrImportControllerOptions): QrImportController {
   const [state, setReactState] = useState<QrImportState>(initialState)
@@ -101,8 +98,7 @@ export function useQrImportController({
 
         completedRef.current = true
         setState({ phase: "completed" })
-        clearDraft()
-        leaveJourney()
+        complete()
       })
       .catch((error: unknown) => {
         if (!activeRef.current || completedRef.current) return
@@ -147,15 +143,16 @@ export function useQrImportController({
     runAttempt(currentState.attempt)
   }
 
-  const scanAnother = () => {
-    if (stateRef.current.phase !== "failed" || inFlightRef.current) return
-    scanClaimedRef.current = false
-    setState(initialState)
-  }
-
-  const enterManualUrl = () => {
-    if (stateRef.current.phase !== "failed" || inFlightRef.current) return
-    openManualUrl()
+  const changeMethod = () => {
+    if (
+      !activeRef.current ||
+      stateRef.current.phase !== "failed" ||
+      inFlightRef.current
+    )
+      return
+    // A dismissed source screen must not accept a stale Retry or second navigation.
+    activeRef.current = false
+    openMethodChooser()
   }
 
   if (state.phase === "failed") {
@@ -163,8 +160,7 @@ export function useQrImportController({
       ...state,
       handleBarcode,
       retry,
-      scanAnother,
-      enterManualUrl,
+      changeMethod,
     }
   }
 

@@ -61,10 +61,16 @@ describe.each(["ios", "android"] as const)("AboutScreen on %s", (platform) => {
 
 it("keeps localized failure feedback when an action rejects", async () => {
   jest.mocked(Linking.openURL).mockRejectedValueOnce(new Error("offline"))
+  const queued = jest
+    .spyOn(AccessibilityInfo, "announceForAccessibilityWithOptions")
+    .mockImplementation(() => undefined)
   const view = await render(<AboutScreen />)
   await fireEvent.press(view.getByTestId("about-contact"))
   expect(await view.findByTestId("about-link-error")).toBeOnTheScreen()
-  expect(mockAnnounce).toHaveBeenCalledWith(
-    "We couldn’t open this link. Please try again.",
+  expect(queued).toHaveBeenCalledWith(
+    expect.stringContaining("We couldn’t open this link. Please try again."),
+    { queue: true },
   )
+  expect(mockAnnounce).not.toHaveBeenCalled()
+  queued.mockRestore()
 })

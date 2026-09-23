@@ -3,6 +3,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, View } from "react-native"
 
+import { ErrorNotice } from "@/components/error-surfaces"
 import { ThemedText } from "@/components/themed-text"
 import type { ExportGuideImage as ExportGuideImageValue } from "@/features/export-guides/data"
 import { Radii, Spacing, useTheme } from "@/theme"
@@ -29,18 +30,14 @@ export function ExportGuideImage({
       {failed ? (
         <View
           testID={`${testID}-placeholder`}
-          accessible
-          accessibilityRole="image"
-          accessibilityLabel={image.altText}
           style={[
             styles.image,
             styles.placeholder,
             { backgroundColor: theme.backgroundElement },
           ]}
         >
-          <ThemedText themeColor="textSecondary">
-            {t("exportGuide.imageUnavailable")}
-          </ThemedText>
+          <ErrorNotice compact message={t("exportGuide.imageUnavailable")} />
+          <ThemedText themeColor="textSecondary">{image.altText}</ThemedText>
         </View>
       ) : (
         <Image

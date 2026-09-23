@@ -1,4 +1,10 @@
-import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react-native"
 import { router } from "expo-router"
 import { StyleSheet } from "react-native"
 
@@ -17,11 +23,16 @@ import IcalUrlScreen from "./ical-url-screen"
 // no recordError), and the persist-failure path (recordError with the ical-import
 // context + an accessible error + Retry).
 jest.mock("expo-router", () => ({
+  useFocusEffect: (effect: () => void) => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require("react").useEffect(effect, [effect])
+  },
   router: {
     back: jest.fn(),
     push: jest.fn(),
     canDismiss: jest.fn(() => true),
     dismissAll: jest.fn(),
+    dismissTo: jest.fn(),
     replace: jest.fn(),
   },
   Stack: { Screen: () => null },
@@ -96,6 +107,7 @@ jest.mock("@/features/onboarding/draft/context", () => ({
 const mockBack = router.back as jest.Mock
 const mockCanDismiss = router.canDismiss as jest.Mock
 const mockDismissAll = router.dismissAll as jest.Mock
+const mockDismissTo = router.dismissTo as jest.Mock
 const mockReplace = router.replace as jest.Mock
 const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockUseAddCalendar = useAddCalendar as jest.Mock
@@ -103,6 +115,16 @@ const mockAddCalendarFromUrl = jest.fn<Promise<void>, [string, unknown]>()
 const mockReset = jest.fn()
 
 let addState: { isPending: boolean; isError: boolean }
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void
+  let reject!: (reason?: unknown) => void
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise
+    reject = rejectPromise
+  })
+  return { promise, reject, resolve }
+}
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -187,15 +209,67 @@ describe("IcalUrlScreen", () => {
 
     // No draft ⇒ the direct-route contract: name "" and schoolName "" (which the
     // server's @ValidateIf pair accepts), and no journey to dismiss.
-    await waitFor(() => expect(mockDismissAll).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(mockDismissTo).toHaveBeenCalledTimes(1))
+    expect(mockDismissTo).toHaveBeenCalledWith("/calendar-import-result")
     expect(mockAddCalendarFromUrl).toHaveBeenCalledWith(
       "  https://example.com/cal.ics  ",
       { name: "", schoolName: "" },
     )
-    expect(mockClearDraft).toHaveBeenCalledTimes(1)
-    expect(mockReset).toHaveBeenCalledTimes(1)
+    expect(mockClearDraft).not.toHaveBeenCalled()
+    expect(mockReset).not.toHaveBeenCalled()
     expect(mockRecordUnknownError).not.toHaveBeenCalled()
   })
+
+  it("replaces the form with accessible progress and excludes rapid submit", async () => {
+    const pending = deferred<void>()
+    mockAddCalendarFromUrl.mockReturnValueOnce(pending.promise)
+    const { getByTestId, getByText, queryByTestId } = await render(
+      <IcalUrlScreen />,
+    )
+    await act(async () => {
+      fireEvent.changeText(
+        getByTestId("ical-url-input"),
+        "https://example.com/cal.ics",
+      )
+    })
+    await act(async () => {
+      fireEvent.press(getByTestId("ical-url-submit"))
+    })
+
+    expect(queryByTestId("ical-url-input")).toBeNull()
+    expect(queryByTestId("ical-url-submit")).toBeNull()
+    expect(getByText("Adding your calendar…")).toBeTruthy()
+    expect(mockAddCalendarFromUrl).toHaveBeenCalledTimes(1)
+
+    await act(async () => pending.resolve())
+    await waitFor(() => expect(mockDismissTo).toHaveBeenCalledTimes(1))
+  })
+
+  it.each(["resolve", "reject"] as const)(
+    "makes a late %s inert after unmount",
+    async (settlement) => {
+      const pending = deferred<void>()
+      mockAddCalendarFromUrl.mockReturnValueOnce(pending.promise)
+      const { getByTestId, unmount } = await render(<IcalUrlScreen />)
+      await act(async () => {
+        fireEvent.changeText(
+          getByTestId("ical-url-input"),
+          "https://example.com/cal.ics",
+        )
+      })
+      await act(async () => {
+        fireEvent.press(getByTestId("ical-url-submit"))
+      })
+      await unmount()
+      await act(async () => {
+        if (settlement === "resolve") pending.resolve()
+        else pending.reject(new Error("late"))
+      })
+
+      expect(mockDismissTo).not.toHaveBeenCalled()
+      expect(mockRecordUnknownError).not.toHaveBeenCalled()
+    },
+  )
 
   it("shows the inline validation error and does not persist on empty", async () => {
     const { getByTestId, getByText } = await render(<IcalUrlScreen />)
@@ -223,7 +297,7 @@ describe("IcalUrlScreen", () => {
     expect(mockAddCalendarFromUrl).not.toHaveBeenCalled()
   })
 
-  it("records the error and shows an accessible error + retry on persist failure", async () => {
+  it("keeps one Import action for checkpoint retry alongside the error and Report", async () => {
     mockAddCalendarFromUrl.mockRejectedValue(new Error("boom"))
     addState = { isPending: false, isError: true }
     const { getByTestId, getByText } = await render(<IcalUrlScreen />)
@@ -246,10 +320,11 @@ describe("IcalUrlScreen", () => {
     )
     expect(
       getByText(
-        "We couldn't import that calendar. Check the URL and try again.",
+        "The import could not be completed. Try importing again. If the problem persists, you can report it.",
       ),
     ).toBeTruthy()
-    expect(getByTestId("ical-url-retry")).toBeTruthy()
+    expect(screen.queryByTestId("ical-url-retry")).toBeNull()
+    expect(getByTestId("ical-url-submit")).toBeEnabled()
     expect(getByTestId("ical-url-report")).toBeTruthy()
     expect(mockDismissAll).not.toHaveBeenCalled()
     // A failed import spends nothing: the draft and the typed URL stay so the
@@ -262,12 +337,12 @@ describe("IcalUrlScreen", () => {
     // Retry re-runs the add; this time it resolves and leaves the journey.
     mockAddCalendarFromUrl.mockResolvedValue(undefined)
     await act(async () => {
-      fireEvent.press(getByTestId("ical-url-retry"))
+      fireEvent.press(getByTestId("ical-url-submit"))
     })
-    await waitFor(() => expect(mockDismissAll).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(mockDismissTo).toHaveBeenCalledTimes(1))
   })
 
-  it("falls back to back() when there is no journey to dismiss", async () => {
+  it("uses root-targeted result dismissal on a direct legal route", async () => {
     mockCanDismiss.mockReturnValue(false)
     mockAddCalendarFromUrl.mockResolvedValue(undefined)
     const { getByTestId } = await render(<IcalUrlScreen />)
@@ -280,7 +355,8 @@ describe("IcalUrlScreen", () => {
     })
     await act(async () => fireEvent.press(getByTestId("ical-url-submit")))
 
-    await waitFor(() => expect(mockBack).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(mockDismissTo).toHaveBeenCalledTimes(1))
+    expect(mockBack).not.toHaveBeenCalled()
     expect(mockDismissAll).not.toHaveBeenCalled()
   })
 

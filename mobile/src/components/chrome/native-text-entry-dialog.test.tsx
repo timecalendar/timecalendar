@@ -128,6 +128,38 @@ describe("NativeTextEntryDialog on Android", () => {
     expect(onCancel).toHaveBeenCalledTimes(1)
   })
 
+  it("marks only validation failures as invalid and preserves operation retry input", async () => {
+    const view = await render(
+      <NativeTextEntryDialog
+        {...props}
+        message="Name too long"
+        messageKind="validation"
+      />,
+    )
+    expect(
+      screen.getByTestId(props.ids.input).props.accessibilityState.invalid,
+    ).toBe(true)
+    await view.rerender(
+      <NativeTextEntryDialog
+        {...props}
+        message="Could not save"
+        messageKind="operation"
+      />,
+    )
+    expect(
+      screen.getByTestId(props.ids.input).props.accessibilityState.invalid,
+    ).toBe(false)
+    expect(screen.getByTestId(props.ids.message)).toHaveTextContent(
+      "Could not save",
+    )
+    await fireEvent.changeText(
+      screen.getByTestId(props.ids.input),
+      "Preserved name",
+    )
+    await fireEvent.press(screen.getByTestId(props.ids.submit))
+    expect(onSubmit).toHaveBeenCalledWith("Preserved name")
+  })
+
   it("submits the current Compose buffer and keeps native actions while pending", async () => {
     const view = await render(<NativeTextEntryDialog {...props} />)
     await fireEvent.changeText(

@@ -8,12 +8,12 @@ entry with the calendar-import result. Unmounting the onboarding provider SHALL 
 the source screen SHALL NOT clear it before navigation. Event-hydration failure SHALL occur on the
 root result after onboarding has been removed and SHALL retry sync rather than calendar creation.
 
-#### Scenario: A pre-persistence failure keeps the context
+#### Scenario: A failed import keeps the context
 - **WHEN** creation, token resolution, or the durable upsert fails
 - **THEN** the draft and entered URL remain available for checkpointed Retry
 - **AND** the student remains in the guarded source flow until they retry, choose another source, or leave
 
-#### Scenario: Durable persistence removes onboarding without a guard race
+#### Scenario: A successful import clears the draft and leaves the journey
 - **WHEN** a QR or iCal attempt commits its `user_calendars` row
 - **THEN** root-targeted dismissal places the calendar-import result above the existing tabs entry
 - **AND** the onboarding Stack unmounts and clears its draft by provider ownership
@@ -24,7 +24,7 @@ root result after onboarding has been removed and SHALL retry sync rather than c
 - **THEN** its Retry action runs only the coordinated event sync
 - **AND** the removed QR/iCal source route cannot repeat calendar creation
 
-#### Scenario: A directly opened source can hand off without throwing
+#### Scenario: A successful import from a directly opened route does not throw
 - **WHEN** a legal directly opened QR or iCal route commits a durable calendar
 - **THEN** root-targeted dismissal replaces the current root entry with the result when necessary
 - **AND** the existing tabs anchor remains below it
@@ -32,25 +32,31 @@ root result after onboarding has been removed and SHALL retry sync rather than c
 ## ADDED Requirements
 
 ### Requirement: Import source navigation has bounded native history
-The import-method chooser SHALL push one selected QR or iCal source. Resetting a failed QR attempt
-SHALL remain on the same route, and switching from failed QR to iCal SHALL replace the source
-sibling. Repeated recovery SHALL NOT append alternating source routes. Intentional export-guide
-page pushes SHALL remain unchanged.
+The import-method chooser SHALL push one selected QR or iCal source. Changing method after QR
+failure SHALL dismiss to the existing chooser while preserving the completed journey draft.
+Repeated recovery SHALL NOT append alternating source routes. Intentional export-guide page pushes
+SHALL remain unchanged.
 
-#### Scenario: Scan another stays on the QR route
-- **WHEN** the student chooses Scan another after a failed valid QR attempt
-- **THEN** the current QR controller returns to scanning without a navigation action
-- **AND** native Back still returns to the import-method chooser
+#### Scenario: Changing method dismisses the failed QR route
+- **WHEN** the student chooses Change method after a failed valid QR attempt
+- **THEN** the chooser opens without clearing the completed guide or draft
+- **AND** choosing QR starts a new scanner instance
 
-#### Scenario: Switching to iCal replaces QR
-- **WHEN** the student chooses Enter an iCal URL instead from QR failure
-- **THEN** the guarded handoff is updated and `/onboarding/ical-url` replaces the QR route
+#### Scenario: Choosing iCal after QR failure opens its input directly
+- **WHEN** the student chooses Change method, then iCal
+- **THEN** the chooser commits the iCal handoff and opens `/onboarding/ical-url`
+- **AND** the focused source guard accepts the completed draft without redirecting to the guide
 - **AND** native Back from iCal returns to the import-method chooser
 
 #### Scenario: Repeated source use does not grow a hidden chain
 - **WHEN** the student returns to the chooser and selects QR or iCal repeatedly
 - **THEN** each selection owns at most one source entry above the chooser
 - **AND** no recovery shortcut stacks one source sibling over another
+
+#### Scenario: Inactive source cannot hijack navigation
+- **WHEN** a retained QR or iCal screen is not focused and the journey state changes
+- **THEN** its guard does not navigate
+- **AND** illegal entry is checked again when that screen becomes focused
 
 ### Requirement: One root result owns loading, failure, and terminal success
 The app SHALL register a thin, root-level calendar-import result route above the existing tabs

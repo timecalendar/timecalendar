@@ -3,6 +3,7 @@ import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Alert, StyleSheet, TextInput, View } from "react-native"
 
+import { ErrorNotice, FieldError } from "@/components/error-surfaces"
 import { KeyboardSafeActionLayout } from "@/components/keyboard-safe-action-layout"
 import { PrimaryAction } from "@/components/primary-action"
 import { PageIntro, RootPage } from "@/components/root-page"
@@ -100,14 +101,10 @@ export default function FeedbackScreen() {
             actions={
               <>
                 {submitFailed ? (
-                  <ThemedText
+                  <ErrorNotice
                     testID="feedback-submit-error"
-                    accessibilityLiveRegion="polite"
-                    accessibilityRole="alert"
-                    themeColor="textSecondary"
-                  >
-                    {t("feedback.failure")}
-                  </ThemedText>
+                    message={t("feedback.failure")}
+                  />
                 ) : null}
                 <PrimaryAction
                   testID="feedback-submit"
@@ -157,19 +154,13 @@ export default function FeedbackScreen() {
                     styles.input,
                     {
                       color: theme.text,
-                      borderColor: theme.backgroundSelected,
+                      borderColor: errors.email
+                        ? theme.error
+                        : theme.backgroundSelected,
                     },
                   ]}
                 />
-                {errors.email ? (
-                  <ThemedText
-                    accessibilityLiveRegion="polite"
-                    accessibilityRole="alert"
-                    themeColor="textSecondary"
-                  >
-                    {t(errors.email)}
-                  </ThemedText>
-                ) : null}
+                {errors.email ? <FieldError message={t(errors.email)} /> : null}
               </View>
 
               <View style={styles.field}>
@@ -197,18 +188,14 @@ export default function FeedbackScreen() {
                     styles.messageInput,
                     {
                       color: theme.text,
-                      borderColor: theme.backgroundSelected,
+                      borderColor: errors.message
+                        ? theme.error
+                        : theme.backgroundSelected,
                     },
                   ]}
                 />
                 {errors.message ? (
-                  <ThemedText
-                    accessibilityLiveRegion="polite"
-                    accessibilityRole="alert"
-                    themeColor="textSecondary"
-                  >
-                    {t(errors.message)}
-                  </ThemedText>
+                  <FieldError message={t(errors.message)} />
                 ) : null}
               </View>
             </View>

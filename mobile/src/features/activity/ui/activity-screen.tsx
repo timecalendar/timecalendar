@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
+  ScrollView,
   SectionList,
   StyleSheet,
   View,
@@ -12,6 +13,7 @@ import {
 
 import { EmptyState } from "@/components/empty-state"
 import { developerActivityArtwork } from "@/components/empty-state-artwork"
+import { ErrorNotice, ErrorState } from "@/components/error-surfaces"
 import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import {
@@ -111,9 +113,20 @@ export function ActivityScreen() {
               </View>
             </View>
           ) : sections.length === 0 && refreshFailed ? (
-            <View style={[laneStyle, styles.stateLane]}>
-              <FullError onRetry={refresh} />
-            </View>
+            <ScrollView contentContainerStyle={[laneStyle, styles.content]}>
+              <ErrorState
+                testID="activity-empty-error"
+                title={t("errors.loadTitle")}
+                message={t("activity.error.empty")}
+                primaryAction={{
+                  label: t("activity.retry"),
+                  accessibilityLabel: t("activity.retry.accessibilityLabel"),
+                  onPress: refresh,
+                  testID: "activity-empty-retry",
+                  busy: refreshing,
+                }}
+              />
+            </ScrollView>
           ) : (
             <SectionList<ActivityItem, ActivitySection>
               testID="activity-section-list"
@@ -123,7 +136,22 @@ export function ActivityScreen() {
               refreshControl={refreshControl}
               onEndReached={loadOlder}
               ListHeaderComponent={
-                refreshFailed ? <CachedError onRetry={refresh} /> : null
+                refreshFailed ? (
+                  <ErrorNotice
+                    compact
+                    testID="activity-cached-error"
+                    message={t("activity.error.cached")}
+                    action={{
+                      label: t("activity.retry"),
+                      accessibilityLabel: t(
+                        "activity.retry.accessibilityLabel",
+                      ),
+                      onPress: refresh,
+                      testID: "activity-refresh-retry",
+                      busy: refreshing,
+                    }}
+                  />
+                ) : null
               }
               ListEmptyComponent={<ActivityEmptyState />}
               ListFooterComponent={
@@ -279,76 +307,6 @@ function ActivityEmptyState() {
   )
 }
 
-function RetryButton({
-  label,
-  accessibilityLabel,
-  onPress,
-  testID,
-}: {
-  label: string
-  accessibilityLabel: string
-  onPress: () => void
-  testID: string
-}) {
-  const theme = useTheme()
-  return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      onPress={onPress}
-      style={[styles.retry, { backgroundColor: theme.backgroundElement }]}
-    >
-      <ThemedText type="smallBold">{label}</ThemedText>
-    </Pressable>
-  )
-}
-
-function CachedError({ onRetry }: { onRetry: () => void }) {
-  const { t } = useTranslation()
-  return (
-    <View style={styles.compactError} testID="activity-cached-error">
-      <ThemedText
-        type="small"
-        themeColor="textSecondary"
-        accessibilityLiveRegion="polite"
-        accessibilityRole="alert"
-        style={styles.errorText}
-      >
-        {t("activity.error.cached")}
-      </ThemedText>
-      <RetryButton
-        label={t("activity.retry")}
-        accessibilityLabel={t("activity.retry.accessibilityLabel")}
-        onPress={onRetry}
-        testID="activity-refresh-retry"
-      />
-    </View>
-  )
-}
-
-function FullError({ onRetry }: { onRetry: () => void }) {
-  const { t } = useTranslation()
-  return (
-    <View style={styles.centered} testID="activity-empty-error">
-      <ThemedText
-        themeColor="textSecondary"
-        accessibilityLiveRegion="polite"
-        accessibilityRole="alert"
-        style={styles.centeredText}
-      >
-        {t("activity.error.empty")}
-      </ThemedText>
-      <RetryButton
-        label={t("activity.retry")}
-        accessibilityLabel={t("activity.retry.accessibilityLabel")}
-        onPress={onRetry}
-        testID="activity-empty-retry"
-      />
-    </View>
-  )
-}
-
 function OlderFooter({
   loading,
   failed,
@@ -372,23 +330,18 @@ function OlderFooter({
   }
   if (!failed) return null
   return (
-    <View style={styles.footer} testID="activity-older-error">
-      <ThemedText
-        type="small"
-        themeColor="textSecondary"
-        accessibilityLiveRegion="polite"
-        accessibilityRole="alert"
-        style={styles.centeredText}
-      >
-        {t("activity.older.error")}
-      </ThemedText>
-      <RetryButton
-        label={t("activity.older.retry")}
-        accessibilityLabel={t("activity.older.retry.accessibilityLabel")}
-        onPress={onRetry}
-        testID="activity-older-retry"
-      />
-    </View>
+    <ErrorNotice
+      compact
+      style={styles.footer}
+      testID="activity-older-error"
+      message={t("activity.older.error")}
+      action={{
+        label: t("activity.older.retry"),
+        accessibilityLabel: t("activity.older.retry.accessibilityLabel"),
+        onPress: onRetry,
+        testID: "activity-older-retry",
+      }}
+    />
   )
 }
 
@@ -406,7 +359,6 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     padding: Spacing.four,
   },
-  centeredText: { textAlign: "center" },
   stateLane: { flex: 1, paddingTop: Spacing.four },
   groupHeader: { paddingTop: Spacing.four, gap: Spacing.half },
   item: {
@@ -415,24 +367,5 @@ const styles = StyleSheet.create({
     borderRadius: Radii.medium,
     gap: Spacing.one,
   },
-  compactError: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.two,
-    paddingTop: Spacing.three,
-  },
-  errorText: { flex: 1 },
-  retry: {
-    minHeight: 48,
-    minWidth: 48,
-    paddingHorizontal: Spacing.three,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: Radii.medium,
-  },
-  footer: {
-    alignItems: "center",
-    gap: Spacing.two,
-    paddingVertical: Spacing.four,
-  },
+  footer: { marginVertical: Spacing.four },
 })

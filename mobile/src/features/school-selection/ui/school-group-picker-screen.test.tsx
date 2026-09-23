@@ -201,10 +201,36 @@ describe("SchoolGroupPickerScreen", () => {
       isError: true,
       refetch,
     })
-    const { getByText, getByTestId } = await render(<SchoolGroupPickerScreen />)
+    const { getByText, getByTestId, queryByTestId } = await render(
+      <SchoolGroupPickerScreen />,
+    )
 
+    expect(queryByTestId("onboarding-group-confirm")).toBeNull()
     expect(getByText("Could not load groups.")).toBeTruthy()
     fireEvent.press(getByTestId("onboarding-group-retry"))
     expect(refetch).toHaveBeenCalledTimes(1)
+  })
+  it("retains cached group selection during a refresh failure", async () => {
+    mockUseSchoolGroups.mockReturnValue(
+      ready([{ text: "Group A", value: "a", children: [] }]),
+    )
+    const view = await render(<SchoolGroupPickerScreen />)
+    await fireEvent.press(view.getByTestId("onboarding-group-leaf-a"))
+    const refetch = jest.fn()
+    mockUseSchoolGroups.mockReturnValue({
+      ...ready([{ text: "Group A", value: "a", children: [] }], refetch),
+      isError: true,
+    })
+    await view.rerender(<SchoolGroupPickerScreen />)
+    expect(view.getByTestId("onboarding-group-cached-error")).toBeTruthy()
+    expect(view.queryByTestId("onboarding-group-error")).toBeNull()
+    expect(view.getByText("Could not load groups.")).toBeTruthy()
+    expect(
+      view.getByTestId("onboarding-group-leaf-a").props.accessibilityState,
+    ).toMatchObject({ selected: true })
+    await fireEvent.press(view.getByTestId("onboarding-group-retry"))
+    expect(refetch).toHaveBeenCalledTimes(1)
+    await fireEvent.press(view.getByTestId("onboarding-group-confirm"))
+    expect(mockSelectGroup).toHaveBeenCalledWith(["a"])
   })
 })

@@ -37,6 +37,17 @@
   queries and presentation generations only; generated API hooks, the fetch mutator, and calendar
   sync are outside that boundary.
 
+## Calendar import checkpoints
+
+QR and iCal share one mounted `useAddCalendar` operation. It retains the normalized source,
+immutable create fields, returned token, and resolved calendar DTO only in memory. Retry resumes
+the first incomplete create → resolve → durable `user_calendars` upsert checkpoint; a materially
+different source or explicit QR reset abandons the old checkpoint. Concurrent invocations join the
+same promise, and completion is reported only after the durable upsert. No unfinished token, DTO,
+URL, or error enters SQLite, MMKV, navigation, or diagnostics. A process loss after the server
+commits but before the create response remains ambiguous until the server gains an idempotency
+contract (ADR [059](./decisions/059-calendar-import-finalization.md)).
+
 ## Single fetch mutator
 
 - Every generated operation uses the single request routine in `mobile/src/api/mutator.ts` for

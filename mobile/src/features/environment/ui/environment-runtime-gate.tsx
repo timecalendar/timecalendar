@@ -1,9 +1,11 @@
 import type { PropsWithChildren } from "react"
 import { useEffect, useState, useSyncExternalStore } from "react"
 import { useTranslation } from "react-i18next"
-import { Pressable, StyleSheet, Text, View } from "react-native"
+import { ActivityIndicator, ScrollView, StyleSheet } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { ErrorState } from "@/components/error-surfaces"
+import { ThemedText } from "@/components/themed-text"
 import {
   isBackendRuntimeReady,
   setBackendRuntimeReady,
@@ -13,7 +15,7 @@ import { useEffectiveBackendEnvironment } from "@/features/environment/data/stor
 import { recoverBackendEnvironmentSwitch } from "@/features/environment/data/switch"
 import { setCrashlyticsAttributes } from "@/firebase"
 import { type BackendResetJournal, readBackendResetJournal } from "@/storage"
-import { Spacing } from "@/theme"
+import { Spacing, useTheme } from "@/theme"
 
 const productionRecoveryJournal: BackendResetJournal = {
   version: 1,
@@ -33,6 +35,7 @@ function getInitialRecoveryJournal(): BackendResetJournal | undefined {
 
 export function EnvironmentRuntimeGate({ children }: PropsWithChildren) {
   const { t } = useTranslation()
+  const theme = useTheme()
   const environment = useEffectiveBackendEnvironment()
   const runtimeReady = useSyncExternalStore(
     subscribeBackendRuntimeReady,
@@ -69,42 +72,35 @@ export function EnvironmentRuntimeGate({ children }: PropsWithChildren) {
   if (blockingJournal !== undefined || !runtimeReady) {
     const isRecovering = failedJournal === undefined
     return (
-      <SafeAreaView style={styles.recoverySafeArea}>
-        <View
-          accessibilityRole="alert"
-          accessibilityLiveRegion="assertive"
-          style={styles.recovery}
+      <SafeAreaView
+        style={[styles.recoverySafeArea, { backgroundColor: theme.background }]}
+      >
+        <ScrollView
+          contentContainerStyle={styles.recovery}
           testID="backend-environment-recovery"
         >
-          <Text style={styles.recoveryTitle}>
-            {t(
-              isRecovering
-                ? "environment.recovery.progress"
-                : "environment.recovery.title",
-            )}
-          </Text>
-          {!isRecovering ? (
+          {isRecovering ? (
             <>
-              <Text style={styles.recoveryBody}>
-                {t("environment.recovery.body")}
-              </Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t("environment.recovery.retry")}
-                onPress={() => {
+              <ActivityIndicator color={theme.textSecondary} />
+              <ThemedText accessibilityLiveRegion="polite">
+                {t("environment.recovery.progress")}
+              </ThemedText>
+            </>
+          ) : (
+            <ErrorState
+              title={t("environment.recovery.title")}
+              message={t("environment.recovery.body")}
+              primaryAction={{
+                label: t("environment.recovery.retry"),
+                testID: "backend-environment-retry",
+                onPress: () => {
                   setFailedJournal(undefined)
                   setAttempt((value) => value + 1)
-                }}
-                style={styles.retry}
-                testID="backend-environment-retry"
-              >
-                <Text style={styles.retryText}>
-                  {t("environment.recovery.retry")}
-                </Text>
-              </Pressable>
-            </>
-          ) : null}
-        </View>
+                },
+              }}
+            />
+          )}
+        </ScrollView>
       </SafeAreaView>
     )
   }
@@ -115,22 +111,12 @@ export function EnvironmentRuntimeGate({ children }: PropsWithChildren) {
 const styles = StyleSheet.create({
   recoverySafeArea: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
     justifyContent: "center",
   },
   recovery: {
+    flexGrow: 1,
+    justifyContent: "center",
     gap: Spacing.three,
     padding: Spacing.four,
   },
-  recoveryTitle: { color: "#000000", fontSize: 24, fontWeight: "700" },
-  recoveryBody: { color: "#000000", fontSize: 17 },
-  retry: {
-    alignItems: "center",
-    alignSelf: "stretch",
-    backgroundColor: "#7A2800",
-    justifyContent: "center",
-    minHeight: 48,
-    paddingHorizontal: Spacing.three,
-  },
-  retryText: { color: "#FFFFFF", fontSize: 17, fontWeight: "700" },
 })
