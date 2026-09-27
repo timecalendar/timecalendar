@@ -2,6 +2,7 @@ import type { SFSymbol } from "expo-symbols"
 import type { ImageSourcePropType } from "react-native"
 
 const materialSymbols = {
+  add: require("@/assets/icons/material/add.xml") as ImageSourcePropType,
   calendar_month:
     require("@/assets/icons/material/calendar_month.xml") as ImageSourcePropType,
   dns: require("@/assets/icons/material/dns.xml") as ImageSourcePropType,

@@ -1,8 +1,12 @@
 import {
+  BottomSheet,
   Button,
+  Form,
+  Group,
   Host,
   HStack,
   ProgressView,
+  Section,
   Spacer,
   Text,
   TextField,
@@ -12,20 +16,26 @@ import {
 import {
   accessibilityIdentifier,
   accessibilityLabel,
-  buttonStyle,
   disabled,
   font,
   frame,
+  interactiveDismissDisabled,
+  onSubmit as onSubmitModifier,
   padding,
-  textFieldStyle,
+  presentationDetents,
+  presentationDragIndicator,
+  scrollContentBackground,
+  submitLabel as swiftSubmitLabel,
+  tint,
 } from "@expo/ui/swift-ui/modifiers"
-import { KeyboardAvoidingView, Modal, StyleSheet, View } from "react-native"
 
-import { AdaptiveContent } from "@/components/adaptive-content"
-import { Spacing } from "@/theme"
+import { useColorScheme } from "@/hooks/use-color-scheme"
+import { useTheme } from "@/theme"
 
 import { NativeErrorNotice } from "./native-error-notice"
 import type { NativeTextEntryDialogProps } from "./native-text-entry-dialog"
+
+const SHEET_HEADER_MIN_HEIGHT = 44
 
 export function NativeTextEntryDialogIos({
   title,
@@ -46,116 +56,95 @@ export function NativeTextEntryDialogIos({
   // before the asynchronous JS callback, so submit reads the complete current
   // buffer with get() instead of relying on a possibly delayed React snapshot.
   const buffer = useNativeState(initialValue)
+  const colorScheme = useColorScheme() === "dark" ? "dark" : "light"
+  const theme = useTheme()
   const saveDisabled = pending || submitDisabled
+  const submit = () => onSubmit(buffer.get())
 
   return (
-    <Modal
-      visible
-      transparent
-      animationType="fade"
-      presentationStyle="overFullScreen"
-      onRequestClose={onCancel}
+    <Host
+      testID="native-text-entry-dialog-ios-host"
+      colorScheme={colorScheme}
+      matchContents
     >
-      <KeyboardAvoidingView
-        testID="native-text-entry-dialog-keyboard-owner"
-        behavior="padding"
-        style={styles.fill}
+      <BottomSheet
+        isPresented
+        onIsPresentedChange={(presented) => {
+          if (!presented) onCancel()
+        }}
       >
-        <View
-          testID="native-text-entry-dialog-backdrop"
-          style={styles.backdrop}
+        <Group
+          modifiers={[
+            presentationDetents(["medium", "large"]),
+            presentationDragIndicator("visible"),
+            interactiveDismissDisabled(pending),
+            tint(theme.primary),
+            accessibilityIdentifier(ids.dialog),
+          ]}
         >
-          <AdaptiveContent
-            testID="native-text-entry-dialog-content"
-            lane="readable"
-            style={styles.contentOwner}
-          >
-            <View
-              testID={ids.dialog}
-              accessibilityViewIsModal
-              style={styles.focusOwner}
+          <VStack spacing={0}>
+            <HStack
+              modifiers={[
+                frame({ minHeight: SHEET_HEADER_MIN_HEIGHT }),
+                padding({ horizontal: 16, top: 12 }),
+              ]}
             >
-              <Host
-                testID="native-text-entry-dialog-ios-host"
-                matchContents={{ vertical: true }}
-                style={styles.host}
-              >
-                <VStack
-                  alignment="leading"
-                  spacing={Spacing.three}
-                  modifiers={[
-                    frame({ maxWidth: 560, alignment: "leading" }),
-                    padding({ all: Spacing.four }),
-                    accessibilityIdentifier(ids.dialog),
-                  ]}
-                >
-                  <Text modifiers={[font({ textStyle: "headline" })]}>
-                    {title}
-                  </Text>
-                  <TextField
-                    testID={ids.input}
-                    text={buffer}
-                    placeholder={placeholder}
-                    autoFocus
-                    onTextChange={onChange}
-                    modifiers={[
-                      textFieldStyle("roundedBorder"),
-                      accessibilityLabel(label),
-                      accessibilityIdentifier(ids.input),
-                      disabled(pending),
-                      frame({ minWidth: 0, maxWidth: 560 }),
-                    ]}
-                  />
-                  {message === null ? null : (
+              <Button
+                label={cancelLabel}
+                onPress={onCancel}
+                modifiers={[
+                  accessibilityIdentifier(ids.cancel),
+                  disabled(pending),
+                ]}
+              />
+              <Spacer />
+              <Text modifiers={[font({ textStyle: "headline" })]}>{title}</Text>
+              <Spacer />
+              {pending ? (
+                <ProgressView
+                  testID="native-text-entry-dialog-ios-progress"
+                  modifiers={[accessibilityLabel(submitLabel)]}
+                />
+              ) : null}
+              <Button
+                label={submitLabel}
+                onPress={submit}
+                modifiers={[
+                  font({ textStyle: "body", weight: "semibold" }),
+                  accessibilityIdentifier(ids.submit),
+                  disabled(saveDisabled),
+                ]}
+              />
+            </HStack>
+            <Form modifiers={[scrollContentBackground("hidden")]}>
+              <Section
+                footer={
+                  message === null ? undefined : (
                     <NativeErrorNotice message={message} testID={ids.message} />
-                  )}
-                  <HStack spacing={Spacing.two}>
-                    <Spacer />
-                    <Button
-                      testID={ids.cancel}
-                      role="cancel"
-                      label={cancelLabel}
-                      onPress={onCancel}
-                      modifiers={[
-                        buttonStyle("bordered"),
-                        accessibilityIdentifier(ids.cancel),
-                      ]}
-                    />
-                    {pending ? (
-                      <ProgressView
-                        testID="native-text-entry-dialog-ios-progress"
-                        modifiers={[accessibilityLabel(submitLabel)]}
-                      />
-                    ) : null}
-                    <Button
-                      testID={ids.submit}
-                      label={submitLabel}
-                      onPress={() => onSubmit(buffer.get())}
-                      modifiers={[
-                        buttonStyle("borderedProminent"),
-                        accessibilityIdentifier(ids.submit),
-                        disabled(saveDisabled),
-                      ]}
-                    />
-                  </HStack>
-                </VStack>
-              </Host>
-            </View>
-          </AdaptiveContent>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+                  )
+                }
+              >
+                <TextField
+                  testID={ids.input}
+                  text={buffer}
+                  placeholder={placeholder}
+                  autoFocus
+                  onTextChange={onChange}
+                  modifiers={[
+                    accessibilityLabel(label),
+                    accessibilityIdentifier(ids.input),
+                    swiftSubmitLabel("done"),
+                    onSubmitModifier(() => {
+                      if (!saveDisabled) submit()
+                    }),
+                    disabled(pending),
+                  ]}
+                />
+              </Section>
+            </Form>
+          </VStack>
+        </Group>
+      </BottomSheet>
+    </Host>
   )
 }
-
-const styles = StyleSheet.create({
-  fill: { flex: 1 },
-  backdrop: {
-    flex: 1,
-    justifyContent: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.35)",
-  },
-  contentOwner: { width: "100%" },
-  focusOwner: { width: "100%" },
-  host: { width: "100%" },
-})

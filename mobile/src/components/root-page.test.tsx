@@ -1,9 +1,11 @@
 import { fireEvent, render } from "@testing-library/react-native"
-import { StyleSheet, View } from "react-native"
+import { HeaderHeightContext } from "expo-router/react-navigation"
+import { Platform, StyleSheet, View } from "react-native"
 
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { Colors, resolveResponsiveLayout, Spacing } from "@/theme"
 
+import { headerScrollProps } from "./header-scroll-props"
 import { PageIntro, RootPage } from "./root-page"
 
 jest.mock("@/hooks/use-color-scheme", () => ({
@@ -78,6 +80,44 @@ describe("RootPage", () => {
     expect(
       StyleSheet.flatten(view.getByTestId("page").props.style),
     ).toMatchObject({ backgroundColor })
+  })
+})
+
+describe("RootPage under a transparent header", () => {
+  const renderUnderHeader = (scrollsUnderHeader: boolean) =>
+    render(
+      <HeaderHeightContext.Provider value={100}>
+        <RootPage testID="page" scrollsUnderHeader={scrollsUnderHeader}>
+          <View />
+        </RootPage>
+      </HeaderHeightContext.Provider>,
+    )
+  const paddingTop = (view: Awaited<ReturnType<typeof renderUnderHeader>>) =>
+    StyleSheet.flatten(view.getByTestId("page").props.style).paddingTop
+
+  it("pads a non-scrolling page below the iOS header", async () => {
+    expect(Platform.OS).toBe("ios")
+    expect(paddingTop(await renderUnderHeader(false))).toBe(100)
+  })
+
+  it("leaves a self-insetting scroll page flush under the header", async () => {
+    expect(paddingTop(await renderUnderHeader(true))).toBeUndefined()
+  })
+})
+
+describe("headerScrollProps", () => {
+  it("insets and bounces a scroller that fills in under the header", () => {
+    expect(headerScrollProps(true)).toEqual({
+      contentInsetAdjustmentBehavior: "automatic",
+      alwaysBounceVertical: true,
+    })
+  })
+
+  it("keeps an empty-state scroller still below the padded header", () => {
+    expect(headerScrollProps(false)).toEqual({
+      contentInsetAdjustmentBehavior: "never",
+      alwaysBounceVertical: false,
+    })
   })
 })
 

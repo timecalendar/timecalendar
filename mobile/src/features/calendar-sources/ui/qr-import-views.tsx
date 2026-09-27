@@ -5,6 +5,8 @@ import { SafeAreaView } from "react-native-safe-area-context"
 
 import { AdaptiveContent } from "@/components/adaptive-content"
 import { ErrorNotice, ErrorState } from "@/components/error-surfaces"
+import { headerScrollProps } from "@/components/header-scroll-props"
+import { RootPage } from "@/components/root-page"
 import { ThemedView } from "@/components/themed-view"
 import { Radii, Spacing, useTheme } from "@/theme"
 
@@ -44,13 +46,13 @@ export function QrImportFailureView({
   changeMethod: () => void
 }) {
   const { t } = useTranslation()
-  const theme = useTheme()
   return (
-    <SafeAreaView
-      style={[styles.readableFailure, { backgroundColor: theme.background }]}
-    >
-      <ScrollView contentContainerStyle={styles.failureScroll}>
-        <AdaptiveContent lane="readable">
+    <RootPage lane="readable">
+      {({ laneStyle }) => (
+        <ScrollView
+          {...headerScrollProps(false)}
+          contentContainerStyle={[laneStyle, styles.failureScroll]}
+        >
           <ErrorState
             testID="qr-scan-failure"
             title={t("calendarSources.qrScan.failureTitle")}
@@ -67,9 +69,9 @@ export function QrImportFailureView({
               onPress: changeMethod,
             }}
           />
-        </AdaptiveContent>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      )}
+    </RootPage>
   )
 }
 
@@ -125,7 +127,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: Radii.large,
   },
-  readableFailure: { flex: 1 },
   failureScroll: {
     flexGrow: 1,
     justifyContent: "center",

@@ -62,6 +62,7 @@ export default function SchoolGroupPickerScreen() {
     <>
       <Stack.Screen options={{ title: t("onboarding.group.title") }} />
       <RootPage
+        scrollsUnderHeader
         testID="onboarding-group-content"
         lane="standard"
         style={styles.fill}
@@ -69,6 +70,7 @@ export default function SchoolGroupPickerScreen() {
         {({ laneStyle }) => (
           <>
             <ScrollView
+              contentInsetAdjustmentBehavior="automatic"
               testID="onboarding-group-scroll"
               style={styles.fill}
               contentContainerStyle={[laneStyle, styles.list]}

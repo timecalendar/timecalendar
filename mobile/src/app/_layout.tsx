@@ -30,7 +30,7 @@ import { persistOptions } from "@/features/school-selection"
 import { SplashScreen } from "@/features/splash/ui"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { LocaleSynchronizer } from "@/i18n/locale-synchronizer"
-import { buildNavTheme } from "@/theme"
+import { buildNavTheme, Colors } from "@/theme"
 import { OtaUpdateRuntime } from "@/updates"
 
 // Anchor the back stack at the tab group so a cold deep link into a non-tab
@@ -106,7 +106,9 @@ function ActivityRuntime() {
 export default function RootLayout() {
   const colorScheme = useColorScheme()
   const navTheme = buildNavTheme(colorScheme === "dark" ? "dark" : "light")
-  const rootScreenOptions = buildCompactRootScreenOptions(navTheme.colors.card)
+  const rootScreenOptions = buildCompactRootScreenOptions(
+    Colors[colorScheme === "dark" ? "dark" : "light"],
+  )
   return (
     // GestureHandlerRootView remains the outermost wrapper for the Expo runtime
     // and the app's current and future owned gesture consumers.
@@ -206,12 +208,12 @@ export default function RootLayout() {
                 }}
               />
               <Stack.Screen name="feedback" />
-              {/* The user-calendars management screen ("Calendriers") — a
-                Stack sibling of (tabs), reached from the Settings summary, where
-                a held calendar's visibility is toggled and a calendar deleted.
-                Header shown for the accessible back affordance + the screen's own
-                title. Deep-linkable: timecalendar-dev://user-calendars. */}
+              {/* The user-calendars management list ("Calendriers") and its
+                per-calendar page (name, visibility, delete) — Stack siblings of
+                (tabs), reached from the Settings summary. Deep-linkable:
+                timecalendar-dev://user-calendars[/<id>]. */}
               <Stack.Screen name="user-calendars" />
+              <Stack.Screen name="user-calendars/[id]" />
               {/* The dev-only import deep-link target (ADR 030) — a Stack sibling
                 of (tabs), the E2E seam that makes the app durably hold a seeded
                 calendar token so real synced data renders. Headerless (it self-

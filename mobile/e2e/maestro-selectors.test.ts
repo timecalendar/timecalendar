@@ -59,7 +59,7 @@ function testIdTemplateParts(source: string): string[][] {
     if (
       ts.isJsxAttribute(node) &&
       ts.isIdentifier(node.name) &&
-      node.name.text === "testID" &&
+      /^(?:testID|\w+TestID)$/.test(node.name.text) &&
       node.initializer !== undefined
     ) {
       collect(node.initializer)
@@ -72,7 +72,7 @@ function testIdTemplateParts(source: string): string[][] {
 }
 
 function declaredTestIds(source: string): string[] {
-  const literals = [...source.matchAll(/testID(?:=\{?|:\s*)"([^"]+)"/g)].map(
+  const literals = [...source.matchAll(/[tT]estID(?:=\{?|:\s*)"([^"]+)"/g)].map(
     (match) => match[1] as string,
   )
   const templates = testIdTemplateParts(source).map((parts) =>
@@ -335,18 +335,23 @@ describe("Maestro journey contracts", () => {
 
   it("hides and restores a persisted subscription without a vacuous absence", () => {
     const yaml = flow("03-calendar-visibility.yaml")
+    const openCalendar =
+      '- tapOn:\n    id: "user-calendar-row-e2e0e2e0-0000-4000-8000-000000000001"'
     const toggle =
-      'id: "user-calendar-visibility-e2e0e2e0-0000-4000-8000-000000000001"'
+      '- tapOn:\n    id: "user-calendar-visibility-e2e0e2e0-0000-4000-8000-000000000001"'
+    expect(yaml.split(openCalendar)).toHaveLength(3)
     expect(yaml.split(toggle)).toHaveLength(3)
     expect(yaml.split(OPEN_AGENDA_FLOW)).toHaveLength(3)
     expect(
       containsOrdered(yaml, [
         'visible: "E2E Hide Control(,.*)?"',
         '- assertVisible: "E2E Hide Seminar(,.*)?"',
+        openCalendar,
         toggle,
         OPEN_AGENDA_FLOW,
         'id: "agenda-section-list"',
         '- assertNotVisible: "E2E Hide Seminar(,.*)?"',
+        openCalendar,
         toggle,
         OPEN_AGENDA_FLOW,
         'visible: "E2E Hide Control(,.*)?"',

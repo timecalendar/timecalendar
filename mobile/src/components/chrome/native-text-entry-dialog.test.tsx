@@ -1,8 +1,7 @@
-import { act, fireEvent, render, screen } from "@testing-library/react-native"
-import { StyleSheet } from "react-native"
+import { fireEvent, render, screen } from "@testing-library/react-native"
 
 import { usePlatform } from "@/test-support/platform"
-import { resolveResponsiveLayout } from "@/theme"
+import { Colors } from "@/theme"
 
 import { NativeTextEntryDialog } from "./native-text-entry-dialog"
 
@@ -37,29 +36,54 @@ beforeEach(() => jest.clearAllMocks())
 describe("NativeTextEntryDialog on iOS", () => {
   usePlatform("ios")
 
-  it("uses one SwiftUI host inside an isolated keyboard-safe readable modal", async () => {
-    await render(<NativeTextEntryDialog {...props} />)
+  it("presents a native brand-tinted sheet that cannot be swiped away while saving", async () => {
+    const view = await render(<NativeTextEntryDialog {...props} />)
 
     expect(screen.getByTestId("native-text-entry-dialog-ios-host")).toBeTruthy()
-    expect(
-      screen.getByTestId(props.ids.dialog).props.accessibilityViewIsModal,
-    ).toBe(true)
-    expect(
-      screen.getByTestId("native-text-entry-dialog-keyboard-owner"),
-    ).toBeTruthy()
+    const modifierOf = (type: string) =>
+      (
+        screen.getByTestId(props.ids.dialog).props.modifiers as {
+          $type: string
+          value: unknown
+        }[]
+      ).find((modifier) => modifier.$type === type)?.value
+    expect(modifierOf("presentationDetents")).toEqual(["medium", "large"])
+    expect(modifierOf("presentationDragIndicator")).toBe("visible")
+    expect(modifierOf("tint")).toBe(Colors.light.primary)
+    expect(modifierOf("interactiveDismissDisabled")).toBe(false)
+    expect(screen.getByText("Rename calendar")).toBeTruthy()
 
-    const lane = screen.getByTestId("native-text-entry-dialog-content")
-    await act(() =>
-      fireEvent(lane, "layout", {
-        nativeEvent: { layout: { width: 1024, height: 640, x: 0, y: 0 } },
-      }),
+    await view.rerender(<NativeTextEntryDialog {...props} pending />)
+    expect(modifierOf("interactiveDismissDisabled")).toBe(true)
+    expect(
+      screen.getByTestId(props.ids.cancel).props.accessibilityState.disabled,
+    ).toBe(true)
+  })
+
+  it("cancels when the sheet is swiped down", async () => {
+    await render(<NativeTextEntryDialog {...props} />)
+    await fireEvent(
+      screen.getByTestId("swiftui-bottom-sheet"),
+      "isPresentedChange",
+      true,
     )
-    const content = lane.children[0] as unknown as { props: { style: unknown } }
-    const layout = resolveResponsiveLayout(1024, "readable")
-    expect(StyleSheet.flatten(content.props.style)).toMatchObject({
-      maxWidth: layout.contentWidth + 2 * layout.gutter,
-      paddingHorizontal: layout.gutter,
-    })
+    expect(onCancel).not.toHaveBeenCalled()
+    await fireEvent(
+      screen.getByTestId("swiftui-bottom-sheet"),
+      "isPresentedChange",
+      false,
+    )
+    expect(onCancel).toHaveBeenCalledTimes(1)
+  })
+
+  it("submits from the keyboard only while saving is allowed", async () => {
+    const view = await render(<NativeTextEntryDialog {...props} />)
+    await fireEvent(screen.getByTestId(props.ids.input), "submitEditing")
+    expect(onSubmit).toHaveBeenCalledWith("ENSEEIHT")
+
+    await view.rerender(<NativeTextEntryDialog {...props} submitDisabled />)
+    await fireEvent(screen.getByTestId(props.ids.input), "submitEditing")
+    expect(onSubmit).toHaveBeenCalledTimes(1)
   })
 
   it("submits the current native buffer and preserves it across busy/error rerenders", async () => {
@@ -88,16 +112,11 @@ describe("NativeTextEntryDialog on iOS", () => {
     expect(onSubmit).toHaveBeenCalledWith("Fast draft")
   })
 
-  it("keeps backdrop taps inert and exposes native selectors", async () => {
-    await render(<NativeTextEntryDialog {...props} />)
+  it("exposes native selectors and cancels from the sheet header", async () => {
+    await render(<NativeTextEntryDialog {...props} message="Too long" />)
     expect(screen.getByTestId(props.ids.input)).toBeTruthy()
-    expect(screen.getByTestId(props.ids.cancel)).toBeTruthy()
+    expect(screen.getByTestId(props.ids.message)).toHaveTextContent("Too long")
     expect(screen.getByTestId(props.ids.submit)).toBeTruthy()
-
-    await fireEvent.press(
-      screen.getByTestId("native-text-entry-dialog-backdrop"),
-    )
-    expect(onCancel).not.toHaveBeenCalled()
     await fireEvent.press(screen.getByTestId(props.ids.cancel))
     expect(onCancel).toHaveBeenCalledTimes(1)
   })

@@ -44,9 +44,14 @@ function ResolvedEventDetails({ event }: { event: EventDetails }) {
   return (
     <>
       <EventDetailsHeader action={action} />
-      <RootPage testID="event-details-responsive-owner" lane="readable">
+      <RootPage
+        scrollsUnderHeader
+        testID="event-details-responsive-owner"
+        lane="readable"
+      >
         {(layout) => (
           <ScrollView
+            contentInsetAdjustmentBehavior="automatic"
             testID="event-details-content"
             style={styles.scroll}
             contentContainerStyle={[layout.laneStyle, styles.content]}

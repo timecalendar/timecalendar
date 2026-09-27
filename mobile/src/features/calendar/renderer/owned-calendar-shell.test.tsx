@@ -388,7 +388,7 @@ describe("OwnedCalendarShell", () => {
     const titleText = screen.getByText(title)
     const locationText = screen.getByText(location)
     expect(titleText.props).toMatchObject({ accessible: false })
-    expect(titleText.props.numberOfLines).toBe(1)
+    expect(titleText.props.numberOfLines).toBeUndefined()
     expect(titleText.props.ellipsizeMode).toBeUndefined()
     expect(StyleSheet.flatten(titleText.props.style)).toMatchObject({
       fontSize: 11,
@@ -396,7 +396,7 @@ describe("OwnedCalendarShell", () => {
       fontWeight: 600,
     })
     expect(locationText.props).toMatchObject({ accessible: false })
-    expect(locationText.props.numberOfLines).toBe(1)
+    expect(locationText.props.numberOfLines).toBeUndefined()
     expect(locationText.props.ellipsizeMode).toBeUndefined()
     expect(StyleSheet.flatten(locationText.props.style)).toMatchObject({
       fontSize: 11,
@@ -1712,7 +1712,7 @@ describe("OwnedCalendarShell", () => {
     expect(onTransitionSettled).not.toHaveBeenCalled()
   })
 
-  it("keeps three non-collapsible pages with development identities", async () => {
+  it("keeps three non-collapsible pages on one surface color", async () => {
     await render(<OwnedCalendarShell {...props} />)
 
     const pages = screen.getAllByTestId(/^owned-calendar-page--?\d$/, {
@@ -1725,9 +1725,9 @@ describe("OwnedCalendarShell", () => {
         screen.getByText(key, { includeHiddenElements: true }),
       ).toBeOnTheScreen()
     }
-    expect(
-      StyleSheet.flatten(pages.at(0)?.props.style).backgroundColor,
-    ).not.toBe(StyleSheet.flatten(pages.at(1)?.props.style).backgroundColor)
+    expect(StyleSheet.flatten(pages.at(0)?.props.style).backgroundColor).toBe(
+      StyleSheet.flatten(pages.at(1)?.props.style).backgroundColor,
+    )
   })
 
   it("draws the closing boundary as a filled physical hairline", async () => {

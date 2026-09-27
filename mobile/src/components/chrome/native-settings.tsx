@@ -2,6 +2,7 @@ import {
   AlertDialog,
   Badge as MaterialBadge,
   Column,
+  FloatingActionButton,
   Host as ComposeHost,
   type HostProps as ComposeHostProps,
   Icon as MaterialIcon,
@@ -82,7 +83,9 @@ export type NativeSettingsRowProps = {
   testID: string
   icon?: NativeSettingsIcon | undefined
   hint?: string | undefined
+  subtitle?: string | undefined
   value?: string | undefined
+  destructive?: boolean | undefined
   badge?: string | undefined
   href?: Href | undefined
   onPress?: (() => void) | undefined
@@ -93,6 +96,17 @@ type NativeSettingsSectionProps = PropsWithChildren<{
   footer?: string | undefined
   testID?: string | undefined
 }>
+
+type NativeSettingsHostProps = PropsWithChildren<{
+  reservesFloatingAction?: boolean | undefined
+}>
+
+type NativeSettingsFloatingActionProps = {
+  label: string
+  icon: NativeSettingsIcon
+  testID: string
+  onPress: () => void
+}
 
 type NativeSettingsChoiceRowProps = {
   label: string
@@ -155,6 +169,8 @@ const OUTER_RADIUS = 20
 const INNER_RADIUS = 4
 const SEGMENT_GAP = 2
 const LIST_INSET = 16
+const LIST_BOTTOM_PADDING = 24
+const FAB_CLEARANCE = 88
 
 const segmentCorners: Record<SegmentPosition, { top: number; bottom: number }> =
   {
@@ -223,7 +239,10 @@ function ComposeSettingsHost({
   )
 }
 
-export function NativeSettingsHost({ children }: PropsWithChildren) {
+export function NativeSettingsHost({
+  children,
+  reservesFloatingAction = false,
+}: NativeSettingsHostProps) {
   const colorScheme = useResolvedScheme()
   const theme = useTheme()
   if (Platform.OS === "ios") {
@@ -240,11 +259,39 @@ export function NativeSettingsHost({ children }: PropsWithChildren) {
   return (
     <ComposeSettingsHost useViewportSizeMeasurement style={styles.fill}>
       <LazyColumn
-        contentPadding={{ top: 0, bottom: 24 }}
+        contentPadding={{
+          top: 0,
+          bottom: reservesFloatingAction
+            ? LIST_BOTTOM_PADDING + FAB_CLEARANCE
+            : LIST_BOTTOM_PADDING,
+        }}
         modifiers={[fillMaxSize()]}
       >
         {children}
       </LazyColumn>
+    </ComposeSettingsHost>
+  )
+}
+
+// iOS adds through the navigation bar; only Material pages carry a FAB.
+export function NativeSettingsFloatingAction({
+  label,
+  icon,
+  testID: fabTestID,
+  onPress,
+}: NativeSettingsFloatingActionProps) {
+  if (Platform.OS === "ios") return null
+  return (
+    <ComposeSettingsHost matchContents style={styles.floatingAction}>
+      <FloatingActionButton onClick={onPress} modifiers={[testID(fabTestID)]}>
+        <FloatingActionButton.Icon>
+          <MaterialIcon
+            source={materialSymbolSource(icon.android)}
+            contentDescription={label}
+            size={24}
+          />
+        </FloatingActionButton.Icon>
+      </FloatingActionButton>
     </ComposeSettingsHost>
   )
 }
@@ -465,13 +512,36 @@ function SwiftIconTile({ icon }: { icon: NativeSettingsIcon }) {
 function SwiftRowLabel({
   label,
   icon,
+  subtitle,
+  destructive = false,
 }: {
   label: string
   icon?: NativeSettingsIcon | undefined
+  subtitle?: string | undefined
+  destructive?: boolean | undefined
 }) {
   const theme = useTheme()
-  const text = (
-    <SwiftText modifiers={[foregroundStyle(theme.text)]}>{label}</SwiftText>
+  const title = (
+    <SwiftText
+      modifiers={[foregroundStyle(destructive ? theme.error : theme.text)]}
+    >
+      {label}
+    </SwiftText>
+  )
+  const text = subtitle ? (
+    <VStack alignment="leading" spacing={2}>
+      {title}
+      <SwiftText
+        modifiers={[
+          font({ textStyle: "subheadline" }),
+          foregroundStyle(theme.textSecondary),
+        ]}
+      >
+        {subtitle}
+      </SwiftText>
+    </VStack>
+  ) : (
+    title
   )
   if (!icon) return text
   return (
@@ -497,16 +567,22 @@ function SwiftBadge({ children }: { children: string }) {
   )
 }
 
+type SwiftRowContentProps = Pick<
+  NativeSettingsRowProps,
+  "label" | "icon" | "subtitle" | "value" | "badge" | "destructive"
+>
+
 function SwiftDisclosureRowContent({
   label,
   icon,
+  subtitle,
   value,
   badge,
-}: Pick<NativeSettingsRowProps, "label" | "icon" | "value" | "badge">) {
+}: SwiftRowContentProps) {
   const theme = useTheme()
   return (
     <HStack spacing={12}>
-      <SwiftRowLabel label={label} icon={icon} />
+      <SwiftRowLabel label={label} icon={icon} subtitle={subtitle} />
       <Spacer />
       <HStack spacing={6}>
         {value ? (
@@ -531,13 +607,20 @@ function SwiftDisclosureRowContent({
 function SwiftActionRowContent({
   label,
   icon,
+  subtitle,
   value,
   badge,
-}: Pick<NativeSettingsRowProps, "label" | "icon" | "value" | "badge">) {
+  destructive,
+}: SwiftRowContentProps) {
   const theme = useTheme()
   return (
     <HStack spacing={12}>
-      <SwiftRowLabel label={label} icon={icon} />
+      <SwiftRowLabel
+        label={label}
+        icon={icon}
+        subtitle={subtitle}
+        destructive={destructive}
+      />
       <Spacer />
       {value ? (
         <SwiftText modifiers={[foregroundStyle(theme.textSecondary)]}>
@@ -554,10 +637,19 @@ export function NativeSettingsRow(props: NativeSettingsRowProps) {
   return <ComposeSettingsRow {...props} />
 }
 
+function defaultAccessibilityLabel({
+  label,
+  subtitle,
+}: Pick<NativeSettingsRowProps, "label" | "subtitle">) {
+  return subtitle ? `${label}, ${subtitle}` : label
+}
+
 function SwiftSettingsRow(props: NativeSettingsRowProps) {
   const modifiers = [
     accessibilityIdentifier(props.testID),
-    accessibilityLabel(props.accessibilityLabel ?? props.label),
+    accessibilityLabel(
+      props.accessibilityLabel ?? defaultAccessibilityLabel(props),
+    ),
     ...(props.hint ? [accessibilityHint(props.hint)] : []),
     ...(props.value ? [accessibilityValue(props.value)] : []),
   ]
@@ -586,8 +678,10 @@ function SwiftSettingsRow(props: NativeSettingsRowProps) {
       <Content
         label={props.label}
         icon={props.icon}
+        subtitle={props.subtitle}
         value={props.value}
         badge={props.badge}
+        destructive={props.destructive}
       />
     </SwiftButton>
   )
@@ -610,6 +704,8 @@ function ComposeSettingsRow(props: NativeSettingsRowProps) {
   const palette = useMaterialColors()
   const segment = useSegmentModifiers()
   const interactive = props.kind !== "value"
+  const supporting = props.subtitle ?? props.value
+  const trailingValue = props.subtitle ? props.value : undefined
   return (
     <ListItem
       colors={listItemColors(palette)}
@@ -622,27 +718,42 @@ function ComposeSettingsRow(props: NativeSettingsRowProps) {
       {props.icon ? <ComposeLeadingIcon icon={props.icon} /> : null}
       <ListItem.HeadlineContent>
         <MaterialText
-          color={palette.onSurface}
+          color={props.destructive ? palette.error : palette.onSurface}
           style={{ typography: "bodyLarge" }}
         >
           {props.label}
         </MaterialText>
       </ListItem.HeadlineContent>
-      {props.value ? (
+      {supporting ? (
         <ListItem.SupportingContent>
           <MaterialText
             color={palette.onSurfaceVariant}
             style={{ typography: "bodyMedium" }}
           >
-            {props.value}
+            {supporting}
           </MaterialText>
         </ListItem.SupportingContent>
       ) : null}
-      {props.badge ? (
+      {trailingValue || props.badge ? (
         <ListItem.TrailingContent>
-          <MaterialBadge>
-            <MaterialText>{props.badge}</MaterialText>
-          </MaterialBadge>
+          <Row
+            horizontalArrangement={{ spacedBy: 8 }}
+            verticalAlignment="center"
+          >
+            {trailingValue ? (
+              <MaterialText
+                color={palette.onSurfaceVariant}
+                style={{ typography: "labelLarge" }}
+              >
+                {trailingValue}
+              </MaterialText>
+            ) : null}
+            {props.badge ? (
+              <MaterialBadge>
+                <MaterialText>{props.badge}</MaterialText>
+              </MaterialBadge>
+            ) : null}
+          </Row>
         </ListItem.TrailingContent>
       ) : null}
     </ListItem>
@@ -851,4 +962,7 @@ function ComposeRadioDialog<Value extends string>({
   )
 }
 
-const styles = StyleSheet.create({ fill: { flex: 1 } })
+const styles = StyleSheet.create({
+  fill: { flex: 1 },
+  floatingAction: { position: "absolute", right: 16, bottom: 16 },
+})

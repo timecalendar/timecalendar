@@ -142,6 +142,7 @@ export default function IcalUrlScreen() {
       <RootPage testID="ical-url-content" lane="readable" style={styles.fill}>
         {() => (
           <KeyboardSafeActionLayout
+            scrollsUnderHeader={false}
             testID="ical-url-keyboard-layout"
             contentContainerStyle={styles.formContent}
             actionContainerStyle={styles.actionRegion}

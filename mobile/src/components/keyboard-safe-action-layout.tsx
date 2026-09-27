@@ -11,6 +11,7 @@ import {
 } from "react-native"
 
 import { useAdaptiveLayout } from "@/components/adaptive-content"
+import { headerScrollProps } from "@/components/header-scroll-props"
 import {
   resolveKeyboardAvoidingBehavior,
   resolveKeyboardVerticalOffset,
@@ -26,6 +27,10 @@ type KeyboardSafeActionLayoutProps = {
   actionsTestID?: string
   contentContainerStyle?: StyleProp<ViewStyle>
   actionContainerStyle?: StyleProp<ViewStyle>
+  // Pass false when the content fills the viewport (flexGrow): an automatic
+  // header inset on top of a viewport-tall content makes it scroll by the
+  // header height. The enclosing RootPage must then drop scrollsUnderHeader.
+  scrollsUnderHeader?: boolean
 }
 
 export function KeyboardSafeActionLayout({
@@ -37,6 +42,7 @@ export function KeyboardSafeActionLayout({
   actionsTestID,
   contentContainerStyle,
   actionContainerStyle,
+  scrollsUnderHeader = true,
 }: KeyboardSafeActionLayoutProps) {
   const { laneStyle, onLayout } = useAdaptiveLayout(lane)
   const ownerRef = useRef<View>(null)
@@ -64,6 +70,7 @@ export function KeyboardSafeActionLayout({
         style={styles.owner}
       >
         <ScrollView
+          {...headerScrollProps(scrollsUnderHeader)}
           testID={
             contentTestID ??
             (testID === undefined ? undefined : `${testID}-content`)

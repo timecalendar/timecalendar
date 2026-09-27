@@ -64,6 +64,7 @@ export default function InstitutionNameScreen() {
       >
         {() => (
           <KeyboardSafeActionLayout
+            scrollsUnderHeader={false}
             testID="onboarding-institution-keyboard-layout"
             contentContainerStyle={stepStyles.formContent}
             actionContainerStyle={styles.actionRegion}

@@ -92,18 +92,13 @@ export default function ProgrammeScreen() {
     <>
       <Stack.Screen
         options={{
-          headerShown: true,
           title: t("onboarding.programme.title"),
-          headerBackButtonDisplayMode: "minimal",
-          headerStyle: { backgroundColor: theme.background },
-          headerShadowVisible: false,
           ...(Platform.OS === "ios" && {
             unstable_headerRightItems: () => [
               {
                 type: "button" as const,
                 label: t("onboarding.programme.skip"),
                 accessibilityLabel: t("onboarding.programme.skipLabel"),
-                tintColor: theme.primary,
                 identifier: "onboarding-programme-skip",
                 onPress: skip,
               },
@@ -119,7 +114,7 @@ export default function ProgrammeScreen() {
                 onPress={skip}
                 style={styles.headerSkip}
               >
-                <ThemedText type="smallBold" themeColor="primary">
+                <ThemedText type="smallBold">
                   {t("onboarding.programme.skip")}
                 </ThemedText>
               </Pressable>
@@ -134,6 +129,7 @@ export default function ProgrammeScreen() {
       >
         {() => (
           <KeyboardSafeActionLayout
+            scrollsUnderHeader={false}
             testID="onboarding-programme-keyboard-layout"
             contentContainerStyle={stepStyles.formContent}
             actionContainerStyle={styles.actionRegion}

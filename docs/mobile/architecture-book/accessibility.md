@@ -29,8 +29,10 @@ These rules guard real product touchables (interactive controls declare `accessi
   content headings remain only when they identify domain content such as an event or release.
 - Controlled native text-entry dialogs isolate the background accessibility tree, keep native input
   and Cancel/Save actions present while pending, announce inline validation/write failure and
-  persistence-gated success, and expose stable native identifiers on both platforms. Back is an
-  explicit cancel on Android; outside taps are inert on both platforms. Jest proves callbacks,
+  persistence-gated success, and expose stable native identifiers on both platforms. On iOS the
+  dialog is a native SwiftUI sheet (medium/large detents, drag indicator, Cancel · title · Save
+  header in the brand tint); swiping it down is a cancel, disabled while a save is pending. On
+  Android it is a Material 3 dialog: Back is an explicit cancel and outside taps are inert. Jest proves callbacks,
   identifiers, and structure; VoiceOver/TalkBack focus and announcement quality remain device proof.
 - Native notification choices expose one selected checkmark/radio state, localized labels and
   plural values. The custom-days editor exposes stable field/action/error identifiers and an

@@ -3,7 +3,7 @@ import { Stack } from "expo-router"
 import { buildCompactRootScreenOptions } from "@/components/chrome"
 import { ImportDraftProvider } from "@/features/onboarding"
 import { useColorScheme } from "@/hooks/use-color-scheme"
-import { buildNavTheme } from "@/theme"
+import { Colors } from "@/theme"
 
 // The nested onboarding stack: welcome (index) → school → institution-name →
 // programme → connect → import, with qr-scan, ical-url and the off-path groups
@@ -18,8 +18,9 @@ import { buildNavTheme } from "@/theme"
 // the journey clears the draft and a restart cannot restore it.
 export default function OnboardingLayout() {
   const colorScheme = useColorScheme()
-  const navTheme = buildNavTheme(colorScheme === "dark" ? "dark" : "light")
-  const screenOptions = buildCompactRootScreenOptions(navTheme.colors.card)
+  const screenOptions = buildCompactRootScreenOptions(
+    Colors[colorScheme === "dark" ? "dark" : "light"],
+  )
 
   return (
     <ImportDraftProvider>

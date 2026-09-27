@@ -68,9 +68,7 @@ export function ChangelogSheetScreen() {
               onPress={acknowledgeAndDismiss}
               testID="changelog-close"
             >
-              <ThemedText themeColor="actionText">
-                {t("changelog.close.label")}
-              </ThemedText>
+              <ThemedText>{t("changelog.close.label")}</ThemedText>
             </Pressable>
           ),
         }}

@@ -98,6 +98,10 @@ describe("HiddenEventsScreen", () => {
             .contentContainerStyle,
         ),
       ).toMatchObject({ maxWidth, paddingHorizontal: gutter })
+      expect(view.getByTestId("hidden-events-responsive-content")).toHaveProp(
+        "contentInsetAdjustmentBehavior",
+        "automatic",
+      )
     },
   )
 
@@ -110,6 +114,10 @@ describe("HiddenEventsScreen", () => {
         includeHiddenElements: true,
       }),
     ).toHaveProp("accessible", false)
+    expect(screen.getByTestId("hidden-events-responsive-content")).toHaveProp(
+      "contentInsetAdjustmentBehavior",
+      "never",
+    )
   })
 
   it("renders the exact French empty title and caption", async () => {
