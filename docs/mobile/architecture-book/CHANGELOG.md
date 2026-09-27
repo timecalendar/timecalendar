@@ -1,4 +1,23 @@
+## 2026-09-27 — Settings sub-pages on the native seam
+
+- Added `NativeSettingsAlert` (page-first failure with optional action, announced on mount) and
+  `NativeSettingsHeader` (centered brand header hosted as React Native for heading role and font
+  scale). Removed `NativeSettingsText`: help copy belongs in section footers.
+- Notifications split into three footer-explained sections; sync status renders only on failure.
+- About opens with the brand header, which now carries the version.
+- The numeric editor carries the brand accent; the iOS selection checkmark is subheadline-semibold.
+
 # Architecture Book changelog
+
+## 2026-09-27 — Native settings chrome foundation
+
+- The Settings tab root shows a native large title; pushed Settings destinations stay compact.
+- The `native-settings` seam owns brand tint (iOS Form `tint`, Android `seedColor` on every Compose
+  host), row label/value/disclosure styling, optional SF Symbol tile / Material Symbol icons, section
+  footers, Material grouped-segment layout, and the Material radio dialog structure.
+- Added the theming rule that feature screens never set tint, color, or typography on settings rows;
+  the chrome seam owns them. No ADR was added; ADR 060's contract is unchanged.
+- Added the dev-only `/settings-gallery` route for device checks of every seam primitive.
 
 ## 2026-09-27 — Server calendar-source validation
 

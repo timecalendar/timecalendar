@@ -1,10 +1,9 @@
 import type { Href } from "expo-router"
-import type { AndroidSymbol, SFSymbol } from "expo-symbols"
 
-import { NativeSettingsRow } from "@/components/chrome"
+import { type NativeSettingsIcon, NativeSettingsRow } from "@/components/chrome"
 
 interface SettingsRowBaseProps {
-  icon: { ios: SFSymbol; android: AndroidSymbol; web: AndroidSymbol }
+  icon?: NativeSettingsIcon
   label: string
   accessibilityLabel?: string
   testID: string
@@ -52,6 +51,7 @@ export function SettingsRow(props: SettingsRowProps) {
       <NativeSettingsRow
         kind="value"
         label={props.label}
+        icon={props.icon}
         accessibilityLabel={props.accessibilityLabel}
         value={props.value}
         testID={props.testID}
@@ -63,6 +63,7 @@ export function SettingsRow(props: SettingsRowProps) {
       <NativeSettingsRow
         kind="action"
         label={props.label}
+        icon={props.icon}
         accessibilityLabel={props.accessibilityLabel}
         value={props.secondary}
         badge={props.badge}
@@ -76,6 +77,7 @@ export function SettingsRow(props: SettingsRowProps) {
     <NativeSettingsRow
       kind="navigation"
       label={props.label}
+      icon={props.icon}
       accessibilityLabel={props.accessibilityLabel}
       value={props.secondary}
       badge={props.badge}

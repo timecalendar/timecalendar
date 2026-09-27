@@ -6,10 +6,9 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import {
-  NativeErrorNotice,
+  NativeSettingsAlert,
+  NativeSettingsHeader,
   NativeSettingsHost,
-  NativeSettingsSection,
-  NativeSettingsText,
 } from "@/components/chrome"
 import { readApplicationInfo } from "@/features/about/data"
 import {
@@ -41,7 +40,6 @@ function formatApplicationInfo(t: TFunction): string {
 export function AboutScreen() {
   const { t } = useTranslation()
   const [linkFailed, setLinkFailed] = useState(false)
-  const linkError = t("about.linkError")
   const versionValue = formatApplicationInfo(t)
   const openLink = async (
     context: string,
@@ -70,7 +68,6 @@ export function AboutScreen() {
           icon: {
             ios: "hand.raised",
             android: "privacy_tip",
-            web: "privacy_tip",
           },
           label: t("about.privacy.label"),
           hint: t("about.privacy.hint"),
@@ -89,7 +86,7 @@ export function AboutScreen() {
         {
           variant: "action",
           first: true,
-          icon: { ios: "envelope", android: "mail", web: "mail" },
+          icon: { ios: "envelope", android: "mail" },
           label: t("about.contact.label"),
           secondary: t("about.contact.value"),
           hint: t("about.contact.hint"),
@@ -106,16 +103,9 @@ export function AboutScreen() {
       title: t("about.section.app"),
       rows: [
         {
-          variant: "value",
-          first: true,
-          icon: { ios: "info.circle", android: "info", web: "info" },
-          label: t("about.version.label"),
-          value: versionValue,
-          testID: "about-version",
-        },
-        {
           variant: "router",
-          icon: { ios: "sparkles", android: "history", web: "history" },
+          first: true,
+          icon: { ios: "sparkles", android: "history" },
           label: t("about.changelog.label"),
           hint: t("about.changelog.hint"),
           href: "/changelog",
@@ -130,7 +120,7 @@ export function AboutScreen() {
         {
           variant: "action",
           first: true,
-          icon: { ios: "person", android: "person", web: "person" },
+          icon: { ios: "person", android: "person" },
           label: t("about.developer.samuel"),
           hint: t("about.developer.hint", {
             name: t("about.developer.samuel"),
@@ -143,7 +133,7 @@ export function AboutScreen() {
         },
         {
           variant: "action",
-          icon: { ios: "person", android: "person", web: "person" },
+          icon: { ios: "person", android: "person" },
           label: t("about.developer.eddy"),
           hint: t("about.developer.hint", {
             name: t("about.developer.eddy"),
@@ -162,21 +152,22 @@ export function AboutScreen() {
     <>
       <Stack.Screen options={{ title: t("about.title") }} />
       <NativeSettingsHost>
-        <NativeSettingsSection testID="about-readable-copy">
-          <NativeSettingsText testID="about-blurb-access">
-            {t("about.blurb.access")}
-          </NativeSettingsText>
-          <NativeSettingsText testID="about-blurb-created">
-            {t("about.blurb.created")}
-          </NativeSettingsText>
-          {linkFailed ? (
-            <NativeErrorNotice
-              title={t("errors.openLinkTitle")}
-              message={linkError}
-              testID="about-link-error"
-            />
-          ) : null}
-        </NativeSettingsSection>
+        <NativeSettingsHeader
+          title={t("app.name")}
+          tagline={t("about.blurb.access")}
+          detail={t("about.blurb.created")}
+          caption={versionValue}
+          testID="about-readable-copy"
+          captionTestID="about-version"
+        />
+        {linkFailed ? (
+          <NativeSettingsAlert
+            title={t("errors.openLinkTitle")}
+            message={t("about.linkError")}
+            testID="about-link-error-section"
+            messageTestID="about-link-error"
+          />
+        ) : null}
         {sections.map((section) => (
           <SettingsSection
             key={section.key}

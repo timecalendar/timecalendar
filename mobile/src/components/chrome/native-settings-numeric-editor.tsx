@@ -25,10 +25,12 @@ import {
   accessibilityLabel,
   keyboardType,
   submitLabel,
+  tint,
 } from "@expo/ui/swift-ui/modifiers"
 import { Platform, StyleSheet } from "react-native"
 
 import { useColorScheme } from "@/hooks/use-color-scheme"
+import { useTheme } from "@/theme"
 
 import { NativeErrorNotice } from "./native-error-notice"
 
@@ -59,13 +61,14 @@ function useResolvedScheme(): "light" | "dark" {
 function IosNumericEditor(props: NativeSettingsNumericEditorProps) {
   const buffer = useSwiftNativeState(props.initialValue)
   const colorScheme = useResolvedScheme()
+  const theme = useTheme()
   return (
     <SwiftHost
       colorScheme={colorScheme}
       useViewportSizeMeasurement
       style={styles.fill}
     >
-      <Form>
+      <Form modifiers={[tint(theme.primary)]}>
         <Section title={props.title}>
           <SwiftTextField
             text={buffer}
@@ -106,8 +109,13 @@ function IosNumericEditor(props: NativeSettingsNumericEditorProps) {
 function AndroidNumericEditor(props: NativeSettingsNumericEditorProps) {
   const buffer = useComposeNativeState(props.initialValue)
   const colorScheme = useResolvedScheme()
+  const theme = useTheme()
   return (
-    <ComposeHost colorScheme={colorScheme} matchContents>
+    <ComposeHost
+      colorScheme={colorScheme}
+      seedColor={theme.primary}
+      matchContents
+    >
       <AlertDialog
         modifiers={[testID(props.ids.container), imePadding()]}
         properties={{

@@ -35,6 +35,7 @@ export {
 } from "@/components/chrome/expo-ui"
 export { NativeErrorNotice } from "@/components/chrome/native-error-notice"
 export {
+  NativeSettingsAlert,
   NativeSettingsChoiceRow,
   NativeSettingsHost,
   NativeSettingsRadioDialog,
@@ -42,8 +43,9 @@ export {
   type NativeSettingsRowProps,
   NativeSettingsSection,
   NativeSettingsSwitchRow,
-  NativeSettingsText,
 } from "@/components/chrome/native-settings"
+export { NativeSettingsHeader } from "@/components/chrome/native-settings-header"
+export type { NativeSettingsIcon } from "@/components/chrome/native-settings-icons"
 export {
   NativeSettingsNumericEditor,
   type NativeSettingsNumericEditorIds,

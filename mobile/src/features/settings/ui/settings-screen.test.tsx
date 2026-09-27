@@ -79,6 +79,30 @@ describe.each(["ios", "android"] as const)(
       }
     })
 
+    it("gives every hub row an icon", async () => {
+      mockCapability = "development"
+      const view = await render(<SettingsScreen />)
+      if (platform === "ios") {
+        for (const symbol of [
+          "calendar",
+          "calendar.day.timeline.leading",
+          "clock.arrow.circlepath",
+          "calendar.badge.plus",
+          "eye.slash",
+          "paintpalette",
+          "globe",
+          "bell",
+          "info.circle",
+          "bubble.left.and.text.bubble.right",
+          "square.grid.2x2",
+        ]) {
+          expect(view.getByTestId(`swiftui-image-${symbol}`)).toBeOnTheScreen()
+        }
+      } else {
+        expect(view.getAllByTestId("compose-icon")).toHaveLength(11)
+      }
+    })
+
     it("routes whole rows and toggles weekends once", async () => {
       const view = await render(<SettingsScreen />)
       await fireEvent.press(view.getByTestId("settings-appearance"))
@@ -113,4 +137,6 @@ it("preserves loading, empty, populated, badge, and environment states", async (
   expect(view.getByText("2 calendars")).toBeOnTheScreen()
   expect(view.getByText("99+")).toBeOnTheScreen()
   expect(view.getByTestId("settings-section-environment")).toBeOnTheScreen()
+  await fireEvent.press(view.getByTestId("settings-gallery"))
+  expect(mockPush).toHaveBeenCalledWith("/settings-gallery")
 })

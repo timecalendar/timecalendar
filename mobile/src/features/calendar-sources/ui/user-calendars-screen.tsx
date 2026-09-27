@@ -30,7 +30,7 @@ import {
   visibleFromOperation,
 } from "./visibility-controller"
 
-// The user-calendars management screen ("Mes calendriers") — PRESENTATIONAL (70%
+// The user-calendars management screen ("Calendriers") — PRESENTATIONAL (70%
 // floor) over the existing durable token store (ADR 018). It lists every held
 // calendar with an explicit visibility switch (a render-only flag filtered at the
 // events-source seam — ADR 031), one overflow menu carrying Rename and a

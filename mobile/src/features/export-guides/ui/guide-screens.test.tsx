@@ -133,7 +133,7 @@ describe("GuidePageScreen", () => {
     expect(view.getByText("Loading the export guide…")).toBeTruthy()
     expect(mockStackScreen).toHaveBeenCalledWith(
       expect.objectContaining({
-        options: { title: "Export your timetable" },
+        options: { title: "Export timetable" },
       }),
       undefined,
     )
@@ -198,7 +198,7 @@ describe("GuidePageScreen", () => {
     expect(mockStackScreen).toHaveBeenCalledWith(
       expect.objectContaining({
         options: expect.objectContaining({
-          title: "Exportez votre emploi du temps",
+          title: "Exporter l'emploi du temps",
         }),
       }),
       undefined,
@@ -398,7 +398,7 @@ describe("GuidePageScreen", () => {
     ).toBe("alert")
     expect(mockStackScreen).toHaveBeenCalledWith(
       expect.objectContaining({
-        options: { title: "Export your timetable" },
+        options: { title: "Export timetable" },
       }),
       undefined,
     )
@@ -546,7 +546,7 @@ describe("ProviderSelectionScreen", () => {
       expect.objectContaining({ options: { title: "Export guide" } }),
       undefined,
     )
-    expect(view.getByText("Choose your timetable service")).toBeTruthy()
+    expect(view.getByText("Choose the timetable service")).toBeTruthy()
     expect(
       view.getAllByRole("button").map((node) => node.props.accessibilityLabel),
     ).toEqual(["Future Provider", "Generic"])

@@ -180,7 +180,7 @@ describe("SchoolPickerScreen", () => {
     mockUseSchools.mockReturnValue(ready([]))
     const { queryByRole } = await render(<SchoolPickerScreen />)
 
-    expect(screenOptions().title).toBe("Select your school")
+    expect(screenOptions().title).toBe("Choose a school")
     expect(screenOptions().headerTitle).toBeUndefined()
     expect(queryByRole("header")).toBeNull()
     expect(screenOptions().headerSearchBarOptions.placeholder).toBe(
@@ -209,7 +209,7 @@ describe("SchoolPickerScreen", () => {
       <SchoolPickerScreen />,
     )
 
-    expect(queryByText("Select your school")).toBeNull()
+    expect(queryByText("Choose a school")).toBeNull()
     expect(getByText("Université Gustave Eiffel")).toBeTruthy()
     expect(getByText("Your timetable comes from your school.")).toBeTruthy()
     const row = getByTestId("onboarding-school-row-univeiffel")

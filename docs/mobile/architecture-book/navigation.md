@@ -17,6 +17,15 @@ Root content uses `RootPage` only for non-header safe areas, vertical rhythm, an
 It never wraps a virtualized list in another scroller. `PageIntro` may be caption-only when the
 native header is the route heading.
 
+The Settings tab root is the one titled-tab exception: its nested Stack shows a native large title
+(`headerLargeTitle: true`) that collapses into the compact bar on scroll. Every Settings destination
+pushed on the root Stack stays compact.
+
+`/settings-gallery` is a dev-only root sibling reached from the Settings hub's environment section.
+It renders every `native-settings` primitive for a one-pass device check in both schemes and
+redirects to `/settings` when the backend capability is `production`, matching the environment
+control's gate.
+
 Settings pages are the native-list exception defined by ADR
 [060](./decisions/060-platform-native-settings-composition.md): Expo Router still owns the root
 header and `/language-settings` push, while the page's SwiftUI Form or Material LazyColumn owns the

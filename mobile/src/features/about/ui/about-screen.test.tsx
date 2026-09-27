@@ -34,7 +34,7 @@ beforeEach(() => {
 describe.each(["ios", "android"] as const)("AboutScreen on %s", (platform) => {
   usePlatform(platform)
 
-  it("renders through one native host with action, value, and navigation rows", async () => {
+  it("renders the brand header and action and navigation rows in one native host", async () => {
     const view = await render(<AboutScreen />)
     expect(
       view.getAllByTestId(
@@ -43,15 +43,20 @@ describe.each(["ios", "android"] as const)("AboutScreen on %s", (platform) => {
           : "compose-lazy-column-scroll-owner",
       ),
     ).toHaveLength(1)
+    expect(view.getByRole("header", { name: "TimeCalendar" })).toBeOnTheScreen()
+    expect(view.getByTestId("about-version")).toHaveTextContent(
+      "Version 4.0.0 · Build 135",
+    )
     expect(
-      view.getByTestId("about-version").props.accessibilityRole,
-    ).toBeFalsy()
-    expect(view.getByTestId("about-blurb-access")).toHaveTextContent(
-      "With TimeCalendar, easily access your university schedule.",
-    )
-    expect(view.getByTestId("about-blurb-created")).toHaveTextContent(
-      "This app was created to make student life simpler, with schedules always close at hand.",
-    )
+      view.getByText(
+        "With TimeCalendar, easily access your university schedule.",
+      ),
+    ).toBeOnTheScreen()
+    expect(
+      view.getByText(
+        "This app was created to make student life simpler, with schedules always close at hand.",
+      ),
+    ).toBeOnTheScreen()
     await fireEvent.press(view.getByTestId("about-changelog"))
     expect(router.push).toHaveBeenCalledWith("/changelog")
     await fireEvent.press(view.getByTestId("about-privacy"))

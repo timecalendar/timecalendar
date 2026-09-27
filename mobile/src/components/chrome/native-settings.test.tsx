@@ -2,8 +2,10 @@ import { fireEvent, render, within } from "@testing-library/react-native"
 import { router } from "expo-router"
 
 import { usePlatform } from "@/test-support/platform"
+import { Colors } from "@/theme"
 
 import {
+  NativeSettingsAlert,
   NativeSettingsChoiceRow,
   NativeSettingsHost,
   NativeSettingsRadioDialog,
@@ -133,3 +135,396 @@ describe.each(["ios", "android"] as const)(
     })
   },
 )
+
+describe("native settings chrome on ios", () => {
+  usePlatform("ios")
+
+  it("tints the form with the brand and renders icons, footers, and trailing content", async () => {
+    const view = await render(
+      <NativeSettingsHost>
+        <NativeSettingsSection title="Section" footer="Footer copy">
+          <NativeSettingsRow
+            kind="navigation"
+            icon={{ ios: "info.circle", android: "info" }}
+            label="Navigate"
+            value="Value"
+            badge="3"
+            href="/about"
+            testID="nav"
+          />
+          <NativeSettingsRow
+            kind="action"
+            icon={{ ios: "envelope", android: "mail" }}
+            label="Act"
+            value="Secondary"
+            badge="1"
+            testID="action"
+          />
+          <NativeSettingsRow
+            kind="value"
+            icon={{ ios: "server.rack", android: "dns" }}
+            label="Value"
+            value="Read only"
+            testID="value"
+          />
+          <NativeSettingsSwitchRow
+            icon={{ ios: "person", android: "person" }}
+            label="Toggle"
+            value={false}
+            onValueChange={jest.fn()}
+            testID="toggle"
+          />
+          <NativeSettingsChoiceRow
+            label="Choice"
+            selected
+            selectedAccessibilityLabel="Selected"
+            onSelect={jest.fn()}
+            testID="choice"
+          />
+        </NativeSettingsSection>
+      </NativeSettingsHost>,
+    )
+    expect(view.getByTestId("swiftui-form-scroll-owner").props.tint).toBe(
+      Colors.dark.primary,
+    )
+    expect(view.getByText("Footer copy")).toBeOnTheScreen()
+    const tiles = view.getAllByTestId(/^swiftui-image-(?!checkmark|chevron)/)
+    expect(tiles.map((tile) => tile.props.testID)).toEqual([
+      "swiftui-image-info.circle",
+      "swiftui-image-envelope",
+      "swiftui-image-server.rack",
+      "swiftui-image-person",
+    ])
+    expect(tiles[0]?.props.color).toBe(Colors.dark.onPrimary)
+    expect(
+      within(view.getByTestId("nav")).getByTestId(
+        "swiftui-image-chevron.forward",
+      ),
+    ).toBeOnTheScreen()
+    expect(
+      within(view.getByTestId("action")).queryByTestId(
+        "swiftui-image-chevron.forward",
+      ),
+    ).toBeNull()
+    expect(within(view.getByTestId("nav")).getByText("3")).toBeOnTheScreen()
+    expect(
+      within(view.getByTestId("action")).getByText("Secondary"),
+    ).toBeOnTheScreen()
+    expect(within(view.getByTestId("toggle")).getByText("Toggle")).toBeTruthy()
+    expect(
+      within(view.getByTestId("toggle")).getByTestId("swiftui-image-person"),
+    ).toBeOnTheScreen()
+    const nav = within(view.getByTestId("nav"))
+    expect(nav.getByText("Navigate").props.foreground).toBe(Colors.dark.text)
+    expect(nav.getByText("Value").props.foreground).toBe(
+      Colors.dark.textSecondary,
+    )
+    expect(
+      nav.getByTestId("swiftui-image-chevron.forward").props.modifiers,
+    ).toContainEqual({
+      $type: "foregroundStyle",
+      value: Colors.dark.textTertiary,
+    })
+    const action = within(view.getByTestId("action"))
+    expect(action.getByText("Act").props.foreground).toBe(Colors.dark.text)
+    expect(action.getByText("Secondary").props.foreground).toBe(
+      Colors.dark.textSecondary,
+    )
+    expect(
+      within(view.getByTestId("choice")).getByText("Choice").props.foreground,
+    ).toBe(Colors.dark.text)
+    const checkmark = within(view.getByTestId("choice")).getByTestId(
+      "swiftui-image-checkmark",
+    )
+    expect(checkmark.props.modifiers).toContainEqual({
+      $type: "foregroundStyle",
+      value: Colors.dark.primary,
+    })
+    expect(checkmark.props.modifiers).toContainEqual({
+      $type: "font",
+      value: { textStyle: "subheadline", weight: "semibold" },
+    })
+  })
+
+  it("renders an alert section with an error glyph, readable copy, and a labelled action", async () => {
+    const onPress = jest.fn()
+    const view = await render(
+      <NativeSettingsAlert
+        title="Title"
+        message="Message"
+        testID="alert"
+        messageTestID="alert-message"
+        action={{
+          label: "Retry",
+          accessibilityLabel: "Retry the thing",
+          testID: "alert-action",
+          onPress,
+        }}
+      />,
+    )
+    expect(view.getByTestId("alert")).toBeOnTheScreen()
+    expect(
+      view.getByTestId("swiftui-image-exclamationmark.triangle.fill").props
+        .modifiers,
+    ).toContainEqual({ $type: "foregroundStyle", value: Colors.dark.error })
+    expect(view.getByText("Title").props.foreground).toBe(Colors.dark.text)
+    expect(view.getByTestId("alert-message").props.foreground).toBe(
+      Colors.dark.textSecondary,
+    )
+    const action = view.getByTestId("alert-action")
+    expect(action.props.accessibilityLabel).toBe("Retry the thing")
+    await fireEvent.press(action)
+    expect(onPress).toHaveBeenCalledTimes(1)
+  })
+
+  it("renders an alert without an action", async () => {
+    const view = await render(
+      <NativeSettingsAlert
+        title="Title"
+        message="Message"
+        testID="alert"
+        messageTestID="alert-message"
+      />,
+    )
+    expect(view.queryByRole("button")).toBeNull()
+  })
+
+  it("omits the checkmark on an unselected choice and never renders the radio dialog", async () => {
+    const view = await render(
+      <>
+        <NativeSettingsChoiceRow
+          label="Choice"
+          selected={false}
+          selectedAccessibilityLabel="Selected"
+          onSelect={jest.fn()}
+          testID="choice"
+        />
+        <NativeSettingsRadioDialog
+          visible
+          title="Dialog"
+          cancelLabel="Cancel"
+          value="a"
+          options={[{ label: "A", value: "a" }]}
+          testID="dialog"
+          onSelect={jest.fn()}
+          onDismiss={jest.fn()}
+        />
+      </>,
+    )
+    expect(view.queryByTestId("swiftui-image-checkmark")).toBeNull()
+    expect(view.queryByTestId("dialog")).toBeNull()
+  })
+})
+
+describe("native settings chrome on android", () => {
+  usePlatform("android")
+
+  it("seeds every Compose host with the brand color", async () => {
+    const view = await render(
+      <NativeSettingsHost>
+        <NativeSettingsRadioDialog
+          visible
+          title="Dialog"
+          cancelLabel="Cancel"
+          value="a"
+          options={[{ label: "A", value: "a" }]}
+          testID="dialog"
+          onSelect={jest.fn()}
+          onDismiss={jest.fn()}
+        />
+      </NativeSettingsHost>,
+    )
+    const hosts = view.getAllByTestId("compose-host")
+    expect(hosts).toHaveLength(2)
+    for (const host of hosts) {
+      expect(host.props.seedColor).toBe(Colors.dark.primary)
+    }
+  })
+
+  it("groups section children into positioned segments with Material text roles", async () => {
+    const view = await render(
+      <NativeSettingsHost>
+        <NativeSettingsSection title="Section" footer="Footer" testID="titled">
+          <NativeSettingsRow
+            kind="navigation"
+            icon={{ ios: "info.circle", android: "info" }}
+            label="First"
+            value="Supporting"
+            badge="4"
+            href="/about"
+            testID="first"
+          />
+          {null}
+          <NativeSettingsSwitchRow
+            icon={{ ios: "person", android: "person" }}
+            label="Middle"
+            value
+            onValueChange={jest.fn()}
+            testID="middle"
+          />
+          <NativeSettingsRow
+            kind="value"
+            label="Last"
+            value="Plain"
+            testID="last"
+          />
+        </NativeSettingsSection>
+        <NativeSettingsSection>
+          <NativeSettingsChoiceRow
+            label="Single"
+            selected={false}
+            selectedAccessibilityLabel="Selected"
+            onSelect={jest.fn()}
+            testID="single"
+          />
+        </NativeSettingsSection>
+      </NativeSettingsHost>,
+    )
+    const title = view.getByTestId("titled")
+    expect(title.props.color).toBe("#primary")
+    expect(title.props.typography).toBe("titleSmall")
+    const footer = view.getByText("Footer")
+    expect(footer.props.color).toBe("#onSurfaceVariant")
+    expect(footer.props.typography).toBe("bodySmall")
+
+    const corners = (id: string) => view.getByTestId(id).props.shape.params
+    expect(corners("first")).toEqual({
+      topStart: 20,
+      topEnd: 20,
+      bottomStart: 4,
+      bottomEnd: 4,
+    })
+    expect(corners("middle")).toEqual({
+      topStart: 4,
+      topEnd: 4,
+      bottomStart: 4,
+      bottomEnd: 4,
+    })
+    expect(corners("last")).toEqual({
+      topStart: 4,
+      topEnd: 4,
+      bottomStart: 20,
+      bottomEnd: 20,
+    })
+    expect(corners("single")).toEqual({
+      topStart: 20,
+      topEnd: 20,
+      bottomStart: 20,
+      bottomEnd: 20,
+    })
+    expect(view.getByTestId("first").props.padding).toEqual({
+      start: 16,
+      top: 0,
+      end: 16,
+      bottom: 2,
+    })
+    expect(view.getByTestId("last").props.padding.bottom).toBe(0)
+    expect(view.getByTestId("single").props.padding).toEqual({
+      start: 16,
+      top: 16,
+      end: 16,
+      bottom: 0,
+    })
+    expect(view.getByTestId("first").props.colors.containerColor).toBe(
+      "#surfaceContainer",
+    )
+
+    const headline = view.getByText("First")
+    expect(headline.props.typography).toBe("bodyLarge")
+    expect(headline.props.color).toBe("#onSurface")
+    const supporting = view.getByText("Supporting")
+    expect(supporting.props.typography).toBe("bodyMedium")
+    expect(supporting.props.color).toBe("#onSurfaceVariant")
+    expect(
+      within(view.getByTestId("first")).getByTestId("compose-badge"),
+    ).toHaveTextContent("4")
+    const icons = view.getAllByTestId("compose-icon")
+    expect(icons).toHaveLength(2)
+    expect(icons[0]?.props.tint).toBe("#onSurfaceVariant")
+    expect(icons[0]?.props.source).toBeTruthy()
+  })
+
+  it("renders the alert as an error-container card with a trailing text action", async () => {
+    const onPress = jest.fn()
+    const view = await render(
+      <NativeSettingsAlert
+        title="Title"
+        message="Message"
+        testID="alert"
+        messageTestID="alert-message"
+        action={{
+          label: "Retry",
+          accessibilityLabel: "Retry the thing",
+          testID: "alert-action",
+          onPress,
+        }}
+      />,
+    )
+    const card = view.getByTestId("alert")
+    expect(card.props.colors.containerColor).toBe("#errorContainer")
+    expect(card.props.shape).toEqual({ type: "roundedCorner", params: 20 })
+    expect(view.getByText("Title").props.typography).toBe("titleMedium")
+    expect(view.getByTestId("alert-message").props.color).toBe(
+      "#onErrorContainer",
+    )
+    await fireEvent.press(view.getByTestId("alert-action"))
+    expect(onPress).toHaveBeenCalledTimes(1)
+
+    await view.rerender(
+      <NativeSettingsAlert
+        title="Title"
+        message="Message"
+        testID="alert"
+        messageTestID="alert-message"
+      />,
+    )
+    expect(view.queryByTestId("alert-action")).toBeNull()
+  })
+
+  it("renders a full-width Material radio dialog with 56dp selectable rows", async () => {
+    const select = jest.fn()
+    const dismiss = jest.fn()
+    const view = await render(
+      <NativeSettingsRadioDialog
+        visible
+        title="Dialog"
+        cancelLabel="Cancel"
+        value="b"
+        options={[
+          { label: "A", value: "a" },
+          { label: "B", value: "b" },
+        ]}
+        testID="dialog"
+        onSelect={select}
+        onDismiss={dismiss}
+      />,
+    )
+    const optionA = view.getByTestId("dialog-a")
+    const optionB = view.getByTestId("dialog-b")
+    expect(optionA.props.accessibilityRole).toBe("radio")
+    expect(optionA.props.minSize).toEqual({ minHeight: 56 })
+    expect(optionA.props.accessibilityState.selected).toBe(false)
+    expect(optionB.props.accessibilityState.selected).toBe(true)
+    expect(view.getByText("A").props.typography).toBe("bodyLarge")
+    await fireEvent.press(optionA)
+    expect(select).toHaveBeenCalledWith("a")
+    await fireEvent.press(view.getByTestId("dialog-cancel"))
+    expect(dismiss).toHaveBeenCalledTimes(1)
+  })
+
+  it("renders nothing while the dialog is hidden", async () => {
+    const view = await render(
+      <NativeSettingsRadioDialog
+        visible={false}
+        title="Dialog"
+        cancelLabel="Cancel"
+        value="a"
+        options={[{ label: "A", value: "a" }]}
+        testID="dialog"
+        onSelect={jest.fn()}
+        onDismiss={jest.fn()}
+      />,
+    )
+    expect(view.queryByTestId("compose-host")).toBeNull()
+  })
+})

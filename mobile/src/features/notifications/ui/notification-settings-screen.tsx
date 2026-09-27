@@ -10,7 +10,6 @@ import {
   NativeSettingsRow,
   NativeSettingsSection,
   NativeSettingsSwitchRow,
-  NativeSettingsText,
 } from "@/components/chrome"
 import {
   type NotificationFrequency,
@@ -75,7 +74,14 @@ export default function NotificationSettingsScreen() {
     <>
       <Stack.Screen options={{ title: t("notifications.title") }} />
       <NativeSettingsHost>
-        <NativeSettingsSection title={t("notifications.section.subscription")}>
+        <NotificationSyncStatus
+          status={preferences.status}
+          retry={preferences.retry}
+        />
+        <NativeSettingsSection
+          title={t("notifications.section.subscription")}
+          footer={t("notifications.subscription.help")}
+        >
           <NativeSettingsSwitchRow
             label={t("notifications.subscription.label")}
             value={preferences.isActive}
@@ -83,11 +89,11 @@ export default function NotificationSettingsScreen() {
             switchTestID="notifications-is-active-switch"
             onValueChange={preferences.setIsActive}
           />
-          <NativeSettingsText testID="notifications-subscription-help">
-            {t("notifications.subscription.help")}
-          </NativeSettingsText>
         </NativeSettingsSection>
-        <NativeSettingsSection title={t("notifications.section.delivery")}>
+        <NativeSettingsSection
+          title={t("notifications.section.delivery")}
+          footer={t("notifications.frequency.help")}
+        >
           <NativeSettingsRow
             kind={Platform.OS === "ios" ? "navigation" : "action"}
             label={t("notifications.frequency.label")}
@@ -96,9 +102,8 @@ export default function NotificationSettingsScreen() {
             href="/notification-frequency"
             onPress={() => setFrequencyOpen(true)}
           />
-          <NativeSettingsText testID="notifications-frequency-help">
-            {t("notifications.frequency.help")}
-          </NativeSettingsText>
+        </NativeSettingsSection>
+        <NativeSettingsSection footer={t("notifications.days.help")}>
           <NativeSettingsRow
             kind={Platform.OS === "ios" ? "navigation" : "action"}
             label={t("notifications.days.label")}
@@ -107,14 +112,7 @@ export default function NotificationSettingsScreen() {
             href="/notification-days-ahead"
             onPress={() => setDaysOpen(true)}
           />
-          <NativeSettingsText testID="notifications-days-help">
-            {t("notifications.days.help")}
-          </NativeSettingsText>
         </NativeSettingsSection>
-        <NotificationSyncStatus
-          status={preferences.status}
-          retry={preferences.retry}
-        />
       </NativeSettingsHost>
 
       <NativeSettingsRadioDialog

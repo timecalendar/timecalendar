@@ -177,8 +177,45 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
   ordinary controls remain thin re-exports. Native controls follow system appearance and typography.
 - **`chrome/native-settings.tsx`** — the bounded settings-composition exception in ADR
   [060](./decisions/060-platform-native-settings-composition.md). SwiftUI Form/Section and Material
-  LazyColumn/ListItem remain private; the stable host, row, switch, selection, and radio-dialog
-  contracts receive the app-resolved light/dark scheme while retaining platform geometry and fonts.
+  LazyColumn/ListItem remain private; the stable host, section, row, switch, selection, alert,
+  header, and radio-dialog contracts receive the app-resolved light/dark scheme and one brand accent:
+  - **iOS:** the Form carries `tint(primary)`, so Toggles, checkmarks, and control accents are brand
+    pink. Inside a SwiftUI Button, hierarchical `.primary`/`.secondary`/`.tertiary` resolve against
+    the tint, so row labels use the concrete `text` token, values `textSecondary`, and the
+    footnote-semibold `chevron.forward` disclosure `textTertiary`; the selection checkmark is
+    subheadline-semibold in `primary`; the default Form button style
+    keeps the full-row highlight. An optional row `icon` renders a white SF Symbol on a 29pt continuous
+    rounded-square tile in `primaryStrong` (the white-on-brand fill pair). Section footers use the
+    native Section footer.
+  - **Android:** every Compose Host (list and dialog) receives `seedColor = primary`. Each section is
+    a `titleSmall`/`primary` heading inset 16dp, then one grouped list: rows are `surfaceContainer`
+    segments 2dp apart with 20dp outer and 4dp inner corners chosen by child position, 16dp side
+    margins, no dividers, and no chevron. Headlines are `bodyLarge`/`onSurface`, supporting values
+    `bodyMedium`/`onSurfaceVariant`, footers `bodySmall`/`onSurfaceVariant`. Row icons are flat
+    Material Symbols tinted `onSurfaceVariant` in the leading slot. The radio dialog is a
+    `selectableGroup` Column of full-width 56dp radio rows.
+  - **Help copy** lives in section footers, never as text rows inside a group: one setting per
+    section when each needs its own explanation.
+  - **`NativeSettingsAlert`** is the page-level failure pattern and renders first on the page. iOS:
+    its own Section with an `exclamationmark.triangle.fill` glyph in `error`, a `headline`/`text`
+    title, a `subheadline`/`textSecondary` message, and an optional tinted Button action row.
+    Android: one 20dp-rounded `errorContainer` ListItem (`titleMedium` title, `bodyMedium` message in
+    `onErrorContainer`) with an optional trailing TextButton. Both announce `title. message` through
+    the platform announcer on mount. Settled or in-progress states render nothing.
+  - **`NativeSettingsHeader`** (`chrome/native-settings-header.tsx`) is the centered brand header
+    for a page's top: the 88pt app icon (continuous rounded square on iOS, circle on Android), the
+    app name as a `ThemedText` heading, a tagline, optional secondary detail, and an optional
+    caption pill in `actionText` on `primarySoft`. SwiftUI and Compose text cannot carry a heading
+    role, so the content is React Native hosted through `RNHostView` (`matchContents`) at a width
+    derived from the window, inside a clear, zero-inset Form row on iOS and a centered Row on
+    Android. It follows the app theme tokens and the OS font scale.
+  - **Icons:** `NativeSettingsIcon` pairs an SF Symbol with a key of
+    `chrome/native-settings-icons.ts`, which maps each Material Symbol name to a committed vector
+    drawable under `mobile/assets/icons/material/`. Adding an Android icon means adding its XML there.
+  - **Rule:** feature screens never set tint, color, or typography on settings rows, sections, or
+    footers; the chrome seam owns them. Features pass copy, icons, values, and intent only.
+  - **Numeric editor:** `chrome/native-settings-numeric-editor.tsx` carries the same brand accent
+    (iOS Form `tint`, Compose `seedColor`).
 - **`chrome/index.ts`** — the barrel. Exports `NativeTabs`, `GlassSurface`, `Host`, `Picker`, `DateTimePicker`, `MenuView`, and `MenuComponentRef`.
 
 ## Lint boundary — the R-1 enforcement
@@ -197,7 +234,10 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
 
 - `src/theme/theme.test.tsx` (gated by `test-mobile`: tsc + lint + Jest, R-1) asserts: (a) `useTheme` resolves a token to its expected **light** and **dark** values (mocking `@/hooks/use-color-scheme`), plus the brand **`primary`** per scheme; (b) `GlassSurface` renders its children in Jest, where `isLiquidGlassAvailable()` is `false`, exercising the **fallback** path (a real `View`, not a throw); (c) **`buildNavTheme`** maps `colors.background` / `colors.primary` to the scheme-appropriate `@/theme` tokens for both schemes — the nav↔token contract.
 - `src/components/chrome/native-settings.test.tsx` asserts that the same resolved scheme reaches the
-  SwiftUI and Material hosts and that each platform composition contains one native scroll owner.
+  SwiftUI and Material hosts, that each platform composition contains one native scroll owner, that
+  the brand reaches the iOS Form tint and every Compose `seedColor`, and that icons, footers, segment
+  positions, Material text roles, and the radio-dialog structure are wired. Rendered geometry stays
+  device evidence, checked through the dev-only `/settings-gallery`.
 - CI **cannot** prove and is therefore **manual** (DoD / splash visual pass): that Liquid Glass renders on iOS 26+, that the fallback looks right on iOS 16.4–25 / Android, and that the contrast pairs read correctly on-device.
 
 ## Deferred (live debt — not built)

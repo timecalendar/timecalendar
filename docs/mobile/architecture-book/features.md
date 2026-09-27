@@ -137,12 +137,18 @@ single effective-zone resolver continues to feed calendar, personal events, and 
   Back, swipe dismissal, opening a choice, and invalid submission never write. Chrome owns the
   SwiftUI/Compose primitives and native buffers; the feature owns options, localized validation,
   commit policy, and the reusable presentation of the shared route-independent sync status.
+  The page is three sections (subscription, frequency, days ahead), each with its help text as the
+  section footer. Sync status appears only on failure, as the first element with Retry. Waiting for
+  a push token or loaded calendars is transient runtime plumbing, not something the user can act
+  on (notification permission is requested separately and does not gate the token), so it stays
+  hidden like pending and acknowledged.
 - Local preference parsers are total: absent, corrupt, or legacy values return safe
   defaults instead of throwing.
 - UI failures are accessible. Unexpected native, persistence, and background failures are
   recorded through `@/firebase` without personal data.
 - About owns its standalone `features/about` module and consumes the Settings grouped-row
-  primitives. This reversible local ownership choice does not require an ADR.
+  primitives. It opens with the chrome brand header (app icon, name, blurb, version caption); a
+  link failure shows as a `NativeSettingsAlert` below it. This reversible local ownership choice does not require an ADR.
 - Changelog owns its typed newest-first catalog, total seen-version store, gate, and shared
   history/sheet content. Phase 09 must call its exported setter before `(tabs)` mounts; every
   future `CHANGELOG_VERSION` bump must ship matching bundled content in the same JS update.

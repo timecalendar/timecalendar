@@ -8,7 +8,7 @@ export default function SettingsStackLayout() {
     <Stack
       screenOptions={{
         headerShown: true,
-        headerLargeTitle: false,
+        headerLargeTitle: true,
         title: t("settingsHub.title"),
       }}
     />

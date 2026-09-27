@@ -34,12 +34,17 @@ These rules guard real product touchables (interactive controls declare `accessi
   identifiers, and structure; VoiceOver/TalkBack focus and announcement quality remain device proof.
 - Native notification choices expose one selected checkmark/radio state, localized labels and
   plural values. The custom-days editor exposes stable field/action/error identifiers and an
-  understandable validation message without treating its numeric keyboard as validation. Shared
-  synchronization state changes use the platform accessibility announcer because SwiftUI/Compose
-  text cannot carry React Native live-region props; focused tests prove every state message and
-  the localized Retry action. Host tests prove the remaining semantics and callbacks; large text,
+  understandable validation message without treating its numeric keyboard as validation. Only a
+  synchronization failure is shown and announced: it renders first on the page through
+  `NativeSettingsAlert`, which uses the platform accessibility announcer because SwiftUI/Compose
+  text cannot carry React Native live-region props, with a localized Retry action. Pending,
+  waiting, and acknowledged states render and announce nothing; focused tests prove both. Host tests prove the remaining semantics and callbacks; large text,
   focus order, sheet/dialog feel, themes, and VoiceOver/TalkBack announcement quality remain
   owner-led device acceptance.
+
+- The Settings brand header (`NativeSettingsHeader`) hosts React Native text inside the native
+  list so the app name keeps the `ThemedText` heading role and all copy follows the OS font scale;
+  the app icon is hidden from assistive technology.
 
 ## Proof in CI
 

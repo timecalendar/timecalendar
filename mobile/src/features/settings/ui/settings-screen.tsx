@@ -18,6 +18,8 @@ import {
 import { deriveCalendarSummary } from "@/features/settings/data"
 import { useShowWeekendsPreference } from "@/features/settings/prefs"
 
+const calendarsIcon = { ios: "calendar", android: "calendar_month" } as const
+
 const destinations = [
   {
     section: "events" as const,
@@ -25,6 +27,7 @@ const destinations = [
     label: "settingsHub.activity.label" as const,
     hint: "settingsHub.activity.hint" as const,
     testID: "settings-activity",
+    icon: { ios: "clock.arrow.circlepath", android: "history" },
     unreadBadge: true,
   },
   {
@@ -33,6 +36,7 @@ const destinations = [
     label: "settingsHub.personalEvents.label" as const,
     hint: "settingsHub.personalEvents.hint" as const,
     testID: "settings-personal-events",
+    icon: { ios: "calendar.badge.plus", android: "event_note" },
   },
   {
     section: "events" as const,
@@ -40,6 +44,7 @@ const destinations = [
     label: "settingsHub.hiddenEvents.label" as const,
     hint: "settingsHub.hiddenEvents.hint" as const,
     testID: "settings-hidden-events",
+    icon: { ios: "eye.slash", android: "visibility_off" },
   },
   {
     section: "preferences" as const,
@@ -47,6 +52,7 @@ const destinations = [
     label: "settingsHub.appearance.label" as const,
     hint: "settingsHub.appearance.hint" as const,
     testID: "settings-appearance",
+    icon: { ios: "paintpalette", android: "palette" },
   },
   {
     section: "preferences" as const,
@@ -54,6 +60,7 @@ const destinations = [
     label: "settingsHub.timezone.label" as const,
     hint: "settingsHub.timezone.hint" as const,
     testID: "settings-timezone",
+    icon: { ios: "globe", android: "public" },
   },
   {
     section: "preferences" as const,
@@ -61,6 +68,7 @@ const destinations = [
     label: "settingsHub.notifications.label" as const,
     hint: "settingsHub.notifications.hint" as const,
     testID: "settings-notifications",
+    icon: { ios: "bell", android: "notifications" },
   },
   {
     section: "app" as const,
@@ -68,6 +76,7 @@ const destinations = [
     label: "settingsHub.about.label" as const,
     hint: "settingsHub.about.hint" as const,
     testID: "settings-about",
+    icon: { ios: "info.circle", android: "info" },
   },
   {
     section: "support" as const,
@@ -75,6 +84,7 @@ const destinations = [
     label: "settingsHub.feedback.label" as const,
     hint: "settingsHub.feedback.hint" as const,
     testID: "settings-feedback",
+    icon: { ios: "bubble.left.and.text.bubble.right", android: "feedback" },
   },
 ] as const
 
@@ -106,6 +116,7 @@ export function SettingsScreen() {
           <NativeSettingsRow
             kind="value"
             label={t("settingsHub.summary.title")}
+            icon={calendarsIcon}
             testID="settings-calendar-summary-loading"
           />
         ) : (
@@ -113,6 +124,7 @@ export function SettingsScreen() {
             kind="navigation"
             href="/user-calendars"
             label={t("settingsHub.summary.manage")}
+            icon={calendarsIcon}
             value={summaryValue}
             hint={t("settingsHub.summary.hint")}
             testID="settings-calendar-summary"
@@ -120,6 +132,7 @@ export function SettingsScreen() {
         )}
         <NativeSettingsSwitchRow
           label={t("settingsHub.summary.showWeekends")}
+          icon={{ ios: "calendar.day.timeline.leading", android: "view_week" }}
           value={showWeekends}
           onValueChange={setShowWeekends}
           testID="settings-show-weekends-row"
@@ -142,6 +155,7 @@ export function SettingsScreen() {
                   kind="navigation"
                   href={destination.href}
                   label={t(destination.label)}
+                  icon={destination.icon}
                   hint={t(destination.hint)}
                   badge={
                     hasUnreadBadge
@@ -160,6 +174,14 @@ export function SettingsScreen() {
           testID="settings-section-environment"
         >
           <EnvironmentSettingsControl />
+          <NativeSettingsRow
+            kind="navigation"
+            href="/settings-gallery"
+            label={t("settingsHub.gallery.label")}
+            icon={{ ios: "square.grid.2x2", android: "grid_view" }}
+            hint={t("settingsHub.gallery.hint")}
+            testID="settings-gallery"
+          />
         </NativeSettingsSection>
       ) : null}
     </NativeSettingsHost>

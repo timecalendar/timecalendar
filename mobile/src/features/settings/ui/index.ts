@@ -1,5 +1,6 @@
 export { default as AppearanceSettingsScreen } from "./appearance-settings-screen"
 export { LanguageSettingsScreen } from "./language-settings-screen"
+export { SettingsGalleryScreen } from "./settings-gallery-screen"
 export { SettingsRow, type SettingsRowProps } from "./settings-row"
 export { SettingsScreen } from "./settings-screen"
 export { SettingsSection } from "./settings-section"

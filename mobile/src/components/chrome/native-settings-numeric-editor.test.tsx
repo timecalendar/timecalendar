@@ -1,8 +1,13 @@
 import { fireEvent, render } from "@testing-library/react-native"
 
 import { usePlatform } from "@/test-support/platform"
+import { Colors } from "@/theme"
 
 import { NativeSettingsNumericEditor } from "./native-settings-numeric-editor"
+
+jest.mock("@/hooks/use-color-scheme", () => ({
+  useColorScheme: () => "dark",
+}))
 
 const ids = {
   container: "numeric-container",
@@ -31,10 +36,10 @@ describe("NativeSettingsNumericEditor on iOS", () => {
 
   it("owns one form, numeric keyboard, identifiers, and the current native buffer", async () => {
     const view = await render(<NativeSettingsNumericEditor {...props} />)
-    expect(view.getAllByTestId("swiftui-form-scroll-owner")).toHaveLength(1)
-    expect(view.getByTestId("swiftui-host").props.colorScheme).toMatch(
-      /light|dark/,
+    expect(view.getByTestId("swiftui-form-scroll-owner").props.tint).toBe(
+      Colors.dark.primary,
     )
+    expect(view.getByTestId("swiftui-host").props.colorScheme).toBe("dark")
     expect(view.getByTestId(ids.field).props.keyboardType).toBe("numeric")
     expect(view.getByTestId(ids.field).props.returnKeyType).toBe("done")
     expect(view.getByTestId(ids.message)).toBeTruthy()
@@ -52,9 +57,9 @@ describe("NativeSettingsNumericEditor on Android", () => {
 
   it("keeps outside taps inert, maps Back to cancel, and submits the current buffer", async () => {
     const view = await render(<NativeSettingsNumericEditor {...props} />)
-    expect(view.getByTestId("compose-host").props.colorScheme).toMatch(
-      /light|dark/,
-    )
+    const host = view.getByTestId("compose-host")
+    expect(host.props.colorScheme).toBe("dark")
+    expect(host.props.seedColor).toBe(Colors.dark.primary)
     const dialog = view.getByTestId(ids.container)
     expect(dialog.props.properties).toEqual({
       dismissOnBackPress: true,

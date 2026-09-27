@@ -189,6 +189,18 @@ jest.mock("@expo/ui/swift-ui/modifiers", () => {
     accessibilityHint: (value: string) => modifier("accessibilityHint", value),
     accessibilityValue: (value: string) =>
       modifier("accessibilityValue", value),
+    accessibilityHidden: (value = true) =>
+      modifier("accessibilityHidden", value),
+    background: (color: unknown, shape?: unknown) =>
+      modifier("background", { color, shape }),
+    shapes: {
+      capsule: () => ({ shape: "capsule" }),
+      roundedRectangle: (params: object) => ({
+        shape: "roundedRectangle",
+        ...params,
+      }),
+    },
+    tint: (value: unknown) => modifier("tint", value),
     keyboardType: (value: string) => modifier("keyboardType", value),
     submitLabel: (value: string) => modifier("submitLabel", value),
     buttonStyle: (value: string) => modifier("buttonStyle", value),
@@ -196,6 +208,8 @@ jest.mock("@expo/ui/swift-ui/modifiers", () => {
     font: (value: unknown) => modifier("font", value),
     foregroundStyle: (value: unknown) => modifier("foregroundStyle", value),
     frame: (value: unknown) => modifier("frame", value),
+    listRowBackground: (value: unknown) => modifier("listRowBackground", value),
+    listRowInsets: (value: unknown) => modifier("listRowInsets", value),
     padding: (value: unknown) => modifier("padding", value),
     textFieldStyle: (value: string) => modifier("textFieldStyle", value),
   }
@@ -253,6 +267,7 @@ jest.mock("@expo/ui/swift-ui", () => {
       {
         ...props,
         testID: modifierValue(modifiers, "accessibilityIdentifier"),
+        foreground: modifierValue(modifiers, "foregroundStyle"),
       },
       children,
     )
@@ -300,7 +315,7 @@ jest.mock("@expo/ui/swift-ui", () => {
           modifierValue(props.modifiers, "accessibilityIdentifier"),
         accessibilityRole: "button",
         accessibilityLabel:
-          props.label ?? modifierValue(props.modifiers, "accessibilityLabel"),
+          modifierValue(props.modifiers, "accessibilityLabel") ?? props.label,
         accessibilityHint: modifierValue(props.modifiers, "accessibilityHint"),
         accessibilityValue: {
           text: modifierValue(props.modifiers, "accessibilityValue"),
@@ -317,15 +332,25 @@ jest.mock("@expo/ui/swift-ui", () => {
       props.children ?? React.createElement(NativeText, null, props.label),
     )
   }
-  function Form({ children }: { children?: unknown }) {
+  function Form({
+    children,
+    modifiers,
+  }: {
+    children?: unknown
+    modifiers?: { $type: string; value: unknown }[]
+  }) {
     return React.createElement(
       View,
-      { testID: "swiftui-form-scroll-owner" },
+      {
+        testID: "swiftui-form-scroll-owner",
+        tint: modifierValue(modifiers, "tint"),
+      },
       children,
     )
   }
   function Section(props: {
     title?: string
+    footer?: unknown
     children?: unknown
     modifiers?: { $type: string; value: unknown }[]
   }) {
@@ -334,10 +359,11 @@ jest.mock("@expo/ui/swift-ui", () => {
       { testID: modifierValue(props.modifiers, "accessibilityIdentifier") },
       props.title ? React.createElement(NativeText, null, props.title) : null,
       props.children,
+      props.footer ?? null,
     )
   }
   function LabeledContent(props: {
-    label?: string
+    label?: unknown
     children?: unknown
     modifiers?: { $type: string; value: unknown }[]
   }) {
@@ -350,12 +376,15 @@ jest.mock("@expo/ui/swift-ui", () => {
           text: modifierValue(props.modifiers, "accessibilityValue"),
         },
       },
-      React.createElement(NativeText, null, props.label),
+      typeof props.label === "string"
+        ? React.createElement(NativeText, null, props.label)
+        : props.label,
       props.children,
     )
   }
   function Toggle(props: {
     label?: string
+    children?: unknown
     isOn?: boolean
     onIsOnChange?: (value: boolean) => void
     modifiers?: { $type: string; value: unknown }[]
@@ -370,14 +399,25 @@ jest.mock("@expo/ui/swift-ui", () => {
         onPress: () => props.onIsOnChange?.(!props.isOn),
         onValueChange: props.onIsOnChange,
       },
-      React.createElement(NativeText, null, props.label),
+      props.children ?? React.createElement(NativeText, null, props.label),
     )
   }
-  function Image() {
-    return null
+  function Image(props: {
+    systemName?: string
+    color?: unknown
+    modifiers?: { $type: string; value: unknown }[]
+  }) {
+    return React.createElement(View, {
+      testID: `swiftui-image-${props.systemName}`,
+      color: props.color,
+      modifiers: props.modifiers,
+    })
   }
   function ProgressView(props: object) {
     return React.createElement(View, props)
+  }
+  function RNHostView({ children }: { children?: unknown }) {
+    return React.createElement(View, { testID: "swiftui-rn-host" }, children)
   }
   function Spacer(props: object) {
     return React.createElement(View, props)
@@ -391,6 +431,7 @@ jest.mock("@expo/ui/swift-ui", () => {
     Image,
     LabeledContent,
     ProgressView,
+    RNHostView,
     Spacer,
     Section,
     Text,
@@ -405,6 +446,14 @@ jest.mock("@expo/ui/jetpack-compose/modifiers", () => {
   const modifier = (type: string, value?: unknown) => ({ $type: type, value })
   return {
     clickable: (handler: () => void) => modifier("clickable", handler),
+    clip: (shape: unknown) => modifier("clip", shape),
+    defaultMinSize: (value: unknown) => modifier("defaultMinSize", value),
+    padding: (start: number, top: number, end: number, bottom: number) =>
+      modifier("padding", { start, top, end, bottom }),
+    selectableGroup: () => modifier("selectableGroup"),
+    Shapes: {
+      RoundedCorner: (params: unknown) => ({ type: "roundedCorner", params }),
+    },
     fillMaxWidth: (value = 1) => modifier("fillMaxWidth", value),
     fillMaxSize: (value = 1) => modifier("fillMaxSize", value),
     imePadding: () => modifier("imePadding"),
@@ -549,35 +598,84 @@ jest.mock("@expo/ui/jetpack-compose", () => {
       props.children,
     )
   }
-  function ListItem(props: {
+  const modifierOf = (
+    modifiers: { $type: string; value: unknown }[] | undefined,
+    type: string,
+  ) => modifiers?.find((modifier) => modifier.$type === type)?.value
+  function selectableProps(
+    modifiers: { $type: string; value: unknown }[] | undefined,
+  ) {
+    const click = modifierOf(modifiers, "clickable") as (() => void) | undefined
+    const selectable = modifierOf(modifiers, "selectable") as
+      | { selected: boolean; handler: () => void }
+      | undefined
+    const toggleable = modifierOf(modifiers, "toggleable") as
+      | { value: boolean; handler: () => void }
+      | undefined
+    return {
+      testID: testID(modifiers),
+      accessibilityRole: selectable
+        ? "radio"
+        : toggleable
+          ? "switch"
+          : click
+            ? "button"
+            : undefined,
+      accessibilityState: {
+        selected: selectable?.selected,
+        checked: selectable?.selected ?? toggleable?.value,
+      },
+      onPress: click ?? selectable?.handler ?? toggleable?.handler,
+      shape: modifierOf(modifiers, "clip"),
+      padding: modifierOf(modifiers, "padding"),
+    }
+  }
+  function Row(props: {
     children?: unknown
     modifiers?: { $type: string; value: unknown }[]
   }) {
-    const click = props.modifiers?.find((item) => item.$type === "clickable")
-      ?.value as (() => void) | undefined
-    const selectable = props.modifiers?.find(
-      (item) => item.$type === "selectable",
-    )?.value as { selected: boolean; handler: () => void } | undefined
-    const toggleable = props.modifiers?.find(
-      (item) => item.$type === "toggleable",
-    )?.value as { value: boolean; handler: () => void } | undefined
     return React.createElement(
       Pressable,
       {
-        testID: testID(props.modifiers),
-        accessibilityRole: selectable
-          ? "radio"
-          : toggleable
-            ? "switch"
-            : click
-              ? "button"
-              : undefined,
-        accessibilityState: {
-          selected: selectable?.selected,
-          checked: selectable?.selected ?? toggleable?.value,
-        },
-        onPress: click ?? selectable?.handler ?? toggleable?.handler,
+        ...selectableProps(props.modifiers),
+        minSize: modifierOf(props.modifiers, "defaultMinSize"),
       },
+      props.children,
+    )
+  }
+  function Icon(props: { source: unknown; tint?: unknown }) {
+    return React.createElement(View, {
+      testID: "compose-icon",
+      source: props.source,
+      tint: props.tint,
+    })
+  }
+  function Badge(props: { children?: unknown }) {
+    return React.createElement(
+      View,
+      { testID: "compose-badge" },
+      props.children,
+    )
+  }
+  const palette = {
+    primary: "#primary",
+    onSurface: "#onSurface",
+    onSurfaceVariant: "#onSurfaceVariant",
+    surfaceContainer: "#surfaceContainer",
+    errorContainer: "#errorContainer",
+    onErrorContainer: "#onErrorContainer",
+  }
+  function useMaterialColors() {
+    return palette
+  }
+  function ListItem(props: {
+    children?: unknown
+    colors?: unknown
+    modifiers?: { $type: string; value: unknown }[]
+  }) {
+    return React.createElement(
+      Pressable,
+      { ...selectableProps(props.modifiers), colors: props.colors },
       props.children,
     )
   }
@@ -622,13 +720,22 @@ jest.mock("@expo/ui/jetpack-compose", () => {
   }
   function Text(props: {
     children?: unknown
+    color?: string
+    style?: { typography?: string }
     modifiers?: { $type: string; value: unknown }[]
   }) {
     return React.createElement(
       NativeText,
-      { testID: testID(props.modifiers) },
+      {
+        testID: testID(props.modifiers),
+        color: props.color,
+        typography: props.style?.typography,
+      },
       props.children,
     )
+  }
+  function RNHostView({ children }: { children?: unknown }) {
+    return React.createElement(View, { testID: "compose-rn-host" }, children)
   }
   function CircularProgressIndicator(props: {
     modifiers?: { $type: string; value: unknown }[]
@@ -638,17 +745,22 @@ jest.mock("@expo/ui/jetpack-compose", () => {
 
   return {
     AlertDialog,
+    Badge,
     Button,
     CircularProgressIndicator,
     Column,
     Host,
+    Icon,
     LazyColumn,
     ListItem,
     OutlinedTextField,
     RadioButton,
+    RNHostView,
+    Row,
     Switch,
     Text,
     TextButton,
+    useMaterialColors,
     useNativeState,
   }
 })

@@ -4,6 +4,7 @@ import { NativeSettingsSection } from "@/components/chrome"
 
 interface SettingsSectionProps extends PropsWithChildren {
   title?: string
+  footer?: string
   testID?: string
 }
 

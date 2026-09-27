@@ -1,18 +1,31 @@
 import {
   AlertDialog,
-  Button as MaterialButton,
+  Badge as MaterialBadge,
+  Column,
   Host as ComposeHost,
+  type HostProps as ComposeHostProps,
+  Icon as MaterialIcon,
   LazyColumn,
   ListItem,
+  type MaterialColors,
   RadioButton,
+  Row,
   Switch as MaterialSwitch,
   Text as MaterialText,
   TextButton,
+  useMaterialColors,
 } from "@expo/ui/jetpack-compose"
 import {
   clickable,
+  clip,
+  defaultMinSize,
   fillMaxSize,
+  fillMaxWidth,
+  type ModifierConfig,
+  padding,
   selectable,
+  selectableGroup,
+  Shapes,
   testID,
   toggleable,
 } from "@expo/ui/jetpack-compose/modifiers"
@@ -27,25 +40,47 @@ import {
   Spacer,
   Text as SwiftText,
   Toggle as SwiftToggle,
+  VStack,
 } from "@expo/ui/swift-ui"
 import {
+  accessibilityHidden,
   accessibilityHint,
   accessibilityIdentifier,
   accessibilityLabel,
   accessibilityValue,
+  background,
+  font,
+  foregroundStyle,
+  frame,
+  padding as swiftPadding,
+  shapes,
+  tint,
 } from "@expo/ui/swift-ui/modifiers"
 import type { Href } from "expo-router"
 import { router } from "expo-router"
-import type { PropsWithChildren } from "react"
+import {
+  Children,
+  createContext,
+  isValidElement,
+  type PropsWithChildren,
+  useContext,
+} from "react"
 import { Platform, StyleSheet } from "react-native"
 
+import {
+  materialSymbolSource,
+  type NativeSettingsIcon,
+} from "@/components/chrome/native-settings-icons"
+import { useErrorAnnouncement } from "@/components/use-error-announcement"
 import { useColorScheme } from "@/hooks/use-color-scheme"
+import { useTheme } from "@/theme"
 
 export type NativeSettingsRowProps = {
   kind: "navigation" | "action" | "value"
   label: string
   accessibilityLabel?: string | undefined
   testID: string
+  icon?: NativeSettingsIcon | undefined
   hint?: string | undefined
   value?: string | undefined
   badge?: string | undefined
@@ -54,8 +89,9 @@ export type NativeSettingsRowProps = {
 }
 
 type NativeSettingsSectionProps = PropsWithChildren<{
-  title?: string
-  testID?: string
+  title?: string | undefined
+  footer?: string | undefined
+  testID?: string | undefined
 }>
 
 type NativeSettingsChoiceRowProps = {
@@ -70,13 +106,24 @@ type NativeSettingsSwitchRowProps = {
   label: string
   value: boolean
   testID: string
+  icon?: NativeSettingsIcon | undefined
   switchTestID?: string
   onValueChange: (value: boolean) => void
 }
 
-type NativeSettingsTextProps = {
-  children: string
-  testID?: string
+type NativeSettingsAlertProps = {
+  title: string
+  message: string
+  testID: string
+  messageTestID: string
+  action?:
+    | {
+        label: string
+        accessibilityLabel: string
+        testID: string
+        onPress: () => void
+      }
+    | undefined
 }
 
 type NativeSettingsRadioDialogOption<Value extends string> = {
@@ -95,12 +142,90 @@ type NativeSettingsRadioDialogProps<Value extends string> = {
   onDismiss: () => void
 }
 
+type SegmentPosition = "first" | "middle" | "last" | "single"
+
+type Segment = { position: SegmentPosition; titled: boolean }
+
+const SegmentContext = createContext<Segment>({
+  position: "single",
+  titled: true,
+})
+
+const OUTER_RADIUS = 20
+const INNER_RADIUS = 4
+const SEGMENT_GAP = 2
+const LIST_INSET = 16
+
+const segmentCorners: Record<SegmentPosition, { top: number; bottom: number }> =
+  {
+    first: { top: OUTER_RADIUS, bottom: INNER_RADIUS },
+    middle: { top: INNER_RADIUS, bottom: INNER_RADIUS },
+    last: { top: INNER_RADIUS, bottom: OUTER_RADIUS },
+    single: { top: OUTER_RADIUS, bottom: OUTER_RADIUS },
+  }
+
+function segmentPosition(index: number, count: number): SegmentPosition {
+  if (count === 1) return "single"
+  if (index === 0) return "first"
+  return index === count - 1 ? "last" : "middle"
+}
+
+function useSegmentModifiers(): ModifierConfig[] {
+  const { position, titled } = useContext(SegmentContext)
+  const { top, bottom } = segmentCorners[position]
+  const leading = position === "first" || position === "single"
+  const trailing = position === "last" || position === "single"
+  return [
+    padding(
+      LIST_INSET,
+      leading && !titled ? LIST_INSET : 0,
+      LIST_INSET,
+      trailing ? 0 : SEGMENT_GAP,
+    ),
+    clip(
+      Shapes.RoundedCorner({
+        topStart: top,
+        topEnd: top,
+        bottomStart: bottom,
+        bottomEnd: bottom,
+      }),
+    ),
+  ]
+}
+
+function listItemColors(palette: MaterialColors) {
+  return {
+    containerColor: palette.surfaceContainer,
+    contentColor: palette.onSurface,
+    leadingContentColor: palette.onSurfaceVariant,
+    trailingContentColor: palette.onSurfaceVariant,
+    supportingContentColor: palette.onSurfaceVariant,
+  }
+}
+
 function useResolvedScheme(): "light" | "dark" {
   return useColorScheme() === "dark" ? "dark" : "light"
 }
 
+function ComposeSettingsHost({
+  children,
+  ...props
+}: Pick<
+  ComposeHostProps,
+  "children" | "matchContents" | "style" | "useViewportSizeMeasurement"
+>) {
+  const colorScheme = useResolvedScheme()
+  const theme = useTheme()
+  return (
+    <ComposeHost {...props} colorScheme={colorScheme} seedColor={theme.primary}>
+      {children}
+    </ComposeHost>
+  )
+}
+
 export function NativeSettingsHost({ children }: PropsWithChildren) {
   const colorScheme = useResolvedScheme()
+  const theme = useTheme()
   if (Platform.OS === "ios") {
     return (
       <SwiftHost
@@ -108,77 +233,202 @@ export function NativeSettingsHost({ children }: PropsWithChildren) {
         useViewportSizeMeasurement
         style={styles.fill}
       >
-        <Form>{children}</Form>
+        <Form modifiers={[tint(theme.primary)]}>{children}</Form>
       </SwiftHost>
     )
   }
   return (
-    <ComposeHost
-      colorScheme={colorScheme}
-      useViewportSizeMeasurement
-      style={styles.fill}
-    >
+    <ComposeSettingsHost useViewportSizeMeasurement style={styles.fill}>
       <LazyColumn
-        contentPadding={{ top: 16, bottom: 24 }}
+        contentPadding={{ top: 0, bottom: 24 }}
         modifiers={[fillMaxSize()]}
       >
         {children}
       </LazyColumn>
-    </ComposeHost>
+    </ComposeSettingsHost>
   )
 }
 
-export function NativeSettingsSection({
+export function NativeSettingsSection(props: NativeSettingsSectionProps) {
+  if (Platform.OS === "ios") {
+    return <SwiftSettingsSection {...props} />
+  }
+  return <ComposeSettingsSection {...props} />
+}
+
+function SwiftSettingsSection({
   title,
+  footer,
   testID: sectionTestID,
   children,
 }: NativeSettingsSectionProps) {
-  if (Platform.OS === "ios") {
-    return (
-      <SwiftSection
-        {...(title ? { title } : {})}
-        {...(sectionTestID
-          ? { modifiers: [accessibilityIdentifier(sectionTestID)] }
-          : {})}
-      >
-        {children}
-      </SwiftSection>
-    )
-  }
+  return (
+    <SwiftSection
+      {...(title ? { title } : {})}
+      {...(footer ? { footer: <SwiftText>{footer}</SwiftText> } : {})}
+      {...(sectionTestID
+        ? { modifiers: [accessibilityIdentifier(sectionTestID)] }
+        : {})}
+    >
+      {children}
+    </SwiftSection>
+  )
+}
+
+function ComposeSettingsSection({
+  title,
+  footer,
+  testID: sectionTestID,
+  children,
+}: NativeSettingsSectionProps) {
+  const palette = useMaterialColors()
+  const items = Children.toArray(children)
+  const titled = Boolean(title)
   return (
     <>
       {title ? (
         <MaterialText
+          color={palette.primary}
           style={{ typography: "titleSmall" }}
-          {...(sectionTestID ? { modifiers: [testID(sectionTestID)] } : {})}
+          modifiers={[
+            padding(LIST_INSET, 24, LIST_INSET, 8),
+            ...(sectionTestID ? [testID(sectionTestID)] : []),
+          ]}
         >
           {title}
         </MaterialText>
       ) : null}
-      {children}
+      {items.map((child, index) => (
+        <SegmentContext.Provider
+          key={isValidElement(child) && child.key !== null ? child.key : index}
+          value={{ position: segmentPosition(index, items.length), titled }}
+        >
+          {child}
+        </SegmentContext.Provider>
+      ))}
+      {footer ? (
+        <MaterialText
+          color={palette.onSurfaceVariant}
+          style={{ typography: "bodySmall" }}
+          modifiers={[padding(LIST_INSET, 8, LIST_INSET, 0)]}
+        >
+          {footer}
+        </MaterialText>
+      ) : null}
     </>
   )
 }
 
-export function NativeSettingsText({
-  children,
-  testID: textTestID,
-}: NativeSettingsTextProps) {
-  if (Platform.OS === "ios") {
-    return (
-      <SwiftText
-        {...(textTestID
-          ? { modifiers: [accessibilityIdentifier(textTestID)] }
-          : {})}
-      >
-        {children}
-      </SwiftText>
-    )
-  }
+export function NativeSettingsAlert(props: NativeSettingsAlertProps) {
+  useErrorAnnouncement(`${props.title}. ${props.message}`, { native: true })
+  if (Platform.OS === "ios") return <SwiftSettingsAlert {...props} />
+  return <ComposeSettingsAlert {...props} />
+}
+
+function SwiftSettingsAlert({
+  title,
+  message,
+  testID: alertTestID,
+  messageTestID,
+  action,
+}: NativeSettingsAlertProps) {
+  const theme = useTheme()
   return (
-    <MaterialText {...(textTestID ? { modifiers: [testID(textTestID)] } : {})}>
-      {children}
-    </MaterialText>
+    <SwiftSection modifiers={[accessibilityIdentifier(alertTestID)]}>
+      <HStack alignment="firstTextBaseline" spacing={12}>
+        <SwiftImage
+          systemName="exclamationmark.triangle.fill"
+          modifiers={[
+            font({ textStyle: "body" }),
+            foregroundStyle(theme.error),
+            accessibilityHidden(),
+          ]}
+        />
+        <VStack alignment="leading" spacing={4}>
+          <SwiftText
+            modifiers={[
+              font({ textStyle: "headline" }),
+              foregroundStyle(theme.text),
+            ]}
+          >
+            {title}
+          </SwiftText>
+          <SwiftText
+            modifiers={[
+              accessibilityIdentifier(messageTestID),
+              font({ textStyle: "subheadline" }),
+              foregroundStyle(theme.textSecondary),
+            ]}
+          >
+            {message}
+          </SwiftText>
+        </VStack>
+        <Spacer />
+      </HStack>
+      {action ? (
+        <SwiftButton
+          label={action.label}
+          onPress={action.onPress}
+          modifiers={[
+            accessibilityIdentifier(action.testID),
+            accessibilityLabel(action.accessibilityLabel),
+          ]}
+        />
+      ) : null}
+    </SwiftSection>
+  )
+}
+
+function ComposeSettingsAlert({
+  title,
+  message,
+  testID: alertTestID,
+  messageTestID,
+  action,
+}: NativeSettingsAlertProps) {
+  const palette = useMaterialColors()
+  return (
+    <ListItem
+      colors={{
+        containerColor: palette.errorContainer,
+        contentColor: palette.onErrorContainer,
+        supportingContentColor: palette.onErrorContainer,
+        trailingContentColor: palette.onErrorContainer,
+      }}
+      modifiers={[
+        padding(LIST_INSET, LIST_INSET, LIST_INSET, 0),
+        clip(Shapes.RoundedCorner(OUTER_RADIUS)),
+        testID(alertTestID),
+      ]}
+    >
+      <ListItem.HeadlineContent>
+        <MaterialText
+          color={palette.onErrorContainer}
+          style={{ typography: "titleMedium" }}
+        >
+          {title}
+        </MaterialText>
+      </ListItem.HeadlineContent>
+      <ListItem.SupportingContent>
+        <MaterialText
+          color={palette.onErrorContainer}
+          style={{ typography: "bodyMedium" }}
+          modifiers={[testID(messageTestID)]}
+        >
+          {message}
+        </MaterialText>
+      </ListItem.SupportingContent>
+      {action ? (
+        <ListItem.TrailingContent>
+          <TextButton
+            onClick={action.onPress}
+            modifiers={[testID(action.testID)]}
+          >
+            <MaterialText>{action.label}</MaterialText>
+          </TextButton>
+        </ListItem.TrailingContent>
+      ) : null}
+    </ListItem>
   )
 }
 
@@ -190,115 +440,263 @@ function activateRow(props: NativeSettingsRowProps) {
   }
 }
 
-function SwiftRowContent({
+function SwiftIconTile({ icon }: { icon: NativeSettingsIcon }) {
+  const theme = useTheme()
+  return (
+    <SwiftImage
+      systemName={icon.ios}
+      size={17}
+      color={theme.onPrimary}
+      modifiers={[
+        frame({ width: 29, height: 29 }),
+        background(
+          theme.primaryStrong,
+          shapes.roundedRectangle({
+            cornerRadius: 7,
+            roundedCornerStyle: "continuous",
+          }),
+        ),
+        accessibilityHidden(),
+      ]}
+    />
+  )
+}
+
+function SwiftRowLabel({
   label,
-  value,
-  badge,
-  disclosure,
-  selected,
+  icon,
 }: {
   label: string
-  value?: string | undefined
-  badge?: string | undefined
-  disclosure?: boolean
-  selected?: boolean
+  icon?: NativeSettingsIcon | undefined
 }) {
+  const theme = useTheme()
+  const text = (
+    <SwiftText modifiers={[foregroundStyle(theme.text)]}>{label}</SwiftText>
+  )
+  if (!icon) return text
   return (
-    <HStack>
-      <SwiftText>{label}</SwiftText>
+    <HStack spacing={12}>
+      <SwiftIconTile icon={icon} />
+      {text}
+    </HStack>
+  )
+}
+
+function SwiftBadge({ children }: { children: string }) {
+  return (
+    <SwiftText
+      modifiers={[
+        font({ textStyle: "subheadline" }),
+        foregroundStyle("white"),
+        swiftPadding({ horizontal: 7, vertical: 2 }),
+        background("red", shapes.capsule()),
+      ]}
+    >
+      {children}
+    </SwiftText>
+  )
+}
+
+function SwiftDisclosureRowContent({
+  label,
+  icon,
+  value,
+  badge,
+}: Pick<NativeSettingsRowProps, "label" | "icon" | "value" | "badge">) {
+  const theme = useTheme()
+  return (
+    <HStack spacing={12}>
+      <SwiftRowLabel label={label} icon={icon} />
       <Spacer />
-      {value ? <SwiftText>{value}</SwiftText> : null}
-      {badge ? <SwiftText>{badge}</SwiftText> : null}
-      {selected ? <SwiftImage systemName="checkmark" /> : null}
-      {disclosure ? <SwiftImage systemName="chevron.right" /> : null}
+      <HStack spacing={6}>
+        {value ? (
+          <SwiftText modifiers={[foregroundStyle(theme.textSecondary)]}>
+            {value}
+          </SwiftText>
+        ) : null}
+        {badge ? <SwiftBadge>{badge}</SwiftBadge> : null}
+        <SwiftImage
+          systemName="chevron.forward"
+          modifiers={[
+            font({ textStyle: "footnote", weight: "semibold" }),
+            foregroundStyle(theme.textTertiary),
+            accessibilityHidden(),
+          ]}
+        />
+      </HStack>
+    </HStack>
+  )
+}
+
+function SwiftActionRowContent({
+  label,
+  icon,
+  value,
+  badge,
+}: Pick<NativeSettingsRowProps, "label" | "icon" | "value" | "badge">) {
+  const theme = useTheme()
+  return (
+    <HStack spacing={12}>
+      <SwiftRowLabel label={label} icon={icon} />
+      <Spacer />
+      {value ? (
+        <SwiftText modifiers={[foregroundStyle(theme.textSecondary)]}>
+          {value}
+        </SwiftText>
+      ) : null}
+      {badge ? <SwiftBadge>{badge}</SwiftBadge> : null}
     </HStack>
   )
 }
 
 export function NativeSettingsRow(props: NativeSettingsRowProps) {
-  const interactive = props.kind !== "value"
-  const onPress = () => activateRow(props)
-  if (Platform.OS === "ios") {
-    const modifiers = [
-      accessibilityIdentifier(props.testID),
-      accessibilityLabel(props.accessibilityLabel ?? props.label),
-      ...(props.hint ? [accessibilityHint(props.hint)] : []),
-      ...(props.value ? [accessibilityValue(props.value)] : []),
-    ]
-    if (!interactive) {
-      return (
-        <LabeledContent label={props.label} modifiers={modifiers}>
-          <SwiftText>{props.value}</SwiftText>
-        </LabeledContent>
-      )
-    }
+  if (Platform.OS === "ios") return <SwiftSettingsRow {...props} />
+  return <ComposeSettingsRow {...props} />
+}
+
+function SwiftSettingsRow(props: NativeSettingsRowProps) {
+  const modifiers = [
+    accessibilityIdentifier(props.testID),
+    accessibilityLabel(props.accessibilityLabel ?? props.label),
+    ...(props.hint ? [accessibilityHint(props.hint)] : []),
+    ...(props.value ? [accessibilityValue(props.value)] : []),
+  ]
+  if (props.kind === "value") {
     return (
-      <SwiftButton onPress={onPress} modifiers={modifiers}>
-        <SwiftRowContent
-          label={props.label}
-          value={props.value}
-          badge={props.badge}
-          disclosure={props.kind === "navigation"}
-        />
-      </SwiftButton>
+      <LabeledContent
+        label={
+          props.icon ? (
+            <SwiftRowLabel label={props.label} icon={props.icon} />
+          ) : (
+            props.label
+          )
+        }
+        modifiers={modifiers}
+      >
+        <SwiftText>{props.value}</SwiftText>
+      </LabeledContent>
     )
   }
+  const Content =
+    props.kind === "navigation"
+      ? SwiftDisclosureRowContent
+      : SwiftActionRowContent
+  return (
+    <SwiftButton onPress={() => activateRow(props)} modifiers={modifiers}>
+      <Content
+        label={props.label}
+        icon={props.icon}
+        value={props.value}
+        badge={props.badge}
+      />
+    </SwiftButton>
+  )
+}
+
+function ComposeLeadingIcon({ icon }: { icon: NativeSettingsIcon }) {
+  const palette = useMaterialColors()
+  return (
+    <ListItem.LeadingContent>
+      <MaterialIcon
+        source={materialSymbolSource(icon.android)}
+        tint={palette.onSurfaceVariant}
+        size={24}
+      />
+    </ListItem.LeadingContent>
+  )
+}
+
+function ComposeSettingsRow(props: NativeSettingsRowProps) {
+  const palette = useMaterialColors()
+  const segment = useSegmentModifiers()
+  const interactive = props.kind !== "value"
   return (
     <ListItem
+      colors={listItemColors(palette)}
       modifiers={[
+        ...segment,
         testID(props.testID),
-        ...(interactive ? [clickable(onPress)] : []),
+        ...(interactive ? [clickable(() => activateRow(props))] : []),
       ]}
     >
+      {props.icon ? <ComposeLeadingIcon icon={props.icon} /> : null}
       <ListItem.HeadlineContent>
-        <MaterialText>{props.label}</MaterialText>
+        <MaterialText
+          color={palette.onSurface}
+          style={{ typography: "bodyLarge" }}
+        >
+          {props.label}
+        </MaterialText>
       </ListItem.HeadlineContent>
       {props.value ? (
         <ListItem.SupportingContent>
-          <MaterialText>{props.value}</MaterialText>
+          <MaterialText
+            color={palette.onSurfaceVariant}
+            style={{ typography: "bodyMedium" }}
+          >
+            {props.value}
+          </MaterialText>
         </ListItem.SupportingContent>
       ) : null}
-      {props.badge || props.kind === "navigation" ? (
+      {props.badge ? (
         <ListItem.TrailingContent>
-          <MaterialText>
-            {props.badge ?? (props.kind === "navigation" ? "›" : "")}
-          </MaterialText>
+          <MaterialBadge>
+            <MaterialText>{props.badge}</MaterialText>
+          </MaterialBadge>
         </ListItem.TrailingContent>
       ) : null}
     </ListItem>
   )
 }
 
-export function NativeSettingsSwitchRow({
+export function NativeSettingsSwitchRow(props: NativeSettingsSwitchRowProps) {
+  if (Platform.OS === "ios") {
+    const { label, icon, value, testID: rowTestID, switchTestID } = props
+    return (
+      <SwiftToggle
+        label={label}
+        isOn={value}
+        onIsOnChange={props.onValueChange}
+        modifiers={[
+          accessibilityIdentifier(switchTestID ?? rowTestID),
+          accessibilityLabel(label),
+        ]}
+      >
+        {icon ? <SwiftRowLabel label={label} icon={icon} /> : undefined}
+      </SwiftToggle>
+    )
+  }
+  return <ComposeSettingsSwitchRow {...props} />
+}
+
+function ComposeSettingsSwitchRow({
   label,
+  icon,
   value,
   testID: rowTestID,
   switchTestID,
   onValueChange,
 }: NativeSettingsSwitchRowProps) {
-  if (Platform.OS === "ios") {
-    return (
-      <SwiftToggle
-        label={label}
-        isOn={value}
-        onIsOnChange={onValueChange}
-        modifiers={[
-          accessibilityIdentifier(switchTestID ?? rowTestID),
-          accessibilityLabel(label),
-        ]}
-      />
-    )
-  }
+  const palette = useMaterialColors()
+  const segment = useSegmentModifiers()
   const toggle = () => onValueChange(!value)
   return (
     <ListItem
+      colors={listItemColors(palette)}
       modifiers={[
+        ...segment,
         testID(rowTestID),
         toggleable(value, toggle, { role: "switch" }),
       ]}
     >
+      {icon ? <ComposeLeadingIcon icon={icon} /> : null}
       <ListItem.HeadlineContent>
-        <MaterialText>{label}</MaterialText>
+        <MaterialText
+          color={palette.onSurface}
+          style={{ typography: "bodyLarge" }}
+        >
+          {label}
+        </MaterialText>
       </ListItem.HeadlineContent>
       <ListItem.TrailingContent>
         <MaterialSwitch
@@ -311,36 +709,70 @@ export function NativeSettingsSwitchRow({
   )
 }
 
-export function NativeSettingsChoiceRow({
+export function NativeSettingsChoiceRow(props: NativeSettingsChoiceRowProps) {
+  if (Platform.OS === "ios") return <SwiftSettingsChoiceRow {...props} />
+  return <ComposeSettingsChoiceRow {...props} />
+}
+
+function SwiftSettingsChoiceRow({
   label,
   selected,
   selectedAccessibilityLabel,
   testID: rowTestID,
   onSelect,
 }: NativeSettingsChoiceRowProps) {
-  if (Platform.OS === "ios") {
-    return (
-      <SwiftButton
-        onPress={onSelect}
-        modifiers={[
-          accessibilityIdentifier(rowTestID),
-          accessibilityLabel(label),
-          accessibilityValue(selected ? selectedAccessibilityLabel : ""),
-        ]}
-      >
-        <SwiftRowContent label={label} selected={selected} />
-      </SwiftButton>
-    )
-  }
+  const theme = useTheme()
+  return (
+    <SwiftButton
+      onPress={onSelect}
+      modifiers={[
+        accessibilityIdentifier(rowTestID),
+        accessibilityLabel(label),
+        accessibilityValue(selected ? selectedAccessibilityLabel : ""),
+      ]}
+    >
+      <HStack>
+        <SwiftRowLabel label={label} />
+        <Spacer />
+        {selected ? (
+          <SwiftImage
+            systemName="checkmark"
+            modifiers={[
+              font({ textStyle: "subheadline", weight: "semibold" }),
+              foregroundStyle(theme.primary),
+              accessibilityHidden(),
+            ]}
+          />
+        ) : null}
+      </HStack>
+    </SwiftButton>
+  )
+}
+
+function ComposeSettingsChoiceRow({
+  label,
+  selected,
+  testID: rowTestID,
+  onSelect,
+}: NativeSettingsChoiceRowProps) {
+  const palette = useMaterialColors()
+  const segment = useSegmentModifiers()
   return (
     <ListItem
+      colors={listItemColors(palette)}
       modifiers={[
+        ...segment,
         testID(rowTestID),
         selectable(selected, onSelect, "radioButton"),
       ]}
     >
       <ListItem.HeadlineContent>
-        <MaterialText>{label}</MaterialText>
+        <MaterialText
+          color={palette.onSurface}
+          style={{ typography: "bodyLarge" }}
+        >
+          {label}
+        </MaterialText>
       </ListItem.HeadlineContent>
       <ListItem.TrailingContent>
         <RadioButton selected={selected} />
@@ -349,8 +781,18 @@ export function NativeSettingsChoiceRow({
   )
 }
 
-export function NativeSettingsRadioDialog<Value extends string>({
-  visible,
+export function NativeSettingsRadioDialog<Value extends string>(
+  props: NativeSettingsRadioDialogProps<Value>,
+) {
+  if (!props.visible || Platform.OS === "ios") return null
+  return (
+    <ComposeSettingsHost matchContents>
+      <ComposeRadioDialog {...props} />
+    </ComposeSettingsHost>
+  )
+}
+
+function ComposeRadioDialog<Value extends string>({
   title,
   cancelLabel,
   value,
@@ -359,39 +801,53 @@ export function NativeSettingsRadioDialog<Value extends string>({
   onSelect,
   onDismiss,
 }: NativeSettingsRadioDialogProps<Value>) {
-  const colorScheme = useResolvedScheme()
-  if (!visible || Platform.OS === "ios") return null
+  const palette = useMaterialColors()
   return (
-    <ComposeHost colorScheme={colorScheme} matchContents>
-      <AlertDialog
-        modifiers={[testID(dialogTestID)]}
-        onDismissRequest={onDismiss}
-      >
-        <AlertDialog.Title>
-          <MaterialText>{title}</MaterialText>
-        </AlertDialog.Title>
-        <AlertDialog.Text>
+    <AlertDialog
+      modifiers={[testID(dialogTestID)]}
+      onDismissRequest={onDismiss}
+    >
+      <AlertDialog.Title>
+        <MaterialText>{title}</MaterialText>
+      </AlertDialog.Title>
+      <AlertDialog.Text>
+        <Column modifiers={[selectableGroup()]}>
           {options.map((option) => (
-            <MaterialButton
+            <Row
               key={option.value}
-              onClick={() => onSelect(option.value)}
-              modifiers={[testID(`${dialogTestID}-${option.value}`)]}
+              verticalAlignment="center"
+              modifiers={[
+                fillMaxWidth(),
+                defaultMinSize({ minHeight: 56 }),
+                selectable(
+                  option.value === value,
+                  () => onSelect(option.value),
+                  "radioButton",
+                ),
+                testID(`${dialogTestID}-${option.value}`),
+              ]}
             >
               <RadioButton selected={option.value === value} />
-              <MaterialText>{option.label}</MaterialText>
-            </MaterialButton>
+              <MaterialText
+                color={palette.onSurface}
+                style={{ typography: "bodyLarge" }}
+                modifiers={[padding(16, 0, 0, 0)]}
+              >
+                {option.label}
+              </MaterialText>
+            </Row>
           ))}
-        </AlertDialog.Text>
-        <AlertDialog.DismissButton>
-          <TextButton
-            onClick={onDismiss}
-            modifiers={[testID(`${dialogTestID}-cancel`)]}
-          >
-            <MaterialText>{cancelLabel}</MaterialText>
-          </TextButton>
-        </AlertDialog.DismissButton>
-      </AlertDialog>
-    </ComposeHost>
+        </Column>
+      </AlertDialog.Text>
+      <AlertDialog.DismissButton>
+        <TextButton
+          onClick={onDismiss}
+          modifiers={[testID(`${dialogTestID}-cancel`)]}
+        >
+          <MaterialText>{cancelLabel}</MaterialText>
+        </TextButton>
+      </AlertDialog.DismissButton>
+    </AlertDialog>
   )
 }
 

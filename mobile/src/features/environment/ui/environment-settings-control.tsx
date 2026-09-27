@@ -71,7 +71,7 @@ export function EnvironmentSettingsControl() {
       first
       variant="action"
       accessibilityRole="button"
-      icon={{ ios: "server.rack", android: "dns", web: "dns" }}
+      icon={{ ios: "server.rack", android: "dns" }}
       label={label}
       accessibilityLabel={t("environment.selector.accessibilityLabel", {
         primary: label,

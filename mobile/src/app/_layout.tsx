@@ -141,6 +141,7 @@ export default function RootLayout() {
               />
               <Stack.Screen name="appearance-settings" />
               <Stack.Screen name="language-settings" />
+              <Stack.Screen name="settings-gallery" />
               <Stack.Screen name="about" />
               <Stack.Screen name="changelog" />
               <Stack.Screen
@@ -205,7 +206,7 @@ export default function RootLayout() {
                 }}
               />
               <Stack.Screen name="feedback" />
-              {/* The user-calendars management screen ("Mes calendriers") — a
+              {/* The user-calendars management screen ("Calendriers") — a
                 Stack sibling of (tabs), reached from the Settings summary, where
                 a held calendar's visibility is toggled and a calendar deleted.
                 Header shown for the accessible back affordance + the screen's own

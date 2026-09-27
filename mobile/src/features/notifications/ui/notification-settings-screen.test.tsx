@@ -54,6 +54,28 @@ describe("NotificationSettingsScreen on iOS", () => {
     expect(setNbDaysAhead).not.toHaveBeenCalled()
   })
 
+  it("footers each setting with its help and shows sync failure first", async () => {
+    const view = await render(<NotificationSettingsScreen />)
+    for (const help of [
+      /^This controls your subscription/,
+      /^Immediate changes/,
+      /^Choose how far ahead/,
+    ]) {
+      expect(view.getByText(help)).toBeOnTheScreen()
+    }
+    expect(view.queryByTestId("notifications-sync-error")).toBeNull()
+
+    mockPrefs({ status: { state: "error" } })
+    await view.rerender(<NotificationSettingsScreen />)
+    const ids = view
+      .getAllByTestId(/^notifications-(sync-error|is-active-switch)$/)
+      .map((node) => node.props.testID as string)
+    expect(ids).toEqual([
+      "notifications-sync-error",
+      "notifications-is-active-switch",
+    ])
+  })
+
   it.each([
     [1, "1 day"],
     [2, "2 days"],

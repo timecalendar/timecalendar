@@ -112,7 +112,7 @@ describe("ConnectScreen", () => {
   it("renders the localized guidance", async () => {
     const { getByText, queryByText } = await render(<ConnectScreen />)
 
-    expect(queryByText("Sign in to your intranet")).toBeNull()
+    expect(queryByText("Sign in to the intranet")).toBeNull()
     expect(
       getByText(
         "On your computer, or in this device's browser, sign in to your institution's site and open your timetable.",

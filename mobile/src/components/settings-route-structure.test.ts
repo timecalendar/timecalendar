@@ -69,10 +69,20 @@ describe("Settings route structure", () => {
     )
   })
 
-  it("uses a compact localized native title", () => {
+  it("uses a large localized native title on the tab root", () => {
     const layout = route("(tabs)/settings/_layout.tsx")
     expect(layout).toContain("headerShown: true")
+    expect(layout).toContain("headerLargeTitle: true")
     expect(layout).toContain('title: t("settingsHub.title")')
+  })
+
+  it("keeps the dev-only Settings gallery as a thin root destination", () => {
+    expect(route("settings-gallery.tsx").trim()).toBe(
+      'export { SettingsGalleryScreen as default } from "@/features/settings/ui"',
+    )
+    expect(route("_layout.tsx")).toContain(
+      '<Stack.Screen name="settings-gallery" />',
+    )
   })
 
   it("redirects legacy Profile and More routes to canonical Settings", () => {
