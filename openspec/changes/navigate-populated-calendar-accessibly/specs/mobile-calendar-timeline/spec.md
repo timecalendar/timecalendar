@@ -88,7 +88,7 @@ The committed page SHALL keep every projected event natively reachable through t
 
 ### Requirement: T12 restores logical focus after accepted context changes
 
-The Calendar SHALL remember the last natively accessibility-focused event by original source/UID and relevant date, using an inbound platform accessibility-focus event tied to that event's sole visible target. Pointer press, event activation, keyboard/input `onFocus`, and an outbound focus request MUST NOT fabricate this memory. Only a live current-generation identity from the focused Calendar route may update it. After details return, accepted paging, or a Day/Week mode change, Calendar SHALL wait for the complete matching presentation and native target registration, reveal the target when necessary, and request focus once on that surviving identity. If the identity is absent, focus SHALL fall back to its relevant committed date heading when present, otherwise to the visible committed-page navigation title with header role and matching label. Stale revisions, transient motion, zoom frames, and adjacent pages SHALL NOT move focus. The accepted date context SHALL be announced once without a second announcement caused by focus restoration.
+The Calendar SHALL remember the last natively accessibility-focused event by original source/UID and relevant date, using an inbound platform accessibility-focus event tied to that event's sole visible target. Pointer press, event activation, keyboard/input `onFocus`, and an outbound focus request MUST NOT fabricate this memory. Only a live current-generation identity from the focused Calendar route may update it. After details return, accepted paging, or a Day/Week mode change, Calendar SHALL wait for the complete matching presentation and native target registration, reveal the target when necessary, and request focus once on that surviving identity. If the identity is absent, focus SHALL fall back to its relevant committed date heading when present, otherwise to the existing visible month/year navigation title. That title SHALL have a header role and an accessible label containing its visible month/year words and the full date context of the accepted presentation. Stale revisions, transient motion, zoom frames, and adjacent pages SHALL NOT move focus. The accepted date context SHALL be announced once; title focus that conveys the context MUST NOT be paired with a second settled-context announcement.
 
 #### Scenario: Native accessibility focus is the only event-memory signal
 
@@ -108,11 +108,12 @@ The Calendar SHALL remember the last natively accessibility-focused event by ori
 - **THEN** focus moves to the relevant date heading if that date remains present, otherwise to the committed page heading
 - **AND** no stale ref or array position determines the destination
 
-#### Scenario: Missing date falls back to the visible committed page title
+#### Scenario: Missing date falls back to the visible month/year title
 
 - **WHEN** the remembered event and date are both absent after the accepted presentation settles
-- **THEN** focus moves to the existing visible Calendar navigation title whose text matches the committed page heading
-- **AND** no first-date-cell substitution, hidden heading, extra toolbar, or duplicate announcement is introduced
+- **THEN** focus moves to the existing visible Calendar navigation title, retaining its localized month/year text and exposing an accessible label with those words plus the accepted full-date context
+- **AND** its registered ref, generation, revision, and label match the accepted presentation, including after late registration or route return
+- **AND** no first-date-cell substitution, hidden heading, extra toolbar, pending-date label, or duplicate settled announcement is introduced
 
 #### Scenario: Obsolete settlement cannot steal focus
 
