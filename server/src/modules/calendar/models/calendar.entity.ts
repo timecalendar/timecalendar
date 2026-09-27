@@ -1,4 +1,5 @@
 import { CalendarLog } from "modules/calendar-log/models/calendar-log.entity"
+import { CalendarCustomData } from "modules/calendar-sync/models/dto/calendar-custom-data.dto"
 import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
 import { School } from "modules/school/models/school.entity"
 import {
@@ -34,7 +35,7 @@ export class Calendar {
   url: string
 
   @Column("json", { nullable: true })
-  customData: Record<string, unknown> | null
+  customData: CalendarCustomData | null
 
   @ManyToOne(() => School, { nullable: true })
   school?: School

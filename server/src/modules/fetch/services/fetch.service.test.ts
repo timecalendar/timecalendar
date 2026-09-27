@@ -81,7 +81,7 @@ describe("FetchService", () => {
         crazyschoolFetcher.mockClear()
 
         const error = await fetchService
-          .fetchEvents({ url, customData: null }, "crazyschool")
+          .fetchEvents({ url }, "crazyschool")
           .catch((failure) => failure)
         expect(error.status).toBe(400)
         expect(error.getResponse()).toEqual({
@@ -101,10 +101,9 @@ describe("FetchService", () => {
         initService([fetcherCalendarEventFactory.build()])
         jest.useFakeTimers({ now: new Date("2026-08-25T12:00:00.000Z") })
         try {
-          await fetchService.fetchEvents({ url, customData: null }, null)
+          await fetchService.fetchEvents({ url }, null)
           expect(icalFetcher.fetch).toHaveBeenCalledWith(
             expect.stringContaining("firstDate=2025-08-25&lastDate=2027-08-25"),
-            {},
             {},
           )
         } finally {
@@ -116,10 +115,30 @@ describe("FetchService", () => {
         initService([fetcherCalendarEventFactory.build()])
         const url = "https://edt.univ-tlse3.fr/calendar/export.ics"
         await expect(
-          fetchService.fetchEvents({ url, customData: null }, null),
+          fetchService.fetchEvents({ url }, null),
         ).resolves.toHaveLength(1)
-        expect(icalFetcher.fetch).toHaveBeenCalledWith(url, {}, {})
+        expect(icalFetcher.fetch).toHaveBeenCalledWith(url, {})
       })
+    })
+
+    it("passes the fetch context with the transformed URL", async () => {
+      initService([fetcherCalendarEventFactory.build()])
+      const context = {
+        signal: new AbortController().signal,
+        onAttempt: jest.fn(),
+      }
+
+      await fetchService.fetchEvents(
+        { url: "https://google.com/calendar?format=1" },
+        "rouen",
+        undefined,
+        context,
+      )
+
+      expect(icalFetcher.fetch).toHaveBeenCalledWith(
+        "https://bing.com/calendar?format=1",
+        context,
+      )
     })
 
     it("should fetch events", async () => {
