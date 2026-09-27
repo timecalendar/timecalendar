@@ -98,13 +98,18 @@ describe("IcalFetcher", () => {
 
   it.each([
     ["2", 2_000, 2],
+    ["Sun, 27 Sep 2026 12:00:02 GMT", 2_000, 2],
+    ["Sun, 27 Sep 2026 11:59:58 GMT", 0, 2],
     ["9", 0, 1],
     ["10", 0, 1],
     ["malformed", 0, 2],
   ])(
     "bounds a 429 Retry-After of %s",
     async (header, expectedWait, expectedAttempts) => {
-      jest.useFakeTimers({ doNotFake: ["nextTick", "setImmediate"] })
+      jest.useFakeTimers({
+        doNotFake: ["nextTick", "setImmediate"],
+        now: new Date("2026-09-27T12:00:00Z"),
+      })
       const request = jest
         .spyOn(axios, "request")
         .mockRejectedValueOnce(responseError(429, header))
