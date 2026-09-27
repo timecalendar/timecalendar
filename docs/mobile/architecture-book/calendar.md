@@ -254,8 +254,9 @@ service tests.
 Server sync telemetry is owned by the
 [server observability runbook](../../server/observability.md), not by the mobile sync
 seam. Calendar URLs and tokens must never become telemetry dimensions. The server uses
-only its reviewed finite upstream classifier; this boundary changes neither the mobile
-API nor local sync behavior. Unexpected mobile-local failures continue to use the
+only its reviewed finite upstream classifier. Stored application metrics are
+collector-merged series derived from DELTA measurements, without per-pod labels;
+this boundary changes neither the mobile API nor local sync behavior. Unexpected mobile-local failures continue to use the
 privacy-safe `@/firebase` seam.
 
 The server gives batch sync a ten-second work budget inside the client's 15-second

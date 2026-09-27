@@ -1,12 +1,12 @@
 ## 1. Exporter and regression proof
 
-- [ ] 1.1 In `server/src/config/observability/tracer.ts`, make the production metric factory construct an `OTLPMetricExporter` subclass whose public temporality selection returns `AggregationTemporality.DELTA` for every `InstrumentType`; verify the configured gRPC endpoint still reaches the factory.
-- [ ] 1.2 In `server/src/config/observability/tracer.test.ts`, test the same factory used by the production SDK against every `InstrumentType` value. Explicitly assert both UpDownCounter kinds are DELTA so replacing the subclass with the stock DELTA preference fails this test; run the focused Jest test.
+- [x] 1.1 In `server/src/config/observability/tracer.ts`, make the production metric factory construct an `OTLPMetricExporter` subclass whose public temporality selection returns `AggregationTemporality.DELTA` for every `InstrumentType`; verify the configured gRPC endpoint still reaches the factory.
+- [x] 1.2 In `server/src/config/observability/tracer.test.ts`, test the same factory used by the production SDK against every `InstrumentType` value. Explicitly assert both UpDownCounter kinds are DELTA so replacing the subclass with the stock DELTA preference fails this test; run the focused Jest test.
 
 ## 2. Documentation
 
-- [ ] 2.1 Update `docs/server/observability.md` to replace per-pod cumulative metric and reset examples with collector-merged series, aggregate `rate`/`increase` queries, and a post-rollout comparison of upstream attempt volume against outbound client span volume; check the queries against the collector contract.
-- [ ] 2.2 Update the existing server-observability boundary in `docs/mobile/architecture-book/calendar.md` to note that stored app metrics are collector-merged DELTA-derived series while mobile sync and API behavior are unchanged; verify the Architecture Book still links to the server runbook.
+- [x] 2.1 Update `docs/server/observability.md` to replace per-pod cumulative metric and reset examples with collector-merged series, aggregate `rate`/`increase` queries, and a post-rollout comparison of upstream attempt volume against outbound client span volume; check the queries against the collector contract.
+- [x] 2.2 Update the existing server-observability boundary in `docs/mobile/architecture-book/calendar.md` to note that stored app metrics are collector-merged DELTA-derived series while mobile sync and API behavior are unchanged; verify the Architecture Book still links to the server runbook.
 
 ## 3. Verification and delivery
 
