@@ -321,7 +321,14 @@ describe("CalendarSyncService", () => {
         async () => {
           await expect(
             service.sync({ ...calendar, url }),
-          ).rejects.toMatchObject({ status: 400 })
+          ).rejects.toMatchObject({
+            name: "CalendarSyncFailure",
+            message: "Unsupported calendar URL",
+            originalCause: {
+              status: 400,
+              response: { message: "Unsupported calendar URL" },
+            },
+          })
         },
       )
       expect(icalFetcher.fetch).not.toHaveBeenCalled()
