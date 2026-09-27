@@ -1,15 +1,33 @@
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-grpc"
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc"
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc"
+import {
+  AggregationTemporality,
+  InstrumentType,
+} from "@opentelemetry/sdk-metrics"
 import { SEMRESATTRS_SERVICE_INSTANCE_ID } from "@opentelemetry/semantic-conventions"
 import {
   annotateOutgoingHttpSpan,
   createBoundedSdkShutdown,
+  createMetricExporter,
   createObservabilitySdk,
   sanitizedOutgoingHttpAttributes,
 } from "./tracer"
 
 describe("observability SDK configuration", () => {
+  it("selects DELTA for every production metric instrument", () => {
+    const exporter = createMetricExporter("http://collector:4317")
+    const instrumentTypes = Object.values(InstrumentType)
+
+    expect(instrumentTypes).toContain(InstrumentType.UP_DOWN_COUNTER)
+    expect(instrumentTypes).toContain(InstrumentType.OBSERVABLE_UP_DOWN_COUNTER)
+    for (const instrumentType of instrumentTypes) {
+      expect(exporter.selectAggregationTemporality(instrumentType)).toBe(
+        AggregationTemporality.DELTA,
+      )
+    }
+  })
+
   it("does not create exporters when telemetry is disabled", () => {
     const factories = {
       trace: jest.fn(),

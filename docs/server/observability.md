@@ -10,13 +10,17 @@ value.
 All three signals carry `service.name=timecalendar`,
 `deployment.environment.name`, and the sanitized pod-derived
 `service.instance.id` (`unknown` when the runtime hostname is unusable).
+The shared collector removes the instance attribute from application metrics,
+sums DELTA measurements by `collector_instance`, and stores cumulative series.
+Stored application metrics therefore have no per-pod identity. Traces and logs
+retain their sanitized instance resource attribute.
 
-| Signal | Bounded application fields |
-| --- | --- |
-| `calendar_sync_total` | `domain`, `school`, `status`, `error_type`, `action` |
-| application logs | severity, `context`, optional `error.type`, active trace/span IDs |
-| `calendar.sync` spans | `action`, `school`, `upstream.domain`, optional `error.type` |
-| outgoing HTTP spans | `peer.service`, `upstream.domain` |
+| Signal                | Bounded application fields                                        |
+| --------------------- | ----------------------------------------------------------------- |
+| `calendar_sync_total` | `domain`, `school`, `status`, `error_type`, `action`              |
+| application logs      | severity, `context`, optional `error.type`, active trace/span IDs |
+| `calendar.sync` spans | `action`, `school`, `upstream.domain`, optional `error.type`      |
+| outgoing HTTP spans   | `peer.service`, `upstream.domain`                                 |
 
 The complete `domain`, `upstream.domain`, and `peer.service` vocabulary is:
 
@@ -40,18 +44,11 @@ log body/attribute, span name, or span attribute. Absolute URLs in logs become
 
 ## VictoriaMetrics
 
-Per-instance rate (each cumulative series is rated before display):
+Rate each stored collector series before aggregating:
 
 ```promql
-sum by (service_instance_id) (
-  rate(calendar_sync_total{deployment_environment_name="preprod"}[5m])
-)
-```
-
-Aggregate only after the per-series `rate`:
-
-```promql
-sum(rate(calendar_sync_total{deployment_environment_name="preprod"}[5m]))
+sum(rate(calendar_sync_total{service_name="timecalendar",deployment_environment_name="preprod"}[5m]))
+sum(increase(calendar_sync_total{service_name="timecalendar",deployment_environment_name="preprod"}[1h]))
 ```
 
 Upstream, outcome, action, and bounded error breakdowns:
@@ -68,17 +65,28 @@ Unexpected upstream labels (expected result: no series):
 calendar_sync_total{deployment_environment_name="preprod",domain!~"ensea\\.fr|esiee\\.fr|grenet\\.fr|u-bourgogne\\.fr|u-pec\\.fr|univ-amu\\.fr|univ-angers\\.fr|univ-eiffel\\.fr|univ-lehavre\\.fr|univ-lyon1\\.fr|univ-orleans\\.fr|univ-poitiers\\.fr|univ-rennes1\\.fr|univ-rouen\\.fr|univ-st-etienne\\.fr|custom|invalid"}
 ```
 
-Reset/collision sanity:
+Collector-merged series and hourly upstream attempt volume:
 
 ```promql
-sum by (service_instance_id) (resets(calendar_sync_total{deployment_environment_name="preprod"}[30m]))
-count(count by (service_instance_id) (calendar_sync_total{deployment_environment_name="preprod"}))
+count by (collector_instance) (calendar_sync_total{service_name="timecalendar",deployment_environment_name="preprod"})
+sum(increase(calendar_sync_upstream_attempt_total{service_name="timecalendar",deployment_environment_name="preprod"}[1h]))
 ```
 
-For a two-pod synthetic exercise, expect two distinct non-`unknown` instance values,
-non-negative rates, and resets only for the restarted pod. The aggregate rate must
-equal the sum of the displayed per-instance rates. The success fixture reports its
-reviewed domain; the custom and unsafe fixtures report `custom` and `invalid`.
+For a two-pod synthetic exercise, expect additive rates and increases across both
+pods in the collector-merged series. Do not expect two stored pod series. The
+success fixture reports its reviewed domain; the custom and unsafe fixtures
+report `custom` and `invalid`. After the production image tag is bumped and a
+fresh hour has elapsed, compare the hourly upstream attempt increase with the
+server's outbound client span volume over the same hour:
+
+```promql
+sum(increase(calendar_sync_upstream_attempt_total{service_name="timecalendar",deployment_environment_name="production"}[1h]))
+sum(increase(traces_spanmetrics_calls_total{service_name="timecalendar",deployment_environment_name="production",span_kind="SPAN_KIND_CLIENT"}[1h]))
+```
+
+Expect the same order of magnitude; outbound spans can include other clients.
+Do not compare an hour spanning the image rollout, since it mixes old and new
+metric temporality.
 
 ## VictoriaLogs
 
@@ -128,9 +136,10 @@ and attributes.
 
 ## Stop and rollback
 
-Stop production rollout if an instance ID is missing/unsafe, concurrent pods collide,
-an upstream value falls outside the vocabulary, any negative privacy search matches,
-OTLP application logs are absent, correlation is missing, or a child ends after its
-HTTP parent. Do not change shared collector policy in this change. Escalate the
-instance-promotion or log-endpoint assumption to the Founding Engineer. Rollback is an
-application-image revert; telemetry storage and schemas require no rollback.
+Stop production rollout if an instance ID is missing/unsafe, collector-merged
+application counters are non-additive, an upstream value falls outside the
+vocabulary, any negative privacy search matches, OTLP application logs are absent,
+correlation is missing, or a child ends after its HTTP parent. Do not change shared
+collector policy in this change. Escalate the metric aggregation or log-endpoint
+assumption to the Founding Engineer. Rollback is an application-image revert;
+telemetry storage and schemas require no rollback.

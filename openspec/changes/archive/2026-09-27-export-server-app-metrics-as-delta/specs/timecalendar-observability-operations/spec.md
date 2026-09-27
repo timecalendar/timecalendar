@@ -1,8 +1,5 @@
-# timecalendar-observability-operations Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change harden-sync-observability. Update Purpose after archive.
-## Requirements
 ### Requirement: Version-controlled observability runbook
 The repository SHALL contain an operator runbook that documents TimeCalendar signal
 names, finite label vocabularies, privacy invariants, copy/paste backend queries,
@@ -42,13 +39,3 @@ proof SHALL cover positive signal presence and negative privacy/cardinality chec
 #### Scenario: Unexpected signal shape is found
 - **WHEN** a raw domain/sensitive value, counter collision, missing log stream, or child-after-parent trace is observed
 - **THEN** production rollout stops and the application instrumentation is corrected or escalated without changing global collector policy in this issue
-
-### Requirement: Calendar architecture boundary
-The calendar Architecture Book SHALL identify the ownership boundary between mobile
-sync behavior and server observability and SHALL link to the server runbook. It MUST
-state that calendar URLs/tokens are not telemetry dimensions and that this change does
-not alter the mobile API or local sync behavior.
-
-#### Scenario: Engineer changes calendar sync
-- **WHEN** an engineer reads the Calendar Architecture Book before modifying sync
-- **THEN** they can locate the server observability contract and preserve the no-token/no-URL telemetry boundary

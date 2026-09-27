@@ -12,7 +12,10 @@ import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc"
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc"
 import { resourceFromAttributes } from "@opentelemetry/resources"
 import { BatchLogRecordProcessor } from "@opentelemetry/sdk-logs"
-import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics"
+import {
+  AggregationTemporality,
+  PeriodicExportingMetricReader,
+} from "@opentelemetry/sdk-metrics"
 import { NodeSDK, type NodeSDKConfiguration } from "@opentelemetry/sdk-node"
 import {
   ATTR_SERVICE_NAME,
@@ -39,9 +42,18 @@ type ExporterFactories = {
   log: (url: string) => OTLPLogExporter
 }
 
+class DeltaMetricExporter extends OTLPMetricExporter {
+  selectAggregationTemporality(): AggregationTemporality {
+    return AggregationTemporality.DELTA
+  }
+}
+
+export const createMetricExporter = (url: string): OTLPMetricExporter =>
+  new DeltaMetricExporter({ url })
+
 const exporterFactories: ExporterFactories = {
   trace: (url) => new OTLPTraceExporter({ url }),
-  metric: (url) => new OTLPMetricExporter({ url }),
+  metric: createMetricExporter,
   log: (url) => new OTLPLogExporter({ url }),
 }
 
