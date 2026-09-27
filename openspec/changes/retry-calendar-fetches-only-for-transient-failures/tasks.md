@@ -31,4 +31,4 @@
 
 - [x] 6.1 Add a dedicated calendar retry CI-proof test that drives the real classifier/fetch/sync/job seams and proves a terminal failure has one upstream attempt and one job execution, while transient work never exceeds two upstream attempts or nine seconds and `Retry-After` cannot extend the budget.
 - [x] 6.2 Run the targeted Jest suites for the classifier, `ical-fetcher`, fetch service/strategies, calendar-sync service, job, failure repository, metrics, and the CI-proof test; record the exact commands and passing counts in the PR.
-- [ ] 6.3 From `server/`, run `npm run lint` and `npm run build`, inspect any lint rewrites, and confirm the branch remains limited to the approved backend/docs/OpenSpec scope before handoff.
+- [x] 6.3 From `server/`, run `npm run lint` and `npm run build`, inspect any lint rewrites, and confirm the branch remains limited to the approved backend/docs/OpenSpec scope before handoff.
