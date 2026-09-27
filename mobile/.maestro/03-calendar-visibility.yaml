@@ -21,8 +21,14 @@ appId: fr.samuelprak.timecalendar.dev
 - runFlow: helpers/confirm-ios-deep-link.yaml
 - extendedWaitUntil:
     visible:
-      id: "user-calendars-list"
+      id: "user-calendar-row-e2e0e2e0-0000-4000-8000-000000000001"
     timeout: 60000
+- tapOn:
+    id: "user-calendar-row-e2e0e2e0-0000-4000-8000-000000000001"
+- extendedWaitUntil:
+    visible:
+      id: "user-calendar-visibility-e2e0e2e0-0000-4000-8000-000000000001"
+    timeout: 30000
 - tapOn:
     id: "user-calendar-visibility-e2e0e2e0-0000-4000-8000-000000000001"
 
@@ -34,14 +40,20 @@ appId: fr.samuelprak.timecalendar.dev
     timeout: 60000
 - assertNotVisible: "E2E Hide Seminar(,.*)?"
 
-# Restore the persisted calendar visibility through the same management switch.
+# Restore the persisted calendar visibility through the same calendar page switch.
 - stopApp
 - openLink: timecalendar-dev://user-calendars
 - runFlow: helpers/confirm-ios-deep-link.yaml
 - extendedWaitUntil:
     visible:
-      id: "user-calendars-list"
+      id: "user-calendar-row-e2e0e2e0-0000-4000-8000-000000000001"
     timeout: 60000
+- tapOn:
+    id: "user-calendar-row-e2e0e2e0-0000-4000-8000-000000000001"
+- extendedWaitUntil:
+    visible:
+      id: "user-calendar-visibility-e2e0e2e0-0000-4000-8000-000000000001"
+    timeout: 30000
 - tapOn:
     id: "user-calendar-visibility-e2e0e2e0-0000-4000-8000-000000000001"
 - runFlow: helpers/open-calendar-agenda.yaml

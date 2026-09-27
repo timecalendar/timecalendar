@@ -7,13 +7,33 @@ The two route-structure rules below are recorded as prose because their load-bea
 ## Compact root Stack classification
 
 The root Stack uses `buildCompactRootScreenOptions` from `@/components/chrome`: user-facing
-non-tab siblings inherit a visible compact header, no large title, a theme-backed surface, and
-`headerBackButtonDisplayMode: "minimal"`. `(tabs)`, `onboarding`, `profile`, `more`, and
+non-tab siblings inherit a visible compact header, no large title, and
+`headerBackButtonDisplayMode: "minimal"`. The bar itself is platform-native. On iOS it is
+transparent and content scrolls under it. On iOS 26+ `headerBlurEffect` is `"none"`: the system
+scroll-edge effect is the only bar surface, as in Settings and Mail, because any blur material
+stacks on it as an opaque slab. On iOS 16.4–25 it is the `systemChromeMaterial` blur, blurred from
+scroll top (never the appear-on-scroll edge). On Android it is a flat Material 3 top app
+bar: page `background`, no shadow, `text` title and back arrow, no lift-on-scroll. On both
+platforms `headerTintColor` is `text`, so back buttons and bar button items use the primary label
+color, never brand pink. Screens never set `headerStyle`, `headerShadowVisible`,
+`headerTransparent`, or a tint on header items themselves; the onboarding Stack uses the same
+builder.
+
+Under the transparent iOS bar every page must inset itself: scroll roots set
+`contentInsetAdjustmentBehavior="automatic"` and mark `RootPage scrollsUnderHeader`
+(`KeyboardSafeActionLayout` sets the inset on its own scroller); every other `RootPage` pads by
+`useHeaderOverlapInset()`; the SwiftUI Form in `NativeSettingsHost` insets natively. Content that
+fills the viewport (`flexGrow: 1` — an `EmptyState variant="screen"`, a centred form, a full-page
+error) never scrolls under the bar: the automatic inset on top of a viewport-tall content makes it
+scroll by the header height. Such a page drops `scrollsUnderHeader` and its scroller spreads
+`headerScrollProps(false)` (inset `never`, no bounce); a list toggles both on whether it has rows
+(`headerScrollProps(hasRows)`); `KeyboardSafeActionLayout` takes `scrollsUnderHeader={false}`. `(tabs)`, `onboarding`, `profile`, `more`, and
 `dev-import` are explicit headerless exceptions. The route-structure test enumerates top-level
 siblings so a new route cannot inherit either posture accidentally. Features still own localized
 `Stack.Screen` titles and native header actions. See ADR [054](./decisions/054-shared-root-page-semantics.md).
 
-Root content uses `RootPage` only for non-header safe areas, vertical rhythm, and a measured lane.
+Root content uses `RootPage` for safe areas, the header overlap inset, vertical rhythm, and a
+measured lane.
 It never wraps a virtualized list in another scroller. `PageIntro` may be caption-only when the
 native header is the route heading.
 

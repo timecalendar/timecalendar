@@ -14,7 +14,7 @@ import {
 import { EmptyState } from "@/components/empty-state"
 import { developerActivityArtwork } from "@/components/empty-state-artwork"
 import { ErrorNotice, ErrorState } from "@/components/error-surfaces"
-import { RootPage } from "@/components/root-page"
+import { headerScrollProps, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import {
   loadOlderPage,
@@ -56,6 +56,7 @@ export function ActivityScreen() {
   const markedOnMount = useRef(false)
 
   const sections = useMemo(() => buildActivitySections(logs), [logs])
+  const hasItems = loaded && sections.length > 0
   const refreshFailed =
     refreshOutcome?.status === "failed" ||
     refreshOutcome?.status === "too-many-calendars"
@@ -101,7 +102,11 @@ export function ActivityScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("activity.title") }} />
-      <RootPage testID="activity-layout-owner" lane="standard">
+      <RootPage
+        scrollsUnderHeader={hasItems}
+        testID="activity-layout-owner"
+        lane="standard"
+      >
         {({ laneStyle }) =>
           !loaded ? (
             <View style={[laneStyle, styles.stateLane]}>
@@ -113,7 +118,10 @@ export function ActivityScreen() {
               </View>
             </View>
           ) : sections.length === 0 && refreshFailed ? (
-            <ScrollView contentContainerStyle={[laneStyle, styles.content]}>
+            <ScrollView
+              {...headerScrollProps(false)}
+              contentContainerStyle={[laneStyle, styles.content]}
+            >
               <ErrorState
                 testID="activity-empty-error"
                 title={t("errors.loadTitle")}
@@ -130,6 +138,7 @@ export function ActivityScreen() {
           ) : (
             <SectionList<ActivityItem, ActivitySection>
               testID="activity-section-list"
+              {...headerScrollProps(hasItems)}
               sections={sections}
               keyExtractor={(item) => item.key}
               stickySectionHeadersEnabled={false}

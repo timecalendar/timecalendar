@@ -212,6 +212,15 @@ jest.mock("@expo/ui/swift-ui/modifiers", () => {
     listRowInsets: (value: unknown) => modifier("listRowInsets", value),
     padding: (value: unknown) => modifier("padding", value),
     textFieldStyle: (value: string) => modifier("textFieldStyle", value),
+    presentationDetents: (value: unknown) =>
+      modifier("presentationDetents", value),
+    presentationDragIndicator: (value: string) =>
+      modifier("presentationDragIndicator", value),
+    interactiveDismissDisabled: (value = true) =>
+      modifier("interactiveDismissDisabled", value),
+    scrollContentBackground: (value: string) =>
+      modifier("scrollContentBackground", value),
+    onSubmit: (handler: () => void) => modifier("onSubmit", handler),
   }
 })
 
@@ -291,6 +300,7 @@ jest.mock("@expo/ui/swift-ui", () => {
       accessibilityLabel: modifierValue(props.modifiers, "accessibilityLabel"),
       keyboardType: modifierValue(props.modifiers, "keyboardType"),
       returnKeyType: modifierValue(props.modifiers, "submitLabel"),
+      onSubmitEditing: modifierValue(props.modifiers, "onSubmit"),
       onChangeText: (nextValue: string) => {
         props.text.set(nextValue)
         setValue(nextValue)
@@ -413,6 +423,34 @@ jest.mock("@expo/ui/swift-ui", () => {
       modifiers: props.modifiers,
     })
   }
+  function BottomSheet(props: {
+    isPresented: boolean
+    onIsPresentedChange: (value: boolean) => void
+    children?: unknown
+  }) {
+    if (!props.isPresented) return null
+    return React.createElement(
+      View,
+      {
+        testID: "swiftui-bottom-sheet",
+        onIsPresentedChange: props.onIsPresentedChange,
+      },
+      props.children,
+    )
+  }
+  function Group(props: {
+    children?: unknown
+    modifiers?: { $type: string; value: unknown }[]
+  }) {
+    return React.createElement(
+      View,
+      {
+        testID: modifierValue(props.modifiers, "accessibilityIdentifier"),
+        modifiers: props.modifiers,
+      },
+      props.children,
+    )
+  }
   function ProgressView(props: object) {
     return React.createElement(View, props)
   }
@@ -424,8 +462,10 @@ jest.mock("@expo/ui/swift-ui", () => {
   }
 
   return {
+    BottomSheet,
     Button,
     Form,
+    Group,
     HStack: Stack,
     Host,
     Image,
@@ -591,10 +631,13 @@ jest.mock("@expo/ui/jetpack-compose", () => {
     )
   }
   const Button = TextButton
-  function LazyColumn(props: { children?: unknown }) {
+  function LazyColumn(props: { children?: unknown; contentPadding?: unknown }) {
     return React.createElement(
       View,
-      { testID: "compose-lazy-column-scroll-owner" },
+      {
+        testID: "compose-lazy-column-scroll-owner",
+        contentPadding: props.contentPadding,
+      },
       props.children,
     )
   }
@@ -643,13 +686,34 @@ jest.mock("@expo/ui/jetpack-compose", () => {
       props.children,
     )
   }
-  function Icon(props: { source: unknown; tint?: unknown }) {
+  function Icon(props: {
+    source: unknown
+    tint?: unknown
+    contentDescription?: string
+  }) {
     return React.createElement(View, {
       testID: "compose-icon",
       source: props.source,
       tint: props.tint,
+      accessibilityLabel: props.contentDescription,
     })
   }
+  function FloatingActionButton(props: {
+    children?: unknown
+    onClick?: () => void
+    modifiers?: { $type: string; value: unknown }[]
+  }) {
+    return React.createElement(
+      Pressable,
+      {
+        testID: testID(props.modifiers),
+        accessibilityRole: "button",
+        onPress: props.onClick,
+      },
+      props.children,
+    )
+  }
+  Object.assign(FloatingActionButton, { Icon: Slot })
   function Badge(props: { children?: unknown }) {
     return React.createElement(
       View,
@@ -662,6 +726,7 @@ jest.mock("@expo/ui/jetpack-compose", () => {
     onSurface: "#onSurface",
     onSurfaceVariant: "#onSurfaceVariant",
     surfaceContainer: "#surfaceContainer",
+    error: "#error",
     errorContainer: "#errorContainer",
     onErrorContainer: "#onErrorContainer",
   }
@@ -749,6 +814,7 @@ jest.mock("@expo/ui/jetpack-compose", () => {
     Button,
     CircularProgressIndicator,
     Column,
+    FloatingActionButton,
     Host,
     Icon,
     LazyColumn,

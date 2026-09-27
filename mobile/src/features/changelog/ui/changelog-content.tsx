@@ -17,9 +17,10 @@ export function ChangelogContent({ releases, footer }: ChangelogContentProps) {
   const theme = useTheme()
 
   return (
-    <RootPage testID="changelog-safe-area" lane="readable">
+    <RootPage scrollsUnderHeader testID="changelog-safe-area" lane="readable">
       {(layout) => (
         <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
           testID="changelog-scroll-owner"
           contentContainerStyle={styles.scrollContent}
           style={{ backgroundColor: theme.background }}

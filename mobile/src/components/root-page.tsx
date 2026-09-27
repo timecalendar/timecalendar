@@ -6,6 +6,7 @@ import {
   type AdaptiveLayout,
   useAdaptiveLayout,
 } from "@/components/adaptive-content"
+import { useHeaderOverlapInset } from "@/components/chrome"
 import { ThemedText } from "@/components/themed-text"
 import { type ResponsiveLane, Spacing, useTheme } from "@/theme"
 
@@ -15,6 +16,9 @@ type RootPageProps = {
   testID?: string
   style?: StyleProp<ViewStyle>
   contentContainerStyle?: StyleProp<ViewStyle>
+  // The page's root is a scroll view with contentInsetAdjustmentBehavior
+  // "automatic": it insets itself under the header, so the page must not pad.
+  scrollsUnderHeader?: boolean
 }
 
 export function RootPage({
@@ -23,8 +27,10 @@ export function RootPage({
   testID,
   style,
   contentContainerStyle,
+  scrollsUnderHeader = false,
 }: RootPageProps) {
   const theme = useTheme()
+  const headerInset = useHeaderOverlapInset()
   const layout = useAdaptiveLayout(lane)
   const content =
     typeof children === "function" ? (
@@ -43,11 +49,26 @@ export function RootPage({
       testID={testID}
       edges={["bottom", "left", "right"]}
       onLayout={layout.onLayout}
-      style={[styles.page, { backgroundColor: theme.background }, style]}
+      style={[
+        styles.page,
+        { backgroundColor: theme.background },
+        !scrollsUnderHeader && headerInset > 0 && { paddingTop: headerInset },
+        style,
+      ]}
     >
       {content}
     </SafeAreaView>
   )
+}
+
+// Scroll props paired with RootPage's `scrollsUnderHeader`: a page with content
+// insets under the header and bounces; an empty/error state is laid out below
+// the header by RootPage and scrolls only when it overflows.
+export function headerScrollProps(scrollsUnderHeader: boolean) {
+  return {
+    contentInsetAdjustmentBehavior: scrollsUnderHeader ? "automatic" : "never",
+    alwaysBounceVertical: scrollsUnderHeader,
+  } as const
 }
 
 type PageIntroProps = {

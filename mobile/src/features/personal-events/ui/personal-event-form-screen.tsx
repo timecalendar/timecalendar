@@ -28,7 +28,11 @@ export default function PersonalEventFormScreen() {
               : t("personalEvents.form.editTitle"),
         }}
       />
-      <RootPage lane="readable" testID="personal-event-form-layout-owner">
+      <RootPage
+        scrollsUnderHeader
+        lane="readable"
+        testID="personal-event-form-layout-owner"
+      >
         {() => (
           <PersonalEventEditor
             key={editorKey}

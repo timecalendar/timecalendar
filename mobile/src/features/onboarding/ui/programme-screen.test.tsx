@@ -58,7 +58,7 @@ const mockStackScreen = Stack.Screen as unknown as jest.Mock
 
 const screenOptions = () =>
   mockStackScreen.mock.lastCall?.[0].options as {
-    headerShown: boolean
+    headerStyle?: unknown
     headerRight?: () => ReactElement
     unstable_headerRightItems?: () => {
       label: string
@@ -272,7 +272,7 @@ describe("ProgrammeScreen", () => {
       await render(<ProgrammeScreen />)
       const options = screenOptions()
 
-      expect(options.headerShown).toBe(true)
+      expect(options.headerStyle).toBeUndefined()
       expect(options.headerRight).toBeUndefined()
       const [item] = options.unstable_headerRightItems?.() ?? []
       expect(item?.label).toBe("Skip")

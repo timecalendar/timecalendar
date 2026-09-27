@@ -84,3 +84,34 @@ describe.each([
     ).not.toHaveProperty("position", "absolute")
   })
 })
+
+describe("KeyboardSafeActionLayout header inset", () => {
+  const renderLayout = (scrollsUnderHeader: boolean) =>
+    render(
+      <KeyboardSafeActionLayout
+        testID="form"
+        scrollsUnderHeader={scrollsUnderHeader}
+        actions={<View />}
+      >
+        <View />
+      </KeyboardSafeActionLayout>,
+    )
+
+  it("insets its scroller under the header by default", async () => {
+    const content = (
+      await render(
+        <KeyboardSafeActionLayout testID="form" actions={<View />}>
+          <View />
+        </KeyboardSafeActionLayout>,
+      )
+    ).getByTestId("form-content")
+    expect(content).toHaveProp("contentInsetAdjustmentBehavior", "automatic")
+    expect(content).toHaveProp("alwaysBounceVertical", true)
+  })
+
+  it("keeps viewport-filling content still below the header", async () => {
+    const content = (await renderLayout(false)).getByTestId("form-content")
+    expect(content).toHaveProp("contentInsetAdjustmentBehavior", "never")
+    expect(content).toHaveProp("alwaysBounceVertical", false)
+  })
+})

@@ -141,6 +141,10 @@ describe.each([
           includeHiddenElements: true,
         }),
       ).toHaveProp("accessible", false)
+      expect(screen.getByTestId("activity-section-list")).toHaveProp(
+        "contentInsetAdjustmentBehavior",
+        "never",
+      )
     })
 
     it("renders populated history", async () => {
@@ -151,6 +155,10 @@ describe.each([
       await render(<ActivityScreen />)
       expect(screen.getByText("Computer Science")).toBeTruthy()
       expect(screen.getByText("Event new")).toBeTruthy()
+      expect(screen.getByTestId("activity-section-list")).toHaveProp(
+        "contentInsetAdjustmentBehavior",
+        "automatic",
+      )
     })
 
     it("keeps cached history when refresh fails", async () => {

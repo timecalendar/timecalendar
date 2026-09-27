@@ -1,5 +1,4 @@
 import { router, Stack, useLocalSearchParams } from "expo-router"
-import { SymbolView } from "expo-symbols"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
@@ -75,9 +74,9 @@ export default function SchoolPickerScreen() {
     <>
       <Stack.Screen
         options={{
-          headerShown: true,
           title: t("onboarding.school.title"),
-          headerBackButtonDisplayMode: "minimal",
+          // UIKit gives a nested stack's first screen no back button; Android's
+          // native one already walks up to the parent stack.
           ...(fromCalendarManagement &&
             Platform.OS === "ios" && {
               unstable_headerLeftItems: () => [
@@ -89,34 +88,11 @@ export default function SchoolPickerScreen() {
                     type: "sfSymbol" as const,
                     name: "chevron.backward" as const,
                   },
-                  tintColor: theme.text,
                   identifier: "onboarding-school-back",
                   onPress: () => router.dismiss(),
                 },
               ],
             }),
-          ...(fromCalendarManagement &&
-            Platform.OS === "android" && {
-              headerLeft: () => (
-                <Pressable
-                  testID="onboarding-school-back"
-                  accessibilityRole="button"
-                  accessibilityLabel={t("common.back")}
-                  hitSlop={Spacing.two}
-                  onPress={() => router.dismiss()}
-                  style={styles.headerBack}
-                >
-                  <SymbolView
-                    name="chevron.backward"
-                    size={22}
-                    weight="semibold"
-                    tintColor={theme.text}
-                  />
-                </Pressable>
-              ),
-            }),
-          headerStyle: { backgroundColor: theme.background },
-          headerShadowVisible: false,
           headerSearchBarOptions: {
             placeholder: t("onboarding.school.search"),
             onChangeText: (e) => setFilter(e.nativeEvent.text),
@@ -125,14 +101,16 @@ export default function SchoolPickerScreen() {
             autoCapitalize: "none",
             // Default placement; "stacked" overlaps the large title on iOS 26.
             hideWhenScrolling: false,
-            tintColor: theme.primary,
-            textColor: theme.text,
             hintTextColor: theme.textSecondary,
             headerIconColor: theme.text,
           },
         }}
       />
-      <RootPage testID="onboarding-school-content" lane="standard">
+      <RootPage
+        scrollsUnderHeader
+        testID="onboarding-school-content"
+        lane="fullBleed"
+      >
         {(schoolListLayout) => (
           <FlatList
             data={visible}
@@ -147,7 +125,6 @@ export default function SchoolPickerScreen() {
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={[
               schoolListLayout.laneStyle,
-              { paddingTop: Spacing.four },
               styles.list,
               // Upper-third so the open search keyboard never covers the status.
               visible.length === 0 && { paddingTop: windowHeight * 0.15 },
@@ -230,15 +207,10 @@ const styles = StyleSheet.create({
   list: {
     paddingBottom: Spacing.three,
   },
-  headerBack: {
-    minWidth: 44,
-    minHeight: 44,
-    alignItems: "flex-start",
-    justifyContent: "center",
-  },
   listHeader: {
     width: "100%",
     paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.three,
     paddingBottom: Spacing.three,
     gap: Spacing.two,
   },

@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 import { FlatList, Pressable, StyleSheet, View } from "react-native"
 
 import { EmptyState } from "@/components/empty-state"
-import { RootPage } from "@/components/root-page"
+import { headerScrollProps, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import { formatShortDateTime, resolveLocale } from "@/features/calendar/data"
 import {
@@ -23,13 +23,19 @@ export function PersonalEventsList() {
   const { t } = useTranslation()
   const theme = useTheme()
   const events = usePersonalEvents()
+  const hasEvents = events.length > 0
 
   return (
     <>
       <Stack.Screen options={{ title: t("personalEvents.list.title") }} />
-      <RootPage testID="personal-events-responsive-owner" lane="standard">
+      <RootPage
+        scrollsUnderHeader={hasEvents}
+        testID="personal-events-responsive-owner"
+        lane="standard"
+      >
         {(layout) => (
           <FlatList
+            {...headerScrollProps(hasEvents)}
             testID="personal-events-list"
             data={events}
             keyExtractor={(event) => event.uid}

@@ -7,6 +7,7 @@ import { Colors } from "@/theme"
 import {
   NativeSettingsAlert,
   NativeSettingsChoiceRow,
+  NativeSettingsFloatingAction,
   NativeSettingsHost,
   NativeSettingsRadioDialog,
   NativeSettingsRow,
@@ -316,6 +317,59 @@ describe("native settings chrome on ios", () => {
   })
 })
 
+describe("native settings rows with subtitles, destructive actions, and a FAB on ios", () => {
+  usePlatform("ios")
+
+  it("stacks a secondary subtitle, reads it in the default label, and colors destructive labels", async () => {
+    const view = await render(
+      <NativeSettingsHost>
+        <NativeSettingsSection>
+          <NativeSettingsRow
+            kind="navigation"
+            label="Calendar"
+            subtitle="School"
+            value="Shown"
+            href="/about"
+            testID="subtitled"
+          />
+          <NativeSettingsRow
+            kind="action"
+            destructive
+            label="Delete"
+            onPress={jest.fn()}
+            testID="destructive"
+          />
+        </NativeSettingsSection>
+      </NativeSettingsHost>,
+    )
+    const row = view.getByTestId("subtitled")
+    expect(row.props.accessibilityLabel).toBe("Calendar, School")
+    expect(row.props.accessibilityValue).toEqual({ text: "Shown" })
+    expect(within(row).getByText("School").props.foreground).toBe(
+      Colors.dark.textSecondary,
+    )
+    expect(within(row).getByText("Shown").props.foreground).toBe(
+      Colors.dark.textSecondary,
+    )
+    expect(
+      within(view.getByTestId("destructive")).getByText("Delete").props
+        .foreground,
+    ).toBe(Colors.dark.error)
+  })
+
+  it("renders no floating action, since iOS adds through the navigation bar", async () => {
+    const view = await render(
+      <NativeSettingsFloatingAction
+        label="Add"
+        icon={{ ios: "plus", android: "add" }}
+        testID="fab"
+        onPress={jest.fn()}
+      />,
+    )
+    expect(view.queryByTestId("fab")).toBeNull()
+  })
+})
+
 describe("native settings chrome on android", () => {
   usePlatform("android")
 
@@ -526,5 +580,74 @@ describe("native settings chrome on android", () => {
       />,
     )
     expect(view.queryByTestId("compose-host")).toBeNull()
+  })
+
+  it("puts a subtitle in supporting text, the value in trailing text, and colors destructive headlines", async () => {
+    const view = await render(
+      <NativeSettingsHost>
+        <NativeSettingsSection>
+          <NativeSettingsRow
+            kind="navigation"
+            label="Calendar"
+            subtitle="School"
+            value="Shown"
+            badge="2"
+            href="/about"
+            testID="subtitled"
+          />
+          <NativeSettingsRow
+            kind="action"
+            destructive
+            label="Delete"
+            onPress={jest.fn()}
+            testID="destructive"
+          />
+        </NativeSettingsSection>
+      </NativeSettingsHost>,
+    )
+    const row = view.getByTestId("subtitled")
+    expect(within(row).getByText("School").props.typography).toBe("bodyMedium")
+    expect(within(row).getByText("Shown").props.typography).toBe("labelLarge")
+    expect(within(row).getByTestId("compose-badge")).toBeTruthy()
+    expect(
+      within(view.getByTestId("destructive")).getByText("Delete").props.color,
+    ).toBe("#error")
+  })
+
+  it("renders a brand-seeded FAB and reserves list space for it", async () => {
+    const onPress = jest.fn()
+    const view = await render(
+      <>
+        <NativeSettingsHost reservesFloatingAction>
+          <NativeSettingsSection>
+            <NativeSettingsRow kind="value" label="Row" testID="row" />
+          </NativeSettingsSection>
+        </NativeSettingsHost>
+        <NativeSettingsFloatingAction
+          label="Add"
+          icon={{ ios: "plus", android: "add" }}
+          testID="fab"
+          onPress={onPress}
+        />
+      </>,
+    )
+    expect(
+      view.getByTestId("compose-lazy-column-scroll-owner").props.contentPadding,
+    ).toEqual({ top: 0, bottom: 112 })
+    expect(view.getByLabelText("Add")).toBeTruthy()
+    await fireEvent.press(view.getByTestId("fab"))
+    expect(onPress).toHaveBeenCalledTimes(1)
+    expect(
+      view
+        .getAllByTestId("compose-host")
+        .every((host) => host.props.seedColor === Colors.dark.primary),
+    ).toBe(true)
+  })
+
+  it("keeps the default list padding without a FAB", async () => {
+    const view = await render(<NativeSettingsHost />)
+    expect(
+      view.getByTestId("compose-lazy-column-scroll-owner").props.contentPadding,
+    ).toEqual({ top: 0, bottom: 24 })
   })
 })

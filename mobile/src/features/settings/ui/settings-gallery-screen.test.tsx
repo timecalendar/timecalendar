@@ -43,6 +43,8 @@ describe.each(["ios", "android"] as const)(
         "settings-gallery-plain",
         "settings-gallery-action",
         "settings-gallery-value",
+        "settings-gallery-subtitle",
+        "settings-gallery-destructive",
         "settings-gallery-error",
         "settings-gallery-error-message",
         "settings-gallery-header",
@@ -79,6 +81,19 @@ describe.each(["ios", "android"] as const)(
         view.getByTestId("settings-gallery-choice-second").props
           .accessibilityState.selected,
       ).toBe(true)
+
+      await fireEvent.press(view.getByTestId("settings-gallery-destructive"))
+      expect(
+        view.getByTestId("settings-gallery-destructive"),
+      ).toHaveTextContent(/1/)
+      if (platform === "android") {
+        await fireEvent.press(view.getByTestId("settings-gallery-fab"))
+        expect(
+          view.getByTestId("settings-gallery-destructive"),
+        ).toHaveTextContent(/2/)
+      } else {
+        expect(view.queryByTestId("settings-gallery-fab")).toBeNull()
+      }
 
       await fireEvent.press(view.getByTestId("settings-gallery-action"))
       if (platform === "ios") {

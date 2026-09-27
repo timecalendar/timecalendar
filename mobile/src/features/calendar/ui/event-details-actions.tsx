@@ -106,9 +106,7 @@ export function EventDetailsHeader({
             onPress={action.onPress}
             style={styles.headerAction}
           >
-            <ThemedText type="smallBold" themeColor="primary">
-              {action.text}
-            </ThemedText>
+            <ThemedText type="smallBold">{action.text}</ThemedText>
           </Pressable>
         ),
       }}

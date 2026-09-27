@@ -13,7 +13,8 @@ through its brand color, calendar data, and logo-derived graphic language.
 
 - **Pink is the brand and action color.** It identifies TimeCalendar and tints primary actions,
   active navigation, links, selection, and the current-time indicator. It does not need to fill
-  every header or large surface to make the app recognizable.
+  every header or large surface to make the app recognizable. Header bar buttons and back
+  buttons are not pink: they take the `text` label color (see `navigation.md`).
 - **Pastel colors belong to calendars and events.** The logo and real schedules establish the
   character: pale lilac, pink, blue, green, yellow, coral, and neighboring generated hues. A
   busy calendar is intentionally a soft mosaic. Event colors are user/data values, not semantic
@@ -142,7 +143,8 @@ surfaces and calendar content; native controls are tinted and composed rather th
 ## Native-chrome wrapper seam — `src/components/chrome/`
 
 Root Stack chrome also enters through this seam: `buildCompactRootScreenOptions` supplies the
-theme-backed compact defaults and minimal back display described by ADR
+compact defaults, the platform bar surface (iOS 26+ system scroll-edge effect, iOS 16.4–25 always-on blur, Android flat page-background bar
+with `text` title), and minimal back display described by ADR
 [054](./decisions/054-shared-root-page-semantics.md). It is stable Expo Router composition rather
 than an alpha API, but co-location keeps root chrome policy discoverable.
 
@@ -194,6 +196,15 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
     `bodyMedium`/`onSurfaceVariant`, footers `bodySmall`/`onSurfaceVariant`. Row icons are flat
     Material Symbols tinted `onSurfaceVariant` in the leading slot. The radio dialog is a
     `selectableGroup` Column of full-width 56dp radio rows.
+  - **Row subtitle and destructive rows:** a row `subtitle` is a second line under the label (iOS
+    `subheadline`/`textSecondary` in a leading VStack; Android the supporting slot, which moves any
+    `value` to trailing `labelLarge`/`onSurfaceVariant` text). The default accessibility label reads
+    `label, subtitle`. A `destructive` action row labels in `error` (iOS) or Material `error`
+    (Android).
+  - **Floating action:** `NativeSettingsFloatingAction` is a Material `FloatingActionButton` in its
+    own seeded Compose host, bottom-right, whose icon carries the label as content description. It
+    renders nothing on iOS, where the page adds through a navigation-bar item. A page that shows it
+    passes `reservesFloatingAction` to `NativeSettingsHost` so the last row clears the button.
   - **Help copy** lives in section footers, never as text rows inside a group: one setting per
     section when each needs its own explanation.
   - **`NativeSettingsAlert`** is the page-level failure pattern and renders first on the page. iOS:

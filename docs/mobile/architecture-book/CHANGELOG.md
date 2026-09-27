@@ -1,3 +1,37 @@
+## 2026-09-27 — Blurred iOS bars and flat Android bars on every stack screen
+
+- `buildCompactRootScreenOptions` owns the header surface for the root and onboarding Stacks. iOS:
+  `headerTransparent`, content scrolling under it. iOS 26+ uses `headerBlurEffect: "none"` so the
+  system scroll-edge effect is the only bar surface (a material stacks on it as an opaque slab);
+  iOS 16.4–25 uses `"systemChromeMaterial"`, blurred at scroll top too. Android: Material 3 flat bar on the page `background`, no shadow,
+  `text` title and back arrow. Both platforms set `headerTintColor` to `text`: bar buttons use
+  the label color, not brand pink. It takes the scheme's `Colors` tokens.
+- `useHeaderOverlapInset` (chrome seam) reports the overlapping iOS header height. `RootPage` pads
+  by it unless `scrollsUnderHeader`; those scroll roots and `KeyboardSafeActionLayout` use
+  `contentInsetAdjustmentBehavior="automatic"`.
+- Viewport-filling content (empty states, centred forms, full-page errors) stays still below the
+  bar: `headerScrollProps(false)` on its scroller, `scrollsUnderHeader` off. Hidden events,
+  Personal events, and Activity toggle it on whether they have rows; the ical-url, institution
+  and programme forms and the QR import failure page are fixed below the bar.
+- School picker and programme drop their own `headerStyle` / `headerShadowVisible` / repeated
+  compact defaults; the school picker keeps its native search bar.
+- The school picker list is edge to edge (full-bleed lane) and its search bar takes platform
+  default text and tint colors. From calendar management, Android uses the native back arrow
+  (it walks up to the parent Stack); iOS keeps a native bar-button back, since UIKit shows none on
+  a nested Stack's first screen.
+
+## 2026-09-27 — Calendars on the native settings seam
+
+- Calendars is a native-settings list of navigation rows (name, school, Shown/Hidden) leading to a
+  per-calendar page `/user-calendars/[id]`: Name (rename dialog), school, the labelled visibility
+  switch with an explanatory footer, and a destructive Delete row. Write failures use
+  `NativeSettingsAlert`. The hand-built cards, overflow menu, and React Native switch are gone.
+- The seam gained row `subtitle`, `destructive` action rows, and `NativeSettingsFloatingAction`
+  (Material FAB, Android only) with `NativeSettingsHost reservesFloatingAction`.
+- The Maestro selector guard reads every `*TestID` prop, not only `testID`.
+- The iOS `NativeTextEntryDialog` presents as a native SwiftUI sheet with a brand-tinted
+  Cancel · title · Save header and a Form field, instead of a transparent React Native modal.
+
 ## 2026-09-27 — Settings sub-pages on the native seam
 
 - Added `NativeSettingsAlert` (page-first failure with optional action, announced on mount) and

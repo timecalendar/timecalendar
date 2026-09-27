@@ -115,9 +115,10 @@ export default function ProviderSelectionScreen() {
   return (
     <>
       {header}
-      <RootPage lane="readable" style={styles.fill}>
+      <RootPage scrollsUnderHeader lane="readable" style={styles.fill}>
         {(layout) => (
           <FlatList
+            contentInsetAdjustmentBehavior="automatic"
             data={providers}
             keyExtractor={(provider) => provider.slug}
             contentContainerStyle={[layout.laneStyle, styles.content]}

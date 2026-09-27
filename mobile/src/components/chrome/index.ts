@@ -12,7 +12,10 @@ export {
   type NativeTextEntryDialogIds,
   type NativeTextEntryDialogProps,
 } from "@/components/chrome/native-text-entry-dialog"
-export { buildCompactRootScreenOptions } from "@/components/chrome/root-screen-options"
+export {
+  buildCompactRootScreenOptions,
+  useHeaderOverlapInset,
+} from "@/components/chrome/root-screen-options"
 
 // @expo/ui — wrapper landed (A2 / TIM-131). The Settings screen is the first
 // `@expo/ui` consumer (discharging the theming-D6 deferral), so the boundary-only
@@ -37,6 +40,7 @@ export { NativeErrorNotice } from "@/components/chrome/native-error-notice"
 export {
   NativeSettingsAlert,
   NativeSettingsChoiceRow,
+  NativeSettingsFloatingAction,
   NativeSettingsHost,
   NativeSettingsRadioDialog,
   NativeSettingsRow,

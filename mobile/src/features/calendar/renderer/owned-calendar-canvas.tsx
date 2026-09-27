@@ -112,14 +112,6 @@ function useMinutePositionStyle(
   }))
 }
 
-function stableTintIndex(key: string) {
-  return (
-    Array.from(key).reduce((total, character) => {
-      return total + character.charCodeAt(0)
-    }, 0) % 3
-  )
-}
-
 export function OwnedCalendarCanvas({
   heading,
   mode,
@@ -397,13 +389,7 @@ function CalendarPageCanvas({
       style={[
         styles.page,
         {
-          backgroundColor: __DEV__
-            ? [
-                theme.backgroundElement,
-                theme.homeHero,
-                theme.backgroundSelected,
-              ][stableTintIndex(page.key)]
-            : theme.backgroundElement,
+          backgroundColor: theme.backgroundElement,
           borderColor: theme.separator,
         },
         pageHeightStyle,
@@ -693,7 +679,6 @@ function TimedCalendarTile({
           accessible={false}
           type="captionSmall"
           style={[styles.tileTitle, { color: tile.appearance.foreground }]}
-          numberOfLines={1}
         >
           {tile.title}
         </ThemedText>
@@ -706,7 +691,6 @@ function TimedCalendarTile({
             accessible={false}
             type="captionSmall"
             style={{ color: tile.appearance.foreground }}
-            numberOfLines={1}
           >
             {tile.location}
           </ThemedText>

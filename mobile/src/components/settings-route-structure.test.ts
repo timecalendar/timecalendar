@@ -128,6 +128,18 @@ describe("Settings route structure", () => {
     expect(rootLayout).toContain('<Stack.Screen name="timezone-settings" />')
   })
 
+  it("keeps the calendar list and per-calendar page as thin root destinations", () => {
+    expect(route("user-calendars.tsx").trim()).toBe(
+      'export { UserCalendarsScreen as default } from "@/features/calendar-sources/ui"',
+    )
+    expect(route("user-calendars/[id].tsx").trim()).toBe(
+      'export { UserCalendarDetailScreen as default } from "@/features/calendar-sources/ui"',
+    )
+    const rootLayout = route("_layout.tsx")
+    expect(rootLayout).toContain('<Stack.Screen name="user-calendars" />')
+    expect(rootLayout).toContain('<Stack.Screen name="user-calendars/[id]" />')
+  })
+
   it("keeps Activity as a thin feature route registered in the root Stack", () => {
     expect(route("activity.tsx").trim()).toBe(
       'export { ActivityScreen as default } from "@/features/activity/ui"',

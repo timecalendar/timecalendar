@@ -44,6 +44,10 @@ describe("PersonalEventsList", () => {
     const add = getByTestId("personal-events-add")
     expect(add.props.accessibilityRole).toBe("button")
     expect(add.props.accessibilityLabel).toBe("Add event")
+    expect(getByTestId("personal-events-list")).toHaveProp(
+      "contentInsetAdjustmentBehavior",
+      "never",
+    )
 
     const owner = getByTestId("personal-events-responsive-owner")
     for (const width of [390, 600, 768, 800, 834, 1024]) {
@@ -84,6 +88,10 @@ describe("PersonalEventsList", () => {
     // is the hint.
     expect(row.props.accessibilityLabel).toBe("Lunch")
     expect(row.props.accessibilityHint).toBe("Opens the event to edit")
+    expect(getByTestId("personal-events-list")).toHaveProp(
+      "contentInsetAdjustmentBehavior",
+      "automatic",
+    )
   })
 
   it("renders a 14:00 wall-clock entry as 14:00 under a worldwide display zone", async () => {

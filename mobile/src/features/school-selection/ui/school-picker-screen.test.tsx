@@ -1,11 +1,16 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
 import { router, Stack, useLocalSearchParams } from "expo-router"
-import { AccessibilityInfo, StyleSheet } from "react-native"
+import {
+  AccessibilityInfo,
+  type StyleProp,
+  StyleSheet,
+  type ViewStyle,
+} from "react-native"
 
 import { useSchools } from "@/features/school-selection/data"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { usePlatform } from "@/test-support/platform"
-import { resolveResponsiveLayout, Spacing } from "@/theme"
+import { Spacing } from "@/theme"
 
 import SchoolPickerScreen from "./school-picker-screen"
 
@@ -128,7 +133,7 @@ beforeEach(() => {
 })
 
 describe("SchoolPickerScreen", () => {
-  it("aligns school rows and states in the measured standard tablet lane", async () => {
+  it("lays the list edge to edge, even on a tablet", async () => {
     mockUseSchools.mockReturnValue(ready([]))
     const { getByTestId } = await render(<SchoolPickerScreen />)
     const owner = getByTestId("onboarding-school-content")
@@ -142,11 +147,11 @@ describe("SchoolPickerScreen", () => {
     const list = owner.children[0] as unknown as {
       props: { contentContainerStyle: unknown }
     }
-    const layout = resolveResponsiveLayout(1024, "standard")
-    expect(StyleSheet.flatten(list.props.contentContainerStyle)).toMatchObject({
-      maxWidth: layout.contentWidth + 2 * layout.gutter,
-      paddingHorizontal: layout.gutter,
-    })
+    const style = StyleSheet.flatten(
+      list.props.contentContainerStyle as StyleProp<ViewStyle>,
+    )
+    expect(style.maxWidth).toBeUndefined()
+    expect(style.paddingHorizontal ?? 0).toBe(0)
     expect(StyleSheet.flatten(owner.props.style).paddingTop ?? 0).toBe(0)
   })
 
@@ -170,9 +175,19 @@ describe("SchoolPickerScreen", () => {
       expect(
         StyleSheet.flatten(list.props.contentContainerStyle),
       ).toMatchObject({
-        paddingTop: Spacing.four,
         paddingBottom: Spacing.three,
       })
+    })
+
+    it("leaves calendar management's back to the native header", async () => {
+      mockUseLocalSearchParams.mockReturnValue({
+        source: "calendar-management",
+      })
+      mockUseSchools.mockReturnValue(ready([]))
+      await render(<SchoolPickerScreen />)
+
+      expect(screenOptions().headerLeft).toBeUndefined()
+      expect(screenOptions().unstable_headerLeftItems).toBeUndefined()
     })
   })
 

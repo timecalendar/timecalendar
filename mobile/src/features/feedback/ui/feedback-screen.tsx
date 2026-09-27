@@ -90,7 +90,11 @@ export default function FeedbackScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("feedback.title") }} />
-      <RootPage lane="readable" testID="feedback-layout-owner">
+      <RootPage
+        scrollsUnderHeader
+        lane="readable"
+        testID="feedback-layout-owner"
+      >
         {() => (
           <KeyboardSafeActionLayout
             testID="feedback-keyboard-layout"

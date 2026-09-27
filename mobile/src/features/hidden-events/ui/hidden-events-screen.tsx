@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, View } from "react-native"
 import { EmptyState } from "@/components/empty-state"
 import { noDataArtwork } from "@/components/empty-state-artwork"
 import { ErrorNotice } from "@/components/error-surfaces"
-import { RootPage } from "@/components/root-page"
+import { headerScrollProps, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import {
   displayEventTitle,
@@ -67,9 +67,14 @@ export function HiddenEventsScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("hiddenEvents.title") }} />
-      <RootPage testID="hidden-events-layout-owner" lane="standard">
+      <RootPage
+        scrollsUnderHeader={!isEmpty}
+        testID="hidden-events-layout-owner"
+        lane="standard"
+      >
         {({ laneStyle }) => (
           <ScrollView
+            {...headerScrollProps(!isEmpty)}
             testID="hidden-events-responsive-content"
             contentContainerStyle={[laneStyle, styles.content]}
           >

@@ -230,9 +230,15 @@ function GuidePageContent({
   }
 
   return (
-    <RootPage testID="export-guide-page" lane="readable" style={styles.fill}>
+    <RootPage
+      scrollsUnderHeader
+      testID="export-guide-page"
+      lane="readable"
+      style={styles.fill}
+    >
       {({ laneStyle }) => (
         <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
           testID="export-guide-page-scroll"
           contentContainerStyle={[laneStyle, styles.content]}
         >
