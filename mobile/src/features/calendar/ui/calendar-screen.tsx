@@ -1,6 +1,6 @@
 import { useCalendars } from "expo-localization"
 import { router, useIsFocused, useLocalSearchParams } from "expo-router"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import {
   AccessibilityInfo,
@@ -29,7 +29,6 @@ import {
   useSyncCalendars,
 } from "@/features/calendar/data"
 import {
-  type CalendarPageTitleTarget,
   OwnedCalendarShell,
   type OwnedCalendarShellHandle,
 } from "@/features/calendar/renderer"
@@ -47,6 +46,7 @@ import { CalendarAddFab } from "./calendar-screen/calendar-screen-actions"
 import { CalendarScreenHeader } from "./calendar-screen/calendar-screen-header"
 import { CalendarScreenStatus } from "./calendar-screen/calendar-screen-status"
 import { useCalendarScreenController } from "./calendar-screen/use-calendar-screen-controller"
+import { useCalendarTitleFocus } from "./calendar-screen/use-calendar-title-focus"
 
 export function CalendarScreen() {
   const { accessibilityProbe } = useLocalSearchParams<{
@@ -84,22 +84,6 @@ export function CalendarScreen() {
   const { showWeekends } = useShowWeekendsPreference()
   const timelineHeading = formatFullDay(selectedDate, locale, displayZone)
   const calendarShellRef = useRef<OwnedCalendarShellHandle>(null)
-  const [pageTitleTarget, setPageTitleTarget] =
-    useState<CalendarPageTitleTarget | null>(null)
-  const onTitleTargetChange = useCallback(
-    (target: CalendarPageTitleTarget | null) => {
-      setPageTitleTarget((current) =>
-        current?.node === target?.node &&
-        current?.label === target?.label &&
-        current?.generation === target?.generation &&
-        current?.revision === target?.revision
-          ? current
-          : target,
-      )
-    },
-    [],
-  )
-  const announcedRevision = useRef<number | null>(null)
   const isFocused = useIsFocused()
   const wasFocused = useRef(false)
   useEffect(() => {
@@ -108,18 +92,6 @@ export function CalendarScreen() {
     wasFocused.current = isFocused
   }, [isFocused])
 
-  const onContextSettled = (revision: number, titleFocused: boolean) => {
-    if (
-      acceptedTransitionRevision === null ||
-      revision !== acceptedTransitionRevision ||
-      announcedRevision.current === revision ||
-      !isFocused
-    )
-      return
-    announcedRevision.current = revision
-    if (!titleFocused)
-      AccessibilityInfo.announceForAccessibility(timelineHeading)
-  }
   const storedEvents = useCalendarEvents(range)
   const timeline = useCalendarTimelinePresentation({
     anchor: selectedDate,
@@ -129,13 +101,21 @@ export function CalendarScreen() {
     showWeekends,
     generation: rendererGeneration,
   })
-  const titleTargetActive =
-    view !== "agenda" &&
-    isFocused &&
-    !transitionPending &&
-    timeline.ready &&
-    timeline.error === undefined &&
-    timeline.presentation.generation === rendererGeneration
+  const {
+    pageTitleTarget,
+    setPageTitleTarget,
+    titleTargetActive,
+    onContextSettled,
+  } = useCalendarTitleFocus({
+    view,
+    routeFocused: isFocused,
+    transitionPending,
+    presentationReady: timeline.ready && timeline.error === undefined,
+    presentationGeneration: timeline.presentation.generation,
+    generation: rendererGeneration,
+    acceptedRevision: acceptedTransitionRevision,
+    heading: timelineHeading,
+  })
   const probeEvents = isAccessibilityProbe ? accessibilityProbeFixture() : null
   const events = probeEvents === null ? storedEvents : [...probeEvents]
   const probePresentation =
@@ -205,7 +185,7 @@ export function CalendarScreen() {
         generation={rendererGeneration}
         acceptedRevision={acceptedTransitionRevision ?? 0}
         titleTargetActive={titleTargetActive}
-        onTitleTargetChange={onTitleTargetChange}
+        onTitleTargetChange={setPageTitleTarget}
         view={view}
         onViewChange={setView}
         onToday={canGoToToday ? goToToday : undefined}
@@ -247,7 +227,7 @@ export function CalendarScreen() {
             <OwnedCalendarShell
               ref={calendarShellRef}
               heading={timelineHeading}
-              pageTitleTarget={titleTargetActive ? pageTitleTarget : null}
+              pageTitleTarget={pageTitleTarget}
               onContextSettled={onContextSettled}
               mode={timelineMode}
               anchor={selectedDate}
