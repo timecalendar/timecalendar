@@ -101,4 +101,48 @@ renderer, change stored event facts, or weaken a final product gate to make this
 
 ## Execution evidence
 
-Not started. Agent checks and owner QA have not run. No owner acceptance or merge is recorded.
+Implementation and local automated checks passed on code head
+`86728d17d9cb286611e35ac86681efe0a33eaba4` in PR #428. The final documentation
+head and its CI result are recorded in the issue handoff. No native assistive-technology
+build, pass, or merge is recorded here.
+
+- `cd mobile && npx tsc --noEmit && npm run lint && npm test -- --coverage`:
+  passed, 210 suites and 2,020 tests. Global coverage: 4,889/4,973 lines (98.31%)
+  and 3,210/3,467 branches (92.59%). The introduced pure accessibility projection
+  covered 26/26 statements and 16/16 branches.
+- Focused renderer, Calendar screen, and owned-shell contract suites: 3 suites and
+  117 tests passed. `npm run react-doctor:changed` reported no issues.
+- Changed source/test/documentation Prettier check, `openspec validate
+navigate-populated-calendar-accessibly --strict`, `bash -n
+scripts/accessibility-probe.sh`, `bash e2e/test_run_e2e.sh`, and
+  `bash e2e/test_ci_mobile_e2e.sh` passed. The disclosure scan reported zero
+  findings before publication.
+- The PR's `Run mobile checks` CI job passed on the exact code head above.
+  Remaining PR jobs and the final documentation-head result are checked at handoff.
+- The fabricated probe contains 11 events: ten on 15 June 2026 and one on the
+  next date. It starts at a 09:00 vertical offset, with 01:00 and 23:00 targets
+  outside the starting viewport. Component tests retain and activate the
+  committed-page targets at 40, 60, and 120 pixels per hour; an offscreen
+  23:00 focus restoration scrolls the existing vertical owner to its target
+  before requesting native focus. These are host assertions, not device
+  traversal or measured native target frames.
+
+Native execution is pending in final QA. The probe operator guide is
+`mobile/src/test-support/owned-calendar/accessibility-probe.md`. Every row
+below is **pending and unverified** on actual iOS and Android builds:
+
+- [ ] Record device, OS, installed build/commit, and assistive tool.
+- [ ] Traverse each timed event once in chronological order, including 01:00
+      and 23:00 outside the starting viewport.
+- [ ] Preserve complete labels and order through zoom and Day/Week changes;
+      operate page and zoom controls without swipe or pinch.
+- [ ] Activate ordinary, overlapping, and tiny visible events with voice and
+      switch controls; record target frames and confirm the routed original UID.
+- [ ] Return after details and paging; verify focus on the surviving identity
+      or relevant committed date heading.
+- [ ] Repeat at largest text with dense overlap and repeat prior interactions
+      touched by this slice, recording any regression.
+
+Any native finding requires a concrete rework result; unreachable or ambiguous
+conflict activation returns to the scoped D06 revision path. ADR 061 and the
+changed Calendar Architecture Book rule require explicit Reviewer scrutiny.
