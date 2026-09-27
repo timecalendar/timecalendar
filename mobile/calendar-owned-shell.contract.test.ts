@@ -43,6 +43,39 @@ function compileForNativeRuntime(path: string): string {
 }
 
 describe("owned Calendar paging repository contract", () => {
+  it("observes only the existing event target's native accessibility focus", () => {
+    const moduleRoot = join(root, "modules/calendar-focus-observer")
+    const ios = readFileSync(
+      join(moduleRoot, "ios/CalendarFocusObserverView.swift"),
+      "utf8",
+    )
+    const android = readFileSync(
+      join(
+        moduleRoot,
+        "android/src/main/java/expo/modules/calendarfocusobserver/CalendarFocusObserverView.kt",
+      ),
+      "utf8",
+    )
+    const canvas = readFileSync(
+      join(root, "src/features/calendar/renderer/owned-calendar-canvas.tsx"),
+      "utf8",
+    )
+    expect(ios).toContain("UIAccessibility.elementFocusedNotification")
+    expect(ios).toContain("UIAccessibility.focusedElementUserInfoKey")
+    expect(ios).toContain("view.isDescendant(of: target)")
+    expect(ios).toContain("stopObserving()")
+    expect(android).toContain("requestSendAccessibilityEvent")
+    expect(android).toContain("TYPE_VIEW_ACCESSIBILITY_FOCUSED")
+    expect(android).toContain("child === getChildAt(0)")
+    expect(android).toContain(
+      "super.requestSendAccessibilityEvent(child, event)",
+    )
+    expect(android).not.toContain("AccessibilityService")
+    expect(canvas).toContain("<CalendarFocusObserverView")
+    expect(canvas).not.toContain("onFocus={")
+    expect(canvas).toMatch(/<Pressable\b/g)
+  })
+
   it("compiles the native scroll and pager owner for the native runtime", () => {
     const compiled = [
       "src/features/calendar/renderer/owned-calendar-shell.tsx",
@@ -83,6 +116,8 @@ describe("owned Calendar paging repository contract", () => {
   it("keeps one owned renderer with no vendor, fallback, or compatibility path", () => {
     const rendererRoot = join(root, "src", "features", "calendar", "renderer")
     expect(readdirSync(rendererRoot).sort()).toEqual([
+      "calendar-focus-observer.tsx",
+      "calendar-focus-observer.types.ts",
       "index.ts",
       "owned-calendar-canvas.tsx",
       "owned-calendar-coordinator.ts",

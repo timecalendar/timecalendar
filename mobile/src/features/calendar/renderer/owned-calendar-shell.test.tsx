@@ -56,6 +56,17 @@ function styledTestNode(node: unknown): StyledTestNode {
   return node as StyledTestNode
 }
 
+async function focusEvent(uid: string) {
+  const observer = screen.getByTestId(`owned-calendar-focus-observer-${uid}`)
+  await fireEvent(observer, "onAccessibilityFocused", {
+    nativeEvent: {
+      identity: observer.props.identity,
+      dateKey: observer.props.dateKey,
+      generation: observer.props.generation,
+    },
+  })
+}
+
 const pagerMock = jest.requireMock<{
   __pagerMock: {
     setPage: jest.Mock
@@ -524,7 +535,7 @@ describe("OwnedCalendarShell", () => {
       const view = await render(
         <OwnedCalendarShell {...props} presentation={presentation} />,
       )
-      await fireEvent.press(screen.getByRole("button", { name: /late-focus/ }))
+      await focusEvent("late-focus")
       await view.rerender(
         <OwnedCalendarShell
           {...props}
@@ -633,9 +644,7 @@ describe("OwnedCalendarShell", () => {
           presentation={presentation}
         />,
       )
-      await fireEvent.press(
-        screen.getByRole("button", { name: /offscreen-late/ }),
-      )
+      await focusEvent("offscreen-late")
       const scrollTo = jest.spyOn(scrollRef.current as ScrollView, "scrollTo")
       try {
         await act(async () => shellRef.current?.restoreFocus())
@@ -653,6 +662,57 @@ describe("OwnedCalendarShell", () => {
       refSpy.mockRestore()
     }
   })
+
+  it.each([
+    ["unmatched identity", { identity: "other" }, {}],
+    ["wrong date", { dateKey: "2026-06-16" }, {}],
+    ["obsolete generation", { generation: -1 }, {}],
+    ["route blur", {}, { routeFocused: false }],
+    ["pending transition", {}, { transitionPending: true }],
+  ] as const)(
+    "ignores %s as accessibility-focus memory",
+    async (_, override, state) => {
+      const presentation = buildCalendarTimelinePresentation({
+        range: planCalendarThreePageRange(props),
+        generation: 0,
+        events: [
+          timedEvent(
+            "observed",
+            "2026-06-15T10:00:00.000Z",
+            "2026-06-15T11:00:00.000Z",
+          ),
+        ],
+      })
+      const shellRef = createRef<OwnedCalendarShellHandle>()
+      const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
+      try {
+        await render(
+          <OwnedCalendarShell
+            {...props}
+            {...state}
+            ref={shellRef}
+            presentation={presentation}
+          />,
+        )
+        const observer = screen.getByTestId(
+          "owned-calendar-focus-observer-observed",
+        )
+        await fireEvent(observer, "onAccessibilityFocused", {
+          nativeEvent: {
+            identity: observer.props.identity,
+            dateKey: observer.props.dateKey,
+            generation: observer.props.generation,
+            ...override,
+          },
+        })
+        await fireEvent.press(screen.getByRole("button", { name: /observed/ }))
+        await act(async () => shellRef.current?.restoreFocus())
+        expect(focus).not.toHaveBeenCalled()
+      } finally {
+        focus.mockRestore()
+      }
+    },
+  )
 
   it.each([
     ["route blur", { routeFocused: false }],
@@ -680,7 +740,7 @@ describe("OwnedCalendarShell", () => {
         presentation={presentation}
       />,
     )
-    await fireEvent.press(screen.getByRole("button", { name: /return-target/ }))
+    await focusEvent("return-target")
     let frame: FrameRequestCallback | undefined
     const requestFrame = jest
       .spyOn(global, "requestAnimationFrame")
@@ -867,8 +927,10 @@ describe("OwnedCalendarShell", () => {
     })
     expect(
       StyleSheet.flatten(
-        styledTestNode(styledTestNode(pointAnchor.children[0]).children[0])
-          .props.style,
+        styledTestNode(
+          styledTestNode(styledTestNode(pointAnchor.children[0]).children[0])
+            .children[0],
+        ).props.style,
       ),
     ).toMatchObject({
       top: 20,
@@ -888,8 +950,10 @@ describe("OwnedCalendarShell", () => {
     })
     expect(
       StyleSheet.flatten(
-        styledTestNode(styledTestNode(tinyAnchor.children[0]).children[0]).props
-          .style,
+        styledTestNode(
+          styledTestNode(styledTestNode(tinyAnchor.children[0]).children[0])
+            .children[0],
+        ).props.style,
       ),
     ).toMatchObject({
       top: 21,

@@ -184,10 +184,17 @@ export const OwnedCalendarShell = forwardRef<
     if (node === null) targets.delete(key)
     else if (!targets.has(key)) targets.set(key, { node, dateKey, minute })
   }
-  const rememberTarget = (key: string, dateKey: string) => {
-    if (activeGeneration.current !== props.generation) return
-    if (targets.get(key)?.dateKey === dateKey)
-      lastFocused.current = { key, dateKey }
+  const rememberTarget = (key: string, dateKey: string, generation: number) => {
+    const revision = props.acceptedTransitionRevision ?? 0
+    if (
+      activeGeneration.current !== generation ||
+      !isFocusContextCurrent(generation, revision) ||
+      targets.get(key)?.dateKey !== dateKey ||
+      (lastFocused.current?.key === key &&
+        lastFocused.current.dateKey === dateKey)
+    )
+      return
+    lastFocused.current = { key, dateKey }
   }
   useEffect(() => {
     const revision = props.acceptedTransitionRevision ?? 0

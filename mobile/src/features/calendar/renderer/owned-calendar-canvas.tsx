@@ -50,6 +50,7 @@ import {
 } from "@/features/event-checklists"
 import { useTheme } from "@/theme"
 
+import CalendarFocusObserverView from "./calendar-focus-observer"
 import type { CalendarPage } from "./owned-calendar-coordinator"
 import type { OwnedCalendarProbeDiagnostic } from "./owned-calendar-shell"
 import {
@@ -195,7 +196,7 @@ export function OwnedCalendarCanvas({
   nowLabel: string
   t: TFunction
   onEventPress: (uid: string) => void
-  onEventFocused: (key: string, dateKey: string) => void
+  onEventFocused: (key: string, dateKey: string, generation: number) => void
   registerTarget: (
     key: string,
     dateKey: string,
@@ -338,6 +339,7 @@ export function OwnedCalendarCanvas({
                   displayZone={displayZone}
                   onEventPress={onEventPress}
                   onEventFocused={onEventFocused}
+                  generation={generation}
                   registerTarget={registerTarget}
                   onProbeDiagnostic={onProbeDiagnostic}
                   isEventActivationBlocked={isEventActivationBlocked}
@@ -386,6 +388,7 @@ function CalendarPageCanvas({
   displayZone,
   onEventPress,
   onEventFocused,
+  generation,
   registerTarget,
   onProbeDiagnostic,
   isEventActivationBlocked,
@@ -400,7 +403,8 @@ function CalendarPageCanvas({
   locale: AppLocale
   displayZone: string
   onEventPress: (uid: string) => void
-  onEventFocused: (key: string, dateKey: string) => void
+  onEventFocused: (key: string, dateKey: string, generation: number) => void
+  generation: number
   registerTarget: (
     key: string,
     dateKey: string,
@@ -456,6 +460,7 @@ function CalendarPageCanvas({
         settledPixelsPerHour={settledPixelsPerHour}
         onEventPress={onEventPress}
         onEventFocused={onEventFocused}
+        generation={generation}
         registerTarget={registerTarget}
         onProbeDiagnostic={onProbeDiagnostic}
         isEventActivationBlocked={isEventActivationBlocked}
@@ -488,6 +493,7 @@ function CalendarTiles({
   settledPixelsPerHour,
   onEventPress,
   onEventFocused,
+  generation,
   registerTarget,
   onProbeDiagnostic,
   isEventActivationBlocked,
@@ -499,7 +505,8 @@ function CalendarTiles({
   pixelsPerHour: SharedValue<number>
   settledPixelsPerHour: number
   onEventPress: (uid: string) => void
-  onEventFocused: (key: string, dateKey: string) => void
+  onEventFocused: (key: string, dateKey: string, generation: number) => void
+  generation: number
   registerTarget: (
     key: string,
     dateKey: string,
@@ -571,11 +578,11 @@ function CalendarTiles({
                     registerTarget={
                       page.direction === 0 ? registerTarget : undefined
                     }
-                    onFocused={() => onEventFocused(tile.key, column.key)}
-                    onPress={() => {
-                      onEventFocused(tile.key, column.key)
-                      onEventPress(tile.identity.uid)
-                    }}
+                    generation={generation}
+                    onNativeFocused={(identity, dateKey, observedGeneration) =>
+                      onEventFocused(identity, dateKey, observedGeneration)
+                    }
+                    onPress={() => onEventPress(tile.identity.uid)}
                     t={t}
                   />
                 ),
@@ -638,8 +645,6 @@ function CalendarTiles({
                 accessibilityRole="button"
                 accessibilityLabel={eventLabel(tile, locale, displayZone, t)}
                 onPress={() => {
-                  if (chooser !== null)
-                    onEventFocused(tile.key, chooser.dateKey)
                   setChooser(null)
                   onEventPress(tile.identity.uid)
                 }}
@@ -705,7 +710,8 @@ function TimedCalendarTile({
   projectionIndex,
   onProbeDiagnostic,
   registerTarget,
-  onFocused,
+  generation,
+  onNativeFocused,
   onPress,
   t,
 }: {
@@ -728,7 +734,12 @@ function TimedCalendarTile({
         node: View | null,
       ) => void)
     | undefined
-  onFocused: () => void
+  generation: number
+  onNativeFocused: (
+    identity: string,
+    dateKey: string,
+    generation: number,
+  ) => void
   onPress: () => void
   t: TFunction
 }) {
@@ -813,6 +824,24 @@ function TimedCalendarTile({
         )}
     </Animated.View>
   )
+  const button = (
+    <Pressable
+      ref={(node) => {
+        if (registerTarget !== undefined)
+          registerTarget(tile.key, dateKey, tile.startMinute, node)
+      }}
+      accessible={accessible}
+      accessibilityElementsHidden={!accessible}
+      importantForAccessibility={accessible ? "yes" : "no-hide-descendants"}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityHint={t("calendar.event.hint")}
+      onPress={onPress}
+      style={styles.tileTarget}
+    >
+      {visual}
+    </Pressable>
+  )
   return (
     <Animated.View
       testID={`owned-calendar-event-${tile.identity.uid}`}
@@ -834,23 +863,26 @@ function TimedCalendarTile({
         interactionStyle,
       ]}
     >
-      <Pressable
-        ref={(node) => {
-          if (registerTarget !== undefined)
-            registerTarget(tile.key, dateKey, tile.startMinute, node)
-        }}
-        onFocus={onFocused}
-        accessible={accessible}
-        accessibilityElementsHidden={!accessible}
-        importantForAccessibility={accessible ? "yes" : "no-hide-descendants"}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        accessibilityHint={t("calendar.event.hint")}
-        onPress={onPress}
-        style={styles.tileTarget}
-      >
-        {visual}
-      </Pressable>
+      {accessible ? (
+        <CalendarFocusObserverView
+          testID={`owned-calendar-focus-observer-${tile.identity.uid}`}
+          identity={tile.key}
+          dateKey={dateKey}
+          generation={generation}
+          onAccessibilityFocused={({ nativeEvent }) =>
+            onNativeFocused(
+              nativeEvent.identity,
+              nativeEvent.dateKey,
+              nativeEvent.generation,
+            )
+          }
+          style={styles.tileTarget}
+        >
+          {button}
+        </CalendarFocusObserverView>
+      ) : (
+        button
+      )}
     </Animated.View>
   )
 }

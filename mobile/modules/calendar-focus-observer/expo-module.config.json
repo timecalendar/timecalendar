@@ -1,0 +1,11 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["CalendarFocusObserverModule"]
+  },
+  "android": {
+    "modules": [
+      "expo.modules.calendarfocusobserver.CalendarFocusObserverModule"
+    ]
+  }
+}
