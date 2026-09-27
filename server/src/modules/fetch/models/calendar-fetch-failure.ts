@@ -44,6 +44,13 @@ export const dispositionOf = (
 ): CalendarFetchDisposition =>
   transient.has(classification) ? "transient" : "terminal"
 
+export const finalDispositionOf = (
+  classification: CalendarFetchClassification,
+): CalendarFetchFinalDisposition =>
+  dispositionOf(classification) === "transient"
+    ? "transient_exhausted"
+    : "terminal"
+
 export class NoCalendarEventsError extends BadRequestException {
   constructor() {
     super("No events found")

@@ -29,9 +29,10 @@ import { nanoid } from "nanoid"
 import { CalendarSyncFailure } from "modules/calendar-sync/models/calendar-sync-failure"
 import {
   CalendarFetchFailure,
+  CalendarFetchClassification,
   classifyCalendarFailure,
+  finalDispositionOf,
   NoCalendarEventsError,
-  dispositionOf,
 } from "modules/fetch/models/calendar-fetch-failure"
 import { CalendarSyncMetricsService } from "./calendar-sync-metrics.service"
 
@@ -139,9 +140,7 @@ export class CalendarSyncService {
               } else {
                 this.calendarSyncMetricsService.recordFetchOutcome(
                   fetchedEvents.classification,
-                  dispositionOf(fetchedEvents.classification) === "transient"
-                    ? "transient_exhausted"
-                    : "terminal",
+                  finalDispositionOf(fetchedEvents.classification),
                 )
               }
             } catch (error) {
@@ -307,7 +306,7 @@ export class CalendarSyncService {
     | {
         ok: false
         error: any
-        classification: import("modules/fetch/models/calendar-fetch-failure").CalendarFetchClassification
+        classification: CalendarFetchClassification
       }
     | { ok: true; events: CalendarEvent[] }
   > {

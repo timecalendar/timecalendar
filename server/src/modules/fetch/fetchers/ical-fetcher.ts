@@ -19,6 +19,7 @@ import {
   CalendarFetchFinalDisposition,
   classifyCalendarFailure,
   dispositionOf,
+  finalDispositionOf,
   NoCalendarEventsError,
   retryAfterDelayMs,
 } from "modules/fetch/models/calendar-fetch-failure"
@@ -206,10 +207,7 @@ export class IcalFetcher implements Fetcher {
           ? "timeout"
           : classifyCalendarFailure({ error, url })
       outcome = classification
-      finalDisposition =
-        dispositionOf(classification) === "transient"
-          ? "transient_exhausted"
-          : "terminal"
+      finalDisposition = finalDispositionOf(classification)
       throw error
     } finally {
       clearTimeout(budgetTimer)
