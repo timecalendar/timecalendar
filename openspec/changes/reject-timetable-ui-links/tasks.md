@@ -80,7 +80,7 @@
 
 ## 7. CI proof on the pushed head
 
-- [ ] 7.1 After pushing the implementation, confirm the `CI build & deploy` server test and OpenAPI
+- [x] 7.1 After pushing the implementation, confirm the `CI build & deploy` server test and OpenAPI
   drift steps are green on the exact PR head and that no mobile job was triggered by an accidental
   `mobile/**` or generated-client diff; repair implementation failures rather than broadening the
   classifier or weakening the test matrix.
