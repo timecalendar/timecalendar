@@ -123,11 +123,14 @@ title first and omit lower-priority location/checklist lines unless their comple
 committed-page button still announces the full localized title, time, optional location and checklist
 meaning and routes by original UID; neighbour visuals and child text add no semantic nodes. Native
 ScrollView, PagerView and pinch owners continue to cancel a pending press when movement takes ownership.
-If actual platform-minimum target rectangles intersect with positive area, every tile remains visible but
-the competing targets become one localized chooser trigger. Its accessible modal lists each complete event
-label exactly once in stable start/end/identity order and routes only the chosen original UID.
+If actual platform-minimum target rectangles intersect with positive area, every tile remains visible.
+One localized, non-semantic chooser overlay covers the union for pointer taps; its accessible modal
+lists each complete event label exactly once in stable start/end/identity order and routes only the
+chosen original UID. Each visible tile remains the sole semantic button for its own identity, ordered
+with the committed page and activated directly by assistive tools. Its semantic target stays tied to
+meaningful visible geometry ([ADR 061](./decisions/061-calendar-conflict-pointer-and-assistive-targets.md)).
 Boundary-touching targets stay direct; no z-order guess, hidden event, duplicate semantic target, or
-event-count threshold determines this behavior.
+event-count threshold determines this behavior. Native assistive operation remains final QA evidence.
 
 Imported event colors pass through the Calendar-owned deterministic appearance resolver. It validates
 six-digit sRGB input, composites an opaque scheme-aware surface, selects a foreground with at least
@@ -307,7 +310,8 @@ separate. The binding contract and regression scenarios live in the
   Header cells use localized narrow weekday glyphs, larger date numbers, and a filled circular Today
   badge. Supported
   ordinary timed tiles use live-scale minute geometry, show title/location/checklist progress, and
-  expose one localized direct button or one explicit conflict chooser only on the committed page. Title and location share compact 11/13
+  expose one semantic button per committed event; intersecting pointer targets use one explicit
+  non-semantic conflict overlay and an accessible chooser modal. Title and location share compact 11/13
   typography, wrap without ellipses, and clip only at the event's actual time boundary; title weight
   supplies the hierarchy. Rounded two-unit event surfaces begin flush with the left day boundary and
   retain two units before the next separator. Activation passes the original UID to the shared details

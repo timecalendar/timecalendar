@@ -20,9 +20,9 @@
 
 - [ ] 4.1 Extend focused renderer and Calendar screen tests for chronological labels/order, one identity, direct and chooser paths, largest-text-safe complete semantics, meaningful target geometry, exact route activation, offscreen reachability inputs, focus fallback, and every previously accepted interaction touched by the slice.
 - [ ] 4.2 Extend `mobile/calendar-owned-shell.contract.test.ts` as the CI proof test to assert one native vertical owner, one pager/three pages, one semantic target per committed identity, hidden adjacent pages/decorations/overlays, bounded focus refs, and absence of a hidden list, alternate renderer, experimental focus-order API, compatibility path, or per-frame React accessibility work.
-- [ ] 4.3 Review the implementation against the binding Architecture Book Calendar/accessibility/testing contracts and record the update as N/A while this scope remains conforming and read-only. If implementation requires a reusable rule change, stop and return for an ADR plus explicit Reviewer scrutiny rather than editing `docs/mobile/architecture-book/` in this slice.
+- [x] 4.3 Record the pointer/assistive conflict split in ADR 061, reconcile the Calendar topical rule, index, and changelog, and request explicit Reviewer scrutiny of the sensitive Architecture Book surface. Native AT remains pending final QA; this documentation decision does not claim a device pass.
 
-  Blocked at this check: `docs/mobile/architecture-book/calendar.md` currently says overlapping targets become one semantic chooser trigger. T12's approved one-event-per-target tree makes that overlay non-semantic. This changes the documented reusable rule and needs the scoped ADR/review decision before the remaining tasks continue.
+  The T11 chooser remains the pointer path; one visible event button per identity is the semantic path. If final native QA finds either event unreachable or ambiguously activatable, return for scoped D06 revision.
 
 ## 5. Run local-green verification
 

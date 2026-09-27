@@ -25,6 +25,14 @@
   malformed sources fail before outbound work, while valid exports, failure recording,
   and eventless-feed rejection retain their existing behavior. No ADR or device QA note.
 
+## 2026-09-27 — Calendar conflict input semantics
+
+- Separated the T11 pointer chooser overlay from committed event semantics: each visible event
+  keeps its own chronological, identity-backed button while the overlay handles intersecting
+  pointer targets (ADR [061](./decisions/061-calendar-conflict-pointer-and-assistive-targets.md)).
+- Kept native assistive-technology traversal and activation evidence pending final QA; a failing
+  conflict target reopens the scoped D06 design decision.
+
 ## 2026-09-22 — Stable simultaneous Calendar classes
 
 - Added complete-day, identity-stable positive-interval packing into minimum equal-width columns, with

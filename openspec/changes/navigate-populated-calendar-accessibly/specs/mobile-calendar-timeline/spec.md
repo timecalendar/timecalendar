@@ -2,7 +2,7 @@
 
 ### Requirement: T11 explicitly disambiguates intersecting effective targets
 
-The renderer SHALL derive each retained event's effective target rectangle from its prepared horizontal placement and platform-minimum interaction geometry. Targets intersecting with positive area SHALL form deterministic conflict components. A single-event component SHALL keep one direct visual, pointer, and semantic event button. A multi-event component SHALL preserve every visual tile and SHALL expose one localized pointer chooser trigger over the component union in place of competing pointer targets. That chooser trigger MUST be excluded from the accessibility tree. Each underlying visible tile SHALL remain the sole semantic button for its original identity only after the T12 native gate proves that its target remains reachable, meaningful, and unambiguously activatable by supported assistive tools. Activating an event semantic button SHALL open exactly that identity; activating the pointer chooser SHALL present one accessible modal choice per involved original identity in stable start/end/identity order.
+The renderer SHALL derive each retained event's effective target rectangle from its prepared horizontal placement and platform-minimum interaction geometry. Targets intersecting with positive area SHALL form deterministic conflict components. A single-event component SHALL keep one direct visual, pointer, and semantic event button. A multi-event component SHALL preserve every visual tile and SHALL expose one localized pointer chooser trigger over the component union in place of competing pointer targets. That chooser trigger MUST be excluded from the accessibility tree. Each underlying visible tile SHALL remain the sole semantic button for its original identity, with a target tied to meaningful visible geometry. Native reachability and unambiguous activation remain pending final QA and SHALL NOT be inferred from automation. Activating an event semantic button SHALL open exactly that identity; activating the pointer chooser SHALL present one accessible modal choice per involved original identity in stable start/end/identity order.
 
 #### Scenario: Separated overlap columns remain directly openable
 
@@ -30,14 +30,14 @@ The renderer SHALL derive each retained event's effective target rectangle from 
 
 #### Scenario: Assistive technology encounters events rather than the pointer overlay
 
-- **WHEN** a committed page contains a multi-event target conflict after the native gate passes
+- **WHEN** a committed page contains a multi-event target conflict
 - **THEN** traversal exposes each visual event tile once in complete chronological order and never exposes the pointer chooser overlay
 - **AND** neighbour pages, child visuals, and the open chooser's background add no duplicate semantic nodes
 
 #### Scenario: Native conflict geometry fails safely
 
 - **WHEN** VoiceOver, TalkBack, Voice Control, or switch operation cannot reach and activate the intended conflict identity with meaningful visual geometry
-- **THEN** T12 stops before adopting the changed semantic arrangement
+- **THEN** the failing device/build/tool/identity is recorded as final QA rework
 - **AND** the implementation requests a scoped D06 revision rather than adding hidden buttons or a duplicate tree
 
 ## ADDED Requirements
@@ -108,20 +108,20 @@ The Calendar SHALL remember the last natively focused event by original source/U
 - **THEN** callbacks from the obsolete revision cannot scroll or request native focus
 - **AND** only the latest accepted complete context may restore focus and announce settlement
 
-### Requirement: T12 native evidence gates the approved tree
+### Requirement: T12 preserves the native verification boundary
 
-Before completing T12, the implementation SHALL run the checked-in fabricated 01:00/10:00/23:00 and overlap fixture on actual iOS and Android test paths with the applicable screen reader, voice, and switch tools. Evidence SHALL record the exact commit/PR head, build, platform/device, preparation/reset steps, traversal order, offscreen reachability, focused target geometry, exact-identity activation, page/zoom alternatives, details return, mode change, largest text, and touched regression checks. Missing platform evidence SHALL remain Applier rework and MUST NOT be inferred from host tests or earlier epics. If the approved visual-target tree fails bounded reachability or activation geometry, implementation SHALL stop and request a scoped D06 revision before adding another semantic strategy.
+The implementation SHALL retain the checked-in fabricated 01:00/10:00/23:00 and overlap fixture plus repeatable preparation/reset steps. Automated checks SHALL prove deterministic projection, one native target per identity, overlay exclusion, exact routing, bounded ownership, and focus behavior on the exact PR head. Actual iOS and Android screen reader, voice, and switch operation SHALL remain pending and unverified on the final QA checklist until executed. Final QA evidence SHALL record the tested head/build, platform/device, traversal order, offscreen reachability, focused target geometry, exact-identity activation, page/zoom alternatives, details return, mode change, largest text, and touched regressions. Host tests or earlier epics MUST NOT be reported as native evidence. If the approved visual-target tree fails bounded reachability or activation geometry, request a scoped D06 revision before adding another semantic strategy.
 
-#### Scenario: Approved tree passes the native gate
+#### Scenario: Final native QA passes the approved tree
 
 - **WHEN** every required iOS and Android assistive path traverses each fixture event once, reveals both extremes, and activates the labelled visible identity
-- **THEN** implementation may complete focus restoration and final exact-head verification on that same strategy
-- **AND** the evidence names every executed result and any rerun required after relevant edits
+- **THEN** the final QA record names every executed result and any rerun required after relevant edits
+- **AND** the native checklist may be marked passed only for the tested head and build
 
-#### Scenario: Approved tree fails the native gate
+#### Scenario: Final native QA fails the approved tree
 
 - **WHEN** any required platform cannot reach an off-viewport event or cannot unambiguously activate its visible identity
-- **THEN** the slice records the failing platform/tool/build/fixture and stops further feature expansion
+- **THEN** the slice records the failing platform/tool/build/fixture as rework and requests the scoped D06 revision
 - **AND** no hidden duplicate, accessibility-only destination, experimental order API, or unapproved semantic layer is added
 
 #### Scenario: Automation proves only deterministic contracts

@@ -28,7 +28,7 @@ decision changes; use Git for its history.
 | [032](./032-calendar-kit-vendor-patch-live-anchor.md)                 | Patch calendar-kit's live scroll anchor                                                           |
 | [033](./033-calendar-renderer-module-boundary.md)                     | Own the calendar renderer boundary inside the calendar feature                                    |
 | [034](./034-settings-third-tab-identity.md)                           | Use Settings as the canonical third tab and secondary-destination hub                             |
-| [035](./035-display-timezone-preference.md)                           | Resolve worldwide display-timezone intent at one seam                                              |
+| [035](./035-display-timezone-preference.md)                           | Resolve worldwide display-timezone intent at one seam                                             |
 | [036](./036-native-onboarding-pager.md)                               | Use the native pager bridge for onboarding                                                        |
 | [037](./037-self-hosted-ota-runtime.md)                               | Self-host signed OTA updates and apply them at foreground boundaries                              |
 | [038](./038-isolate-maestro-flow-lifecycles.md)                       | Isolate each Maestro flow in a fresh CLI process                                                  |
@@ -52,6 +52,7 @@ decision changes; use Git for its history.
 | [057](./057-three-journey-native-smoke-budget.md)                     | Limit daily native smoke to three durable business journeys                                       |
 | [058](./058-activity-virtual-fragment-pagination.md)                  | Page Activity as stable byte-bounded virtual fragments                                            |
 | [060](./060-platform-native-settings-composition.md)                  | Compose platform-native settings behind the chrome boundary                                       |
+| [061](./061-calendar-conflict-pointer-and-assistive-targets.md)       | Separate Calendar conflict pointer and assistive targets                                          |
 
 | [059](./059-calendar-import-finalization.md)                          | Finalize import above onboarding with checkpointed creation and serialized event sync             |
 
