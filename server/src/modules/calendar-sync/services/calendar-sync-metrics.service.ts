@@ -1,6 +1,10 @@
 import { Injectable } from "@nestjs/common"
 import meter from "config/observability/meter"
 import { UpstreamDomain } from "config/observability/upstream-domain"
+import {
+  CalendarFetchOutcome,
+  CalendarFetchFinalDisposition,
+} from "modules/fetch/models/calendar-fetch-failure"
 
 export type CalendarSyncMetricAttributes = {
   school: string
@@ -60,6 +64,13 @@ export class CalendarSyncMetricsService {
     "calendar_sync_upstream_attempt_total",
     { unit: "{attempts}", description: "Upstream transport attempts" },
   )
+  private readonly fetchOutcomeCounter = meter.createCounter(
+    "calendar_sync_fetch_outcome_total",
+    {
+      unit: "{fetches}",
+      description: "Final classified upstream fetch outcomes",
+    },
+  )
   private readonly outcomeCounter = meter.createCounter(
     "calendar_sync_batch_outcome_total",
     { unit: "{batches}", description: "Terminal sync batch outcomes" },
@@ -98,5 +109,12 @@ export class CalendarSyncMetricsService {
 
   recordAttempt() {
     this.attemptCounter.add(1)
+  }
+
+  recordFetchOutcome(
+    classification: CalendarFetchOutcome,
+    disposition: CalendarFetchFinalDisposition,
+  ) {
+    this.fetchOutcomeCounter.add(1, { classification, disposition })
   }
 }

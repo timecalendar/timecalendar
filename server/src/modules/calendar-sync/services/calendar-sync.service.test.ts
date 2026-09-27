@@ -24,6 +24,8 @@ import { CalendarFailure } from "modules/calendar-sync/models/calendar-failure.e
 import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
 import { CalendarSyncMetricsService } from "modules/calendar-sync/services/calendar-sync-metrics.service"
 import { CalendarSyncAbortError } from "modules/calendar-sync/models/calendar-sync-context"
+import { CalendarSyncFailure } from "modules/calendar-sync/models/calendar-sync-failure"
+import { CalendarFetchFailure } from "modules/fetch/models/calendar-fetch-failure"
 import { calendarEventFactory } from "modules/calendar/factories/calendar-event.factory"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
@@ -423,6 +425,44 @@ describe("CalendarSyncService", () => {
         },
       )
     })
+
+    it("stores the exact submitted full source URL on creation failure", async () => {
+      const fullUrl =
+        "https://example.test/feed.ics?token=example-token&calendar=one#source"
+      icalFetcher.fetch.mockRejectedValueOnce(new Error("source failed"))
+      await expect(
+        service.sync(calendarFactory().build({ url: fullUrl })),
+      ).rejects.toThrow("source failed")
+      const [failure] = await dataSource.getRepository(CalendarFailure).find()
+      expect(failure.url).toBe(fullUrl)
+      expect(JSON.parse(failure.error)).toMatchObject({
+        message: "source failed",
+      })
+    })
+
+    it.each([
+      ["invalid_ical", "terminal"],
+      ["service_unavailable", "transient"],
+    ] as const)(
+      "propagates a typed %s failure for an existing calendar",
+      async (classification, disposition) => {
+        const sourceError = new Error("source failed")
+        icalFetcher.fetch.mockRejectedValueOnce(
+          new CalendarFetchFailure(classification, sourceError),
+        )
+        try {
+          await service.sync(calendar)
+          throw new Error("expected sync to fail")
+        } catch (error) {
+          expect(error).toBeInstanceOf(CalendarSyncFailure)
+          expect(error).toMatchObject({
+            classification,
+            disposition,
+            originalCause: expect.any(CalendarFetchFailure),
+          })
+        }
+      },
+    )
 
     it("updates the calendar lastUpdatedAt when there is an error", async () => {
       jest.useFakeTimers({

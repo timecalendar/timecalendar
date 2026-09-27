@@ -1,4 +1,4 @@
-import { Injectable, UnprocessableEntityException } from "@nestjs/common"
+import { Injectable } from "@nestjs/common"
 import { classifyUpstreamDomain } from "config/observability/upstream-domain"
 import { SpanStatusCode, trace } from "@opentelemetry/api"
 import { addMinutes } from "date-fns"
@@ -26,6 +26,14 @@ import { toErrorType } from "modules/shared/utils/to-error-type"
 import { idToEntity } from "modules/shared/utils/typeorm/id-to-entity"
 import { SubjectService } from "modules/subject/services/subject.service"
 import { nanoid } from "nanoid"
+import { CalendarSyncFailure } from "modules/calendar-sync/models/calendar-sync-failure"
+import {
+  CalendarFetchFailure,
+  CalendarFetchClassification,
+  classifyCalendarFailure,
+  finalDispositionOf,
+  NoCalendarEventsError,
+} from "modules/fetch/models/calendar-fetch-failure"
 import { CalendarSyncMetricsService } from "./calendar-sync-metrics.service"
 
 type CalendarForSync = Pick<Calendar, "url" | "customData"> &
@@ -124,6 +132,24 @@ export class CalendarSyncService {
                 onAttempt: () =>
                   this.calendarSyncMetricsService.recordAttempt(),
               })
+              if (fetchedEvents.ok) {
+                this.calendarSyncMetricsService.recordFetchOutcome(
+                  "success",
+                  "success",
+                )
+              } else {
+                this.calendarSyncMetricsService.recordFetchOutcome(
+                  fetchedEvents.classification,
+                  finalDispositionOf(fetchedEvents.classification),
+                )
+              }
+            } catch (error) {
+              if (isCalendarSyncAbort(error, context.signal))
+                this.calendarSyncMetricsService.recordFetchOutcome(
+                  "cancelled",
+                  "cancelled",
+                )
+              throw error
             } finally {
               this.calendarSyncMetricsService.upstreamCompleted()
             }
@@ -204,7 +230,11 @@ export class CalendarSyncService {
             }
             throw error
           }
-          if (!fetchedEvents.ok) throw fetchedEvents.error
+          if (!fetchedEvents.ok)
+            throw new CalendarSyncFailure(
+              fetchedEvents.classification,
+              fetchedEvents.error,
+            )
 
           span.setStatus({ code: SpanStatusCode.OK })
           return savedCalendar
@@ -273,7 +303,12 @@ export class CalendarSyncService {
     code: string | null,
     context: CalendarSyncContext,
   ): Promise<
-    { ok: false; error: any } | { ok: true; events: CalendarEvent[] }
+    | {
+        ok: false
+        error: any
+        classification: CalendarFetchClassification
+      }
+    | { ok: true; events: CalendarEvent[] }
   > {
     try {
       const fetchedEvents = await this.fetchService.fetchEvents(
@@ -282,8 +317,7 @@ export class CalendarSyncService {
         undefined,
         context,
       )
-      if (fetchedEvents.length === 0)
-        throw new UnprocessableEntityException("No events found")
+      if (fetchedEvents.length === 0) throw new NoCalendarEventsError()
 
       return {
         ok: true,
@@ -293,7 +327,14 @@ export class CalendarSyncService {
       }
     } catch (err) {
       if (isCalendarSyncAbort(err, context.signal)) throw err
-      return { ok: false, error: err }
+      return {
+        ok: false,
+        error: err,
+        classification:
+          err instanceof CalendarFetchFailure
+            ? err.classification
+            : classifyCalendarFailure({ error: err }),
+      }
     }
   }
 

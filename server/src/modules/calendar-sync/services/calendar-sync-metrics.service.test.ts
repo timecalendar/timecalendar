@@ -18,6 +18,40 @@ import { CalendarSyncMetricsService } from "./calendar-sync-metrics.service"
 
 describe("CalendarSyncMetricsService", () => {
   it.each([
+    ["success", "success"],
+    ["service_unavailable", "transient_exhausted"],
+    ["invalid_ical", "terminal"],
+    ["cancelled", "cancelled"],
+  ] as const)(
+    "records one final %s fetch outcome",
+    (classification, disposition) => {
+      const service = new CalendarSyncMetricsService()
+      const add = mockInstruments.calendar_sync_fetch_outcome_total.add
+      add.mockClear()
+      service.recordFetchOutcome(classification, disposition)
+      expect(add).toHaveBeenCalledTimes(1)
+      expect(add).toHaveBeenCalledWith(1, { classification, disposition })
+    },
+  )
+
+  it("keeps fetch metric labels to the closed vocabulary", () => {
+    const service = new CalendarSyncMetricsService()
+    const attempt = mockInstruments.calendar_sync_upstream_attempt_total.add
+    const outcome = mockInstruments.calendar_sync_fetch_outcome_total.add
+    attempt.mockClear()
+    outcome.mockClear()
+    service.recordAttempt()
+    service.recordFetchOutcome("rate_limited", "transient_exhausted")
+    expect(attempt).toHaveBeenCalledWith(1)
+    expect(outcome).toHaveBeenCalledWith(1, {
+      classification: "rate_limited",
+      disposition: "transient_exhausted",
+    })
+    expect(JSON.stringify([...attempt.mock.calls, ...outcome.mock.calls])).toBe(
+      '[[1],[1,{"classification":"rate_limited","disposition":"transient_exhausted"}]]',
+    )
+  })
+  it.each([
     "success",
     "partial_deadline",
     "client_cancelled",

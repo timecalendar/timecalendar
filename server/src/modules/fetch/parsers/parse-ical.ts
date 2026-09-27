@@ -1,4 +1,4 @@
-import { BadRequestException } from "@nestjs/common"
+import { NoCalendarEventsError } from "modules/fetch/models/calendar-fetch-failure"
 import { parseICS, ParameterValue, VEvent } from "node-ical"
 import {
   EventType,
@@ -51,7 +51,7 @@ export const parseIcal = (strIcal: string) => {
     })
 
   if (events.length === 0) {
-    throw new BadRequestException("No events found")
+    throw new NoCalendarEventsError()
   }
 
   return events

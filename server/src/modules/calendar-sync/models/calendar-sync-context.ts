@@ -1,3 +1,8 @@
+import {
+  CalendarFetchFinalDisposition,
+  CalendarFetchOutcome,
+} from "modules/fetch/models/calendar-fetch-failure"
+
 export type CalendarSyncCancellationKind = "deadline" | "client_cancelled"
 
 export class CalendarSyncAbortError extends Error {
@@ -11,6 +16,10 @@ export class CalendarSyncAbortError extends Error {
 export type CalendarSyncContext = {
   signal?: AbortSignal
   onAttempt?: () => void
+  onFinal?: (
+    classification: CalendarFetchOutcome,
+    disposition: CalendarFetchFinalDisposition,
+  ) => void
 }
 
 export const throwIfCalendarSyncAborted = (signal?: AbortSignal) => {
