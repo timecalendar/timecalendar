@@ -126,9 +126,12 @@ scripts/accessibility-probe.sh`, `bash e2e/test_run_e2e.sh`, and
   passed on documentation head `9873f5dad4744065ca278db3125c24f745c6f55b`.
   [Native workflow #36337639222](https://github.com/timecalendar/timecalendar/actions/runs/36337639222)
   passed both iOS `Build Release simulator app` and Android `Build release APK`
-  compilation steps on the code head. Its Android Maestro flow failed after
-  compilation; the iOS flow is still running. Build success is not a native
-  assistive-technology result.
+  compilation steps on the code head. Both subsequent Maestro jobs failed in
+  the fresh-user import flow before reaching Calendar: iOS did not show the
+  onboarding connect action after programme entry; Android did not show the
+  expected school, and its backend log reported an unavailable export-guide
+  snapshot. The workflow result is failed; these flow results are separate
+  from compilation and do not establish native assistive-technology behavior.
 - The fabricated probe contains 11 events: ten on 15 June 2026 and one on the
   next date. It starts at a 09:00 vertical offset, with 01:00 and 23:00 targets
   outside the starting viewport. Component tests retain and activate the
