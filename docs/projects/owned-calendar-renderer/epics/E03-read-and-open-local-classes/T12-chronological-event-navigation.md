@@ -104,9 +104,8 @@ renderer, change stored event facts, or weaken a final product gate to make this
 Review status: pending on PR #428. Code head
 `d3e4e30ddd52cacc22ab40aa821dafe0bce9e8cd` contains the single-target native
 focus observer and a ref-backed visible month/year title fallback. The OpenSpec
-change remains active until final-head verification and archive complete; merge
-is pending. Native assistive-technology operation
-remains final QA and has no recorded pass.
+change is archived and synced into the main timeline spec; merge is pending.
+Native assistive-technology operation remains final QA and has no recorded pass.
 
 - `cd mobile && npx tsc --noEmit && npm run lint && npm test -- --coverage`:
   passed on the code head above, 210 suites and 2,032 tests. Global coverage:
@@ -132,6 +131,11 @@ scripts/accessibility-probe.sh`, `bash e2e/test_run_e2e.sh`, and
   expected school, and its backend log reported an unavailable export-guide
   snapshot. The workflow result is failed; these flow results are separate
   from compilation and do not establish native assistive-technology behavior.
+- Archived-spec revision `081511d7e50fbe7e6de47e5ac6d1d5dd168715bf` passed
+  all seven jobs in [repository CI #36340147632](https://github.com/timecalendar/timecalendar/actions/runs/36340147632)
+  and both iOS and Android compilation steps in [native workflow #36340164066](https://github.com/timecalendar/timecalendar/actions/runs/36340164066).
+  Both subsequent Maestro import flows failed before Calendar. These results
+  apply to that revision; later code changes require fresh verification.
 - The fabricated probe contains 11 events: ten on 15 June 2026 and one on the
   next date. It starts at a 09:00 vertical offset, with 01:00 and 23:00 targets
   outside the starting viewport. Component tests retain and activate the

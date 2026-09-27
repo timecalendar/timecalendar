@@ -36,8 +36,8 @@
 - [x] 6.2 Transfer the complete native checklist to final QA as pending and unverified: traverse each event once in chronological order; reach 01:00 and 23:00; retain labels/order through zoom and mode; operate page/zoom controls without gestures; activate the intended visible class with voice/switch; restore the surviving event or relevant date heading after details/paging; verify largest text and dense overlap; and repeat every touched prior interaction. Record any board-supplied finding as concrete rework; never infer a pass from host tests or earlier epics.
 - [x] 6.3 Update the canonical T12 execution-evidence section with the exact tested head/build, privacy-safe fixture measurements, local and CI command results, automated proof, and the pending native QA checklist. Leave Reviewer merge autonomous after green exact-head automated evidence; the Reviewer records the merged revision before successor promotion. Do not claim a native AT pass.
 
-Review rework: the bounded target registry exists, but `Pressable.onFocus` and activation are
-not evidence of screen-reader focus. Tasks 3.0–3.2 replace those signals with a bounded native
-observer and use the existing visible navigation title for the missing-date fallback. The change
-stays active and unarchived until these requirements and final-head verification pass; archive
-the validated change before merge.
+The bounded target registry accepts native accessibility-focus observations from the
+event wrapper; `Pressable.onFocus` and activation do not seed focus memory. The
+existing visible navigation title supplies the missing-date fallback. This change
+is archived with all tasks complete; native assistive-technology checks remain
+pending final QA.
