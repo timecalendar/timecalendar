@@ -251,16 +251,15 @@ describe("IcalFetcher", () => {
 
     const onAttempt = jest.fn()
     const onFinal = jest.fn()
-    await expect(
-      new IcalFetcher({ withRetries: true }).fetch("https://example.com", {
-        onAttempt,
-        onFinal,
-      }),
-    ).rejects.toMatchObject({
+    const failure = await new IcalFetcher({ withRetries: true })
+      .fetch("https://example.com", { onAttempt, onFinal })
+      .catch((error) => error)
+    expect(failure).toMatchObject({
       classification: "authentication",
       disposition: "terminal",
-      response: expect.not.objectContaining({ auth: expect.anything() }),
     })
+    expect(failure.getResponse()).not.toHaveProperty("auth")
+    expect(failure.getResponse()).not.toHaveProperty("basicAuth")
     expect(attempts).toBe(1)
     expect(onAttempt).toHaveBeenCalledTimes(1)
     expect(onFinal).toHaveBeenCalledWith("authentication", "terminal")
