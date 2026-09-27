@@ -12,13 +12,13 @@
 
 ## 3. Preserve identity focus and settled context
 
-- [x] 3.1 Add a bounded source/UID target-ref registry and focus state at the screen/renderer boundary; verify registration/cleanup, last-focused identity/date capture, and rejection of neighbour-page, unmounted, duplicate, and obsolete-revision targets.
-- [x] 3.2 After an accepted complete revision, reveal then focus the surviving identity once; otherwise focus its relevant committed date heading or the committed page heading. Verify details return, forward/back paging, Day/Week changes, removed identity, rapid supersession, and offscreen restoration without index- or pager-slot-based focus.
+- [ ] 3.1 Add a bounded source/UID target-ref registry and focus state at the screen/renderer boundary; verify registration/cleanup, last-focused identity/date capture, and rejection of neighbour-page, unmounted, duplicate, and obsolete-revision targets.
+- [ ] 3.2 After an accepted complete revision, reveal then focus the surviving identity once; otherwise focus its relevant committed date heading or the committed page heading. Verify details return, forward/back paging, Day/Week changes, removed identity, rapid supersession, and offscreen restoration without index- or pager-slot-based focus.
 - [x] 3.3 Retain one accepted-context announcement and the existing accessible page/zoom alternatives; add French/English typed-key parity only for genuinely new copy and verify zoom, vertical movement, focus restoration, cancelled transitions, and stale settlements do not duplicate announcements.
 
 ## 4. Preserve accessibility and repository contracts
 
-- [x] 4.1 Extend focused renderer and Calendar screen tests for chronological labels/order, one identity, direct and chooser paths, largest-text-safe complete semantics, meaningful target geometry, exact route activation, offscreen reachability inputs, focus fallback, and every previously accepted interaction touched by the slice.
+- [ ] 4.1 Extend focused renderer and Calendar screen tests for chronological labels/order, one identity, direct and chooser paths, largest-text-safe complete semantics, meaningful target geometry, exact route activation, offscreen reachability inputs, focus fallback, and every previously accepted interaction touched by the slice.
 - [x] 4.2 Extend `mobile/calendar-owned-shell.contract.test.ts` as the CI proof test to assert one native vertical owner, one pager/three pages, one semantic target per committed identity, hidden adjacent pages/decorations/overlays, bounded focus refs, and absence of a hidden list, alternate renderer, experimental focus-order API, compatibility path, or per-frame React accessibility work.
 - [x] 4.3 Record the pointer/assistive conflict split in ADR 061, reconcile the Calendar topical rule, index, and changelog, and request explicit Reviewer scrutiny of the sensitive Architecture Book surface. Native AT remains pending final QA; this documentation decision does not claim a device pass.
 
@@ -26,11 +26,16 @@
 
 ## 5. Run local-green verification
 
-- [x] 5.1 From `mobile/`, run every edited pure/component/screen suite with introduced pure coverage at 100%, then run the repository's canonical `npx tsc --noEmit`, `npm run lint`, scoped Prettier checks over all changed source/test/JSON/Markdown files, `npm run react-doctor:changed`, and the applicable Maestro selector/harness static checks; record exact commands, suite/test counts, coverage, and results without claiming native behavior.
-- [x] 5.2 Run `openspec validate navigate-populated-calendar-accessibly --strict`, inspect the final diff for out-of-scope or sensitive surfaces, and run the repository disclosure scan before every public PR write. No OpenAPI/generated client, migration, native/store/EAS/Firebase, deploy/CI/infrastructure, or legacy Flutter path may enter the change without returning it for re-scope.
+- [ ] 5.1 From `mobile/`, run every edited pure/component/screen suite with introduced pure coverage at 100%, then run the repository's canonical `npx tsc --noEmit`, `npm run lint`, scoped Prettier checks over all changed source/test/JSON/Markdown files, `npm run react-doctor:changed`, and the applicable Maestro selector/harness static checks; record exact commands, suite/test counts, coverage, and results without claiming native behavior.
+- [ ] 5.2 Run `openspec validate navigate-populated-calendar-accessibly --strict`, inspect the final diff for out-of-scope or sensitive surfaces, and run the repository disclosure scan before every public PR write. No OpenAPI/generated client, migration, native/store/EAS/Firebase, deploy/CI/infrastructure, or legacy Flutter path may enter the change without returning it for re-scope.
 
 ## 6. Prove the exact final head and hand off
 
-- [x] 6.1 Commit and push the implementation head, wait for green CI including the owned-shell contract proof on that exact SHA, and record the PR head/build plus all local and CI command results. Relevant edits after native testing invalidate the affected device evidence and require reruns.
+- [ ] 6.1 Commit and push the implementation head, wait for green CI including the owned-shell contract proof on that exact SHA, and record the PR head/build plus all local and CI command results. Relevant edits after native testing invalidate the affected device evidence and require reruns.
 - [x] 6.2 Transfer the complete native checklist to final QA as pending and unverified: traverse each event once in chronological order; reach 01:00 and 23:00; retain labels/order through zoom and mode; operate page/zoom controls without gestures; activate the intended visible class with voice/switch; restore the surviving event or relevant date heading after details/paging; verify largest text and dense overlap; and repeat every touched prior interaction. Record any board-supplied finding as concrete rework; never infer a pass from host tests or earlier epics.
-- [x] 6.3 Update the canonical T12 execution-evidence section with the exact tested head/build, privacy-safe fixture measurements, local and CI command results, automated proof, and the pending native QA checklist. Leave Reviewer merge autonomous after green exact-head automated evidence; the Reviewer records the merged revision before successor promotion. Do not claim a native AT pass.
+- [ ] 6.3 Update the canonical T12 execution-evidence section with the exact tested head/build, privacy-safe fixture measurements, local and CI command results, automated proof, and the pending native QA checklist. Leave Reviewer merge autonomous after green exact-head automated evidence; the Reviewer records the merged revision before successor promotion. Do not claim a native AT pass.
+
+Review rework: the bounded target registry and activation memory are present, but React Native's
+public `Pressable.onFocus` event does not report screen-reader accessibility focus. The actual
+focus-identity signal and the committed-page-heading fallback need a scoped design decision.
+The change stays active and unarchived until these requirements and final-head verification pass.

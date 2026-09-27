@@ -77,6 +77,13 @@ const ignoreEventPress = () => undefined
 
 type FocusTarget = { node: View; dateKey: string; minute: number }
 type FocusMemory = { key: string; dateKey: string }
+type FocusContext = {
+  generation: number
+  revision: number
+  presentationGeneration: number | undefined
+  routeFocused: boolean
+  transitionPending: boolean
+}
 
 function requestRestoredFocus({
   targets,
@@ -126,14 +133,48 @@ export const OwnedCalendarShell = forwardRef<
   const targets = useRef(new Map<string, FocusTarget>()).current
   const headings = useRef(new Map<string, View>()).current
   const activeGeneration = useRef(props.generation)
+  const focusContext = useRef<FocusContext>({
+    generation: props.generation,
+    revision: props.acceptedTransitionRevision ?? 0,
+    presentationGeneration: props.presentation?.generation,
+    routeFocused: props.routeFocused !== false,
+    transitionPending: props.transitionPending ?? false,
+  })
+  const returnFrame = useRef<number | null>(null)
   useLayoutEffect(() => {
     activeGeneration.current = props.generation
-  }, [props.generation])
+    focusContext.current = {
+      generation: props.generation,
+      revision: props.acceptedTransitionRevision ?? 0,
+      presentationGeneration: props.presentation?.generation,
+      routeFocused: props.routeFocused !== false,
+      transitionPending: props.transitionPending ?? false,
+    }
+    if (returnFrame.current !== null) {
+      cancelAnimationFrame(returnFrame.current)
+      returnFrame.current = null
+    }
+  }, [
+    props.acceptedTransitionRevision,
+    props.generation,
+    props.presentation?.generation,
+    props.routeFocused,
+    props.transitionPending,
+  ])
   const lastFocused = useRef<FocusMemory | null>(null)
   const lastRestore = useRef<string | null>(null)
   const lastAutoRevision = useRef<string | null>(null)
   const returnEpoch = useRef(0)
-  const returnFrame = useRef<number | null>(null)
+  const isFocusContextCurrent = (generation: number, revision: number) => {
+    const current = focusContext.current
+    return (
+      current.generation === generation &&
+      current.revision === revision &&
+      current.presentationGeneration === generation &&
+      current.routeFocused &&
+      !current.transitionPending
+    )
+  }
   const registerTarget = (
     key: string,
     dateKey: string,
@@ -168,10 +209,7 @@ export const OwnedCalendarShell = forwardRef<
       pixelsPerHour: coordinator.pixelsPerHour.get(),
       scrollTo: (y) =>
         coordinator.scrollRef.current?.scrollTo({ y, animated: false }),
-      isCurrent: () =>
-        activeGeneration.current === props.generation &&
-        !props.transitionPending &&
-        props.routeFocused !== false,
+      isCurrent: () => isFocusContextCurrent(props.generation, revision),
     })
     if (frame !== null) return () => cancelAnimationFrame(frame)
   }, [
@@ -187,6 +225,7 @@ export const OwnedCalendarShell = forwardRef<
   ])
   const restoreFocus = () => {
     returnEpoch.current += 1
+    const revision = props.acceptedTransitionRevision ?? 0
     if (
       props.routeFocused === false ||
       props.transitionPending ||
@@ -199,14 +238,11 @@ export const OwnedCalendarShell = forwardRef<
       headings,
       lastFocused,
       lastRestore,
-      restoreKey: `${props.generation}:${props.acceptedTransitionRevision ?? 0}:${returnEpoch.current}`,
+      restoreKey: `${props.generation}:${revision}:${returnEpoch.current}`,
       pixelsPerHour: coordinator.pixelsPerHour.get(),
       scrollTo: (y) =>
         coordinator.scrollRef.current?.scrollTo({ y, animated: false }),
-      isCurrent: () =>
-        activeGeneration.current === props.generation &&
-        !props.transitionPending &&
-        props.routeFocused !== false,
+      isCurrent: () => isFocusContextCurrent(props.generation, revision),
     })
   }
   useEffect(

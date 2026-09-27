@@ -101,10 +101,16 @@ renderer, change stored event facts, or weaken a final product gate to make this
 
 ## Execution evidence
 
-Implementation and local automated checks passed on code head
+Review status: pending. The current branch still lacks a supported
+accessibility-focus identity signal and an explicit committed-page-heading
+fallback. The OpenSpec change remains active; exact-head CI and archive are
+pending rework. Native assistive-technology execution is still final QA, with
+no device pass recorded.
+
+Earlier implementation and local automated checks passed on code head
 `86728d17d9cb286611e35ac86681efe0a33eaba4` in PR #428. The final documentation
-head and its CI result are recorded in the issue handoff. No native assistive-technology
-build, pass, or merge is recorded here.
+head and its CI result require re-verification after the review findings. No
+native assistive-technology build, pass, or merge is recorded here.
 
 - `cd mobile && npx tsc --noEmit && npm run lint && npm test -- --coverage`:
   passed, 210 suites and 2,020 tests. Global coverage: 4,889/4,973 lines (98.31%)
@@ -118,7 +124,7 @@ scripts/accessibility-probe.sh`, `bash e2e/test_run_e2e.sh`, and
   `bash e2e/test_ci_mobile_e2e.sh` passed. The disclosure scan reported zero
   findings before publication.
 - The PR's `Run mobile checks` CI job passed on the exact code head above.
-  Remaining PR jobs and the final documentation-head result are checked at handoff.
+  It does not verify later changes.
 - The fabricated probe contains 11 events: ten on 15 June 2026 and one on the
   next date. It starts at a 09:00 vertical offset, with 01:00 and 23:00 targets
   outside the starting viewport. Component tests retain and activate the

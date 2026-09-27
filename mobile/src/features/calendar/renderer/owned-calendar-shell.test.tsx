@@ -524,10 +524,7 @@ describe("OwnedCalendarShell", () => {
       const view = await render(
         <OwnedCalendarShell {...props} presentation={presentation} />,
       )
-      await fireEvent(
-        screen.getByRole("button", { name: /late-focus/ }),
-        "focus",
-      )
+      await fireEvent.press(screen.getByRole("button", { name: /late-focus/ }))
       await view.rerender(
         <OwnedCalendarShell
           {...props}
@@ -636,9 +633,8 @@ describe("OwnedCalendarShell", () => {
           presentation={presentation}
         />,
       )
-      await fireEvent(
+      await fireEvent.press(
         screen.getByRole("button", { name: /offscreen-late/ }),
-        "focus",
       )
       const scrollTo = jest.spyOn(scrollRef.current as ScrollView, "scrollTo")
       try {
@@ -655,6 +651,63 @@ describe("OwnedCalendarShell", () => {
       await cleanup()
       focus.mockRestore()
       refSpy.mockRestore()
+    }
+  })
+
+  it.each([
+    ["route blur", { routeFocused: false }],
+    ["transition start", { transitionPending: true }],
+    ["revision replacement", { acceptedTransitionRevision: 1 }],
+  ] as const)("invalidates a pending focus frame on %s", async (_, change) => {
+    const presentation = buildCalendarTimelinePresentation({
+      range: planCalendarThreePageRange(props),
+      generation: 0,
+      events: [
+        timedEvent(
+          "return-target",
+          "2026-06-15T10:00:00.000Z",
+          "2026-06-15T11:00:00.000Z",
+        ),
+      ],
+    })
+    const shellRef = createRef<OwnedCalendarShellHandle>()
+    const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
+    const view = await render(
+      <OwnedCalendarShell
+        {...props}
+        ref={shellRef}
+        routeFocused
+        presentation={presentation}
+      />,
+    )
+    await fireEvent.press(screen.getByRole("button", { name: /return-target/ }))
+    let frame: FrameRequestCallback | undefined
+    const requestFrame = jest
+      .spyOn(global, "requestAnimationFrame")
+      .mockImplementation((callback) => {
+        frame = callback
+        return 73
+      })
+    const cancelFrame = jest.spyOn(global, "cancelAnimationFrame")
+    try {
+      await act(async () => shellRef.current?.restoreFocus())
+      const pendingFrame = frame
+      expect(pendingFrame).toBeDefined()
+      await view.rerender(
+        <OwnedCalendarShell
+          {...props}
+          {...change}
+          ref={shellRef}
+          presentation={presentation}
+        />,
+      )
+      expect(cancelFrame).toHaveBeenCalledWith(73)
+      await act(async () => pendingFrame?.(0))
+      expect(focus).not.toHaveBeenCalled()
+    } finally {
+      requestFrame.mockRestore()
+      cancelFrame.mockRestore()
+      focus.mockRestore()
     }
   })
 

@@ -264,9 +264,10 @@ describe("owned Calendar paging repository contract", () => {
     )
     expect(canvas).toContain('importantForAccessibility="no-hide-descendants"')
     expect(canvas.match(/<Pressable\b/g)?.length).toBe(4)
-    expect(shell).toMatch(
-      /new Map<\s*string,\s*\{ node: View; dateKey: string; minute: number \}\s*>\(\)/,
+    expect(shell).toContain(
+      "type FocusTarget = { node: View; dateKey: string; minute: number }",
     )
+    expect(shell).toContain("new Map<string, FocusTarget>()")
     expect(shell).toContain("coordinator.scrollRef.current?.scrollTo")
     expect(shell).toContain("AccessibilityInfo.setAccessibilityFocus")
     expect(projection).toContain("entries.sort(compareEntries)")
