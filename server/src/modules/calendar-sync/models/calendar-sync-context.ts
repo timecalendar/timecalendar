@@ -11,6 +11,10 @@ export class CalendarSyncAbortError extends Error {
 export type CalendarSyncContext = {
   signal?: AbortSignal
   onAttempt?: () => void
+  onFinal?: (
+    classification: import("modules/fetch/models/calendar-fetch-failure").CalendarFetchOutcome,
+    disposition: import("modules/fetch/models/calendar-fetch-failure").CalendarFetchFinalDisposition,
+  ) => void
 }
 
 export const throwIfCalendarSyncAborted = (signal?: AbortSignal) => {

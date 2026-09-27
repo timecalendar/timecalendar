@@ -11,7 +11,7 @@ jest.mock("modules/fetch/fetchers/ical-fetcher", () => ({
 }))
 
 import { NestExpressApplication } from "@nestjs/platform-express"
-import { Job } from "bullmq"
+import { Job, UnrecoverableError } from "bullmq"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import {
   SyncCalendarJob,
@@ -21,6 +21,7 @@ import { CalendarSyncService } from "modules/calendar-sync/services/calendar-syn
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import createTestApp from "test-utils/create-test-app"
 import { v4 } from "uuid"
+import { CalendarSyncFailure } from "modules/calendar-sync/models/calendar-sync-failure"
 
 const buildJob = (calendarId: string) =>
   ({ data: { calendarId } }) as Job<SyncCalendarJobData>
@@ -73,6 +74,30 @@ describe("SyncCalendarJob", () => {
     await expect(job.process(buildJob(calendar.id))).rejects.toThrow(
       "iCal source timed out",
     )
+  })
+
+  it("stops terminal calendar failures after one execution", async () => {
+    const calendar = await calendarFactory().create()
+    syncSpy.mockRejectedValue(
+      new CalendarSyncFailure("invalid_ical", new Error("bad feed")),
+    )
+
+    await expect(job.process(buildJob(calendar.id))).rejects.toBeInstanceOf(
+      UnrecoverableError,
+    )
+    expect(syncSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it("keeps transient classified failures retryable", async () => {
+    const calendar = await calendarFactory().create()
+    const failure = new CalendarSyncFailure(
+      "service_unavailable",
+      new Error("later"),
+    )
+    syncSpy.mockRejectedValue(failure)
+
+    await expect(job.process(buildJob(calendar.id))).rejects.toBe(failure)
+    expect(syncSpy).toHaveBeenCalledTimes(1)
   })
 
   it("does not bypass the persisted claim when BullMQ retries", async () => {

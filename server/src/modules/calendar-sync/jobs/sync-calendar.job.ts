@@ -1,9 +1,10 @@
 import { JobProcessor, JobProcessorInterface } from "@lyrolab/nest-shared/queue"
 import { Injectable } from "@nestjs/common"
-import { Job, JobsOptions } from "bullmq"
+import { Job, JobsOptions, UnrecoverableError } from "bullmq"
 import { SYNC_QUEUE } from "config/queues"
 import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
 import { CalendarRepository } from "modules/calendar/repositories/calendar.repository"
+import { CalendarSyncFailure } from "modules/calendar-sync/models/calendar-sync-failure"
 
 export const SYNC_CALENDAR_JOB = "sync_calendar"
 
@@ -37,6 +38,15 @@ export class SyncCalendarJob implements JobProcessorInterface {
     )
     if (!calendar) return
 
-    await this.calendarSyncService.sync(calendar)
+    try {
+      await this.calendarSyncService.sync(calendar)
+    } catch (error) {
+      if (
+        error instanceof CalendarSyncFailure &&
+        error.disposition === "terminal"
+      )
+        throw new UnrecoverableError(error.message)
+      throw error
+    }
   }
 }
