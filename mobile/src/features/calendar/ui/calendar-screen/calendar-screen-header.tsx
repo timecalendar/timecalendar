@@ -1,5 +1,6 @@
 import { Stack } from "expo-router"
-import { Platform } from "react-native"
+import { useCallback } from "react"
+import { Platform, StyleSheet, Text } from "react-native"
 
 import { type CalendarView } from "@/features/settings/prefs"
 import { useTheme } from "@/theme"
@@ -13,6 +14,11 @@ import {
 
 export function CalendarScreenHeader({
   title,
+  contextHeading,
+  generation,
+  acceptedRevision,
+  titleTargetActive,
+  onTitleTargetChange,
   view,
   onViewChange,
   onToday,
@@ -20,6 +26,20 @@ export function CalendarScreenHeader({
   zoom,
 }: {
   title: string
+  contextHeading: string
+  generation: number
+  acceptedRevision: number
+  titleTargetActive: boolean
+  onTitleTargetChange: (
+    target: {
+      node: Text
+      visibleTitle: string
+      label: string
+      contextHeading: string
+      generation: number
+      revision: number
+    } | null,
+  ) => void
   view: CalendarView
   onViewChange: (view: CalendarView) => void
   onToday: (() => void) | undefined
@@ -27,10 +47,50 @@ export function CalendarScreenHeader({
   zoom: CalendarZoomMenuState | null
 }) {
   const theme = useTheme()
+  const titleLabel = `${title}, ${contextHeading}`
+  const registerTitle = useCallback(
+    (node: Text | null) => {
+      onTitleTargetChange(
+        node !== null && titleTargetActive
+          ? {
+              node,
+              visibleTitle: title,
+              label: titleLabel,
+              contextHeading,
+              generation,
+              revision: acceptedRevision,
+            }
+          : null,
+      )
+    },
+    [
+      acceptedRevision,
+      contextHeading,
+      generation,
+      onTitleTargetChange,
+      title,
+      titleLabel,
+      titleTargetActive,
+    ],
+  )
   return (
     <Stack.Screen
       options={{
-        headerTitle: title,
+        headerTitle:
+          view === "agenda"
+            ? title
+            : () => (
+                <Text
+                  ref={registerTitle}
+                  testID="calendar-header-title"
+                  accessibilityRole="header"
+                  accessibilityLabel={titleTargetActive ? titleLabel : title}
+                  numberOfLines={1}
+                  style={[styles.title, { color: theme.text }]}
+                >
+                  {title}
+                </Text>
+              ),
         headerTitleAlign: "center",
         headerStyle: { backgroundColor: theme.background },
         headerShadowVisible: false,
@@ -51,3 +111,11 @@ export function CalendarScreenHeader({
     />
   )
 }
+
+const styles = StyleSheet.create({
+  title: {
+    fontSize: Platform.OS === "ios" ? 17 : 20,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+})

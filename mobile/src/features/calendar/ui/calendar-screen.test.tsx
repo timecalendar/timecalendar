@@ -120,11 +120,13 @@ jest.mock("expo-router", () => {
           null,
           title == null
             ? null
-            : React.createElement(
-                Text,
-                { testID: "calendar-header-title" },
-                title,
-              ),
+            : React.isValidElement(title)
+              ? title
+              : React.createElement(
+                  Text,
+                  { testID: "calendar-header-title" },
+                  title,
+                ),
           options.headerLeft?.(),
           options.headerRight?.(),
         )
@@ -477,6 +479,16 @@ describe("CalendarScreen owned shell", () => {
     const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
     try {
       const view = await render(<CalendarScreen />)
+      const observer = await screen.findByTestId(
+        "owned-calendar-focus-observer-return-identity",
+      )
+      await fireEvent(observer, "onAccessibilityFocused", {
+        nativeEvent: {
+          identity: observer.props.identity,
+          dateKey: observer.props.dateKey,
+          generation: observer.props.generation,
+        },
+      })
       await fireEvent.press(
         await screen.findByRole("button", { name: /^Return class,/ }),
       )
@@ -958,6 +970,14 @@ describe("CalendarScreen owned shell", () => {
       expect(screen.getByTestId("calendar-header-title")).toHaveTextContent(
         formatMonthYear(destination, "en", ZONE),
       )
+      expect(screen.getByTestId("calendar-header-title")).toHaveProp(
+        "accessibilityRole",
+        "header",
+      )
+      expect(screen.getByTestId("calendar-header-title")).toHaveProp(
+        "accessibilityLabel",
+        `${formatMonthYear(destination, "en", ZONE)}, ${formatFullDay(destination, "en", ZONE)}`,
+      )
     })
     const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0]
     expect(range.from).toEqual(destination)
@@ -970,6 +990,54 @@ describe("CalendarScreen owned shell", () => {
         includeHiddenElements: true,
       }),
     ).toHaveLength(3)
+  })
+
+  it("focuses the visible title without a second context announcement when its date is gone", async () => {
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-08-31" })
+    const event = calendarEvent({
+      identity: { source: "synced", uid: "old-week" },
+      id: "old-week",
+      title: "Old week class",
+      startsAt: new Date(2026, 7, 31, 9),
+      endsAt: new Date(2026, 7, 31, 10),
+    })
+    mockUseCalendarTimelinePresentation.mockImplementation((input) => ({
+      presentation: buildCalendarTimelinePresentation({
+        range: planCalendarThreePageRange(input),
+        generation: input.generation,
+        events: [event],
+      }),
+      ready: true,
+      error: undefined,
+    }))
+    const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
+    try {
+      await render(<CalendarScreen />)
+      const observer = await screen.findByTestId(
+        "owned-calendar-focus-observer-old-week",
+      )
+      await fireEvent(observer, "onAccessibilityFocused", {
+        nativeEvent: {
+          identity: observer.props.identity,
+          dateKey: observer.props.dateKey,
+          generation: observer.props.generation,
+        },
+      })
+      await fireEvent(
+        screen.getByTestId("owned-calendar-canvas"),
+        "accessibilityAction",
+        { nativeEvent: { actionName: "increment" } },
+      )
+      await waitFor(() => expect(focus).toHaveBeenCalledTimes(1))
+      const destination = new Date(2026, 8, 7)
+      expect(screen.getByTestId("calendar-header-title")).toHaveProp(
+        "accessibilityLabel",
+        `${formatMonthYear(destination, "en", ZONE)}, ${formatFullDay(destination, "en", ZONE)}`,
+      )
+      expect(mockAnnounce).not.toHaveBeenCalled()
+    } finally {
+      focus.mockRestore()
+    }
   })
 
   it("commits a deferred settle after the request rerenders the controller", async () => {

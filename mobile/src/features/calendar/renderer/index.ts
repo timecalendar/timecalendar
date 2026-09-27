@@ -1,4 +1,5 @@
 export type {
+  CalendarPageTitleTarget,
   OwnedCalendarProbeDiagnostic,
   OwnedCalendarShellHandle,
 } from "./owned-calendar-shell"

@@ -10,6 +10,7 @@ import {
   AccessibilityInfo,
   findNodeHandle,
   StyleSheet,
+  Text,
   View,
 } from "react-native"
 import { GestureDetector } from "react-native-gesture-handler"
@@ -41,6 +42,8 @@ export type OwnedCalendarProbeDiagnostic = {
 
 type OwnedCalendarShellProps = {
   heading: string
+  pageTitleTarget?: CalendarPageTitleTarget | null
+  onContextSettled?: (revision: number, titleFocused: boolean) => void
   mode: CalendarTimelineMode
   anchor: Date
   displayZone: string
@@ -74,9 +77,21 @@ export type OwnedCalendarShellHandle = {
 }
 
 const ignoreEventPress = () => undefined
+const NO_COLUMNS: readonly {
+  key: string
+  tiles: readonly { key: string }[]
+}[] = []
 
 type FocusTarget = { node: View; dateKey: string; minute: number }
 type FocusMemory = { key: string; dateKey: string }
+export type CalendarPageTitleTarget = {
+  node: Text
+  visibleTitle: string
+  label: string
+  contextHeading: string
+  generation: number
+  revision: number
+}
 type FocusContext = {
   generation: number
   revision: number
@@ -88,36 +103,70 @@ type FocusContext = {
 function requestRestoredFocus({
   targets,
   headings,
+  pageTitleTarget,
+  heading,
+  generation,
+  revision,
+  currentColumns,
   lastFocused,
   lastRestore,
   restoreKey,
   pixelsPerHour,
   scrollTo,
   isCurrent,
+  onFocused,
 }: {
   targets: Map<string, FocusTarget>
   headings: Map<string, View>
+  pageTitleTarget: CalendarPageTitleTarget | null | undefined
+  heading: string
+  generation: number
+  revision: number
+  currentColumns: readonly {
+    key: string
+    tiles: readonly { key: string }[]
+  }[]
   lastFocused: { current: FocusMemory | null }
   lastRestore: { current: string | null }
   restoreKey: string
   pixelsPerHour: number
   scrollTo: (y: number) => void
   isCurrent: () => boolean
-}): number | null {
+  onFocused?: (titleFocused: boolean) => void
+}): number | "waiting" | null {
   if (lastRestore.current === restoreKey || lastFocused.current === null)
     return null
   const last = lastFocused.current
   const target = targets.get(last.key)
-  const node = target?.node ?? headings.get(last.dateKey)
-  if (node === null || node === undefined) return null
+  const identityPresent = currentColumns.some((column) =>
+    column.tiles.some((tile) => tile.key === last.key),
+  )
+  const datePresent = currentColumns.some(
+    (column) => column.key === last.dateKey,
+  )
+  if (identityPresent && target === undefined) return "waiting"
+  const dateNode = datePresent ? headings.get(last.dateKey) : undefined
+  if (datePresent && target === undefined && !dateNode) return "waiting"
+  const title =
+    pageTitleTarget?.generation === generation &&
+    pageTitleTarget.revision === revision &&
+    pageTitleTarget.contextHeading === heading &&
+    pageTitleTarget.label.includes(pageTitleTarget.visibleTitle) &&
+    pageTitleTarget.label.includes(heading)
+      ? pageTitleTarget
+      : null
+  const node = target?.node ?? dateNode ?? title?.node
+  if (node === null || node === undefined) return "waiting"
+  const titleFocused = node === title?.node
   if (target !== undefined)
     scrollTo(Math.max(0, (target.minute / 60) * pixelsPerHour - 96))
   return requestAnimationFrame(() => {
-    if (!isCurrent()) return
+    if (!isCurrent() || lastRestore.current === restoreKey) return
     const handle = findNodeHandle(node)
     if (handle !== null) {
       lastRestore.current = restoreKey
       AccessibilityInfo.setAccessibilityFocus(handle)
+      onFocused?.(titleFocused)
     }
   })
 }
@@ -129,6 +178,16 @@ export const OwnedCalendarShell = forwardRef<
   const { t } = useTranslation()
   const theme = useTheme()
   const coordinator = useOwnedCalendarCoordinator(props)
+  const {
+    acceptedTransitionRevision,
+    generation: currentGeneration,
+    heading,
+    onContextSettled,
+    pageTitleTarget,
+    presentation,
+    routeFocused,
+    transitionPending,
+  } = props
   const targets = useRef(new Map<string, FocusTarget>()).current
   const headings = useRef(new Map<string, View>()).current
   const activeGeneration = useRef(props.generation)
@@ -139,9 +198,11 @@ export const OwnedCalendarShell = forwardRef<
     routeFocused: props.routeFocused !== false,
     transitionPending: props.transitionPending ?? false,
   })
+  const titleContext = useRef(props.pageTitleTarget)
   const returnFrame = useRef<number | null>(null)
   useLayoutEffect(() => {
     activeGeneration.current = props.generation
+    titleContext.current = props.pageTitleTarget
     focusContext.current = {
       generation: props.generation,
       revision: props.acceptedTransitionRevision ?? 0,
@@ -157,6 +218,7 @@ export const OwnedCalendarShell = forwardRef<
     props.acceptedTransitionRevision,
     props.generation,
     props.presentation?.generation,
+    props.pageTitleTarget,
     props.routeFocused,
     props.transitionPending,
   ])
@@ -164,6 +226,8 @@ export const OwnedCalendarShell = forwardRef<
   const lastRestore = useRef<string | null>(null)
   const lastAutoRevision = useRef<string | null>(null)
   const returnEpoch = useRef(0)
+  const pendingReturn = useRef(false)
+  const currentColumns = props.presentation?.pages[1].columns ?? NO_COLUMNS
   const isFocusContextCurrent = (generation: number, revision: number) => {
     const current = focusContext.current
     return (
@@ -196,37 +260,56 @@ export const OwnedCalendarShell = forwardRef<
     lastFocused.current = { key, dateKey }
   }
   useEffect(() => {
-    const revision = props.acceptedTransitionRevision ?? 0
+    const revision = acceptedTransitionRevision ?? 0
     if (
-      props.routeFocused === false ||
-      props.transitionPending ||
-      props.presentation?.generation !== props.generation
+      routeFocused === false ||
+      transitionPending ||
+      presentation?.generation !== currentGeneration
     )
       return
-    const autoRevision = `${props.generation}:${revision}`
+    const autoRevision = `${currentGeneration}:${revision}`
     if (lastAutoRevision.current === autoRevision) return
-    lastAutoRevision.current = autoRevision
     const frame = requestRestoredFocus({
       targets,
       headings,
+      pageTitleTarget,
+      heading,
+      generation: currentGeneration,
+      revision,
+      currentColumns,
       lastFocused,
       lastRestore,
-      restoreKey: `${props.generation}:${revision}:${returnEpoch.current}`,
+      restoreKey: `${currentGeneration}:${revision}:${returnEpoch.current}`,
       pixelsPerHour: coordinator.pixelsPerHour.get(),
       scrollTo: (y) =>
         coordinator.scrollRef.current?.scrollTo({ y, animated: false }),
-      isCurrent: () => isFocusContextCurrent(props.generation, revision),
+      isCurrent: () =>
+        isFocusContextCurrent(currentGeneration, revision) &&
+        titleContext.current === pageTitleTarget,
+      onFocused: (titleFocused) => {
+        pendingReturn.current = false
+        lastAutoRevision.current = autoRevision
+        onContextSettled?.(revision, titleFocused)
+      },
     })
-    if (frame !== null) return () => cancelAnimationFrame(frame)
+    if (frame === null) {
+      lastAutoRevision.current = autoRevision
+      onContextSettled?.(revision, false)
+    }
+    if (typeof frame === "number") return () => cancelAnimationFrame(frame)
   }, [
     coordinator.pixelsPerHour,
     coordinator.scrollRef,
+    currentColumns,
+    currentGeneration,
     headings,
-    props.acceptedTransitionRevision,
-    props.generation,
-    props.presentation?.generation,
-    props.routeFocused,
-    props.transitionPending,
+    heading,
+    onContextSettled,
+    pageTitleTarget,
+    acceptedTransitionRevision,
+    presentation,
+    routeFocused,
+    transitionPending,
     targets,
   ])
   const restoreFocus = () => {
@@ -239,18 +322,52 @@ export const OwnedCalendarShell = forwardRef<
     )
       return
     if (returnFrame.current !== null) cancelAnimationFrame(returnFrame.current)
-    returnFrame.current = requestRestoredFocus({
+    const frame = requestRestoredFocus({
       targets,
       headings,
+      pageTitleTarget: props.pageTitleTarget,
+      heading: props.heading,
+      generation: props.generation,
+      revision,
+      currentColumns,
       lastFocused,
       lastRestore,
       restoreKey: `${props.generation}:${revision}:${returnEpoch.current}`,
       pixelsPerHour: coordinator.pixelsPerHour.get(),
       scrollTo: (y) =>
         coordinator.scrollRef.current?.scrollTo({ y, animated: false }),
-      isCurrent: () => isFocusContextCurrent(props.generation, revision),
+      isCurrent: () =>
+        isFocusContextCurrent(props.generation, revision) &&
+        titleContext.current === props.pageTitleTarget,
+      onFocused: () => {
+        pendingReturn.current = false
+      },
     })
+    pendingReturn.current = frame !== null
+    returnFrame.current = typeof frame === "number" ? frame : null
   }
+  const restoreFocusRef = useRef(restoreFocus)
+  useLayoutEffect(() => {
+    restoreFocusRef.current = restoreFocus
+  })
+  useEffect(() => {
+    if (
+      pendingReturn.current &&
+      props.routeFocused !== false &&
+      !props.transitionPending &&
+      props.presentation?.generation === props.generation &&
+      props.pageTitleTarget !== null &&
+      props.pageTitleTarget !== undefined
+    )
+      restoreFocusRef.current()
+  }, [
+    props.acceptedTransitionRevision,
+    props.generation,
+    props.pageTitleTarget,
+    props.presentation?.generation,
+    props.routeFocused,
+    props.transitionPending,
+  ])
   useEffect(
     () => () => {
       if (returnFrame.current !== null)

@@ -13,6 +13,7 @@ import {
   AppState,
   type ScrollView,
   StyleSheet,
+  Text,
 } from "react-native"
 import { State } from "react-native-gesture-handler"
 import {
@@ -610,6 +611,92 @@ describe("OwnedCalendarShell", () => {
         />,
       )
       await waitFor(() => expect(focus).toHaveBeenCalledTimes(3))
+    } finally {
+      focus.mockRestore()
+    }
+  })
+
+  it("waits for the matching visible page title when the remembered date is gone", async () => {
+    const events = [
+      timedEvent(
+        "removed-date",
+        "2026-06-15T10:00:00.000Z",
+        "2026-06-15T11:00:00.000Z",
+      ),
+    ]
+    const initial = buildCalendarTimelinePresentation({
+      range: planCalendarThreePageRange(props),
+      generation: 0,
+      events,
+    })
+    const destination = {
+      ...props,
+      anchor: new Date("2026-06-22T00:00:00.000Z"),
+      heading: "Monday, June 22nd, 2026",
+      generation: 1,
+      revisionFloor: 1,
+      acceptedTransitionRevision: 1,
+    }
+    const settled = buildCalendarTimelinePresentation({
+      range: planCalendarThreePageRange(destination),
+      generation: 1,
+      events: [],
+    })
+    const titleRef = createRef<Text>()
+    const onContextSettled = jest.fn()
+    const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
+    try {
+      const view = await render(
+        <>
+          <Text ref={titleRef}>June 2026</Text>
+          <OwnedCalendarShell {...props} presentation={initial} />
+        </>,
+      )
+      await focusEvent("removed-date")
+      await view.rerender(
+        <>
+          <Text ref={titleRef}>June 2026</Text>
+          <OwnedCalendarShell
+            {...destination}
+            presentation={settled}
+            onContextSettled={onContextSettled}
+          />
+        </>,
+      )
+      expect(focus).not.toHaveBeenCalled()
+      const title = {
+        node: titleRef.current!,
+        visibleTitle: "June 2026",
+        label: "June 2026, Monday, June 22nd, 2026",
+        contextHeading: destination.heading,
+        generation: 1,
+        revision: 1,
+      }
+      await view.rerender(
+        <>
+          <Text ref={titleRef}>June 2026</Text>
+          <OwnedCalendarShell
+            {...destination}
+            presentation={settled}
+            pageTitleTarget={{ ...title, revision: 0 }}
+            onContextSettled={onContextSettled}
+          />
+        </>,
+      )
+      expect(focus).not.toHaveBeenCalled()
+      await view.rerender(
+        <>
+          <Text ref={titleRef}>June 2026</Text>
+          <OwnedCalendarShell
+            {...destination}
+            presentation={settled}
+            pageTitleTarget={title}
+            onContextSettled={onContextSettled}
+          />
+        </>,
+      )
+      await waitFor(() => expect(focus).toHaveBeenCalledTimes(1))
+      expect(onContextSettled).toHaveBeenLastCalledWith(1, true)
     } finally {
       focus.mockRestore()
     }

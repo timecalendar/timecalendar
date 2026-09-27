@@ -1,6 +1,6 @@
 import { useCalendars } from "expo-localization"
 import { router, useIsFocused, useLocalSearchParams } from "expo-router"
-import { useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
   AccessibilityInfo,
@@ -29,6 +29,7 @@ import {
   useSyncCalendars,
 } from "@/features/calendar/data"
 import {
+  type CalendarPageTitleTarget,
   OwnedCalendarShell,
   type OwnedCalendarShellHandle,
 } from "@/features/calendar/renderer"
@@ -83,6 +84,21 @@ export function CalendarScreen() {
   const { showWeekends } = useShowWeekendsPreference()
   const timelineHeading = formatFullDay(selectedDate, locale, displayZone)
   const calendarShellRef = useRef<OwnedCalendarShellHandle>(null)
+  const [pageTitleTarget, setPageTitleTarget] =
+    useState<CalendarPageTitleTarget | null>(null)
+  const onTitleTargetChange = useCallback(
+    (target: CalendarPageTitleTarget | null) => {
+      setPageTitleTarget((current) =>
+        current?.node === target?.node &&
+        current?.label === target?.label &&
+        current?.generation === target?.generation &&
+        current?.revision === target?.revision
+          ? current
+          : target,
+      )
+    },
+    [],
+  )
   const announcedRevision = useRef<number | null>(null)
   const isFocused = useIsFocused()
   const wasFocused = useRef(false)
@@ -92,16 +108,18 @@ export function CalendarScreen() {
     wasFocused.current = isFocused
   }, [isFocused])
 
-  useEffect(() => {
+  const onContextSettled = (revision: number, titleFocused: boolean) => {
     if (
       acceptedTransitionRevision === null ||
-      acceptedTransitionRevision === announcedRevision.current
-    ) {
+      revision !== acceptedTransitionRevision ||
+      announcedRevision.current === revision ||
+      !isFocused
+    )
       return
-    }
-    announcedRevision.current = acceptedTransitionRevision
-    AccessibilityInfo.announceForAccessibility(timelineHeading)
-  }, [acceptedTransitionRevision, timelineHeading])
+    announcedRevision.current = revision
+    if (!titleFocused)
+      AccessibilityInfo.announceForAccessibility(timelineHeading)
+  }
   const storedEvents = useCalendarEvents(range)
   const timeline = useCalendarTimelinePresentation({
     anchor: selectedDate,
@@ -111,6 +129,13 @@ export function CalendarScreen() {
     showWeekends,
     generation: rendererGeneration,
   })
+  const titleTargetActive =
+    view !== "agenda" &&
+    isFocused &&
+    !transitionPending &&
+    timeline.ready &&
+    timeline.error === undefined &&
+    timeline.presentation.generation === rendererGeneration
   const probeEvents = isAccessibilityProbe ? accessibilityProbeFixture() : null
   const events = probeEvents === null ? storedEvents : [...probeEvents]
   const probePresentation =
@@ -176,6 +201,11 @@ export function CalendarScreen() {
     <ThemedView collapsable={false} style={styles.container}>
       <CalendarScreenHeader
         title={formatMonthYear(selectedDate, locale, displayZone)}
+        contextHeading={timelineHeading}
+        generation={rendererGeneration}
+        acceptedRevision={acceptedTransitionRevision ?? 0}
+        titleTargetActive={titleTargetActive}
+        onTitleTargetChange={onTitleTargetChange}
         view={view}
         onViewChange={setView}
         onToday={canGoToToday ? goToToday : undefined}
@@ -217,6 +247,8 @@ export function CalendarScreen() {
             <OwnedCalendarShell
               ref={calendarShellRef}
               heading={timelineHeading}
+              pageTitleTarget={titleTargetActive ? pageTitleTarget : null}
+              onContextSettled={onContextSettled}
               mode={timelineMode}
               anchor={selectedDate}
               displayZone={displayZone}
