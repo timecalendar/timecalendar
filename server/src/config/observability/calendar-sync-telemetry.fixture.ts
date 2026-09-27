@@ -112,6 +112,7 @@ async function run() {
       upstreamStarted: () => undefined,
       upstreamCompleted: () => undefined,
       recordAttempt: () => undefined,
+      recordFetchOutcome: () => undefined,
       measurePhase: async (_phase: string, work: () => Promise<unknown>) =>
         work(),
     } as never,
