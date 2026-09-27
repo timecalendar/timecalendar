@@ -131,6 +131,12 @@ describe("GuidePageScreen", () => {
 
     const view = await render(<GuidePageScreen />)
     expect(view.getByText("Loading the export guide…")).toBeTruthy()
+    expect(mockStackScreen).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: { title: "Export your timetable" },
+      }),
+      undefined,
+    )
     expect(mockLoad).not.toHaveBeenCalled()
     expect(router.replace).toHaveBeenCalledWith("/onboarding/connect")
   })
@@ -390,6 +396,12 @@ describe("GuidePageScreen", () => {
         /The guide is required before you can import your timetable\./,
       ).parent?.props.accessibilityRole,
     ).toBe("alert")
+    expect(mockStackScreen).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: { title: "Export your timetable" },
+      }),
+      undefined,
+    )
     await fireEvent.press(view.getByTestId("export-guide-retry"))
     await fireEvent.press(view.getByTestId("export-guide-back"))
     expect(mockRetry).toHaveBeenCalledTimes(1)

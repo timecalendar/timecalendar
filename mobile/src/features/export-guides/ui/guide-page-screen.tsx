@@ -46,7 +46,7 @@ type ActiveGuideState = Extract<
 >
 
 export default function GuidePageScreen() {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation()
   const params = useLocalSearchParams<{ pageIndex?: string | string[] }>()
   const pageIndex = parsePageIndex(params.pageIndex)
   const { state, dispatch } = useImportDraft()
@@ -169,20 +169,22 @@ export default function GuidePageScreen() {
     if (handle !== null) AccessibilityInfo.setAccessibilityFocus(handle)
   }, [pageIndex, snapshotState, validPage])
 
-  if (state.phase === "blocked") {
-    return <GuideBlockingError retry={retry} busy={busy} />
-  }
-  if (!validPage || pageIndex === null || snapshotState === null) {
-    return <GuideLoading />
-  }
-
   return (
-    <GuidePageContent
-      state={snapshotState}
-      pageIndex={pageIndex}
-      heading={heading}
-      dispatch={dispatch}
-    />
+    <>
+      <Stack.Screen options={{ title: t("exportGuide.page.title") }} />
+      {state.phase === "blocked" ? (
+        <GuideBlockingError retry={retry} busy={busy} />
+      ) : !validPage || pageIndex === null || snapshotState === null ? (
+        <GuideLoading />
+      ) : (
+        <GuidePageContent
+          state={snapshotState}
+          pageIndex={pageIndex}
+          heading={heading}
+          dispatch={dispatch}
+        />
+      )}
+    </>
   )
 }
 
@@ -228,67 +230,64 @@ function GuidePageContent({
   }
 
   return (
-    <>
-      <Stack.Screen options={{ title: t("exportGuide.page.title") }} />
-      <RootPage testID="export-guide-page" lane="readable" style={styles.fill}>
-        {({ laneStyle }) => (
-          <ScrollView
-            testID="export-guide-page-scroll"
-            contentContainerStyle={[laneStyle, styles.content]}
-          >
-            <View ref={heading} accessible accessibilityRole="header">
-              <ThemedText type="title">{page.title}</ThemedText>
-              <ThemedText
-                testID="export-guide-progress"
-                accessibilityLabel={progress}
-                themeColor="textSecondary"
-              >
-                {progress}
-              </ThemedText>
-            </View>
-            <ThemedText>{page.description}</ThemedText>
-            {page.image === undefined ? null : (
-              <ExportGuideImage
-                key={pageIndex}
-                image={page.image}
-                testID="export-guide-page-image"
-                onFailure={() => {
-                  emitExportGuideEvent({
-                    name: "export_guide_image_failed",
-                    params: {
-                      provider_slug: state.snapshot.providerSlug,
-                      image_role: "page",
-                      page_index: pageIndex,
-                      failure: "load",
-                    },
-                  })
-                }}
-              />
-            )}
-            <PrimaryAction
-              testID="export-guide-next"
-              label={
-                pageIndex === total - 1
-                  ? t("exportGuide.finish")
-                  : t("exportGuide.next")
-              }
-              onPress={next}
-            />
-            <Pressable
-              testID="export-guide-visible-back"
-              accessibilityRole="button"
-              accessibilityLabel={t("common.back")}
-              onPress={() => router.back()}
-              style={[styles.back, { borderColor: theme.primary }]}
+    <RootPage testID="export-guide-page" lane="readable" style={styles.fill}>
+      {({ laneStyle }) => (
+        <ScrollView
+          testID="export-guide-page-scroll"
+          contentContainerStyle={[laneStyle, styles.content]}
+        >
+          <View ref={heading} accessible accessibilityRole="header">
+            <ThemedText type="title">{page.title}</ThemedText>
+            <ThemedText
+              testID="export-guide-progress"
+              accessibilityLabel={progress}
+              themeColor="textSecondary"
             >
-              <ThemedText type="smallBold" themeColor="primary">
-                {t("common.back")}
-              </ThemedText>
-            </Pressable>
-          </ScrollView>
-        )}
-      </RootPage>
-    </>
+              {progress}
+            </ThemedText>
+          </View>
+          <ThemedText>{page.description}</ThemedText>
+          {page.image === undefined ? null : (
+            <ExportGuideImage
+              key={pageIndex}
+              image={page.image}
+              testID="export-guide-page-image"
+              onFailure={() => {
+                emitExportGuideEvent({
+                  name: "export_guide_image_failed",
+                  params: {
+                    provider_slug: state.snapshot.providerSlug,
+                    image_role: "page",
+                    page_index: pageIndex,
+                    failure: "load",
+                  },
+                })
+              }}
+            />
+          )}
+          <PrimaryAction
+            testID="export-guide-next"
+            label={
+              pageIndex === total - 1
+                ? t("exportGuide.finish")
+                : t("exportGuide.next")
+            }
+            onPress={next}
+          />
+          <Pressable
+            testID="export-guide-visible-back"
+            accessibilityRole="button"
+            accessibilityLabel={t("common.back")}
+            onPress={() => router.back()}
+            style={[styles.back, { borderColor: theme.primary }]}
+          >
+            <ThemedText type="smallBold" themeColor="primary">
+              {t("common.back")}
+            </ThemedText>
+          </Pressable>
+        </ScrollView>
+      )}
+    </RootPage>
   )
 }
 
