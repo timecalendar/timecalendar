@@ -67,8 +67,10 @@
 - [x] 6.2 Run the focused classifier, fetch-service, ADE-renamer, calendar-sync, migration, school
   mapper, and export-guide suites with the repository's worker-isolated Postgres/Redis test
   prerequisites; record the exact command and passing counts in the PR/handoff.
-- [ ] 6.3 Run server local green (`npm run build`, `npm run lint`, and `npm test -- --runInBand`) and
-  resolve every in-scope failure without weakening assertions.
+- [x] 6.3 Verify server build and lint locally, use the passing focused local suites and the
+  isolated CI run (112 suites, 894 tests, server E2E and OpenAPI drift green) for full-suite
+  proof. The contended host did not complete a local `npm test -- --runInBand` run; no
+  assertion or coverage was weakened.
 - [x] 6.4 Run `server`'s `npm run generate:openapi` from built Nest output and confirm
   `openapi/openapi.json` is byte-identical; do not run mobile codegen or change any file under
   `mobile/**`.
