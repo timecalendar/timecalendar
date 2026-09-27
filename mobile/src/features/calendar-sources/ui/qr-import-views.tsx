@@ -5,7 +5,8 @@ import { SafeAreaView } from "react-native-safe-area-context"
 
 import { AdaptiveContent } from "@/components/adaptive-content"
 import { ErrorNotice, ErrorState } from "@/components/error-surfaces"
-import { headerScrollProps, RootPage } from "@/components/root-page"
+import { headerScrollProps } from "@/components/header-scroll-props"
+import { RootPage } from "@/components/root-page"
 import { ThemedView } from "@/components/themed-view"
 import { Radii, Spacing, useTheme } from "@/theme"
 

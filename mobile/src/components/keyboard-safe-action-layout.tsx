@@ -11,11 +11,11 @@ import {
 } from "react-native"
 
 import { useAdaptiveLayout } from "@/components/adaptive-content"
+import { headerScrollProps } from "@/components/header-scroll-props"
 import {
   resolveKeyboardAvoidingBehavior,
   resolveKeyboardVerticalOffset,
 } from "@/components/keyboard-avoiding-behavior"
-import { headerScrollProps } from "@/components/root-page"
 import { type ResponsiveLane, Spacing } from "@/theme"
 
 type KeyboardSafeActionLayoutProps = {

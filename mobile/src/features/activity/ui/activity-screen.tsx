@@ -14,7 +14,8 @@ import {
 import { EmptyState } from "@/components/empty-state"
 import { developerActivityArtwork } from "@/components/empty-state-artwork"
 import { ErrorNotice, ErrorState } from "@/components/error-surfaces"
-import { headerScrollProps, RootPage } from "@/components/root-page"
+import { headerScrollProps } from "@/components/header-scroll-props"
+import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import {
   loadOlderPage,

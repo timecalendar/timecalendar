@@ -3,7 +3,8 @@ import { useTranslation } from "react-i18next"
 import { FlatList, Pressable, StyleSheet, View } from "react-native"
 
 import { EmptyState } from "@/components/empty-state"
-import { headerScrollProps, RootPage } from "@/components/root-page"
+import { headerScrollProps } from "@/components/header-scroll-props"
+import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import { formatShortDateTime, resolveLocale } from "@/features/calendar/data"
 import {

@@ -5,7 +5,8 @@ import { Pressable, ScrollView, StyleSheet, View } from "react-native"
 import { EmptyState } from "@/components/empty-state"
 import { noDataArtwork } from "@/components/empty-state-artwork"
 import { ErrorNotice } from "@/components/error-surfaces"
-import { headerScrollProps, RootPage } from "@/components/root-page"
+import { headerScrollProps } from "@/components/header-scroll-props"
+import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import {
   displayEventTitle,

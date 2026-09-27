@@ -5,7 +5,8 @@ import { Platform, StyleSheet, View } from "react-native"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { Colors, resolveResponsiveLayout, Spacing } from "@/theme"
 
-import { headerScrollProps, PageIntro, RootPage } from "./root-page"
+import { headerScrollProps } from "./header-scroll-props"
+import { PageIntro, RootPage } from "./root-page"
 
 jest.mock("@/hooks/use-color-scheme", () => ({
   useColorScheme: jest.fn(),
