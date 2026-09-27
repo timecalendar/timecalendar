@@ -10,6 +10,6 @@
 
 ## 3. Verification and delivery
 
-- [ ] 3.1 Run the server test suite with `--coverage`, server lint, and server typecheck; record exact commands and results in the handoff.
-- [ ] 3.2 Confirm the focused production-factory regression test runs in the existing CI server test job on the PR head, and use its result as the CI proof gate before merge. The current job runs `npm run test` without `--coverage`, so retain the separate local coverage run from 3.1; do not change workflow scope in this ticket.
-- [ ] 3.3 Confirm the PR body describes the manual production image-tag bump and the post-deploy hourly metric comparison. State that no platform dashboard or alert query assumes per-pod cumulative application metrics; the infrastructure pod queries are separate.
+- [x] 3.1 Run the server test suite with `--coverage`, server lint, and server typecheck; record exact commands and results in the handoff.
+- [x] 3.2 Confirm the focused production-factory regression test runs in the existing CI server test job on the PR head, and use its result as the CI proof gate before merge. The current job runs `npm run test` without `--coverage`, so retain the separate local coverage run from 3.1; do not change workflow scope in this ticket.
+- [x] 3.3 Confirm the PR body describes the manual production image-tag bump and the post-deploy hourly metric comparison. State that no platform dashboard or alert query assumes per-pod cumulative application metrics; the infrastructure pod queries are separate.
