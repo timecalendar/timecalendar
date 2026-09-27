@@ -18,9 +18,11 @@ import {
   buildCalendarTimelinePresentation,
   HOURS_COLUMN_WIDTH,
   planCalendarThreePageRange,
+  projectCalendarAccessibilityEntries,
   type TimedCalendarEventV1,
 } from "@/features/calendar/data"
 import { useColorScheme } from "@/hooks/use-color-scheme"
+import { accessibilityProbeFixture } from "@/test-support/owned-calendar/accessibility-probe"
 import { Colors } from "@/theme"
 
 import {
@@ -449,6 +451,45 @@ describe("OwnedCalendarShell", () => {
       }
     },
   )
+
+  it("mounts the entire committed fixture in projection order through the single vertical owner", async () => {
+    const presentation = buildCalendarTimelinePresentation({
+      range: planCalendarThreePageRange(props),
+      generation: props.generation,
+      events: accessibilityProbeFixture(),
+    })
+    const committed = presentation.pages.find((page) => page.direction === 0)!
+    const expected = projectCalendarAccessibilityEntries(committed).map(
+      (entry) => entry.identity.uid,
+    )
+    const onEventPress = jest.fn()
+    await render(
+      <OwnedCalendarShell
+        {...props}
+        initialVerticalOffset={9 * 60}
+        presentation={presentation}
+        onEventPress={onEventPress}
+      />,
+    )
+
+    const buttons = screen.getAllByRole("button")
+    expect(buttons).toHaveLength(expected.length)
+    expect(buttons.map((button) => button.props.accessibilityLabel)).toEqual(
+      expected.map((uid) => expect.stringContaining(`Fixture ${uid}`)),
+    )
+    for (const button of buttons) await fireEvent.press(button)
+    expect(onEventPress.mock.calls.map(([uid]) => uid)).toEqual(expected)
+    expect(screen.getByTestId("owned-calendar-canvas")).toHaveProp(
+      "removeClippedSubviews",
+      false,
+    )
+    expect(
+      screen.getByTestId("owned-calendar-event-probe-early"),
+    ).toBeOnTheScreen()
+    expect(
+      screen.getByTestId("owned-calendar-event-probe-late"),
+    ).toBeOnTheScreen()
+  })
 
   it("keeps conflict tiles semantic while a hidden pointer overlay opens the chooser", async () => {
     const events = [

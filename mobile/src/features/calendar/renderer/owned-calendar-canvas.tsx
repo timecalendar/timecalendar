@@ -520,8 +520,8 @@ function CalendarTiles({
               pointerEvents="box-none"
               style={styles.tileColumn}
             >
-              {components.flatMap((component) =>
-                component.items.map((tile) => (
+              {(accessibilityTilesByDate.get(column.key) ?? column.tiles).map(
+                (tile) => (
                   <TimedCalendarTile
                     key={tile.key}
                     tile={tile}
@@ -537,7 +537,7 @@ function CalendarTiles({
                     onPress={() => onEventPress(tile.identity.uid)}
                     t={t}
                   />
-                )),
+                ),
               )}
               {components.map((component) =>
                 component.items.length > 1 ? (
