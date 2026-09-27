@@ -13,7 +13,7 @@
 
 - [x] 3.1 Update the Architecture Book's `docs/mobile/architecture-book/data.md` with the current create seam behavior: deployed requests can send `customData`, but the server ignores it. Verify no mobile code, web code, or generated client changes are included.
 - [ ] 3.2 Run `cd server && npm test -- --coverage`, `npm run lint`, and `npx tsc --noEmit` with the repository's documented services; record exact commands and results. Run `openspec validate ignore-calendar-customdata` and `git diff --check`.
-- [ ] 3.3 Prove the committed create contract is byte-for-byte unchanged by running the server's OpenAPI generation/check path and comparing `openapi/openapi.json` to the base; verify `server/src/migrations/`, `mobile/`, `web/`, and the calendar column mapping have no changes.
+- [x] 3.3 Prove the committed create contract is byte-for-byte unchanged by running the server's OpenAPI generation/check path and comparing `openapi/openapi.json` to the base; verify `server/src/migrations/`, `mobile/`, `web/`, and the calendar column mapping have no changes.
 
 ## 4. CI proof on the pushed head
 
