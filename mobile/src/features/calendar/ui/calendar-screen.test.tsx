@@ -7,7 +7,7 @@ import {
   waitFor,
 } from "@testing-library/react-native"
 import * as Localization from "expo-localization"
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router"
+import { router, useIsFocused, useLocalSearchParams } from "expo-router"
 import {
   AccessibilityInfo,
   AppState,
@@ -99,9 +99,7 @@ jest.mock("expo-router", () => {
   return {
     router: { push: jest.fn(), setParams: jest.fn() },
     useLocalSearchParams: jest.fn(() => ({})),
-    useFocusEffect: jest.fn((callback: () => void) =>
-      React.useEffect(callback, [callback]),
-    ),
+    useIsFocused: jest.fn(() => true),
     Stack: {
       Screen: ({
         options,
@@ -151,7 +149,7 @@ const mockUseCalendarClock = useCalendarClock as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
 const mockUseChecklistProgress = useChecklistProgress as jest.Mock
 const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock
-const mockUseFocusEffect = jest.mocked(useFocusEffect)
+const mockIsFocused = jest.mocked(useIsFocused)
 const mockIsDevVariant = isDevVariant as jest.Mock
 const mockRecordAccessibilityProbeDiagnostic =
   recordAccessibilityProbeDiagnostic as jest.Mock
@@ -245,7 +243,7 @@ beforeEach(() => {
   mockUseSyncCalendars.mockReturnValue(syncState())
   mockUseChecklistProgress.mockReturnValue(new Map())
   mockUseLocalSearchParams.mockReturnValue({})
-  mockUseFocusEffect.mockClear()
+  mockIsFocused.mockReturnValue(true)
   mockIsDevVariant.mockReturnValue(false)
   mockRecordAccessibilityProbeDiagnostic.mockReset()
   mockSync.mockReset()
@@ -478,16 +476,17 @@ describe("CalendarScreen owned shell", () => {
     }))
     const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
     try {
-      await render(<CalendarScreen />)
+      const view = await render(<CalendarScreen />)
       await fireEvent.press(
         await screen.findByRole("button", { name: /^Return class,/ }),
       )
       expect(mockPush).toHaveBeenLastCalledWith(
         "/event-details/return-identity",
       )
-      await act(async () => {
-        mockUseFocusEffect.mock.lastCall?.[0]()
-      })
+      mockIsFocused.mockReturnValue(false)
+      await view.rerender(<CalendarScreen />)
+      mockIsFocused.mockReturnValue(true)
+      await view.rerender(<CalendarScreen />)
       await waitFor(() => expect(focus).toHaveBeenCalledTimes(1))
     } finally {
       focus.mockRestore()

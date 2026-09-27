@@ -1,6 +1,6 @@
 import { useCalendars } from "expo-localization"
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { router, useIsFocused, useLocalSearchParams } from "expo-router"
+import { useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import {
   AccessibilityInfo,
@@ -84,12 +84,13 @@ export function CalendarScreen() {
   const timelineHeading = formatFullDay(selectedDate, locale, displayZone)
   const calendarShellRef = useRef<OwnedCalendarShellHandle>(null)
   const announcedRevision = useRef<number | null>(null)
-  const [focusReturnEpoch, setFocusReturnEpoch] = useState(0)
-  useFocusEffect(
-    useCallback(() => {
-      setFocusReturnEpoch((epoch) => epoch + 1)
-    }, []),
-  )
+  const isFocused = useIsFocused()
+  const wasFocused = useRef(false)
+  useEffect(() => {
+    if (isFocused && !wasFocused.current)
+      calendarShellRef.current?.restoreFocus()
+    wasFocused.current = isFocused
+  }, [isFocused])
 
   useEffect(() => {
     if (
@@ -234,7 +235,7 @@ export function CalendarScreen() {
               revisionFloor={transitionRevision}
               acceptedTransitionRevision={acceptedTransitionRevision}
               transitionPending={transitionPending}
-              focusReturnEpoch={focusReturnEpoch}
+              routeFocused={isFocused}
               onTransitionRequest={requestTransition}
               onTransitionSettled={settleTransition}
               onTransitionCancelled={cancelTransition}

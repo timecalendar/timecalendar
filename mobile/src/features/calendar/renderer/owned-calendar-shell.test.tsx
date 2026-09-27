@@ -533,7 +533,6 @@ describe("OwnedCalendarShell", () => {
           {...props}
           revisionFloor={1}
           transitionPending
-          focusReturnEpoch={1}
           presentation={presentation}
         />,
       )
@@ -616,6 +615,7 @@ describe("OwnedCalendarShell", () => {
       .spyOn(Reanimated, "useAnimatedRef")
       .mockReturnValue(scrollRef)
     const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
+    const shellRef = createRef<OwnedCalendarShellHandle>()
     try {
       const events = [
         timedEvent(
@@ -629,8 +629,12 @@ describe("OwnedCalendarShell", () => {
         generation: 0,
         events,
       })
-      const view = await render(
-        <OwnedCalendarShell {...props} presentation={presentation} />,
+      await render(
+        <OwnedCalendarShell
+          {...props}
+          ref={shellRef}
+          presentation={presentation}
+        />,
       )
       await fireEvent(
         screen.getByRole("button", { name: /offscreen-late/ }),
@@ -638,13 +642,7 @@ describe("OwnedCalendarShell", () => {
       )
       const scrollTo = jest.spyOn(scrollRef.current as ScrollView, "scrollTo")
       try {
-        await view.rerender(
-          <OwnedCalendarShell
-            {...props}
-            focusReturnEpoch={1}
-            presentation={presentation}
-          />,
-        )
+        await act(async () => shellRef.current?.restoreFocus())
         expect(scrollTo).toHaveBeenCalledWith({
           y: 23 * 60 - 96,
           animated: false,
