@@ -12,14 +12,15 @@
 
 ## 3. Preserve identity focus and settled context
 
-- [ ] 3.1 Add a bounded source/UID target-ref registry and focus state at the screen/renderer boundary; verify registration/cleanup, last-focused identity/date capture, and rejection of neighbour-page, unmounted, duplicate, and obsolete-revision targets.
-- [ ] 3.2 After an accepted complete revision, reveal then focus the surviving identity once; otherwise focus its relevant committed date heading or the committed page heading. Verify details return, forward/back paging, Day/Week changes, removed identity, rapid supersession, and offscreen restoration without index- or pager-slot-based focus.
+- [ ] 3.0 Add a local Expo native event-wrapper module under `mobile/modules/`: observe `UIAccessibility.elementFocusedNotification` on iOS and a child `TYPE_VIEW_ACCESSIBILITY_FOCUSED` event through the wrapper `ViewGroup` on Android, emit the wrapper's original identity/date/generation only for its own live event target, and tear down observers on unmount. Keep the wrapper non-semantic and preserve the existing event `Pressable`, geometry, pointer chooser, vertical owner, and pager. Verify native source/bridge contracts, no service or generated-native edits, and both-platform native compilation through the existing manual workflow; actual VoiceOver/TalkBack delivery remains final QA pending. If the wrapper cannot retain one native target or deliver identity safely, return for scoped D06 revision before substituting another signal.
+- [ ] 3.1 Connect only accepted native accessibility-focus callbacks to the bounded source/UID target registry at the screen/renderer boundary. Verify registration/cleanup, actual-focus identity/date capture, and rejection of unmatched, off-route, neighbour-page, unmounted, duplicate, and obsolete-generation callbacks. Press, activation, input `onFocus`, and outbound focus commands must not update focus memory.
+- [ ] 3.2 Render the existing visible Calendar native-stack title as a ref-backed header target with the same committed `timelineHeading` and no added toolbar or duplicate heading. After an accepted complete revision, reveal then focus the surviving identity once; otherwise focus its relevant committed date heading or that registered visible page title. Verify details return, forward/back paging, Day/Week changes, removed identity and date, late title registration, rapid supersession, offscreen restoration, header layout, and no index- or pager-slot-based focus.
 - [x] 3.3 Retain one accepted-context announcement and the existing accessible page/zoom alternatives; add French/English typed-key parity only for genuinely new copy and verify zoom, vertical movement, focus restoration, cancelled transitions, and stale settlements do not duplicate announcements.
 
 ## 4. Preserve accessibility and repository contracts
 
 - [ ] 4.1 Extend focused renderer and Calendar screen tests for chronological labels/order, one identity, direct and chooser paths, largest-text-safe complete semantics, meaningful target geometry, exact route activation, offscreen reachability inputs, focus fallback, and every previously accepted interaction touched by the slice.
-- [x] 4.2 Extend `mobile/calendar-owned-shell.contract.test.ts` as the CI proof test to assert one native vertical owner, one pager/three pages, one semantic target per committed identity, hidden adjacent pages/decorations/overlays, bounded focus refs, and absence of a hidden list, alternate renderer, experimental focus-order API, compatibility path, or per-frame React accessibility work.
+- [ ] 4.2 Extend `mobile/calendar-owned-shell.contract.test.ts` as the CI proof test to assert one native vertical owner, one pager/three pages, one semantic target per committed identity, hidden adjacent pages/decorations/overlays, bounded focus refs, the non-semantic native observer wrapper, and absence of a hidden list, alternate renderer, accessibility service, experimental focus-order API, compatibility path, or per-frame React accessibility work.
 - [x] 4.3 Record the pointer/assistive conflict split in ADR 061, reconcile the Calendar topical rule, index, and changelog, and request explicit Reviewer scrutiny of the sensitive Architecture Book surface. Native AT remains pending final QA; this documentation decision does not claim a device pass.
 
   The T11 chooser remains the pointer path; one visible event button per identity is the semantic path. If final native QA finds either event unreachable or ambiguously activatable, return for scoped D06 revision.
@@ -31,11 +32,12 @@
 
 ## 6. Prove the exact final head and hand off
 
-- [ ] 6.1 Commit and push the implementation head, wait for green CI including the owned-shell contract proof on that exact SHA, and record the PR head/build plus all local and CI command results. Relevant edits after native testing invalidate the affected device evidence and require reruns.
+- [ ] 6.1 Commit and push the implementation head, wait for green CI including the owned-shell contract proof on that exact SHA, and run the existing manual native workflow for both Android and iOS compilation on that SHA. Record the PR head/build plus local, CI, and native-compile results separately from the pending assistive-technology checklist. Relevant edits after native testing invalidate the affected device evidence and require reruns.
 - [x] 6.2 Transfer the complete native checklist to final QA as pending and unverified: traverse each event once in chronological order; reach 01:00 and 23:00; retain labels/order through zoom and mode; operate page/zoom controls without gestures; activate the intended visible class with voice/switch; restore the surviving event or relevant date heading after details/paging; verify largest text and dense overlap; and repeat every touched prior interaction. Record any board-supplied finding as concrete rework; never infer a pass from host tests or earlier epics.
 - [ ] 6.3 Update the canonical T12 execution-evidence section with the exact tested head/build, privacy-safe fixture measurements, local and CI command results, automated proof, and the pending native QA checklist. Leave Reviewer merge autonomous after green exact-head automated evidence; the Reviewer records the merged revision before successor promotion. Do not claim a native AT pass.
 
-Review rework: the bounded target registry and activation memory are present, but React Native's
-public `Pressable.onFocus` event does not report screen-reader accessibility focus. The actual
-focus-identity signal and the committed-page-heading fallback need a scoped design decision.
-The change stays active and unarchived until these requirements and final-head verification pass.
+Review rework: the bounded target registry exists, but `Pressable.onFocus` and activation are
+not evidence of screen-reader focus. Tasks 3.0–3.2 replace those signals with a bounded native
+observer and use the existing visible navigation title for the missing-date fallback. The change
+stays active and unarchived until these requirements and final-head verification pass; archive
+the validated change before merge.
