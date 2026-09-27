@@ -7,6 +7,8 @@ export type CalendarSourceClassification =
   | { accepted: true; url: URL }
   | { accepted: false; reason: CalendarSourceRejection }
 
+const SUPPORTED_PROTOCOLS = ["http:", "https:", "webcal:"]
+
 // These exact host/path pairs are known timetable pages, not calendar exports.
 export const TIMETABLE_UI_PATHS: Readonly<Record<string, readonly string[]>> = {
   "edt.univ-lyon1.fr": ["/", "/jsp/standard/index.jsp"],
@@ -31,7 +33,7 @@ export function classifyCalendarSource(
     return { accepted: false, reason: "malformed" }
   }
 
-  if (!(["http:", "https:", "webcal:"] as string[]).includes(url.protocol)) {
+  if (!SUPPORTED_PROTOCOLS.includes(url.protocol)) {
     return { accepted: false, reason: "unsupported-scheme" }
   }
   if (!url.hostname) {
