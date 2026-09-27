@@ -2,8 +2,8 @@ import { useLocalSearchParams } from "expo-router"
 import { useTranslation } from "react-i18next"
 import { ScrollView, StyleSheet } from "react-native"
 
+import { ErrorNotice } from "@/components/error-surfaces"
 import { RootPage } from "@/components/root-page"
-import { WriteErrorNotice } from "@/components/write-error-notice"
 import {
   type EventDetails,
   resolveLocale,
@@ -51,9 +51,7 @@ function ResolvedEventDetails({ event }: { event: EventDetails }) {
             style={styles.scroll}
             contentContainerStyle={[layout.laneStyle, styles.content]}
           >
-            {failed && (
-              <WriteErrorNotice message={t("eventDetails.hide.error")} />
-            )}
+            {failed && <ErrorNotice message={t("eventDetails.hide.error")} />}
             <EventDetailsContent
               event={event}
               locale={locale}

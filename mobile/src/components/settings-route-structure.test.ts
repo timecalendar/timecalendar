@@ -158,6 +158,7 @@ describe("Settings route structure", () => {
       "profile",
       "more",
       "dev-import",
+      "calendar-import-result",
     ]) {
       expect(rootLayout).toMatch(
         new RegExp(
@@ -172,6 +173,7 @@ describe("Settings route structure", () => {
       "profile",
       "more",
       "dev-import",
+      "calendar-import-result",
     ])
     const registrations = rootRegistrations(rootLayout)
 
@@ -191,6 +193,19 @@ describe("Settings route structure", () => {
     )
     expect(route("../components/chrome/root-screen-options.ts")).toContain(
       "headerLargeTitle: false",
+    )
+  })
+
+  it("keeps the calendar import result thin, root-level, and headerless", () => {
+    expect(route("calendar-import-result.tsx").trim()).toBe(
+      'export { CalendarImportResultScreen as default } from "@/features/calendar-sources/ui"',
+    )
+    const rootLayout = route("_layout.tsx")
+    expect(rootLayout).toMatch(
+      /name="calendar-import-result"[\s\S]*?headerShown: false/,
+    )
+    expect(rootLayout.indexOf('name="(tabs)"')).toBeLessThan(
+      rootLayout.indexOf('name="calendar-import-result"'),
     )
   })
 
@@ -254,7 +269,7 @@ describe("Settings route structure", () => {
       ],
       [
         "../features/export-guides/ui/provider-selection-screen.tsx",
-        "exportGuide.provider.title",
+        "exportGuide.provider.headerTitle",
       ],
       [
         "../features/export-guides/ui/guide-page-screen.tsx",

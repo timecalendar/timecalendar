@@ -259,6 +259,17 @@ describe("HomeScreen", () => {
     expect(mockSync).toHaveBeenCalled()
   })
 
+  it("disables sync recovery while a refresh is running", async () => {
+    mockUseSyncCalendars.mockReturnValue(
+      syncState({ isError: true, isSyncing: true }),
+    )
+    await render(<HomeScreen />)
+    const retry = screen.getByTestId("home-sync-retry")
+    expect(retry).toBeDisabled()
+    await fireEvent.press(retry)
+    expect(mockSync).not.toHaveBeenCalled()
+  })
+
   it("exposes the Add personal event control", async () => {
     await render(<HomeScreen />)
     await waitFor(() => {

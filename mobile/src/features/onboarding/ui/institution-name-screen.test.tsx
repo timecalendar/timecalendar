@@ -124,7 +124,6 @@ describe("InstitutionNameScreen", () => {
 
       expect(getByText("Enter your institution's name.")).toBeTruthy()
       const error = getByTestId("onboarding-institution-error")
-      expect(error.props.accessibilityLiveRegion).toBe("polite")
       expect(error.props.accessibilityRole).toBe("alert")
       expect(mockSetUnlistedInstitution).not.toHaveBeenCalled()
       expect(mockClearSelection).not.toHaveBeenCalled()

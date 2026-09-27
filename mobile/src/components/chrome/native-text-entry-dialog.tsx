@@ -17,6 +17,7 @@ export type NativeTextEntryDialogProps = {
   label: string
   placeholder: string
   message: string | null
+  messageKind?: "validation" | "operation"
   cancelLabel: string
   submitLabel: string
   pending: boolean

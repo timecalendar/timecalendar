@@ -194,6 +194,7 @@ jest.mock("@expo/ui/swift-ui/modifiers", () => {
     buttonStyle: (value: string) => modifier("buttonStyle", value),
     disabled: (value = true) => modifier("disabled", value),
     font: (value: unknown) => modifier("font", value),
+    foregroundStyle: (value: unknown) => modifier("foregroundStyle", value),
     frame: (value: unknown) => modifier("frame", value),
     padding: (value: unknown) => modifier("padding", value),
     textFieldStyle: (value: string) => modifier("textFieldStyle", value),

@@ -24,6 +24,7 @@ import { KeyboardAvoidingView, Modal, StyleSheet, View } from "react-native"
 import { AdaptiveContent } from "@/components/adaptive-content"
 import { Spacing } from "@/theme"
 
+import { NativeErrorNotice } from "./native-error-notice"
 import type { NativeTextEntryDialogProps } from "./native-text-entry-dialog"
 
 export function NativeTextEntryDialogIos({
@@ -106,15 +107,7 @@ export function NativeTextEntryDialogIos({
                     ]}
                   />
                   {message === null ? null : (
-                    <Text
-                      testID={ids.message}
-                      modifiers={[
-                        accessibilityLabel(message),
-                        accessibilityIdentifier(ids.message),
-                      ]}
-                    >
-                      {message}
-                    </Text>
+                    <NativeErrorNotice message={message} testID={ids.message} />
                   )}
                   <HStack spacing={Spacing.two}>
                     <Spacer />

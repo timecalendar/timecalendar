@@ -3,6 +3,11 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Pressable, ScrollView, StyleSheet, View } from "react-native"
 
+import {
+  ErrorNotice,
+  ErrorState,
+  FieldError,
+} from "@/components/error-surfaces"
 import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import {
@@ -78,7 +83,30 @@ export default function SchoolGroupPickerScreen() {
                 </ThemedText>
               )}
 
-              {isError && <ErrorRetry onRetry={refetch} />}
+              {isError &&
+                (groups.length > 0 ? (
+                  <ErrorNotice
+                    compact
+                    testID="onboarding-group-cached-error"
+                    message={t("onboarding.group.error")}
+                    action={{
+                      label: t("onboarding.group.retry"),
+                      testID: "onboarding-group-retry",
+                      onPress: refetch,
+                    }}
+                  />
+                ) : (
+                  <ErrorState
+                    testID="onboarding-group-error"
+                    title={t("errors.loadTitle")}
+                    message={t("onboarding.group.error")}
+                    primaryAction={{
+                      label: t("onboarding.group.retry"),
+                      testID: "onboarding-group-retry",
+                      onPress: refetch,
+                    }}
+                  />
+                ))}
 
               {!isLoading && !isError && groups.length === 0 && (
                 <ThemedText
@@ -100,63 +128,35 @@ export default function SchoolGroupPickerScreen() {
               ))}
             </ScrollView>
 
-            <View style={[laneStyle, styles.actions]}>
-              {showGuard && (
-                <ThemedText
-                  themeColor="textSecondary"
-                  accessibilityLiveRegion="polite"
-                  accessibilityRole="alert"
-                >
-                  {t("onboarding.group.empty.selectionGuard")}
-                </ThemedText>
-              )}
+            {groups.length > 0 && (
+              <View style={[laneStyle, styles.actions]}>
+                {showGuard && (
+                  <FieldError
+                    message={t("onboarding.group.empty.selectionGuard")}
+                  />
+                )}
 
-              <Pressable
-                testID="onboarding-group-confirm"
-                accessibilityRole="button"
-                accessibilityLabel={t("onboarding.group.confirmLabel")}
-                hitSlop={Spacing.two}
-                onPress={onConfirm}
-                style={[
-                  styles.confirm,
-                  { backgroundColor: theme.backgroundSelected },
-                ]}
-              >
-                <ThemedText type="smallBold">
-                  {t("onboarding.group.confirm")}
-                </ThemedText>
-              </Pressable>
-            </View>
+                <Pressable
+                  testID="onboarding-group-confirm"
+                  accessibilityRole="button"
+                  accessibilityLabel={t("onboarding.group.confirmLabel")}
+                  hitSlop={Spacing.two}
+                  onPress={onConfirm}
+                  style={[
+                    styles.confirm,
+                    { backgroundColor: theme.backgroundSelected },
+                  ]}
+                >
+                  <ThemedText type="smallBold">
+                    {t("onboarding.group.confirm")}
+                  </ThemedText>
+                </Pressable>
+              </View>
+            )}
           </>
         )}
       </RootPage>
     </>
-  )
-}
-
-function ErrorRetry({ onRetry }: { onRetry: () => void }) {
-  const { t } = useTranslation()
-  const theme = useTheme()
-  return (
-    <View style={styles.errorBlock}>
-      <ThemedText
-        themeColor="textSecondary"
-        accessibilityLiveRegion="polite"
-        accessibilityRole="alert"
-      >
-        {t("onboarding.group.error")}
-      </ThemedText>
-      <Pressable
-        testID="onboarding-group-retry"
-        accessibilityRole="button"
-        accessibilityLabel={t("onboarding.group.retry")}
-        hitSlop={Spacing.two}
-        onPress={onRetry}
-        style={[styles.retry, { backgroundColor: theme.backgroundElement }]}
-      >
-        <ThemedText type="smallBold">{t("onboarding.group.retry")}</ThemedText>
-      </Pressable>
-    </View>
   )
 }
 
@@ -236,16 +236,6 @@ const styles = StyleSheet.create({
   actions: {
     gap: Spacing.three,
     paddingVertical: Spacing.three,
-  },
-  errorBlock: {
-    gap: Spacing.two,
-  },
-  retry: {
-    minHeight: 48,
-    paddingHorizontal: Spacing.three,
-    justifyContent: "center",
-    alignSelf: "flex-start",
-    borderRadius: Radii.medium,
   },
   list: {
     paddingVertical: Spacing.four,

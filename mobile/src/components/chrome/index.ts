@@ -33,6 +33,7 @@ export {
   MenuView,
   Picker,
 } from "@/components/chrome/expo-ui"
+export { NativeErrorNotice } from "@/components/chrome/native-error-notice"
 export {
   NativeSettingsChoiceRow,
   NativeSettingsHost,

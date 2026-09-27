@@ -1,9 +1,19 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
-import { act, fireEvent, render } from "@testing-library/react-native"
+import {
+  act,
+  fireEvent,
+  render,
+  renderHook,
+} from "@testing-library/react-native"
 import { router } from "expo-router"
 
-import type { ImportJourneyState } from "@/features/onboarding/draft"
+import {
+  type ImportJourneyAction,
+  importJourneyReducer,
+  type ImportJourneyState,
+  useProtectedImportRoute,
+} from "@/features/onboarding/draft"
 
 import ManualImportScreen from "./manual-import-screen"
 
@@ -12,6 +22,10 @@ import ManualImportScreen from "./manual-import-screen"
 // routes and owns no permission, validation, create or retry logic. The source
 // assertion below is the only way to state that as a test rather than a promise.
 jest.mock("expo-router", () => ({
+  useFocusEffect: (effect: () => void) => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require("react").useEffect(effect, [effect])
+  },
   router: { push: jest.fn(), replace: jest.fn() },
   Stack: { Screen: () => null },
 }))
@@ -82,6 +96,50 @@ describe("ManualImportScreen", () => {
 
     await act(async () => fireEvent.press(control))
     expect(mockPush).toHaveBeenCalledWith(route)
+  })
+
+  it("opens iCal from the chooser after QR recovery without restarting the completed journey", async () => {
+    if (mockJourneyState.phase !== "completed")
+      throw new Error("expected completed journey")
+    mockJourneyState = {
+      ...mockJourneyState,
+      manualHandoff: "qr",
+      draft: {
+        institution: { kind: "unlisted", schoolName: "My School" },
+        calendarName: "L3 Informatique",
+      },
+    }
+    const completedJourney = mockJourneyState
+    mockDispatch.mockImplementationOnce((action: ImportJourneyAction) => {
+      mockJourneyState = importJourneyReducer(mockJourneyState, action)
+    })
+
+    // QR recovery dismisses to this chooser with the existing handoff intact.
+    const chooser = await render(<ManualImportScreen />)
+    expect(chooser.getByTestId("onboarding-import-url")).toBeTruthy()
+    expect(mockReplace).not.toHaveBeenCalled()
+    await fireEvent.press(chooser.getByTestId("onboarding-import-url"))
+    await chooser.rerender(<ManualImportScreen />)
+
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: "set-manual-handoff",
+      target: "ical",
+    })
+    expect(mockJourneyState).toEqual({
+      ...completedJourney,
+      manualHandoff: "ical",
+    })
+    expect(mockPush).toHaveBeenCalledTimes(1)
+    expect(mockPush).toHaveBeenCalledWith("/onboarding/ical-url")
+    expect(mockReplace).not.toHaveBeenCalled()
+    await chooser.unmount()
+
+    // The actual destination guard accepts the reducer's new state as well.
+    const destination = await renderHook(() =>
+      useProtectedImportRoute("ical", "/onboarding/ical-url"),
+    )
+    expect(destination.result.current).toBe(true)
+    expect(mockReplace).not.toHaveBeenCalled()
   })
 
   it("contains no permission, validation, create or retry logic", () => {

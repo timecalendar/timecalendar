@@ -222,11 +222,11 @@ describe("overlapping Activity triggers", () => {
       await new Promise((resolve) => setImmediate(resolve))
     })
 
-    // TWO calendar syncs really did complete — the push's own `void sync()` and
-    // the explicit one — otherwise their Activity triggers would be absent for an
-    // uninteresting reason and this test would pass vacuously. Two successful
-    // syncs means two forced refreshes, which is MORE overlap, not less.
-    expect(requestsTo(SYNC_URL)).toHaveLength(2)
+    // The push's sync and the explicit trigger overlap, so the calendar-sync
+    // coordinator makes both observe one pass. That committed pass emits one
+    // forced Activity refresh; the independently overlapping push, screen-open,
+    // and foreground triggers still collapse at the Activity coordinator.
+    expect(requestsTo(SYNC_URL)).toHaveLength(1)
     expect(result.current.isError).toBe(false)
     // FOUR triggers, ONE request.
     expect(requestsTo(ACTIVITY_URL)).toHaveLength(1)

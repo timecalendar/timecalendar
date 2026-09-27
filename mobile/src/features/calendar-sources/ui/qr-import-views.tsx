@@ -1,15 +1,14 @@
 import { type BarcodeScanningResult, CameraView } from "expo-camera"
 import { useTranslation } from "react-i18next"
-import { StyleSheet, View } from "react-native"
+import { ScrollView, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import { AdaptiveContent } from "@/components/adaptive-content"
-import { ThemedText } from "@/components/themed-text"
+import { ErrorNotice, ErrorState } from "@/components/error-surfaces"
 import { ThemedView } from "@/components/themed-view"
-import { WriteErrorNotice } from "@/components/write-error-notice"
 import { Radii, Spacing, useTheme } from "@/theme"
 
-import { QrActionButton } from "./qr-action-button"
+import { ImportProgressView } from "./import-progress-view"
 
 interface ScannerProps {
   onBarcodeScanned: (result: BarcodeScanningResult) => void
@@ -23,64 +22,54 @@ export function QrScannerView({
   return (
     <QrCameraFrame onBarcodeScanned={onBarcodeScanned}>
       {invalidPayload && (
-        <ThemedText
-          themeColor="textSecondary"
-          accessibilityLiveRegion="polite"
-          accessibilityRole="alert"
-        >
-          {t("calendarSources.qrScan.notACalendar")}
-        </ThemedText>
+        <ErrorNotice
+          testID="qr-scan-invalid-payload"
+          message={t("calendarSources.qrScan.notACalendar")}
+        />
       )}
     </QrCameraFrame>
   )
 }
 
-export function QrImportingView(props: ScannerProps) {
-  return <QrCameraFrame {...props} />
-}
-
-export function QrImportCompletedView(props: ScannerProps) {
-  return <QrCameraFrame {...props} />
+export function QrImportingView() {
+  const { t } = useTranslation()
+  return <ImportProgressView message={t("calendarImport.source.importing")} />
 }
 
 export function QrImportFailureView({
-  onBarcodeScanned,
   retry,
-  scanAnother,
-  enterManualUrl,
-}: ScannerProps & {
+  changeMethod,
+}: {
   retry: () => void
-  scanAnother: () => void
-  enterManualUrl: () => void
+  changeMethod: () => void
 }) {
   const { t } = useTranslation()
+  const theme = useTheme()
   return (
-    <QrCameraFrame onBarcodeScanned={onBarcodeScanned}>
-      <View style={styles.recoveryActions}>
-        <WriteErrorNotice message={t("calendarSources.qrScan.failure")} />
-        <QrActionButton
-          testID="qr-scan-retry"
-          label={t("calendarSources.qrScan.retryLabel")}
-          text={t("calendarSources.qrScan.retry")}
-          onPress={retry}
-          disabled={false}
-        />
-        <QrActionButton
-          testID="qr-scan-another"
-          label={t("calendarSources.qrScan.scanAnotherLabel")}
-          text={t("calendarSources.qrScan.scanAnother")}
-          onPress={scanAnother}
-          disabled={false}
-        />
-        <QrActionButton
-          testID="qr-scan-manual-url"
-          label={t("calendarSources.qrScan.manualUrlLabel")}
-          text={t("calendarSources.qrScan.manualUrl")}
-          onPress={enterManualUrl}
-          disabled={false}
-        />
-      </View>
-    </QrCameraFrame>
+    <SafeAreaView
+      style={[styles.readableFailure, { backgroundColor: theme.background }]}
+    >
+      <ScrollView contentContainerStyle={styles.failureScroll}>
+        <AdaptiveContent lane="readable">
+          <ErrorState
+            testID="qr-scan-failure"
+            title={t("calendarSources.qrScan.failureTitle")}
+            message={t("calendarSources.qrScan.failure")}
+            primaryAction={{
+              testID: "qr-scan-retry",
+              accessibilityLabel: t("calendarSources.qrScan.retryLabel"),
+              label: t("calendarSources.qrScan.retry"),
+              onPress: retry,
+            }}
+            secondaryAction={{
+              testID: "qr-scan-change-method",
+              label: t("calendarSources.qrScan.changeMethod"),
+              onPress: changeMethod,
+            }}
+          />
+        </AdaptiveContent>
+      </ScrollView>
+    </SafeAreaView>
   )
 }
 
@@ -136,8 +125,10 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: Radii.large,
   },
-  recoveryActions: {
-    alignSelf: "stretch",
-    gap: Spacing.three,
+  readableFailure: { flex: 1 },
+  failureScroll: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingVertical: Spacing.four,
   },
 })

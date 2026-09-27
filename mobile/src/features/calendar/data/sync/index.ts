@@ -9,5 +9,10 @@ export {
 } from "./hooks"
 export { replaceAll } from "./repository"
 export { useStartupSync } from "./startup"
-export { type UseSyncCalendars, useSyncCalendars } from "./sync"
+export {
+  type CalendarSyncOptions,
+  type CalendarSyncOutcome,
+  type UseSyncCalendars,
+  useSyncCalendars,
+} from "./sync"
 export { dtoToRow, rowToCalendarEvent } from "./types"

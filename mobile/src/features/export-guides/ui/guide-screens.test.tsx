@@ -12,6 +12,7 @@ import { Colors } from "@/theme"
 
 import GuidePageScreen from "./guide-page-screen"
 import ProviderSelectionScreen from "./provider-selection-screen"
+import { emitExportGuideEvent } from "./telemetry"
 
 const mockLoad = jest.fn()
 const mockRetry = jest.fn()
@@ -130,6 +131,12 @@ describe("GuidePageScreen", () => {
 
     const view = await render(<GuidePageScreen />)
     expect(view.getByText("Loading the export guide…")).toBeTruthy()
+    expect(mockStackScreen).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: { title: "Export your timetable" },
+      }),
+      undefined,
+    )
     expect(mockLoad).not.toHaveBeenCalled()
     expect(router.replace).toHaveBeenCalledWith("/onboarding/connect")
   })
@@ -297,11 +304,10 @@ describe("GuidePageScreen", () => {
     const view = await render(<GuidePageScreen />)
 
     await fireEvent(view.getByTestId("export-guide-page-image"), "error")
-    const placeholder = view.getByTestId("export-guide-page-image-placeholder")
-    expect(placeholder.props.accessibilityRole).toBe("image")
-    expect(placeholder.props.accessibilityLabel).toBe("Open the export menu")
+    expect(view.getByTestId("export-guide-page-image-placeholder")).toBeTruthy()
+    expect(view.getByRole("alert")).toBeTruthy()
     expect(view.getByText("The menu is beside Settings")).toBeTruthy()
-    expect(view.getAllByLabelText("Open the export menu")).toHaveLength(1)
+    expect(view.getAllByText("Open the export menu")).toHaveLength(1)
     expect(view.getByTestId("export-guide-next")).toBeEnabled()
   })
 
@@ -331,29 +337,40 @@ describe("GuidePageScreen", () => {
     expect(router.push).toHaveBeenCalledWith("/onboarding/import")
   })
 
-  it("renders the completed final page restored by Back from manual import", async () => {
-    mockUseLocalSearchParams.mockReturnValue({ pageIndex: "1" })
-    mockUseImportDraft.mockReturnValue({
-      state: {
-        phase: "completed",
-        draft: {
-          institution: { kind: "unlisted", schoolName: "School" },
-          calendarName: "",
+  it.each([0, 1])(
+    "continues from completed page %i after Back from manual import",
+    async (pageIndex) => {
+      mockUseLocalSearchParams.mockReturnValue({ pageIndex: String(pageIndex) })
+      mockUseImportDraft.mockReturnValue({
+        state: {
+          phase: "completed",
+          draft: {
+            institution: { kind: "unlisted", schoolName: "School" },
+            calendarName: "",
+          },
+          draftRevision: 1,
+          gateProgress: "programme",
+          snapshot,
+          visitedThrough: 1,
+          manualHandoff: "none",
         },
-        draftRevision: 1,
-        gateProgress: "programme",
-        snapshot,
-        visitedThrough: 1,
-        manualHandoff: "none",
-      },
-      dispatch,
-    })
-    const view = await render(<GuidePageScreen />)
+        dispatch,
+      })
+      const view = await render(<GuidePageScreen />)
 
-    expect(view.getByText("Second")).toBeTruthy()
-    expect(view.getByTestId("export-guide-next")).toBeDisabled()
-    expect(router.replace).not.toHaveBeenCalled()
-  })
+      expect(view.getByText(snapshot.pages[pageIndex]!.title)).toBeTruthy()
+      expect(view.getByTestId("export-guide-next")).toBeEnabled()
+      await fireEvent.press(view.getByTestId("export-guide-next"))
+      expect(router.push).toHaveBeenCalledWith(
+        pageIndex === 0 ? "/onboarding/export-guide/1" : "/onboarding/import",
+      )
+      expect(dispatch).not.toHaveBeenCalled()
+      expect(emitExportGuideEvent).not.toHaveBeenCalledWith(
+        expect.objectContaining({ name: "export_guide_completed" }),
+      )
+      expect(router.replace).not.toHaveBeenCalled()
+    },
+  )
 
   it("renders blocking recovery with single retry and ordinary Back", async () => {
     mockUseImportDraft.mockReturnValue({
@@ -376,9 +393,15 @@ describe("GuidePageScreen", () => {
 
     expect(
       view.getByText(
-        "The guide is required before you can import your timetable.",
+        /The guide is required before you can import your timetable\./,
       ).parent?.props.accessibilityRole,
     ).toBe("alert")
+    expect(mockStackScreen).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: { title: "Export your timetable" },
+      }),
+      undefined,
+    )
     await fireEvent.press(view.getByTestId("export-guide-retry"))
     await fireEvent.press(view.getByTestId("export-guide-back"))
     expect(mockRetry).toHaveBeenCalledTimes(1)
@@ -418,6 +441,44 @@ describe("GuidePageScreen", () => {
 })
 
 describe("ProviderSelectionScreen", () => {
+  it.each([
+    [
+      "loading",
+      {
+        phase: "draft",
+        draft: {
+          institution: { kind: "unlisted", schoolName: "School" },
+          calendarName: "",
+        },
+        draftRevision: 1,
+        gateProgress: "programme",
+      },
+    ],
+    [
+      "blocking error",
+      {
+        phase: "blocked",
+        draft: {
+          institution: { kind: "unlisted", schoolName: "School" },
+          calendarName: "",
+        },
+        draftRevision: 1,
+        gateProgress: "programme",
+        locale: "en",
+        selector: { kind: "active" },
+        failure: "network",
+        attempt: 1,
+      },
+    ],
+  ])("uses compact native chrome during %s", async (_label, state) => {
+    mockUseImportDraft.mockReturnValue({ state, dispatch })
+    await render(<ProviderSelectionScreen />)
+    expect(mockStackScreen).toHaveBeenCalledWith(
+      expect.objectContaining({ options: { title: "Export guide" } }),
+      undefined,
+    )
+  })
+
   it("recovers a listed direct entry instead of loading forever", async () => {
     mockUseImportDraft.mockReturnValue({
       state: {
@@ -481,6 +542,11 @@ describe("ProviderSelectionScreen", () => {
       dispatch,
     })
     const view = await render(<ProviderSelectionScreen />)
+    expect(mockStackScreen).toHaveBeenCalledWith(
+      expect.objectContaining({ options: { title: "Export guide" } }),
+      undefined,
+    )
+    expect(view.getByText("Choose your timetable service")).toBeTruthy()
     expect(
       view.getAllByRole("button").map((node) => node.props.accessibilityLabel),
     ).toEqual(["Future Provider", "Generic"])

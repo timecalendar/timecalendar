@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { ActivityIndicator, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { ErrorNotice } from "@/components/error-surfaces"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { isDevVariant } from "@/config/variant"
@@ -82,14 +83,10 @@ export function DevImportScreen() {
               {t("devImport.unavailable")}
             </ThemedText>
           ) : error ? (
-            <ThemedText
-              themeColor="textSecondary"
-              accessibilityLiveRegion="polite"
-              accessibilityRole="alert"
+            <ErrorNotice
               testID="dev-import-error"
-            >
-              {t("devImport.error")}
-            </ThemedText>
+              message={t("devImport.error")}
+            />
           ) : (
             <View style={styles.loading} testID="dev-import-loading">
               <ActivityIndicator />
