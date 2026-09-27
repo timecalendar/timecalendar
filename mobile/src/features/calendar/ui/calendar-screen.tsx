@@ -101,6 +101,7 @@ export function CalendarScreen() {
     showWeekends,
     generation: rendererGeneration,
   })
+  const presentationReady = timeline.ready && timeline.error === undefined
   const {
     pageTitleTarget,
     setPageTitleTarget,
@@ -110,7 +111,7 @@ export function CalendarScreen() {
     view,
     routeFocused: isFocused,
     transitionPending,
-    presentationReady: timeline.ready && timeline.error === undefined,
+    presentationReady,
     presentationGeneration: timeline.presentation.generation,
     generation: rendererGeneration,
     acceptedRevision: acceptedTransitionRevision,
@@ -247,7 +248,7 @@ export function CalendarScreen() {
               revisionFloor={transitionRevision}
               acceptedTransitionRevision={acceptedTransitionRevision}
               transitionPending={transitionPending}
-              presentationReady={timeline.ready && timeline.error === undefined}
+              presentationReady={presentationReady}
               routeFocused={isFocused}
               onTransitionRequest={requestTransition}
               onTransitionSettled={settleTransition}
