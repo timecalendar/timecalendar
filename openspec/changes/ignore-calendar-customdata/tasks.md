@@ -12,9 +12,11 @@
 ## 3. Record the contract and local proof
 
 - [x] 3.1 Update the Architecture Book's `docs/mobile/architecture-book/data.md` with the current create seam behavior: deployed requests can send `customData`, but the server ignores it. Verify no mobile code, web code, or generated client changes are included.
-- [ ] 3.2 Run `cd server && npm test -- --coverage`, `npm run lint`, and `npx tsc --noEmit` with the repository's documented services; record exact commands and results. Run `openspec validate ignore-calendar-customdata` and `git diff --check`.
+- [x] 3.2 Run `cd server && npm test -- --coverage`, `npm run lint`, and `npx tsc --noEmit` with the repository's documented services; record exact commands and results. Run `openspec validate ignore-calendar-customdata` and `git diff --check`.
+
+  Verification on the unchanged server inputs: `npm test -- --coverage --coverageProvider=v8 --maxWorkers=4 --silent --coverageReporters=text-summary` passed 111 suites and 846 tests with an isolated test database and queue. Coverage was 82.07% statements and lines, 81.12% branches, and 79.03% functions. `npm run lint`, `npx tsc --noEmit`, `openspec validate ignore-calendar-customdata`, and `git diff --check` passed.
 - [x] 3.3 Prove the committed create contract is byte-for-byte unchanged by running the server's OpenAPI generation/check path and comparing `openapi/openapi.json` to the base; verify `server/src/migrations/`, `mobile/`, `web/`, and the calendar column mapping have no changes.
 
 ## 4. CI proof on the pushed head
 
-- [ ] 4.1 On the exact pushed PR head, confirm the server test job passes its tests and committed OpenAPI drift check; if the new compatibility or 401 proof fails in CI, repair the implementation or test without weakening either assertion.
+- [x] 4.1 On the exact pushed PR head, confirm the server test job passes its tests and committed OpenAPI drift check; if the new compatibility or 401 proof fails in CI, repair the implementation or test without weakening either assertion.
