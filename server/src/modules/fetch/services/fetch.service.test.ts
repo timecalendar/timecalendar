@@ -51,6 +51,77 @@ describe("FetchService", () => {
   }
 
   describe("fetchEvents", () => {
+    describe("pre-fetch source validation", () => {
+      const uiUrls = [
+        "https://edt.univ-lyon1.fr/",
+        "https://edt.univ-lyon1.fr/jsp/standard/index.jsp",
+        "https://plannings.ube.fr/",
+        "https://plannings.ube.fr/jsp/standard/index.jsp",
+        "https://proseconsult.umontpellier.fr/",
+        "https://proseconsult.umontpellier.fr/direct",
+        "https://proseconsult.umontpellier.fr/direct/",
+        "https://planning.univ-rennes.fr/",
+        "https://planning.univ-rennes.fr/jsp/standard/index.jsp",
+        "https://planning.univ-rennes.fr/direct",
+        "https://planning.univ-rennes.fr/direct/",
+        "https://edt.univ-tlse3.fr/calendar",
+        "https://edt.univ-tlse3.fr/calendar/",
+        "https://edt.univ-tlse3.fr/calendar/default.aspx",
+      ].map((url) => `${url}?data=opaque#fragment`)
+
+      it.each([
+        ...uiUrls,
+        "",
+        "/calendar",
+        "https://",
+        "ftp://example.com/a.ics",
+      ])("rejects %j before any fetcher", async (url) => {
+        initService([])
+        icalFetcher.fetch.mockReset().mockResolvedValue([])
+        crazyschoolFetcher.mockClear()
+
+        const error = await fetchService
+          .fetchEvents({ url, customData: null }, "crazyschool")
+          .catch((failure) => failure)
+        expect(error.status).toBe(400)
+        expect(error.getResponse()).toEqual({
+          message: "Unsupported calendar URL",
+          error: "Bad Request",
+          statusCode: 400,
+        })
+        expect(icalFetcher.fetch).not.toHaveBeenCalled()
+        expect(crazyschoolFetcher).not.toHaveBeenCalled()
+      })
+
+      it.each([
+        "https://edt.univ-lyon1.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?calType=ical&nbWeeks=4",
+        "https://plannings.ube.fr/jsp/custom/modules/plannings/direct_cal.jsp?calType=ical&nbWeeks=4",
+        "https://planning.univ-rennes.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?calType=ical&nbWeeks=4",
+      ])("normalizes and fetches ADE export %s", async (url) => {
+        initService([fetcherCalendarEventFactory.build()])
+        jest.useFakeTimers({ now: new Date("2026-08-25T12:00:00.000Z") })
+        try {
+          await fetchService.fetchEvents({ url, customData: null }, null)
+          expect(icalFetcher.fetch).toHaveBeenCalledWith(
+            expect.stringContaining("firstDate=2025-08-25&lastDate=2027-08-25"),
+            {},
+            {},
+          )
+        } finally {
+          jest.useRealTimers()
+        }
+      })
+
+      it("fetches a non-UI Celcat export on the Toulouse 3 host", async () => {
+        initService([fetcherCalendarEventFactory.build()])
+        const url = "https://edt.univ-tlse3.fr/calendar/export.ics"
+        await expect(
+          fetchService.fetchEvents({ url, customData: null }, null),
+        ).resolves.toHaveLength(1)
+        expect(icalFetcher.fetch).toHaveBeenCalledWith(url, {}, {})
+      })
+    })
+
     it("should fetch events", async () => {
       initService([
         {

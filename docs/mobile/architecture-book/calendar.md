@@ -258,6 +258,19 @@ can expire. The enforcing boundary is
 with recognition and sync-cadence coverage beside the renamer and in the fetch/calendar-sync
 service tests.
 
+Before any fetch strategy, renamer, retry, or outbound request, the server validates the
+submitted source in [`FetchService`](../../../server/src/modules/fetch/services/fetch.service.ts).
+The pure [calendar-source classifier](../../../server/src/modules/fetch/calendar-source-classifier.ts)
+accepts absolute HTTP(S) and `webcal` URLs and rejects only malformed or unsupported
+sources and exact, evidenced timetable UI host/path pairs. It does not infer feed status
+from generic paths. Every rejection returns the stable `Unsupported calendar URL` error;
+new-calendar failures still record the full original source, and accepted eventless feeds
+still fail with `No events found`. Valid ADE and Celcat exports continue through the
+existing renamers and fetchers. The [classifier tests](../../../server/src/modules/fetch/calendar-source-classifier.test.ts),
+[fetch-boundary tests](../../../server/src/modules/fetch/services/fetch.service.test.ts), and
+[calendar-sync tests](../../../server/src/modules/calendar-sync/services/calendar-sync.service.test.ts)
+enforce these behaviors.
+
 Server sync telemetry is owned by the
 [server observability runbook](../../server/observability.md), not by the mobile sync
 seam. Calendar URLs and tokens must never become telemetry dimensions. The server uses

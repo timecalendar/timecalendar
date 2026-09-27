@@ -1,4 +1,5 @@
-import { Injectable } from "@nestjs/common"
+import { BadRequestException, Injectable } from "@nestjs/common"
+import { classifyCalendarSource } from "modules/fetch/calendar-source-classifier"
 import { InjectStrategies } from "modules/fetch/decorators/inject-strategies"
 import { CalendarSource } from "modules/fetch/models/calendar-source"
 import { FetchContext } from "modules/fetch/models/fetch-context"
@@ -60,6 +61,10 @@ export class FetchService {
     context: FetchContext = {},
   ) {
     const { url, customData } = calendarSource
+
+    if (!classifyCalendarSource(url).accepted) {
+      throw new BadRequestException("Unsupported calendar URL")
+    }
 
     const schoolStrategy = this.getStrategy(school, calendarSource)
     const transformedUrl = this.transformUrl(url, school, schoolStrategy)

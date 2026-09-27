@@ -69,6 +69,37 @@ describe("CalendarSyncService", () => {
       .findBy({ calendar: { id: calendarId } })
 
   describe("createCalendar", () => {
+    it("records the full rejected source without creating a calendar or fetching", async () => {
+      const url = "https://edt.univ-tlse3.fr/calendar?data=private#selection"
+      icalFetcher.fetch.mockClear()
+      await assertChanges(
+        dataSource,
+        [
+          [Calendar, 0],
+          [CalendarContent, 0],
+          [CalendarFailure, 1],
+        ],
+        async () => {
+          await expect(
+            service.createCalendar({
+              url,
+              schoolName: "Toulouse 3",
+              customData: null,
+            }),
+          ).rejects.toMatchObject({ status: 400 })
+          expect(icalFetcher.fetch).not.toHaveBeenCalled()
+          const failures = await dataSource
+            .getRepository(CalendarFailure)
+            .find()
+          expect(failures).toHaveLength(1)
+          expect(failures[0].url).toBe(url)
+          expect(JSON.parse(failures[0].error)).toMatchObject({
+            message: "Unsupported calendar URL",
+          })
+        },
+      )
+    })
+
     it("creates a calendar with an existing school", async () => {
       const school = await schoolFactory().create()
 
@@ -268,6 +299,45 @@ describe("CalendarSyncService", () => {
       dataSource.getRepository(Calendar).update(calendarId, {
         syncPlannedAt: new Date("2021-12-31T00:00:00.000Z"),
       })
+
+    it("keeps last-known content when a due source becomes a rejected UI", async () => {
+      await service.sync(calendar)
+      const before = await dataSource
+        .getRepository(CalendarContent)
+        .findOneByOrFail({
+          calendar: { id: calendar.id },
+        })
+      const url = "https://planning.univ-rennes.fr/direct/"
+      await dataSource.getRepository(Calendar).update(calendar.id, { url })
+      await makeDue(calendar.id)
+      icalFetcher.fetch.mockClear()
+
+      await assertChanges(
+        dataSource,
+        [
+          [CalendarFailure, 0],
+          [CalendarContent, 0],
+        ],
+        async () => {
+          await expect(
+            service.sync({ ...calendar, url }),
+          ).rejects.toMatchObject({
+            name: "CalendarSyncFailure",
+            message: "Unsupported calendar URL",
+            originalCause: {
+              status: 400,
+              response: { message: "Unsupported calendar URL" },
+            },
+          })
+        },
+      )
+      expect(icalFetcher.fetch).not.toHaveBeenCalled()
+      expect(
+        await dataSource.getRepository(CalendarContent).findOneByOrFail({
+          calendar: { id: calendar.id },
+        }),
+      ).toEqual(before)
+    })
 
     it("syncs events for an existing calendar", async () => {
       events = [
