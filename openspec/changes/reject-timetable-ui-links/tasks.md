@@ -64,15 +64,15 @@
   the complete configured bad-shape matrix through `FetchService` with the outbound mock untouched
   and drives representative valid ADE/Celcat exports through it, so classifier-only coverage cannot
   stay green if enforcement moves after the fetcher.
-- [ ] 6.2 Run the focused classifier, fetch-service, ADE-renamer, calendar-sync, migration, school
+- [x] 6.2 Run the focused classifier, fetch-service, ADE-renamer, calendar-sync, migration, school
   mapper, and export-guide suites with the repository's worker-isolated Postgres/Redis test
   prerequisites; record the exact command and passing counts in the PR/handoff.
 - [ ] 6.3 Run server local green (`npm run build`, `npm run lint`, and `npm test -- --runInBand`) and
   resolve every in-scope failure without weakening assertions.
-- [ ] 6.4 Run `server`'s `npm run generate:openapi` from built Nest output and confirm
+- [x] 6.4 Run `server`'s `npm run generate:openapi` from built Nest output and confirm
   `openapi/openapi.json` is byte-identical; do not run mobile codegen or change any file under
   `mobile/**`.
-- [ ] 6.5 Run `openspec validate reject-timetable-ui-links`, `git diff --check`, and the repository
+- [x] 6.5 Run `openspec validate reject-timetable-ui-links`, `git diff --check`, and the repository
   disclosure scan; confirm the final diff contains only the scoped server implementation/tests,
   the targeted migration, Architecture Book entries, and this OpenSpec change, with no mobile,
   generated-client, API-contract, dependency, workflow/infra, deploy/native/store, web, or legacy

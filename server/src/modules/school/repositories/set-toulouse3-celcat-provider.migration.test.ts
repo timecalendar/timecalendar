@@ -2,6 +2,9 @@ import { NestExpressApplication } from "@nestjs/platform-express"
 import { SetToulouse3CelcatProvider1787851000000 } from "migrations/1787851000000-SetToulouse3CelcatProvider"
 import { SchoolModule } from "modules/school/school.module"
 import { schoolFactory } from "modules/school/factories/school.factory"
+import { SchoolMapper } from "modules/school/mappers/school.mapper"
+import { getSchoolAssistant } from "modules/school/models/school-assistant.model"
+import { School } from "modules/school/models/school.entity"
 import createTestApp from "test-utils/create-test-app"
 import { DataSource, QueryRunner } from "typeorm"
 
@@ -51,6 +54,14 @@ describe("SetToulouse3CelcatProvider1787851000000", () => {
           ...before,
           assistant: "celcat",
         })
+        const projected = new SchoolMapper().toSchoolForList(
+          await dataSource
+            .getRepository(School)
+            .findOneByOrFail({ id: toulouse.id }),
+          "catalogue-v1",
+        )
+        expect(projected.exportGuide.providerSlug).toBe("celcat")
+        expect(projected.assistant).toEqual(getSchoolAssistant("celcat"))
         expect(await read(other.id)).toEqual(originalOther)
         await migration.down(runner)
         await migration.down(runner)

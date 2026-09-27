@@ -69,11 +69,14 @@ describe("FetchService", () => {
         icalFetcher.fetch.mockReset().mockResolvedValue([])
         crazyschoolFetcher.mockClear()
 
-        await expect(
-          fetchService.fetchEvents({ url, customData: null }, "crazyschool"),
-        ).rejects.toMatchObject({
-          status: 400,
-          response: { message: "Unsupported calendar URL" },
+        const error = await fetchService
+          .fetchEvents({ url, customData: null }, "crazyschool")
+          .catch((failure) => failure)
+        expect(error.status).toBe(400)
+        expect(error.getResponse()).toEqual({
+          message: "Unsupported calendar URL",
+          error: "Bad Request",
+          statusCode: 400,
         })
         expect(icalFetcher.fetch).not.toHaveBeenCalled()
         expect(crazyschoolFetcher).not.toHaveBeenCalled()
