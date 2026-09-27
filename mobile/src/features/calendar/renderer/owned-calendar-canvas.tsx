@@ -522,7 +522,6 @@ function CalendarTiles({
   const theme = useTheme()
   const [chooser, setChooser] = useState<{
     page: CalendarPage
-    dateKey: string
     items: readonly TimedTileV1[]
   } | null>(null)
   const chooserItems = chooser?.page === page ? chooser.items : null
@@ -579,9 +578,7 @@ function CalendarTiles({
                       page.direction === 0 ? registerTarget : undefined
                     }
                     generation={generation}
-                    onNativeFocused={(identity, dateKey, observedGeneration) =>
-                      onEventFocused(identity, dateKey, observedGeneration)
-                    }
+                    onNativeFocused={onEventFocused}
                     onPress={() => onEventPress(tile.identity.uid)}
                     t={t}
                   />
@@ -599,7 +596,6 @@ function CalendarTiles({
                       if (!isEventActivationBlocked())
                         setChooser({
                           page,
-                          dateKey: column.key,
                           items: component.items,
                         })
                     }}
