@@ -594,7 +594,7 @@ describe("OwnedCalendarShell", () => {
           })}
         />,
       )
-      await waitFor(() => expect(focus).toHaveBeenCalledTimes(3))
+      expect(focus).toHaveBeenCalledTimes(2)
       await view.rerender(
         <OwnedCalendarShell
           {...props}
@@ -609,7 +609,7 @@ describe("OwnedCalendarShell", () => {
           })}
         />,
       )
-      await waitFor(() => expect(focus).toHaveBeenCalledTimes(4))
+      await waitFor(() => expect(focus).toHaveBeenCalledTimes(3))
     } finally {
       focus.mockRestore()
     }

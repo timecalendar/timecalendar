@@ -108,8 +108,7 @@ function requestRestoredFocus({
     return null
   const last = lastFocused.current
   const target = targets.get(last.key)
-  const node =
-    target?.node ?? headings.get(last.dateKey) ?? headings.values().next().value
+  const node = target?.node ?? headings.get(last.dateKey)
   if (node === null || node === undefined) return null
   if (target !== undefined)
     scrollTo(Math.max(0, (target.minute / 60) * pixelsPerHour - 96))
