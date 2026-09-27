@@ -27,7 +27,7 @@
 
 ## 5. Run local-green verification
 
-- [ ] 5.1 From `mobile/`, run every edited pure/component/screen suite with introduced pure coverage at 100%, then run the repository's canonical `npx tsc --noEmit`, `npm run lint`, scoped Prettier checks over all changed source/test/JSON/Markdown files, `npm run react-doctor:changed`, and the applicable Maestro selector/harness static checks; record exact commands, suite/test counts, coverage, and results without claiming native behavior.
+- [x] 5.1 From `mobile/`, run every edited pure/component/screen suite with introduced pure coverage at 100%, then run the repository's canonical `npx tsc --noEmit`, `npm run lint`, scoped Prettier checks over all changed source/test/JSON/Markdown files, `npm run react-doctor:changed`, and the applicable Maestro selector/harness static checks; record exact commands, suite/test counts, coverage, and results without claiming native behavior.
 - [ ] 5.2 Run `openspec validate navigate-populated-calendar-accessibly --strict`, inspect the final diff for out-of-scope or sensitive surfaces, and run the repository disclosure scan before every public PR write. No OpenAPI/generated client, migration, native/store/EAS/Firebase, deploy/CI/infrastructure, or legacy Flutter path may enter the change without returning it for re-scope.
 
 ## 6. Prove the exact final head and hand off
