@@ -1,9 +1,7 @@
 import axios, { AxiosError, AxiosRequestConfig } from "axios"
 import { Fetcher } from "modules/fetch/fetchers/fetcher"
-import { CalendarCustomData } from "modules/fetch/models/calendar-source"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { parseIcal } from "modules/fetch/parsers/parse-ical"
-import { CustomError } from "modules/shared/errors/custom-error"
 import { HttpsProxyAgent } from "https-proxy-agent"
 import { PROXY_URL } from "config/constants"
 import {
@@ -53,7 +51,6 @@ export class IcalFetcher implements Fetcher {
 
   async fetch(
     url: string,
-    data?: CalendarCustomData,
     context: FetchContext = {},
   ): Promise<FetcherCalendarEvent[]> {
     // Some badly configured ADE instances do not return the ICal file
@@ -84,10 +81,6 @@ export class IcalFetcher implements Fetcher {
     if (this.options.useProxy && PROXY_URL.length > 0) {
       const httpsAgent = new HttpsProxyAgent(PROXY_URL)
       axiosConfig.httpsAgent = httpsAgent
-    }
-
-    if (data?.auth) {
-      axiosConfig.auth = data.auth
     }
 
     let outcome: CalendarFetchOutcome = "cancelled"
@@ -144,17 +137,6 @@ export class IcalFetcher implements Fetcher {
         } catch (error: unknown) {
           if (context.signal?.aborted) {
             throw context.signal.reason
-          }
-
-          if (
-            error instanceof AxiosError &&
-            error.response?.status === 401 &&
-            error.response.headers["www-authenticate"]
-          ) {
-            throw new CustomError(
-              "Basic Authorization required",
-              data?.auth ? { basicAuth: "failed" } : { auth: "basic" },
-            )
           }
 
           const classification: CalendarFetchClassification =

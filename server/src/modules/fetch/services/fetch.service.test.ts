@@ -142,10 +142,7 @@ describe("FetchService", () => {
       const url = "https://google.com/search?export=json&format=1"
       const school = "rouen"
 
-      const events = await fetchService.fetchEvents(
-        { url, customData: null },
-        school,
-      )
+      const events = await fetchService.fetchEvents({ url }, school)
 
       expect(icalFetcher.fetch).toHaveBeenCalled()
       expect(pipe).toHaveBeenCalled()
@@ -187,10 +184,7 @@ describe("FetchService", () => {
       const url = "https://google.com/search?export=json&format=1"
       const school = "rouen"
 
-      const events = await fetchService.fetchEvents(
-        { url, customData: null },
-        school,
-      )
+      const events = await fetchService.fetchEvents({ url }, school)
 
       expect(events.length).toBe(1)
       expect(events[0].uid).toBe("1")
@@ -202,11 +196,10 @@ describe("FetchService", () => {
       const url = "https://google.com/search?export=json&format=1"
       const school = "crazyschool"
 
-      await fetchService.fetchEvents({ url, customData: null }, school)
+      await fetchService.fetchEvents({ url }, school)
 
       expect(crazyschoolFetcher).toHaveBeenCalledWith(
         "https://google.com/search?export=json&format=1",
-        {},
         {},
       )
     })
@@ -222,15 +215,11 @@ describe("FetchService", () => {
           "https://google.com/jsp/custom/modules/plannings/anonymous_cal.jsp?calType=ical&crazy=true&nbWeeks=4"
         const school = "rouen"
 
-        const events = await fetchService.fetchEvents(
-          { url, customData: null },
-          school,
-        )
+        const events = await fetchService.fetchEvents({ url }, school)
 
         expect(events.length).toBe(1)
         expect(icalFetcher.fetch).toHaveBeenCalledWith(
           "https://bing.com/jsp/custom/modules/plannings/anonymous_cal.jsp?calType=ical&crazy=true&firstDate=2025-08-25&lastDate=2027-08-25",
-          {},
           {},
         )
         jest.useRealTimers()
@@ -248,11 +237,10 @@ describe("FetchService", () => {
         const url = "https://google.com/search?export=json&nbWeeks=4"
         const school = "oneschool"
 
-        await fetchService.fetchEvents({ url, customData: null }, school)
+        await fetchService.fetchEvents({ url }, school)
 
         expect(icalFetcher.fetch).toHaveBeenCalledWith(
           "https://google.com/search?export=json&nbWeeks=4",
-          {},
           {},
         )
       })
@@ -261,9 +249,9 @@ describe("FetchService", () => {
         initService([fetcherCalendarEventFactory.build()])
         const url = "https://google.com/search?crazy=true"
 
-        await fetchService.fetchEvents({ url, customData: null }, "generic")
+        await fetchService.fetchEvents({ url }, "generic")
 
-        expect(icalFetcher.fetch).toHaveBeenCalledWith(url, {}, {})
+        expect(icalFetcher.fetch).toHaveBeenCalledWith(url, {})
       })
 
       it("uses all strategies if no school is provided", async () => {
@@ -272,15 +260,11 @@ describe("FetchService", () => {
         const url = "https://google.com/search?export=json&crazy=true"
         const school = null
 
-        const events = await fetchService.fetchEvents(
-          { url, customData: null },
-          school,
-        )
+        const events = await fetchService.fetchEvents({ url }, school)
 
         expect(events.length).toBe(1)
         expect(icalFetcher.fetch).toHaveBeenCalledWith(
           "https://bing.com/search?export=json&crazy=false",
-          {},
           {},
         )
       })
@@ -291,15 +275,11 @@ describe("FetchService", () => {
         const url = "https://google.com/search?export=json&crazy=true"
         const school = "unknown"
 
-        const events = await fetchService.fetchEvents(
-          { url, customData: null },
-          school,
-        )
+        const events = await fetchService.fetchEvents({ url }, school)
 
         expect(events.length).toBe(1)
         expect(icalFetcher.fetch).toHaveBeenCalledWith(
           "https://bing.com/search?export=json&crazy=false",
-          {},
           {},
         )
       })
@@ -313,7 +293,7 @@ describe("FetchService", () => {
       "https://adelb.univ-lyon1.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=12345&projectId=6&calType=ical"
 
     const resolve = (url: string, school: string | null) =>
-      service.getMinSyncIntervalMinutes({ url, customData: null }, school)
+      service.getMinSyncIntervalMinutes({ url }, school)
 
     it("returns 60 minutes for a Lyon 1 url", () => {
       expect(resolve(lyon1Url, null)).toBe(60)
@@ -365,7 +345,7 @@ describe("FetchService", () => {
       icalFetcher.fetch.mockImplementationOnce(() =>
         Promise.resolve([fetcherCalendarEventFactory.build()]),
       )
-      await service.fetchEvents({ url, customData: null }, school)
+      await service.fetchEvents({ url }, school)
       const calls = icalFetcher.fetch.mock.calls as unknown as [string][]
       return calls[calls.length - 1][0]
     }
@@ -375,7 +355,6 @@ describe("FetchService", () => {
 
       expect(icalFetcher.fetch).toHaveBeenLastCalledWith(
         expect.stringContaining("&projectId=-1&"),
-        {},
         {},
       )
     })
@@ -387,7 +366,6 @@ describe("FetchService", () => {
 
       expect(icalFetcher.fetch).toHaveBeenLastCalledWith(
         expect.stringContaining("&projectId=3&"),
-        {},
         {},
       )
     })

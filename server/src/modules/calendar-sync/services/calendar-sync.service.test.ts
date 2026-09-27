@@ -3,7 +3,7 @@
 const icalFetcher: {
   fetch: jest.Mock<
     Promise<FetcherCalendarEvent[]>,
-    [string?, unknown?, { signal?: AbortSignal }?]
+    [string?, { signal?: AbortSignal }?]
   >
 } = {
   fetch: jest.fn(() => Promise.resolve([])),
@@ -200,7 +200,7 @@ describe("CalendarSyncService", () => {
         .findOneByOrFail({ token: created.token })
       const fetchCalls = icalFetcher.fetch.mock.calls as unknown as [
         string,
-        typeof customData,
+        { signal?: AbortSignal },
       ][]
       const creationUrl = new URL(fetchCalls[0][0])
 
@@ -210,9 +210,10 @@ describe("CalendarSyncService", () => {
       expect(creationUrl.searchParams.get("projectId")).toBe("-1")
       expect(creationUrl.searchParams.get("extra")).toBe("a b")
       expect(creationUrl.hash).toBe("#calendar")
-      expect(fetchCalls[0][1]).toEqual(customData)
+      expect(fetchCalls[0]).toHaveLength(2)
+      expect(fetchCalls[0][1]).not.toHaveProperty("auth")
       expect(calendar.url).toBe(sourceUrl)
-      expect(calendar.customData).toEqual(customData)
+      expect(calendar.customData).toBeNull()
 
       jest.setSystemTime(new Date("2026-08-26T12:00:00.000Z"))
       await dataSource.getRepository(Calendar).update(calendar.id, {
@@ -229,7 +230,7 @@ describe("CalendarSyncService", () => {
         await dataSource.getRepository(Calendar).findOneByOrFail({
           id: calendar.id,
         }),
-      ).toMatchObject({ url: sourceUrl, customData })
+      ).toMatchObject({ url: sourceUrl, customData: null })
       jest.useRealTimers()
     })
 
@@ -337,6 +338,28 @@ describe("CalendarSyncService", () => {
           calendar: { id: calendar.id },
         }),
       ).toEqual(before)
+    })
+
+    it("ignores historical customData during resync", async () => {
+      const historicalData = {
+        auth: { username: "old-user", password: "old-password" },
+      }
+      await dataSource.getRepository(Calendar).update(calendar.id, {
+        customData: historicalData,
+      })
+      calendar.customData = historicalData
+
+      await service.sync(calendar)
+
+      expect(icalFetcher.fetch).toHaveBeenCalledWith(
+        calendar.url,
+        expect.not.objectContaining({ auth: expect.anything() }),
+      )
+      expect(icalFetcher.fetch.mock.calls[0]).toHaveLength(2)
+      const saved = await dataSource
+        .getRepository(Calendar)
+        .findOneByOrFail({ id: calendar.id })
+      expect(saved.customData).toEqual(historicalData)
     })
 
     it("syncs events for an existing calendar", async () => {

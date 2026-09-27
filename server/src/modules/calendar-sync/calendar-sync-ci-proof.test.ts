@@ -40,7 +40,7 @@ describe("calendar sync bounded-work proof", () => {
         active++
         peak = Math.max(peak, active)
         try {
-          await fetcher.fetch("https://synthetic.invalid", undefined, {
+          await fetcher.fetch("https://synthetic.invalid", {
             signal: controller.signal,
           })
         } finally {

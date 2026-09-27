@@ -11,7 +11,7 @@ import {
   CALENDAR_NAME_MAX_LENGTH,
   TrimCalendarName,
 } from "modules/calendar/helpers/calendar-name"
-import { CalendarCustomData } from "modules/fetch/models/calendar-source"
+import { CalendarCustomData } from "modules/calendar-sync/models/dto/calendar-custom-data.dto"
 
 export class CreateCalendarDto {
   @IsString()
