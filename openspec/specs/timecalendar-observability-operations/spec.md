@@ -6,11 +6,13 @@ TBD - created by archiving change harden-sync-observability. Update Purpose afte
 ### Requirement: Version-controlled observability runbook
 The repository SHALL contain an operator runbook that documents TimeCalendar signal
 names, finite label vocabularies, privacy invariants, copy/paste backend queries,
-expected results, and the preproduction-before-production verification order.
+expected results, and the preproduction-before-production verification order. Its
+application-metric queries SHALL describe collector-merged series rather than
+per-pod cumulative series.
 
 #### Scenario: Operator investigates sync volume
 - **WHEN** the operator follows the VictoriaMetrics section
-- **THEN** they can query per-instance sync rate and total sync rate calculated after per-series rate without counter-reset collisions
+- **THEN** they can query aggregate sync rate and hourly counter increase after collector conversion without assuming a stored `service_instance_id` label
 
 #### Scenario: Operator investigates upstream health
 - **WHEN** the operator follows the metrics and trace sections
@@ -31,7 +33,7 @@ proof SHALL cover positive signal presence and negative privacy/cardinality chec
 
 #### Scenario: Synthetic preproduction exercise completes
 - **WHEN** the documented success and failure are generated in preproduction
-- **THEN** VictoriaMetrics shows distinct instance-aware counters and bounded upstream labels, VictoriaLogs shows correlated sanitized application errors, and Tempo shows contained sync trace descendants
+- **THEN** VictoriaMetrics shows additive collector-merged application counters and bounded upstream labels, VictoriaLogs shows correlated sanitized application errors, and Tempo shows contained sync trace descendants
 
 #### Scenario: Sensitive synthetic fixtures are searched
 - **WHEN** the operator searches VictoriaLogs and Tempo for the synthetic URL, token, email, and identifier fixtures

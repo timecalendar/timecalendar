@@ -256,8 +256,8 @@ Server sync telemetry is owned by the
 seam. Calendar URLs and tokens must never become telemetry dimensions. The server uses
 only its reviewed finite upstream classifier. Stored application metrics are
 collector-merged series derived from DELTA measurements, without per-pod labels;
-this boundary changes neither the mobile API nor local sync behavior. Unexpected mobile-local failures continue to use the
-privacy-safe `@/firebase` seam.
+this boundary changes neither the mobile API nor local sync behavior. Unexpected
+mobile-local failures continue to use the privacy-safe `@/firebase` seam.
 
 The server gives batch sync a ten-second work budget inside the client's 15-second
 request timeout. Disconnect and deadline cancellation propagate to upstream iCalendar
