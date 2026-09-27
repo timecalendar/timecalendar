@@ -58,6 +58,7 @@ type OwnedCalendarShellProps = {
   revisionFloor: number
   acceptedTransitionRevision?: number | null
   transitionPending?: boolean
+  presentationReady?: boolean
   routeFocused?: boolean
   onVerticalOffsetSettled: (offset: number) => void
   onZoomSettled: (settlement: CalendarZoomSettlement) => void
@@ -98,6 +99,7 @@ type FocusContext = {
   presentationGeneration: number | undefined
   routeFocused: boolean
   transitionPending: boolean
+  presentationReady: boolean
 }
 
 function requestRestoredFocus({
@@ -185,6 +187,7 @@ export const OwnedCalendarShell = forwardRef<
     onContextSettled,
     pageTitleTarget,
     presentation,
+    presentationReady,
     routeFocused,
     transitionPending,
   } = props
@@ -197,6 +200,7 @@ export const OwnedCalendarShell = forwardRef<
     presentationGeneration: props.presentation?.generation,
     routeFocused: props.routeFocused !== false,
     transitionPending: props.transitionPending ?? false,
+    presentationReady: props.presentationReady !== false,
   })
   const titleContext = useRef(props.pageTitleTarget)
   const returnFrame = useRef<number | null>(null)
@@ -209,6 +213,7 @@ export const OwnedCalendarShell = forwardRef<
       presentationGeneration: props.presentation?.generation,
       routeFocused: props.routeFocused !== false,
       transitionPending: props.transitionPending ?? false,
+      presentationReady: props.presentationReady !== false,
     }
     if (returnFrame.current !== null) {
       cancelAnimationFrame(returnFrame.current)
@@ -218,6 +223,7 @@ export const OwnedCalendarShell = forwardRef<
     props.acceptedTransitionRevision,
     props.generation,
     props.presentation?.generation,
+    props.presentationReady,
     props.pageTitleTarget,
     props.routeFocused,
     props.transitionPending,
@@ -235,7 +241,8 @@ export const OwnedCalendarShell = forwardRef<
       current.revision === revision &&
       current.presentationGeneration === generation &&
       current.routeFocused &&
-      !current.transitionPending
+      !current.transitionPending &&
+      current.presentationReady
     )
   }
   const registerTarget = (
@@ -264,6 +271,7 @@ export const OwnedCalendarShell = forwardRef<
     if (
       routeFocused === false ||
       transitionPending ||
+      presentationReady === false ||
       presentation?.generation !== currentGeneration
     )
       return
@@ -308,6 +316,7 @@ export const OwnedCalendarShell = forwardRef<
     pageTitleTarget,
     acceptedTransitionRevision,
     presentation,
+    presentationReady,
     routeFocused,
     transitionPending,
     targets,
@@ -318,6 +327,7 @@ export const OwnedCalendarShell = forwardRef<
     if (
       props.routeFocused === false ||
       props.transitionPending ||
+      props.presentationReady === false ||
       props.presentation?.generation !== props.generation
     )
       return
@@ -355,6 +365,7 @@ export const OwnedCalendarShell = forwardRef<
       pendingReturn.current &&
       props.routeFocused !== false &&
       !props.transitionPending &&
+      props.presentationReady !== false &&
       props.presentation?.generation === props.generation &&
       props.pageTitleTarget !== null &&
       props.pageTitleTarget !== undefined
@@ -365,6 +376,7 @@ export const OwnedCalendarShell = forwardRef<
     props.generation,
     props.pageTitleTarget,
     props.presentation?.generation,
+    props.presentationReady,
     props.routeFocused,
     props.transitionPending,
   ])

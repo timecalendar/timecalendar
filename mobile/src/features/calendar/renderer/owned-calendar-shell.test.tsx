@@ -756,6 +756,7 @@ describe("OwnedCalendarShell", () => {
     ["obsolete generation", { generation: -1 }, {}],
     ["route blur", {}, { routeFocused: false }],
     ["pending transition", {}, { transitionPending: true }],
+    ["incomplete presentation", {}, { presentationReady: false }],
   ] as const)(
     "ignores %s as accessibility-focus memory",
     async (_, override, state) => {

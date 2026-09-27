@@ -247,6 +247,7 @@ export function CalendarScreen() {
               revisionFloor={transitionRevision}
               acceptedTransitionRevision={acceptedTransitionRevision}
               transitionPending={transitionPending}
+              presentationReady={timeline.ready && timeline.error === undefined}
               routeFocused={isFocused}
               onTransitionRequest={requestTransition}
               onTransitionSettled={settleTransition}
