@@ -15,6 +15,7 @@ import { useTheme } from "@/theme"
 import type { CalendarPage } from "./owned-calendar-coordinator"
 
 export function OwnedCalendarDateHeader({
+  registerHeading,
   pages,
   locale,
   displayZone,
@@ -22,6 +23,7 @@ export function OwnedCalendarDateHeader({
   todayLabel,
   stripStyle,
 }: {
+  registerHeading: (dateKey: string, node: View | null) => void
   pages: readonly CalendarPage[]
   locale: AppLocale
   displayZone: string
@@ -84,6 +86,10 @@ export function OwnedCalendarDateHeader({
                 const dateLabel = `${parts.weekday} ${parts.dayOfMonth}`
                 return (
                   <View
+                    ref={(node) => {
+                      if (page.direction === 0)
+                        registerHeading(column.key, node)
+                    }}
                     key={column.key}
                     testID={`owned-calendar-date-${page.direction}-${column.key}`}
                     accessible={page.direction === 0}

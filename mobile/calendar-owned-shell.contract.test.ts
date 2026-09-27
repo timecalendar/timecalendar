@@ -152,7 +152,16 @@ describe("owned Calendar paging repository contract", () => {
     expect(renderer).not.toMatch(
       /PanGestureHandler|Animated\.timing|setInterval|setTimeout|runOnJS|import\s*\{[^}]*\bAnimated\b[^}]*\}\s*from "react-native"/,
     )
-    expect(renderer).not.toMatch(/\buseMemo\b|\buseCallback\b/)
+    expect(renderer).not.toMatch(/\buseCallback\b/)
+    const motionSources = [
+      "owned-calendar-canvas.tsx",
+      "owned-calendar-coordinator.ts",
+      "owned-calendar-zoom.ts",
+      "pager-page-scroll.ts",
+    ]
+      .map((file) => readFileSync(join(rendererRoot, file), "utf8"))
+      .join("\n")
+    expect(motionSources).not.toMatch(/\buseMemo\b/)
 
     const zoom = readFileSync(
       join(rendererRoot, "owned-calendar-zoom.ts"),
@@ -218,7 +227,7 @@ describe("owned Calendar paging repository contract", () => {
     expect(renderer).toContain("onEventPress(tile.identity.uid)")
     expect(renderer).toContain("planTargetConflicts")
     expect(renderer).toContain("accessibilityViewIsModal")
-    expect(renderer).toContain("component.items.map")
+    expect(renderer).toContain("accessibilityTilesByDate.get(column.key)")
     expect(renderer).toContain("component.items.length > 1")
     expect(renderer).toContain("accessibilityElementsHidden")
     expect(renderer).toContain("isEventActivationBlocked")
@@ -227,6 +236,42 @@ describe("owned Calendar paging repository contract", () => {
     expect(renderer).not.toMatch(/onEventPress\([^)]*(?:index|direction|key)/)
     expect(navigationBoundary).not.toMatch(
       /@\/api|generated\/|customFetch|fetch\(|useSyncCalendars|syncCalendars/,
+    )
+  })
+
+  it("keeps one committed-page event tree and bounded identity focus refs", () => {
+    const rendererRoot = join(root, "src/features/calendar/renderer")
+    const canvas = readFileSync(
+      join(rendererRoot, "owned-calendar-canvas.tsx"),
+      "utf8",
+    )
+    const shell = readFileSync(
+      join(rendererRoot, "owned-calendar-shell.tsx"),
+      "utf8",
+    )
+    const projection = readFileSync(
+      join(root, "src/features/calendar/data/accessibility-projection.ts"),
+      "utf8",
+    )
+
+    expect(canvas).toContain("projectCalendarAccessibilityEntries(page)")
+    expect(canvas).toMatch(
+      /page\.direction === 0\s*\? registerTarget : undefined/,
+    )
+    expect(canvas).toContain("removeClippedSubviews={false}")
+    expect(canvas).toContain(
+      "accessibilityElementsHidden={page.direction !== 0}",
+    )
+    expect(canvas).toContain('importantForAccessibility="no-hide-descendants"')
+    expect(canvas.match(/<Pressable\b/g)?.length).toBe(4)
+    expect(shell).toMatch(
+      /new Map<\s*string,\s*\{ node: View; dateKey: string; minute: number \}\s*>\(\)/,
+    )
+    expect(shell).toContain("coordinator.scrollRef.current?.scrollTo")
+    expect(shell).toContain("AccessibilityInfo.setAccessibilityFocus")
+    expect(projection).toContain("entries.sort(compareEntries)")
+    expect([canvas, shell, projection].join("\n")).not.toMatch(
+      /experimental_accessibilityOrder|accessibilityOrder=|<FlatList\b|<SectionList\b/,
     )
   })
 

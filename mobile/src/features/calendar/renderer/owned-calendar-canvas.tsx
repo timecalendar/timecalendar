@@ -155,6 +155,8 @@ export function OwnedCalendarCanvas({
   nowLabel,
   t,
   onEventPress,
+  onEventFocused,
+  registerTarget,
   onProbeDiagnostic,
   isEventActivationBlocked,
 }: {
@@ -193,6 +195,13 @@ export function OwnedCalendarCanvas({
   nowLabel: string
   t: TFunction
   onEventPress: (uid: string) => void
+  onEventFocused: (key: string, dateKey: string) => void
+  registerTarget: (
+    key: string,
+    dateKey: string,
+    minute: number,
+    node: View | null,
+  ) => void
   onProbeDiagnostic?:
     | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
     | undefined
@@ -328,6 +337,8 @@ export function OwnedCalendarCanvas({
                   locale={locale}
                   displayZone={displayZone}
                   onEventPress={onEventPress}
+                  onEventFocused={onEventFocused}
+                  registerTarget={registerTarget}
                   onProbeDiagnostic={onProbeDiagnostic}
                   isEventActivationBlocked={isEventActivationBlocked}
                 />
@@ -374,6 +385,8 @@ function CalendarPageCanvas({
   locale,
   displayZone,
   onEventPress,
+  onEventFocused,
+  registerTarget,
   onProbeDiagnostic,
   isEventActivationBlocked,
 }: {
@@ -387,6 +400,13 @@ function CalendarPageCanvas({
   locale: AppLocale
   displayZone: string
   onEventPress: (uid: string) => void
+  onEventFocused: (key: string, dateKey: string) => void
+  registerTarget: (
+    key: string,
+    dateKey: string,
+    minute: number,
+    node: View | null,
+  ) => void
   onProbeDiagnostic?:
     | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
     | undefined
@@ -435,6 +455,8 @@ function CalendarPageCanvas({
         pixelsPerHour={pixelsPerHour}
         settledPixelsPerHour={settledPixelsPerHour}
         onEventPress={onEventPress}
+        onEventFocused={onEventFocused}
+        registerTarget={registerTarget}
         onProbeDiagnostic={onProbeDiagnostic}
         isEventActivationBlocked={isEventActivationBlocked}
         t={t}
@@ -465,6 +487,8 @@ function CalendarTiles({
   pixelsPerHour,
   settledPixelsPerHour,
   onEventPress,
+  onEventFocused,
+  registerTarget,
   onProbeDiagnostic,
   isEventActivationBlocked,
   t,
@@ -475,6 +499,13 @@ function CalendarTiles({
   pixelsPerHour: SharedValue<number>
   settledPixelsPerHour: number
   onEventPress: (uid: string) => void
+  onEventFocused: (key: string, dateKey: string) => void
+  registerTarget: (
+    key: string,
+    dateKey: string,
+    minute: number,
+    node: View | null,
+  ) => void
   onProbeDiagnostic?:
     | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
     | undefined
@@ -484,6 +515,7 @@ function CalendarTiles({
   const theme = useTheme()
   const [chooser, setChooser] = useState<{
     page: CalendarPage
+    dateKey: string
     items: readonly TimedTileV1[]
   } | null>(null)
   const chooserItems = chooser?.page === page ? chooser.items : null
@@ -525,16 +557,24 @@ function CalendarTiles({
                   <TimedCalendarTile
                     key={tile.key}
                     tile={tile}
+                    dateKey={column.key}
                     locale={locale}
                     displayZone={displayZone}
                     pixelsPerHour={pixelsPerHour}
                     settledPixelsPerHour={settledPixelsPerHour}
                     accessible={page.direction === 0}
-                    accessibilityOrder={accessibilityEntries?.findIndex(
+                    projectionIndex={accessibilityEntries?.findIndex(
                       (entry) => entry.key === tile.key,
                     )}
                     onProbeDiagnostic={onProbeDiagnostic}
-                    onPress={() => onEventPress(tile.identity.uid)}
+                    registerTarget={
+                      page.direction === 0 ? registerTarget : undefined
+                    }
+                    onFocused={() => onEventFocused(tile.key, column.key)}
+                    onPress={() => {
+                      onEventFocused(tile.key, column.key)
+                      onEventPress(tile.identity.uid)
+                    }}
                     t={t}
                   />
                 ),
@@ -549,7 +589,11 @@ function CalendarTiles({
                     importantForAccessibility="no-hide-descendants"
                     onPress={() => {
                       if (!isEventActivationBlocked())
-                        setChooser({ page, items: component.items })
+                        setChooser({
+                          page,
+                          dateKey: column.key,
+                          items: component.items,
+                        })
                     }}
                     style={[
                       styles.conflictTarget,
@@ -593,6 +637,8 @@ function CalendarTiles({
                 accessibilityRole="button"
                 accessibilityLabel={eventLabel(tile, locale, displayZone, t)}
                 onPress={() => {
+                  if (chooser !== null)
+                    onEventFocused(tile.key, chooser.dateKey)
                   setChooser(null)
                   onEventPress(tile.identity.uid)
                 }}
@@ -649,26 +695,39 @@ function eventLabel(
 
 function TimedCalendarTile({
   tile,
+  dateKey,
   locale,
   displayZone,
   pixelsPerHour,
   settledPixelsPerHour,
   accessible,
-  accessibilityOrder,
+  projectionIndex,
   onProbeDiagnostic,
+  registerTarget,
+  onFocused,
   onPress,
   t,
 }: {
   tile: TimedTileV1
+  dateKey: string
   locale: AppLocale
   displayZone: string
   pixelsPerHour: SharedValue<number>
   settledPixelsPerHour: number
   accessible: boolean
-  accessibilityOrder: number | undefined
+  projectionIndex: number | undefined
   onProbeDiagnostic?:
     | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
     | undefined
+  registerTarget?:
+    | ((
+        key: string,
+        dateKey: string,
+        minute: number,
+        node: View | null,
+      ) => void)
+    | undefined
+  onFocused: () => void
   onPress: () => void
   t: TFunction
 }) {
@@ -758,14 +817,12 @@ function TimedCalendarTile({
       testID={`owned-calendar-event-${tile.identity.uid}`}
       pointerEvents="box-none"
       onLayout={
-        accessible &&
-        accessibilityOrder !== undefined &&
-        accessibilityOrder >= 0
+        accessible && projectionIndex !== undefined && projectionIndex >= 0
           ? ({ nativeEvent }) =>
               onProbeDiagnostic?.({
                 kind: "target-frame",
                 identity: tile.key,
-                order: accessibilityOrder,
+                order: projectionIndex,
                 frame: nativeEvent.layout,
               })
           : undefined
@@ -777,6 +834,11 @@ function TimedCalendarTile({
       ]}
     >
       <Pressable
+        ref={(node) => {
+          if (registerTarget !== undefined)
+            registerTarget(tile.key, dateKey, tile.startMinute, node)
+        }}
+        onFocus={onFocused}
         accessible={accessible}
         accessibilityElementsHidden={!accessible}
         importantForAccessibility={accessible ? "yes" : "no-hide-descendants"}

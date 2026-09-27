@@ -3,10 +3,11 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react-native"
 import { createRef } from "react"
-import { AppState, StyleSheet } from "react-native"
+import { AccessibilityInfo, AppState, StyleSheet } from "react-native"
 import { State } from "react-native-gesture-handler"
 import {
   fireGestureHandler,
@@ -16,7 +17,10 @@ import { useEvent, useReducedMotion } from "react-native-reanimated"
 
 import {
   buildCalendarTimelinePresentation,
+  DEFAULT_PIXELS_PER_HOUR,
   HOURS_COLUMN_WIDTH,
+  MAX_PIXELS_PER_HOUR,
+  MIN_PIXELS_PER_HOUR,
   planCalendarThreePageRange,
   projectCalendarAccessibilityEntries,
   type TimedCalendarEventV1,
@@ -452,43 +456,130 @@ describe("OwnedCalendarShell", () => {
     },
   )
 
-  it("mounts the entire committed fixture in projection order through the single vertical owner", async () => {
+  it.each([MIN_PIXELS_PER_HOUR, DEFAULT_PIXELS_PER_HOUR, MAX_PIXELS_PER_HOUR])(
+    "mounts the committed fixture in projection order at %i pixels per hour",
+    async (scale) => {
+      const presentation = buildCalendarTimelinePresentation({
+        range: planCalendarThreePageRange(props),
+        generation: props.generation,
+        events: accessibilityProbeFixture(),
+      })
+      const committed = presentation.pages.find((page) => page.direction === 0)!
+      const expected = projectCalendarAccessibilityEntries(committed).map(
+        (entry) => entry.identity.uid,
+      )
+      const onEventPress = jest.fn()
+      await render(
+        <OwnedCalendarShell
+          {...props}
+          initialVerticalOffset={9 * scale}
+          initialPixelsPerHour={scale}
+          presentation={presentation}
+          onEventPress={onEventPress}
+        />,
+      )
+
+      const buttons = screen.getAllByRole("button")
+      expect(buttons).toHaveLength(expected.length)
+      expect(buttons.map((button) => button.props.accessibilityLabel)).toEqual(
+        expected.map((uid) => expect.stringContaining(`Fixture ${uid}`)),
+      )
+      for (const button of buttons) await fireEvent.press(button)
+      expect(onEventPress.mock.calls.map(([uid]) => uid)).toEqual(expected)
+      expect(screen.getByTestId("owned-calendar-canvas")).toHaveProp(
+        "removeClippedSubviews",
+        false,
+      )
+      expect(
+        screen.getByTestId("owned-calendar-event-probe-early"),
+      ).toBeOnTheScreen()
+      expect(
+        screen.getByTestId("owned-calendar-event-probe-late"),
+      ).toBeOnTheScreen()
+    },
+  )
+
+  it("restores a surviving event after a settled presentation revision", async () => {
+    const events = [
+      timedEvent(
+        "late-focus",
+        "2026-06-15T23:00:00.000Z",
+        "2026-06-15T23:45:00.000Z",
+      ),
+    ]
     const presentation = buildCalendarTimelinePresentation({
       range: planCalendarThreePageRange(props),
-      generation: props.generation,
-      events: accessibilityProbeFixture(),
+      generation: 0,
+      events,
     })
-    const committed = presentation.pages.find((page) => page.direction === 0)!
-    const expected = projectCalendarAccessibilityEntries(committed).map(
-      (entry) => entry.identity.uid,
-    )
-    const onEventPress = jest.fn()
-    await render(
-      <OwnedCalendarShell
-        {...props}
-        initialVerticalOffset={9 * 60}
-        presentation={presentation}
-        onEventPress={onEventPress}
-      />,
-    )
-
-    const buttons = screen.getAllByRole("button")
-    expect(buttons).toHaveLength(expected.length)
-    expect(buttons.map((button) => button.props.accessibilityLabel)).toEqual(
-      expected.map((uid) => expect.stringContaining(`Fixture ${uid}`)),
-    )
-    for (const button of buttons) await fireEvent.press(button)
-    expect(onEventPress.mock.calls.map(([uid]) => uid)).toEqual(expected)
-    expect(screen.getByTestId("owned-calendar-canvas")).toHaveProp(
-      "removeClippedSubviews",
-      false,
-    )
-    expect(
-      screen.getByTestId("owned-calendar-event-probe-early"),
-    ).toBeOnTheScreen()
-    expect(
-      screen.getByTestId("owned-calendar-event-probe-late"),
-    ).toBeOnTheScreen()
+    const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
+    try {
+      const view = await render(
+        <OwnedCalendarShell {...props} presentation={presentation} />,
+      )
+      await fireEvent(
+        screen.getByRole("button", { name: /late-focus/ }),
+        "focus",
+      )
+      await view.rerender(
+        <OwnedCalendarShell
+          {...props}
+          revisionFloor={1}
+          transitionPending
+          focusReturnEpoch={1}
+          presentation={presentation}
+        />,
+      )
+      expect(focus).not.toHaveBeenCalled()
+      await view.rerender(
+        <OwnedCalendarShell
+          {...props}
+          generation={1}
+          revisionFloor={1}
+          acceptedTransitionRevision={1}
+          presentation={buildCalendarTimelinePresentation({
+            range: planCalendarThreePageRange(props),
+            generation: 1,
+            events,
+          })}
+        />,
+      )
+      await waitFor(() => expect(focus).toHaveBeenCalledTimes(1))
+      await view.rerender(
+        <OwnedCalendarShell
+          {...props}
+          generation={2}
+          revisionFloor={2}
+          acceptedTransitionRevision={2}
+          presentation={buildCalendarTimelinePresentation({
+            range: planCalendarThreePageRange(props),
+            generation: 2,
+            events: [],
+          })}
+        />,
+      )
+      await waitFor(() => expect(focus).toHaveBeenCalledTimes(2))
+      await view.rerender(
+        <OwnedCalendarShell
+          {...props}
+          anchor={new Date("2026-06-22T00:00:00.000Z")}
+          generation={3}
+          revisionFloor={3}
+          acceptedTransitionRevision={3}
+          presentation={buildCalendarTimelinePresentation({
+            range: planCalendarThreePageRange({
+              ...props,
+              anchor: new Date("2026-06-22T00:00:00.000Z"),
+            }),
+            generation: 3,
+            events: [],
+          })}
+        />,
+      )
+      await waitFor(() => expect(focus).toHaveBeenCalledTimes(3))
+    } finally {
+      focus.mockRestore()
+    }
   })
 
   it("keeps conflict tiles semantic while a hidden pointer overlay opens the chooser", async () => {

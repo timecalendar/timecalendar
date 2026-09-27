@@ -22,6 +22,8 @@
 - [ ] 4.2 Extend `mobile/calendar-owned-shell.contract.test.ts` as the CI proof test to assert one native vertical owner, one pager/three pages, one semantic target per committed identity, hidden adjacent pages/decorations/overlays, bounded focus refs, and absence of a hidden list, alternate renderer, experimental focus-order API, compatibility path, or per-frame React accessibility work.
 - [ ] 4.3 Review the implementation against the binding Architecture Book Calendar/accessibility/testing contracts and record the update as N/A while this scope remains conforming and read-only. If implementation requires a reusable rule change, stop and return for an ADR plus explicit Reviewer scrutiny rather than editing `docs/mobile/architecture-book/` in this slice.
 
+  Blocked at this check: `docs/mobile/architecture-book/calendar.md` currently says overlapping targets become one semantic chooser trigger. T12's approved one-event-per-target tree makes that overlay non-semantic. This changes the documented reusable rule and needs the scoped ADR/review decision before the remaining tasks continue.
+
 ## 5. Run local-green verification
 
 - [ ] 5.1 From `mobile/`, run every edited pure/component/screen suite with introduced pure coverage at 100%, then run the repository's canonical `npx tsc --noEmit`, `npm run lint`, scoped Prettier checks over all changed source/test/JSON/Markdown files, `npm run react-doctor:changed`, and the applicable Maestro selector/harness static checks; record exact commands, suite/test counts, coverage, and results without claiming native behavior.

@@ -1,6 +1,18 @@
-import { forwardRef, useImperativeHandle } from "react"
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from "react"
 import { useTranslation } from "react-i18next"
-import { StyleSheet, View } from "react-native"
+import {
+  AccessibilityInfo,
+  findNodeHandle,
+  StyleSheet,
+  View,
+} from "react-native"
 import { GestureDetector } from "react-native-gesture-handler"
 
 import {
@@ -42,6 +54,9 @@ type OwnedCalendarShellProps = {
   initialPixelsPerHour: number
   generation: number
   revisionFloor: number
+  acceptedTransitionRevision?: number | null
+  transitionPending?: boolean
+  focusReturnEpoch?: number
   onVerticalOffsetSettled: (offset: number) => void
   onZoomSettled: (settlement: CalendarZoomSettlement) => void
   onTransitionRequest: (request: CalendarTransitionRequest) => void
@@ -67,6 +82,85 @@ export const OwnedCalendarShell = forwardRef<
   const { t } = useTranslation()
   const theme = useTheme()
   const coordinator = useOwnedCalendarCoordinator(props)
+  const focusRegistry = useMemo(
+    () => ({
+      generation: props.generation,
+      targets: new Map<
+        string,
+        { node: View; dateKey: string; minute: number }
+      >(),
+      headings: new Map<string, View>(),
+    }),
+    [props.generation],
+  )
+  const targets = focusRegistry.targets
+  const headings = focusRegistry.headings
+  const activeTargets = useRef(targets)
+  useLayoutEffect(() => {
+    activeTargets.current = targets
+  }, [targets])
+  const lastFocused = useRef<{ key: string; dateKey: string } | null>(null)
+  const lastRestore = useRef<string | null>(null)
+  const registerTarget = (
+    key: string,
+    dateKey: string,
+    minute: number,
+    node: View | null,
+  ) => {
+    if (node === null) targets.delete(key)
+    else if (!targets.has(key)) targets.set(key, { node, dateKey, minute })
+  }
+  const rememberTarget = (key: string, dateKey: string) => {
+    if (activeTargets.current !== targets) return
+    if (targets.get(key)?.dateKey === dateKey)
+      lastFocused.current = { key, dateKey }
+  }
+  useEffect(() => {
+    const revision = props.acceptedTransitionRevision ?? 0
+    if (
+      props.transitionPending ||
+      props.presentation?.generation !== props.generation
+    )
+      return
+    const restoreKey = `${props.generation}:${revision}:${props.focusReturnEpoch ?? 0}`
+    if (lastRestore.current === restoreKey || lastFocused.current === null)
+      return
+    const last = lastFocused.current
+    const target = targets.get(last.key)
+    const node =
+      target?.node ??
+      headings.get(last.dateKey) ??
+      headings.values().next().value
+    if (node === null || node === undefined) return
+    if (target !== undefined) {
+      coordinator.scrollRef.current?.scrollTo({
+        y: Math.max(
+          0,
+          (target.minute / 60) * coordinator.pixelsPerHour.get() - 96,
+        ),
+        animated: false,
+      })
+    }
+    const frame = requestAnimationFrame(() => {
+      if (activeTargets.current !== targets || props.transitionPending) return
+      const handle = findNodeHandle(node)
+      if (handle !== null) {
+        lastRestore.current = restoreKey
+        AccessibilityInfo.setAccessibilityFocus(handle)
+      }
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [
+    coordinator.pixelsPerHour,
+    coordinator.scrollRef,
+    headings,
+    props.acceptedTransitionRevision,
+    props.focusReturnEpoch,
+    props.generation,
+    props.presentation,
+    props.transitionPending,
+    targets,
+  ])
   const onEventPress = (uid: string) => {
     if (coordinator.isEventActivationBlocked()) return
     const eventPress = props.onEventPress ?? ignoreEventPress
@@ -83,6 +177,10 @@ export const OwnedCalendarShell = forwardRef<
       style={[styles.shell, { backgroundColor: theme.background }]}
     >
       <OwnedCalendarDateHeader
+        registerHeading={(dateKey, node) => {
+          if (node === null) headings.delete(dateKey)
+          else headings.set(dateKey, node)
+        }}
         pages={coordinator.pages}
         locale={props.locale}
         displayZone={props.displayZone}
@@ -129,6 +227,8 @@ export const OwnedCalendarShell = forwardRef<
           )}
           t={t}
           onEventPress={onEventPress}
+          onEventFocused={rememberTarget}
+          registerTarget={registerTarget}
           onProbeDiagnostic={props.onProbeDiagnostic}
           isEventActivationBlocked={coordinator.isEventActivationBlocked}
         />
