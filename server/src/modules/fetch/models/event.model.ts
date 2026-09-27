@@ -58,8 +58,3 @@ export interface RepCalendarEvent {
   groupColor: string
   [key: string]: any
 }
-
-export interface BasicCredentials {
-  username: string
-  password: string
-}

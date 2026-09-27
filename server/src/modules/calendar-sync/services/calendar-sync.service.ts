@@ -36,8 +36,7 @@ import {
 } from "modules/fetch/models/calendar-fetch-failure"
 import { CalendarSyncMetricsService } from "./calendar-sync-metrics.service"
 
-type CalendarForSync = Pick<Calendar, "url" | "customData"> &
-  Partial<Omit<Calendar, "url">>
+type CalendarForSync = Pick<Calendar, "url"> & Partial<Omit<Calendar, "url">>
 
 @Injectable()
 export class CalendarSyncService {
@@ -56,7 +55,7 @@ export class CalendarSyncService {
   ) {}
 
   async createCalendar(body: CreateCalendarDto): Promise<CreateCalendarRepDto> {
-    const { url, schoolId, schoolName, customData, name } = body
+    const { url, schoolId, schoolName, name } = body
 
     // Both timestamps are placeholders overwritten by `saveCalendar` at the end
     // of this same sync. `syncPlannedAt` has to be one of them: without it the
@@ -68,7 +67,7 @@ export class CalendarSyncService {
       school: schoolId ? idToEntity(schoolId) : undefined,
       schoolName: schoolId ? null : schoolName,
       url,
-      customData,
+      customData: null,
       // The DTO already trimmed a supplied name; this is the last line before a
       // NOT NULL column, so an omitted one still has to become "".
       name: normalizeCalendarName(name),
@@ -80,7 +79,7 @@ export class CalendarSyncService {
   }
 
   async sync(calendar: CalendarForSync, context: CalendarSyncContext = {}) {
-    const { id, url, customData, school } = calendar
+    const { id, url, school } = calendar
     const isNewCalendar = !id
     const action = isNewCalendar ? "create" : "update"
     const upstreamDomain = classifyUpstreamDomain(url)
@@ -96,7 +95,7 @@ export class CalendarSyncService {
       async (span) => {
         try {
           throwIfCalendarSyncAborted(context.signal)
-          const source = { url, customData }
+          const source = { url }
           const code = await this.findSchoolCode(school?.id)
           const boundedSchool =
             code && /^[a-z0-9_-]{1,64}$/.test(code) ? code : "unknown"

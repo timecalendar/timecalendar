@@ -33,6 +33,32 @@ describe("CalendarSyncController", () => {
   })
 
   describe("POST /calendars", () => {
+    it.each([
+      ["null", null],
+      [
+        "credentials",
+        { auth: { username: "calendar-user", password: "calendar-password" } },
+      ],
+    ])("accepts %s customData and discards it", async (_label, customData) => {
+      await request(app)
+        .post("/calendars")
+        .send({
+          url: "https://www.google.com/calendar/ical/",
+          schoolName: "My school",
+          customData,
+        })
+        .expect(201)
+
+      const [calendar] = await dataSource.getRepository(Calendar).find()
+      expect(calendar.customData).toBeNull()
+      expect(mockFetchService.fetchEvents).toHaveBeenCalledWith(
+        { url: calendar.url },
+        null,
+        undefined,
+        expect.any(Object),
+      )
+    })
+
     it("creates a calendar", async () => {
       const { body } = await assertChanges(
         dataSource,

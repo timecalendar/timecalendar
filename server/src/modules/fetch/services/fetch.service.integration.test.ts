@@ -27,7 +27,7 @@ describe("FetchService", () => {
     server.use(http.get("https://google.com", () => new HttpResponse(ical)))
 
     const events = await fetchService.fetchEvents(
-      { url: "https://google.com", customData: null },
+      { url: "https://google.com" },
       "generic",
     )
 

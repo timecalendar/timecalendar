@@ -1,9 +1,6 @@
 import { DEFAULT_MIN_SYNC_INTERVAL_MINUTES } from "modules/fetch/constants"
 import { IcalFetcher } from "modules/fetch/fetchers/ical-fetcher"
-import {
-  CalendarCustomData,
-  CalendarSource,
-} from "modules/fetch/models/calendar-source"
+import { CalendarSource } from "modules/fetch/models/calendar-source"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { FetchContext } from "modules/fetch/models/fetch-context"
 import { defaultPipes } from "modules/fetch/pipes/pipes"
@@ -78,11 +75,7 @@ export class SchoolStrategy {
     return events.map((event) => pipes.reduce((acc, pipe) => pipe(acc), event))
   }
 
-  fetchEvents(
-    url: string,
-    data: CalendarCustomData | null,
-    context: FetchContext = {},
-  ) {
-    return this.options.fetcher.fetch(url, data ?? {}, context)
+  fetchEvents(url: string, context: FetchContext = {}) {
+    return this.options.fetcher.fetch(url, context)
   }
 }

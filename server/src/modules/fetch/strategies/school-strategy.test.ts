@@ -55,7 +55,6 @@ describe("SchoolStrategy", () => {
 
       const isMatching = strategy.isMatchingCalendarSource("academiaschool", {
         url: "http://example.com",
-        customData: {},
       })
 
       expect(isMatching).toBe(true)
@@ -68,7 +67,6 @@ describe("SchoolStrategy", () => {
         "notacademiaschool",
         {
           url: "http://example.com",
-          customData: {},
         },
       )
 
@@ -82,7 +80,6 @@ describe("SchoolStrategy", () => {
 
       const isMatching = strategy.isMatchingCalendarSource("academiaschool", {
         url: "http://example.com",
-        customData: {},
       })
 
       expect(isMatching).toBe(true)
@@ -95,7 +92,6 @@ describe("SchoolStrategy", () => {
 
       const isMatching = strategy.isMatchingCalendarSource("academiaschool", {
         url: "http://anotherurl.com",
-        customData: {},
       })
 
       expect(isMatching).toBe(false)
@@ -108,7 +104,6 @@ describe("SchoolStrategy", () => {
 
       const isMatching = strategy.isMatchingCalendarSource("academiaschool", {
         url: "http://example.com",
-        customData: {},
       })
 
       expect(isMatching).toBe(true)
@@ -121,7 +116,6 @@ describe("SchoolStrategy", () => {
 
       const isMatching = strategy.isMatchingCalendarSource("academiaschool", {
         url: "http://anotherurl.com",
-        customData: {},
       })
 
       expect(isMatching).toBe(false)
@@ -134,7 +128,6 @@ describe("SchoolStrategy", () => {
 
       const isMatching = strategy.isMatchingCalendarSource("academiaschool", {
         url: "http://example.com",
-        customData: {},
       })
 
       expect(isMatching).toBe(true)
@@ -147,7 +140,6 @@ describe("SchoolStrategy", () => {
 
       const isMatching = strategy.isMatchingCalendarSource("academiaschool", {
         url: "http://anotherurl.com",
-        customData: {},
       })
 
       expect(isMatching).toBe(false)
@@ -160,7 +152,6 @@ describe("SchoolStrategy", () => {
 
       const isMatching = strategy.isMatchingCalendarSource("academiaschool", {
         url: "http://anotherurl.com",
-        customData: {},
       })
 
       expect(isMatching).toBe(true)

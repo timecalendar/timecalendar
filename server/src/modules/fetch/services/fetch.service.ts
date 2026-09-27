@@ -60,7 +60,7 @@ export class FetchService {
     debugObject?: Record<string, any>,
     context: FetchContext = {},
   ) {
-    const { url, customData } = calendarSource
+    const { url } = calendarSource
 
     if (!classifyCalendarSource(url).accepted) {
       throw new BadRequestException("Unsupported calendar URL")
@@ -75,11 +75,7 @@ export class FetchService {
       debugObject.strategy = schoolStrategy?.options.school || null
     }
 
-    const rawEvents = await strategy.fetchEvents(
-      transformedUrl,
-      customData,
-      context,
-    )
+    const rawEvents = await strategy.fetchEvents(transformedUrl, context)
     const events = strategy.transformEvents(rawEvents)
     return events.filter((event) => !event.fields.canceled)
   }

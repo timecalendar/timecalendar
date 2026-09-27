@@ -5,7 +5,6 @@ import { delay, http, HttpResponse } from "msw"
 import { IcalFetcher } from "modules/fetch/fetchers/ical-fetcher"
 import { BadRequestException } from "@nestjs/common"
 import { CalendarSyncAbortError } from "modules/calendar-sync/models/calendar-sync-context"
-import { CustomError } from "modules/shared/errors/custom-error"
 import axios, { AxiosError } from "axios"
 
 const server = setupMsw()
@@ -138,7 +137,6 @@ describe("IcalFetcher", () => {
       .mockRejectedValue(responseError(429, "2"))
     const fetch = new IcalFetcher({ withRetries: true }).fetch(
       "https://example.com",
-      undefined,
       { signal: controller.signal },
     )
     await Promise.resolve()
@@ -210,7 +208,6 @@ describe("IcalFetcher", () => {
     const reason = new CalendarSyncAbortError("client_cancelled")
     const promise = new IcalFetcher({ withRetries: true }).fetch(
       "https://example.com",
-      undefined,
       { signal: controller.signal },
     )
 
@@ -238,11 +235,13 @@ describe("IcalFetcher", () => {
     jest.useRealTimers()
   })
 
-  it("does not retry a basic-auth challenge", async () => {
+  it("treats a basic-auth challenge as an ordinary terminal failure", async () => {
     let attempts = 0
+    const authorizationHeaders: (string | null)[] = []
     server.use(
-      http.get("https://example.com", () => {
+      http.get("https://example.com", ({ request }) => {
         attempts++
+        authorizationHeaders.push(request.headers.get("authorization"))
         return new HttpResponse(null, {
           status: 401,
           headers: { "www-authenticate": "Basic" },
@@ -250,11 +249,20 @@ describe("IcalFetcher", () => {
       }),
     )
 
-    await expect(
-      new IcalFetcher({ withRetries: true }).fetch("https://example.com"),
-    ).rejects.toEqual(
-      new CustomError("Basic Authorization required", { auth: "basic" }),
-    )
+    const onAttempt = jest.fn()
+    const onFinal = jest.fn()
+    const failure = await new IcalFetcher({ withRetries: true })
+      .fetch("https://example.com", { onAttempt, onFinal })
+      .catch((error) => error)
+    expect(failure).toMatchObject({
+      classification: "authentication",
+      disposition: "terminal",
+    })
+    expect(failure.getResponse()).not.toHaveProperty("auth")
+    expect(failure.getResponse()).not.toHaveProperty("basicAuth")
     expect(attempts).toBe(1)
+    expect(onAttempt).toHaveBeenCalledTimes(1)
+    expect(onFinal).toHaveBeenCalledWith("authentication", "terminal")
+    expect(authorizationHeaders).toEqual([null])
   })
 })
