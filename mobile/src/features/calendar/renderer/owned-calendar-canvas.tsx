@@ -522,6 +522,9 @@ function CalendarTiles({
   const platform = Platform.OS === "ios" ? "ios" : "android"
   const accessibilityEntries =
     page.direction === 0 ? projectCalendarAccessibilityEntries(page) : null
+  const accessibilityOrder = new Map(
+    accessibilityEntries?.map((entry, index) => [entry.tile, index]),
+  )
   const accessibilityTilesByDate = new Map<string, TimedTileV1[]>()
   for (const entry of accessibilityEntries ?? []) {
     const entriesForDate = accessibilityTilesByDate.get(entry.dateKey)
@@ -563,9 +566,7 @@ function CalendarTiles({
                     pixelsPerHour={pixelsPerHour}
                     settledPixelsPerHour={settledPixelsPerHour}
                     accessible={page.direction === 0}
-                    projectionIndex={accessibilityEntries?.findIndex(
-                      (entry) => entry.key === tile.key,
-                    )}
+                    projectionIndex={accessibilityOrder.get(tile)}
                     onProbeDiagnostic={onProbeDiagnostic}
                     registerTarget={
                       page.direction === 0 ? registerTarget : undefined

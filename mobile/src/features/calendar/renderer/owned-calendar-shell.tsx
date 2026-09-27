@@ -123,15 +123,13 @@ export const OwnedCalendarShell = forwardRef<
   const { t } = useTranslation()
   const theme = useTheme()
   const coordinator = useOwnedCalendarCoordinator(props)
-  const targets = useRef(
-    new Map<string, { node: View; dateKey: string; minute: number }>(),
-  ).current
+  const targets = useRef(new Map<string, FocusTarget>()).current
   const headings = useRef(new Map<string, View>()).current
   const activeGeneration = useRef(props.generation)
   useLayoutEffect(() => {
     activeGeneration.current = props.generation
   }, [props.generation])
-  const lastFocused = useRef<{ key: string; dateKey: string } | null>(null)
+  const lastFocused = useRef<FocusMemory | null>(null)
   const lastRestore = useRef<string | null>(null)
   const lastAutoRevision = useRef<string | null>(null)
   const returnEpoch = useRef(0)
