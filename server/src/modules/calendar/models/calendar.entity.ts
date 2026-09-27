@@ -1,5 +1,5 @@
 import { CalendarLog } from "modules/calendar-log/models/calendar-log.entity"
-import { CalendarCustomData } from "modules/calendar-sync/models/dto/calendar-custom-data.dto"
+import { CalendarCustomData } from "modules/calendar-sync/models/calendar-custom-data"
 import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
 import { School } from "modules/school/models/school.entity"
 import {
