@@ -1,7 +1,4 @@
-import {
-  classifyCalendarSource,
-  TIMETABLE_UI_PATHS,
-} from "modules/fetch/calendar-source-classifier"
+import { classifyCalendarSource } from "modules/fetch/calendar-source-classifier"
 
 describe("classifyCalendarSource", () => {
   it.each(["", " ", "/calendar", "not a URL", "https://", "https://%"])(
@@ -26,9 +23,22 @@ describe("classifyCalendarSource", () => {
     })
   })
 
-  const uiUrls = Object.entries(TIMETABLE_UI_PATHS).flatMap(([host, paths]) =>
-    paths.map((path) => `https://${host}${path}`),
-  )
+  const uiUrls = [
+    "https://edt.univ-lyon1.fr/",
+    "https://edt.univ-lyon1.fr/jsp/standard/index.jsp",
+    "https://plannings.ube.fr/",
+    "https://plannings.ube.fr/jsp/standard/index.jsp",
+    "https://proseconsult.umontpellier.fr/",
+    "https://proseconsult.umontpellier.fr/direct",
+    "https://proseconsult.umontpellier.fr/direct/",
+    "https://planning.univ-rennes.fr/",
+    "https://planning.univ-rennes.fr/jsp/standard/index.jsp",
+    "https://planning.univ-rennes.fr/direct",
+    "https://planning.univ-rennes.fr/direct/",
+    "https://edt.univ-tlse3.fr/calendar",
+    "https://edt.univ-tlse3.fr/calendar/",
+    "https://edt.univ-tlse3.fr/calendar/default.aspx",
+  ]
 
   it.each(uiUrls)("rejects exact timetable UI %s", (source) => {
     expect(classifyCalendarSource(`${source}?data=opaque#fragment`)).toEqual({

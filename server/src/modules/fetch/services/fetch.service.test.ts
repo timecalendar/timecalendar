@@ -13,7 +13,6 @@ jest.mock("modules/fetch/fetchers/ical-fetcher", () => {
 })
 
 import { fetcherCalendarEventFactory } from "modules/fetch/factories/fetcher-calendar-event.factory"
-import { TIMETABLE_UI_PATHS } from "modules/fetch/calendar-source-classifier"
 import {
   EventType,
   FetcherCalendarEvent,
@@ -53,10 +52,22 @@ describe("FetchService", () => {
 
   describe("fetchEvents", () => {
     describe("pre-fetch source validation", () => {
-      const uiUrls = Object.entries(TIMETABLE_UI_PATHS).flatMap(
-        ([host, paths]) =>
-          paths.map((path) => `https://${host}${path}?data=opaque#fragment`),
-      )
+      const uiUrls = [
+        "https://edt.univ-lyon1.fr/",
+        "https://edt.univ-lyon1.fr/jsp/standard/index.jsp",
+        "https://plannings.ube.fr/",
+        "https://plannings.ube.fr/jsp/standard/index.jsp",
+        "https://proseconsult.umontpellier.fr/",
+        "https://proseconsult.umontpellier.fr/direct",
+        "https://proseconsult.umontpellier.fr/direct/",
+        "https://planning.univ-rennes.fr/",
+        "https://planning.univ-rennes.fr/jsp/standard/index.jsp",
+        "https://planning.univ-rennes.fr/direct",
+        "https://planning.univ-rennes.fr/direct/",
+        "https://edt.univ-tlse3.fr/calendar",
+        "https://edt.univ-tlse3.fr/calendar/",
+        "https://edt.univ-tlse3.fr/calendar/default.aspx",
+      ].map((url) => `${url}?data=opaque#fragment`)
 
       it.each([
         ...uiUrls,
