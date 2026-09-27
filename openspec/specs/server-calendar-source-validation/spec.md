@@ -1,7 +1,11 @@
 # server-calendar-source-validation Specification
 
 ## Purpose
-TBD - created by archiving change reject-timetable-ui-links. Update Purpose after archive.
+
+Define server validation of submitted calendar sources before fetch work. The shared
+fetch boundary rejects malformed, unsupported, and exact known timetable UI URLs while
+preserving accepted ADE and Celcat exports and the existing calendar failure policy.
+
 ## Requirements
 ### Requirement: Calendar sources are syntactically validated before fetch work
 
