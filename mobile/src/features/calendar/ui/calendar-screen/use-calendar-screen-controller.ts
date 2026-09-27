@@ -202,6 +202,7 @@ export function useCalendarScreenController() {
     rendererGeneration: transition.generation,
     transitionRevision: transition.lastRequestRevision,
     acceptedTransitionRevision: transition.acceptedRevision,
+    transitionPending: transition.pending !== null,
     verticalOffset,
     pixelsPerHour,
     settleVerticalOffset,

@@ -1,26 +1,40 @@
 import {
   act,
+  cleanup,
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from "@testing-library/react-native"
 import { createRef } from "react"
-import { AppState, StyleSheet } from "react-native"
+import {
+  AccessibilityInfo,
+  AppState,
+  type ScrollView,
+  StyleSheet,
+  Text,
+} from "react-native"
 import { State } from "react-native-gesture-handler"
 import {
   fireGestureHandler,
   getByGestureTestId,
 } from "react-native-gesture-handler/jest-utils"
+import * as Reanimated from "react-native-reanimated"
 import { useEvent, useReducedMotion } from "react-native-reanimated"
 
 import {
   buildCalendarTimelinePresentation,
+  DEFAULT_PIXELS_PER_HOUR,
   HOURS_COLUMN_WIDTH,
+  MAX_PIXELS_PER_HOUR,
+  MIN_PIXELS_PER_HOUR,
   planCalendarThreePageRange,
+  projectCalendarAccessibilityEntries,
   type TimedCalendarEventV1,
 } from "@/features/calendar/data"
 import { useColorScheme } from "@/hooks/use-color-scheme"
+import { accessibilityProbeFixture } from "@/test-support/owned-calendar/accessibility-probe"
 import { Colors } from "@/theme"
 
 import {
@@ -41,6 +55,17 @@ interface StyledTestNode {
 
 function styledTestNode(node: unknown): StyledTestNode {
   return node as StyledTestNode
+}
+
+async function focusEvent(uid: string) {
+  const observer = screen.getByTestId(`owned-calendar-focus-observer-${uid}`)
+  await fireEvent(observer, "onAccessibilityFocused", {
+    nativeEvent: {
+      identity: observer.props.identity,
+      dateKey: observer.props.dateKey,
+      generation: observer.props.generation,
+    },
+  })
 }
 
 const pagerMock = jest.requireMock<{
@@ -198,6 +223,7 @@ describe("OwnedCalendarShell", () => {
 
   it("renders a timed class at its actual time and opens its original UID", async () => {
     const onEventPress = jest.fn()
+    const onProbeDiagnostic = jest.fn()
     const event = {
       version: 1,
       kind: "timed",
@@ -233,10 +259,20 @@ describe("OwnedCalendarShell", () => {
         {...props}
         presentation={presentation}
         onEventPress={onEventPress}
+        onProbeDiagnostic={onProbeDiagnostic}
       />,
     )
 
     const anchor = screen.getByTestId("owned-calendar-event-original-42")
+    await fireEvent(anchor, "layout", {
+      nativeEvent: { layout: { x: 4, y: 600, width: 128, height: 60 } },
+    })
+    expect(onProbeDiagnostic).toHaveBeenCalledWith({
+      kind: "target-frame",
+      identity: "synced:original-42",
+      order: 0,
+      frame: { x: 4, y: 600, width: 128, height: 60 },
+    })
     expect(StyleSheet.flatten(anchor.props.style)).toMatchObject({
       top: 600,
       height: 60,
@@ -439,7 +475,391 @@ describe("OwnedCalendarShell", () => {
     },
   )
 
-  it("uses one chooser target for intersecting minimum targets and routes one identity", async () => {
+  it.each([MIN_PIXELS_PER_HOUR, DEFAULT_PIXELS_PER_HOUR, MAX_PIXELS_PER_HOUR])(
+    "mounts the committed fixture in projection order at %i pixels per hour",
+    async (scale) => {
+      const presentation = buildCalendarTimelinePresentation({
+        range: planCalendarThreePageRange(props),
+        generation: props.generation,
+        events: accessibilityProbeFixture(),
+      })
+      const committed = presentation.pages.find((page) => page.direction === 0)!
+      const expected = projectCalendarAccessibilityEntries(committed).map(
+        (entry) => entry.identity.uid,
+      )
+      const onEventPress = jest.fn()
+      await render(
+        <OwnedCalendarShell
+          {...props}
+          initialVerticalOffset={9 * scale}
+          initialPixelsPerHour={scale}
+          presentation={presentation}
+          onEventPress={onEventPress}
+        />,
+      )
+
+      const buttons = screen.getAllByRole("button")
+      expect(buttons).toHaveLength(expected.length)
+      expect(buttons.map((button) => button.props.accessibilityLabel)).toEqual(
+        expected.map((uid) => expect.stringContaining(`Fixture ${uid}`)),
+      )
+      for (const button of buttons) await fireEvent.press(button)
+      expect(onEventPress.mock.calls.map(([uid]) => uid)).toEqual(expected)
+      expect(screen.getByTestId("owned-calendar-canvas")).toHaveProp(
+        "removeClippedSubviews",
+        false,
+      )
+      expect(
+        screen.getByTestId("owned-calendar-event-probe-early"),
+      ).toBeOnTheScreen()
+      expect(
+        screen.getByTestId("owned-calendar-event-probe-late"),
+      ).toBeOnTheScreen()
+    },
+  )
+
+  it("restores a surviving event after a settled presentation revision", async () => {
+    const events = [
+      timedEvent(
+        "late-focus",
+        "2026-06-15T23:00:00.000Z",
+        "2026-06-15T23:45:00.000Z",
+      ),
+    ]
+    const presentation = buildCalendarTimelinePresentation({
+      range: planCalendarThreePageRange(props),
+      generation: 0,
+      events,
+    })
+    const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
+    try {
+      const view = await render(
+        <OwnedCalendarShell {...props} presentation={presentation} />,
+      )
+      await focusEvent("late-focus")
+      await view.rerender(
+        <OwnedCalendarShell
+          {...props}
+          revisionFloor={1}
+          transitionPending
+          presentation={presentation}
+        />,
+      )
+      expect(focus).not.toHaveBeenCalled()
+      await view.rerender(
+        <OwnedCalendarShell
+          {...props}
+          generation={1}
+          revisionFloor={1}
+          acceptedTransitionRevision={1}
+          presentation={buildCalendarTimelinePresentation({
+            range: planCalendarThreePageRange(props),
+            generation: 1,
+            events,
+          })}
+        />,
+      )
+      await waitFor(() => expect(focus).toHaveBeenCalledTimes(1))
+      await view.rerender(
+        <OwnedCalendarShell
+          {...props}
+          generation={2}
+          revisionFloor={2}
+          acceptedTransitionRevision={2}
+          presentation={buildCalendarTimelinePresentation({
+            range: planCalendarThreePageRange(props),
+            generation: 2,
+            events: [],
+          })}
+        />,
+      )
+      await waitFor(() => expect(focus).toHaveBeenCalledTimes(2))
+      expect(screen.getByTestId("owned-calendar-date-0-2026-06-15")).toHaveProp(
+        "accessibilityRole",
+        "header",
+      )
+      await view.rerender(
+        <OwnedCalendarShell
+          {...props}
+          anchor={new Date("2026-06-22T00:00:00.000Z")}
+          generation={3}
+          revisionFloor={3}
+          acceptedTransitionRevision={3}
+          presentation={buildCalendarTimelinePresentation({
+            range: planCalendarThreePageRange({
+              ...props,
+              anchor: new Date("2026-06-22T00:00:00.000Z"),
+            }),
+            generation: 3,
+            events: [],
+          })}
+        />,
+      )
+      expect(focus).toHaveBeenCalledTimes(2)
+      await view.rerender(
+        <OwnedCalendarShell
+          {...props}
+          mode="day"
+          generation={4}
+          revisionFloor={4}
+          acceptedTransitionRevision={4}
+          presentation={buildCalendarTimelinePresentation({
+            range: planCalendarThreePageRange({ ...props, mode: "day" }),
+            generation: 4,
+            events,
+          })}
+        />,
+      )
+      await waitFor(() => expect(focus).toHaveBeenCalledTimes(3))
+    } finally {
+      focus.mockRestore()
+    }
+  })
+
+  it("waits for the matching visible page title when the remembered date is gone", async () => {
+    const events = [
+      timedEvent(
+        "removed-date",
+        "2026-06-15T10:00:00.000Z",
+        "2026-06-15T11:00:00.000Z",
+      ),
+    ]
+    const initial = buildCalendarTimelinePresentation({
+      range: planCalendarThreePageRange(props),
+      generation: 0,
+      events,
+    })
+    const destination = {
+      ...props,
+      anchor: new Date("2026-06-22T00:00:00.000Z"),
+      heading: "Monday, June 22nd, 2026",
+      generation: 1,
+      revisionFloor: 1,
+      acceptedTransitionRevision: 1,
+    }
+    const settled = buildCalendarTimelinePresentation({
+      range: planCalendarThreePageRange(destination),
+      generation: 1,
+      events: [],
+    })
+    const titleRef = createRef<Text>()
+    const onContextSettled = jest.fn()
+    const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
+    try {
+      const view = await render(
+        <>
+          <Text ref={titleRef}>June 2026</Text>
+          <OwnedCalendarShell {...props} presentation={initial} />
+        </>,
+      )
+      await focusEvent("removed-date")
+      await view.rerender(
+        <>
+          <Text ref={titleRef}>June 2026</Text>
+          <OwnedCalendarShell
+            {...destination}
+            presentation={settled}
+            onContextSettled={onContextSettled}
+          />
+        </>,
+      )
+      expect(focus).not.toHaveBeenCalled()
+      const title = {
+        node: titleRef.current!,
+        visibleTitle: "June 2026",
+        label: "June 2026, Monday, June 22nd, 2026",
+        contextHeading: destination.heading,
+        generation: 1,
+        revision: 1,
+      }
+      await view.rerender(
+        <>
+          <Text ref={titleRef}>June 2026</Text>
+          <OwnedCalendarShell
+            {...destination}
+            presentation={settled}
+            pageTitleTarget={{ ...title, revision: 0 }}
+            onContextSettled={onContextSettled}
+          />
+        </>,
+      )
+      expect(focus).not.toHaveBeenCalled()
+      await view.rerender(
+        <>
+          <Text ref={titleRef}>June 2026</Text>
+          <OwnedCalendarShell
+            {...destination}
+            presentation={settled}
+            pageTitleTarget={title}
+            onContextSettled={onContextSettled}
+          />
+        </>,
+      )
+      await waitFor(() => expect(focus).toHaveBeenCalledTimes(1))
+      expect(onContextSettled).toHaveBeenLastCalledWith(1, true)
+    } finally {
+      focus.mockRestore()
+    }
+  })
+
+  it("reveals an offscreen focus target through the existing vertical owner", async () => {
+    const scrollRef = { current: null } as ReturnType<
+      typeof Reanimated.useAnimatedRef
+    >
+    const refSpy = jest
+      .spyOn(Reanimated, "useAnimatedRef")
+      .mockReturnValue(scrollRef)
+    const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
+    const shellRef = createRef<OwnedCalendarShellHandle>()
+    try {
+      const events = [
+        timedEvent(
+          "offscreen-late",
+          "2026-06-15T23:00:00.000Z",
+          "2026-06-15T23:45:00.000Z",
+        ),
+      ]
+      const presentation = buildCalendarTimelinePresentation({
+        range: planCalendarThreePageRange(props),
+        generation: 0,
+        events,
+      })
+      await render(
+        <OwnedCalendarShell
+          {...props}
+          ref={shellRef}
+          presentation={presentation}
+        />,
+      )
+      await focusEvent("offscreen-late")
+      const scrollTo = jest.spyOn(scrollRef.current as ScrollView, "scrollTo")
+      try {
+        await act(async () => shellRef.current?.restoreFocus())
+        expect(scrollTo).toHaveBeenCalledWith({
+          y: 23 * 60 - 96,
+          animated: false,
+        })
+        await waitFor(() => expect(focus).toHaveBeenCalledTimes(1))
+      } finally {
+        scrollTo.mockRestore()
+      }
+    } finally {
+      await cleanup()
+      focus.mockRestore()
+      refSpy.mockRestore()
+    }
+  })
+
+  it.each([
+    ["unmatched identity", { identity: "other" }, {}],
+    ["wrong date", { dateKey: "2026-06-16" }, {}],
+    ["obsolete generation", { generation: -1 }, {}],
+    ["route blur", {}, { routeFocused: false }],
+    ["pending transition", {}, { transitionPending: true }],
+    ["incomplete presentation", {}, { presentationReady: false }],
+  ] as const)(
+    "ignores %s as accessibility-focus memory",
+    async (_, override, state) => {
+      const presentation = buildCalendarTimelinePresentation({
+        range: planCalendarThreePageRange(props),
+        generation: 0,
+        events: [
+          timedEvent(
+            "observed",
+            "2026-06-15T10:00:00.000Z",
+            "2026-06-15T11:00:00.000Z",
+          ),
+        ],
+      })
+      const shellRef = createRef<OwnedCalendarShellHandle>()
+      const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
+      try {
+        await render(
+          <OwnedCalendarShell
+            {...props}
+            {...state}
+            ref={shellRef}
+            presentation={presentation}
+          />,
+        )
+        const observer = screen.getByTestId(
+          "owned-calendar-focus-observer-observed",
+        )
+        await fireEvent(observer, "onAccessibilityFocused", {
+          nativeEvent: {
+            identity: observer.props.identity,
+            dateKey: observer.props.dateKey,
+            generation: observer.props.generation,
+            ...override,
+          },
+        })
+        await fireEvent.press(screen.getByRole("button", { name: /observed/ }))
+        await act(async () => shellRef.current?.restoreFocus())
+        expect(focus).not.toHaveBeenCalled()
+      } finally {
+        focus.mockRestore()
+      }
+    },
+  )
+
+  it.each([
+    ["route blur", { routeFocused: false }],
+    ["transition start", { transitionPending: true }],
+    ["revision replacement", { acceptedTransitionRevision: 1 }],
+  ] as const)("invalidates a pending focus frame on %s", async (_, change) => {
+    const presentation = buildCalendarTimelinePresentation({
+      range: planCalendarThreePageRange(props),
+      generation: 0,
+      events: [
+        timedEvent(
+          "return-target",
+          "2026-06-15T10:00:00.000Z",
+          "2026-06-15T11:00:00.000Z",
+        ),
+      ],
+    })
+    const shellRef = createRef<OwnedCalendarShellHandle>()
+    const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
+    const view = await render(
+      <OwnedCalendarShell
+        {...props}
+        ref={shellRef}
+        routeFocused
+        presentation={presentation}
+      />,
+    )
+    await focusEvent("return-target")
+    let frame: FrameRequestCallback | undefined
+    const requestFrame = jest
+      .spyOn(global, "requestAnimationFrame")
+      .mockImplementation((callback) => {
+        frame = callback
+        return 73
+      })
+    const cancelFrame = jest.spyOn(global, "cancelAnimationFrame")
+    try {
+      await act(async () => shellRef.current?.restoreFocus())
+      const pendingFrame = frame
+      expect(pendingFrame).toBeDefined()
+      await view.rerender(
+        <OwnedCalendarShell
+          {...props}
+          {...change}
+          ref={shellRef}
+          presentation={presentation}
+        />,
+      )
+      expect(cancelFrame).toHaveBeenCalledWith(73)
+      await act(async () => pendingFrame?.(0))
+      expect(focus).not.toHaveBeenCalled()
+    } finally {
+      requestFrame.mockRestore()
+      cancelFrame.mockRestore()
+      focus.mockRestore()
+    }
+  })
+
+  it("keeps conflict tiles semantic while a hidden pointer overlay opens the chooser", async () => {
     const events = [
       timedEvent(
         "tiny-a",
@@ -470,51 +890,57 @@ describe("OwnedCalendarShell", () => {
 
     expect(screen.getByTestId("owned-calendar-event-tiny-a")).toBeOnTheScreen()
     expect(screen.getByTestId("owned-calendar-event-tiny-b")).toBeOnTheScreen()
-    expect(screen.queryByRole("button", { name: /Tiny A/ })).toBeNull()
-    expect(screen.queryByRole("button", { name: /Tiny B/ })).toBeNull()
-    const trigger = screen.getByRole("button", {
-      name: "Choose an overlapping event",
-    })
-    expect(screen.getAllByRole("button")).toHaveLength(1)
-    expect(trigger).toHaveProp(
-      "accessibilityHint",
-      "Opens a list of events in this area",
+    const firstTile = screen.getByRole("button", { name: /Tiny A/ })
+    const secondTile = screen.getByRole("button", { name: /Tiny B/ })
+    const pointerOverlay = screen.getByTestId(
+      "owned-calendar-conflict-synced:tiny-a|synced:tiny-b",
+      { includeHiddenElements: true },
     )
+    expect(screen.getAllByRole("button")).toHaveLength(2)
+    expect(firstTile).toHaveProp("accessibilityHint", "View details")
+    expect(pointerOverlay).toHaveProp("accessible", false)
+    expect(pointerOverlay).toHaveProp("accessibilityElementsHidden", true)
+    expect(pointerOverlay.props.accessibilityLabel).toBeUndefined()
+
+    await fireEvent.press(secondTile)
+    expect(onEventPress).toHaveBeenLastCalledWith("tiny-b")
+    onEventPress.mockClear()
 
     await fireEvent(
       screen.getByTestId("owned-calendar-canvas"),
       "scrollBeginDrag",
       scrollEvent(20),
     )
-    await fireEvent.press(trigger)
+    await fireEvent.press(pointerOverlay)
     expect(screen.queryByTestId("owned-calendar-event-chooser")).toBeNull()
     await fireEvent(
       screen.getByTestId("owned-calendar-canvas"),
       "momentumScrollEnd",
       scrollEvent(20),
     )
-    await fireEvent.press(trigger)
+    await fireEvent.press(pointerOverlay)
     const chooser = screen.getByTestId("owned-calendar-event-chooser")
     expect(chooser).toHaveProp("accessibilityViewIsModal", true)
-    expect(screen.getByRole("button", { name: /Tiny A/ })).toBeOnTheScreen()
-    expect(screen.getAllByRole("button")).toHaveLength(4)
-    const second = screen.getByRole("button", { name: /Tiny B/ })
+    expect(
+      within(chooser).getByRole("button", { name: /Tiny A/ }),
+    ).toBeOnTheScreen()
+    const second = within(chooser).getByRole("button", { name: /Tiny B/ })
     await fireEvent.press(second)
     expect(onEventPress).toHaveBeenCalledTimes(1)
     expect(onEventPress).toHaveBeenCalledWith("tiny-b")
 
-    await fireEvent.press(trigger)
+    await fireEvent.press(pointerOverlay)
     await fireEvent.press(screen.getByRole("button", { name: "Cancel" }))
     expect(onEventPress).toHaveBeenCalledTimes(1)
 
-    await fireEvent.press(trigger)
+    await fireEvent.press(pointerOverlay)
     await fireEvent(
       screen.getByTestId("owned-calendar-event-chooser-modal"),
       "requestClose",
     )
     expect(screen.queryByTestId("owned-calendar-event-chooser")).toBeNull()
 
-    await fireEvent.press(trigger)
+    await fireEvent.press(pointerOverlay)
     await view.rerender(
       <OwnedCalendarShell
         {...props}
@@ -589,8 +1015,10 @@ describe("OwnedCalendarShell", () => {
     })
     expect(
       StyleSheet.flatten(
-        styledTestNode(styledTestNode(pointAnchor.children[0]).children[0])
-          .props.style,
+        styledTestNode(
+          styledTestNode(styledTestNode(pointAnchor.children[0]).children[0])
+            .children[0],
+        ).props.style,
       ),
     ).toMatchObject({
       top: 20,
@@ -610,8 +1038,10 @@ describe("OwnedCalendarShell", () => {
     })
     expect(
       StyleSheet.flatten(
-        styledTestNode(styledTestNode(tinyAnchor.children[0]).children[0]).props
-          .style,
+        styledTestNode(
+          styledTestNode(styledTestNode(tinyAnchor.children[0]).children[0])
+            .children[0],
+        ).props.style,
       ),
     ).toMatchObject({
       top: 21,

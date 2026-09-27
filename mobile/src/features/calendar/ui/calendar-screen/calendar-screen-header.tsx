@@ -1,6 +1,13 @@
 import { Stack } from "expo-router"
-import { Platform } from "react-native"
+import {
+  type Dispatch,
+  type SetStateAction,
+  useLayoutEffect,
+  useRef,
+} from "react"
+import { Platform, StyleSheet, Text } from "react-native"
 
+import type { CalendarPageTitleTarget } from "@/features/calendar/renderer"
 import { type CalendarView } from "@/features/settings/prefs"
 import { useTheme } from "@/theme"
 
@@ -13,6 +20,11 @@ import {
 
 export function CalendarScreenHeader({
   title,
+  contextHeading,
+  generation,
+  acceptedRevision,
+  titleTargetActive,
+  onTitleTargetChange,
   view,
   onViewChange,
   onToday,
@@ -20,6 +32,11 @@ export function CalendarScreenHeader({
   zoom,
 }: {
   title: string
+  contextHeading: string
+  generation: number
+  acceptedRevision: number
+  titleTargetActive: boolean
+  onTitleTargetChange: Dispatch<SetStateAction<CalendarPageTitleTarget | null>>
   view: CalendarView
   onViewChange: (view: CalendarView) => void
   onToday: (() => void) | undefined
@@ -30,7 +47,20 @@ export function CalendarScreenHeader({
   return (
     <Stack.Screen
       options={{
-        headerTitle: title,
+        headerTitle:
+          view === "agenda"
+            ? title
+            : () => (
+                <CalendarHeaderTitle
+                  title={title}
+                  contextHeading={contextHeading}
+                  generation={generation}
+                  acceptedRevision={acceptedRevision}
+                  active={titleTargetActive}
+                  color={theme.text}
+                  onTitleTargetChange={onTitleTargetChange}
+                />
+              ),
         headerTitleAlign: "center",
         headerStyle: { backgroundColor: theme.background },
         headerShadowVisible: false,
@@ -51,3 +81,77 @@ export function CalendarScreenHeader({
     />
   )
 }
+
+function CalendarHeaderTitle({
+  title,
+  contextHeading,
+  generation,
+  acceptedRevision,
+  active,
+  color,
+  onTitleTargetChange,
+}: {
+  title: string
+  contextHeading: string
+  generation: number
+  acceptedRevision: number
+  active: boolean
+  color: string
+  onTitleTargetChange: Dispatch<SetStateAction<CalendarPageTitleTarget | null>>
+}) {
+  const titleRef = useRef<Text>(null)
+  const label = `${title}, ${contextHeading}`
+  useLayoutEffect(() => {
+    const node = titleRef.current
+    if (!active || node === null) return
+    const target: CalendarPageTitleTarget = {
+      node,
+      visibleTitle: title,
+      label,
+      contextHeading,
+      generation,
+      revision: acceptedRevision,
+    }
+    onTitleTargetChange((current) =>
+      current?.node === node &&
+      current.label === label &&
+      current.generation === generation &&
+      current.revision === acceptedRevision
+        ? current
+        : target,
+    )
+    return () => {
+      onTitleTargetChange((current) =>
+        current?.node === node ? null : current,
+      )
+    }
+  }, [
+    acceptedRevision,
+    active,
+    contextHeading,
+    generation,
+    label,
+    onTitleTargetChange,
+    title,
+  ])
+  return (
+    <Text
+      ref={titleRef}
+      testID="calendar-header-title"
+      accessibilityRole="header"
+      accessibilityLabel={active ? label : title}
+      numberOfLines={1}
+      style={[styles.title, { color }]}
+    >
+      {title}
+    </Text>
+  )
+}
+
+const styles = StyleSheet.create({
+  title: {
+    fontSize: Platform.OS === "ios" ? 17 : 20,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+})

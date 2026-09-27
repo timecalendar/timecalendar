@@ -3,6 +3,10 @@
 // display formatter, the domain CalendarEvent, the single events-source seam
 // (useCalendarEvents), and the calendar-sync surface (the orchestrator + startup
 // trigger).
+export {
+  type CalendarAccessibilityEntryV1,
+  projectCalendarAccessibilityEntries,
+} from "./accessibility-projection"
 export { type AgendaDay, groupEventsByDay } from "./agenda"
 export { useCalendarClock } from "./clock"
 export {

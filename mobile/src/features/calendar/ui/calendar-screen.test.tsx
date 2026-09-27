@@ -7,7 +7,7 @@ import {
   waitFor,
 } from "@testing-library/react-native"
 import * as Localization from "expo-localization"
-import { router, useLocalSearchParams } from "expo-router"
+import { router, useIsFocused, useLocalSearchParams } from "expo-router"
 import {
   AccessibilityInfo,
   AppState,
@@ -17,6 +17,7 @@ import {
 } from "react-native"
 import * as Reanimated from "react-native-reanimated"
 
+import { isDevVariant } from "@/config/variant"
 import {
   buildCalendarTimelinePresentation,
   formatFullDay,
@@ -40,6 +41,7 @@ import {
   SETTINGS_KEYS,
 } from "@/features/settings/prefs"
 import { remove } from "@/storage"
+import { recordAccessibilityProbeDiagnostic } from "@/test-support/owned-calendar/accessibility-probe"
 import { resolveResponsiveLayout } from "@/theme"
 
 import { CalendarScreen } from "./calendar-screen"
@@ -70,6 +72,15 @@ jest.mock("@/features/calendar/data", () => {
   }
 })
 
+jest.mock("@/config/variant", () => ({ isDevVariant: jest.fn(() => false) }))
+
+jest.mock("@/test-support/owned-calendar/accessibility-probe", () => {
+  const actual = jest.requireActual<
+    typeof import("@/test-support/owned-calendar/accessibility-probe")
+  >("@/test-support/owned-calendar/accessibility-probe")
+  return { ...actual, recordAccessibilityProbeDiagnostic: jest.fn() }
+})
+
 jest.mock("@/features/event-checklists", () => {
   const actual = jest.requireActual("@/features/event-checklists")
   return { ...actual, useChecklistProgress: jest.fn() }
@@ -88,6 +99,7 @@ jest.mock("expo-router", () => {
   return {
     router: { push: jest.fn(), setParams: jest.fn() },
     useLocalSearchParams: jest.fn(() => ({})),
+    useIsFocused: jest.fn(() => true),
     Stack: {
       Screen: ({
         options,
@@ -108,11 +120,13 @@ jest.mock("expo-router", () => {
           null,
           title == null
             ? null
-            : React.createElement(
-                Text,
-                { testID: "calendar-header-title" },
-                title,
-              ),
+            : React.isValidElement(title)
+              ? title
+              : React.createElement(
+                  Text,
+                  { testID: "calendar-header-title" },
+                  title,
+                ),
           options.headerLeft?.(),
           options.headerRight?.(),
         )
@@ -137,6 +151,10 @@ const mockUseCalendarClock = useCalendarClock as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
 const mockUseChecklistProgress = useChecklistProgress as jest.Mock
 const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock
+const mockIsFocused = jest.mocked(useIsFocused)
+const mockIsDevVariant = isDevVariant as jest.Mock
+const mockRecordAccessibilityProbeDiagnostic =
+  recordAccessibilityProbeDiagnostic as jest.Mock
 const mockPush = router.push as jest.Mock
 const mockSetParams = router.setParams as jest.Mock
 const mockSync = jest.fn()
@@ -227,6 +245,9 @@ beforeEach(() => {
   mockUseSyncCalendars.mockReturnValue(syncState())
   mockUseChecklistProgress.mockReturnValue(new Map())
   mockUseLocalSearchParams.mockReturnValue({})
+  mockIsFocused.mockReturnValue(true)
+  mockIsDevVariant.mockReturnValue(false)
+  mockRecordAccessibilityProbeDiagnostic.mockReset()
   mockSync.mockReset()
   mockPush.mockReset()
   mockSetParams.mockReset()
@@ -238,6 +259,50 @@ beforeEach(() => {
 })
 
 describe("CalendarScreen owned shell", () => {
+  it("runs the deterministic accessibility fixture only on the development route", async () => {
+    setCalendarView("day")
+    mockIsDevVariant.mockReturnValue(true)
+    mockUseLocalSearchParams.mockReturnValue({
+      accessibilityProbe: "timed-events",
+      focusDate: "2026-06-15",
+    })
+
+    await render(<CalendarScreen />)
+
+    const early = await screen.findByRole("button", {
+      name: /^Fixture probe-early,/,
+    })
+    const late = screen.getByRole("button", { name: /^Fixture probe-late,/ })
+    expect(
+      screen.getByTestId("owned-calendar-canvas").props.contentOffset,
+    ).toEqual({ x: 0, y: 540 })
+    expect(early).toBeOnTheScreen()
+    expect(late).toBeOnTheScreen()
+
+    await fireEvent.press(late)
+    expect(mockRecordAccessibilityProbeDiagnostic).toHaveBeenCalledWith({
+      kind: "route",
+      uid: "probe-late",
+    })
+    expect(mockPush).toHaveBeenLastCalledWith("/event-details/probe-late")
+  })
+
+  it("ignores the accessibility fixture flag outside the development variant", async () => {
+    setCalendarView("day")
+    mockUseLocalSearchParams.mockReturnValue({
+      accessibilityProbe: "timed-events",
+      focusDate: "2026-06-15",
+    })
+
+    await render(<CalendarScreen />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId("owned-calendar-canvas")).toBeOnTheScreen()
+    })
+    expect(screen.queryByText("Fixture probe-early")).toBeNull()
+    expect(mockRecordAccessibilityProbeDiagnostic).not.toHaveBeenCalled()
+  })
+
   it.each([
     { position: 0, destination: "2026-06-08" },
     { position: 2, destination: "2026-06-22" },
@@ -394,7 +459,53 @@ describe("CalendarScreen owned shell", () => {
     )
   })
 
-  it("opens each crowded synced and personal identity through the chooser", async () => {
+  it("restores the activated event when Calendar regains route focus", async () => {
+    setCalendarView("day")
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-16" })
+    const event = calendarEvent({
+      identity: { source: "synced", uid: "return-identity" },
+      id: "return-identity",
+      title: "Return class",
+    })
+    mockUseCalendarTimelinePresentation.mockImplementation((input) => ({
+      presentation: buildCalendarTimelinePresentation({
+        range: planCalendarThreePageRange(input),
+        generation: input.generation,
+        events: [event],
+      }),
+      ready: true,
+      error: undefined,
+    }))
+    const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
+    try {
+      const view = await render(<CalendarScreen />)
+      const observer = await screen.findByTestId(
+        "owned-calendar-focus-observer-return-identity",
+      )
+      await fireEvent(observer, "onAccessibilityFocused", {
+        nativeEvent: {
+          identity: observer.props.identity,
+          dateKey: observer.props.dateKey,
+          generation: observer.props.generation,
+        },
+      })
+      await fireEvent.press(
+        await screen.findByRole("button", { name: /^Return class,/ }),
+      )
+      expect(mockPush).toHaveBeenLastCalledWith(
+        "/event-details/return-identity",
+      )
+      mockIsFocused.mockReturnValue(false)
+      await view.rerender(<CalendarScreen />)
+      mockIsFocused.mockReturnValue(true)
+      await view.rerender(<CalendarScreen />)
+      await waitFor(() => expect(focus).toHaveBeenCalledTimes(1))
+    } finally {
+      focus.mockRestore()
+    }
+  })
+
+  it("opens each crowded synced and personal semantic identity directly", async () => {
     setCalendarView("day")
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-16" })
     const crowded = [
@@ -425,21 +536,22 @@ describe("CalendarScreen owned shell", () => {
     }))
 
     await render(<CalendarScreen />)
-    const trigger = await screen.findByRole("button", {
-      name: "Choose an overlapping event",
-    })
-    await fireEvent.press(trigger)
     await fireEvent.press(
-      screen.getByRole("button", { name: /^Crowded class,/ }),
+      await screen.findByRole("button", { name: /^Crowded class,/ }),
     )
     expect(mockPush).toHaveBeenLastCalledWith("/event-details/crowded-synced")
 
-    await fireEvent.press(trigger)
     await fireEvent.press(
       screen.getByRole("button", { name: /^Crowded study,/ }),
     )
     expect(mockPush).toHaveBeenLastCalledWith("/event-details/crowded-personal")
     expect(mockPush).toHaveBeenCalledTimes(2)
+    expect(
+      screen.getByTestId(
+        "owned-calendar-conflict-synced:crowded-synced|personal:crowded-personal",
+        { includeHiddenElements: true },
+      ),
+    ).toHaveProp("accessible", false)
   })
 
   it("pages away and back using only local presentation reads", async () => {
@@ -858,6 +970,14 @@ describe("CalendarScreen owned shell", () => {
       expect(screen.getByTestId("calendar-header-title")).toHaveTextContent(
         formatMonthYear(destination, "en", ZONE),
       )
+      expect(screen.getByTestId("calendar-header-title")).toHaveProp(
+        "accessibilityRole",
+        "header",
+      )
+      expect(screen.getByTestId("calendar-header-title")).toHaveProp(
+        "accessibilityLabel",
+        `${formatMonthYear(destination, "en", ZONE)}, ${formatFullDay(destination, "en", ZONE)}`,
+      )
     })
     const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0]
     expect(range.from).toEqual(destination)
@@ -870,6 +990,54 @@ describe("CalendarScreen owned shell", () => {
         includeHiddenElements: true,
       }),
     ).toHaveLength(3)
+  })
+
+  it("focuses the visible title without a second context announcement when its date is gone", async () => {
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-08-31" })
+    const event = calendarEvent({
+      identity: { source: "synced", uid: "old-week" },
+      id: "old-week",
+      title: "Old week class",
+      startsAt: new Date(2026, 7, 31, 9),
+      endsAt: new Date(2026, 7, 31, 10),
+    })
+    mockUseCalendarTimelinePresentation.mockImplementation((input) => ({
+      presentation: buildCalendarTimelinePresentation({
+        range: planCalendarThreePageRange(input),
+        generation: input.generation,
+        events: [event],
+      }),
+      ready: true,
+      error: undefined,
+    }))
+    const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
+    try {
+      await render(<CalendarScreen />)
+      const observer = await screen.findByTestId(
+        "owned-calendar-focus-observer-old-week",
+      )
+      await fireEvent(observer, "onAccessibilityFocused", {
+        nativeEvent: {
+          identity: observer.props.identity,
+          dateKey: observer.props.dateKey,
+          generation: observer.props.generation,
+        },
+      })
+      await fireEvent(
+        screen.getByTestId("owned-calendar-canvas"),
+        "accessibilityAction",
+        { nativeEvent: { actionName: "increment" } },
+      )
+      await waitFor(() => expect(focus).toHaveBeenCalledTimes(1))
+      const destination = new Date(2026, 8, 7)
+      expect(screen.getByTestId("calendar-header-title")).toHaveProp(
+        "accessibilityLabel",
+        `${formatMonthYear(destination, "en", ZONE)}, ${formatFullDay(destination, "en", ZONE)}`,
+      )
+      expect(mockAnnounce).not.toHaveBeenCalled()
+    } finally {
+      focus.mockRestore()
+    }
   })
 
   it("commits a deferred settle after the request rerenders the controller", async () => {
