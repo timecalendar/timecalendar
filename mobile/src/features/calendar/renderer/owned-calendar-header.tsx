@@ -93,6 +93,9 @@ export function OwnedCalendarDateHeader({
                     key={column.key}
                     testID={`owned-calendar-date-${page.direction}-${column.key}`}
                     accessible={page.direction === 0}
+                    accessibilityRole={
+                      page.direction === 0 ? "header" : undefined
+                    }
                     accessibilityLabel={
                       isToday ? `${dateLabel}, ${todayLabel}` : dateLabel
                     }

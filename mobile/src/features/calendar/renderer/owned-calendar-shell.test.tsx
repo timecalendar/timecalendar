@@ -1,5 +1,6 @@
 import {
   act,
+  cleanup,
   fireEvent,
   render,
   screen,
@@ -7,12 +8,18 @@ import {
   within,
 } from "@testing-library/react-native"
 import { createRef } from "react"
-import { AccessibilityInfo, AppState, StyleSheet } from "react-native"
+import {
+  AccessibilityInfo,
+  AppState,
+  type ScrollView,
+  StyleSheet,
+} from "react-native"
 import { State } from "react-native-gesture-handler"
 import {
   fireGestureHandler,
   getByGestureTestId,
 } from "react-native-gesture-handler/jest-utils"
+import * as Reanimated from "react-native-reanimated"
 import { useEvent, useReducedMotion } from "react-native-reanimated"
 
 import {
@@ -559,6 +566,10 @@ describe("OwnedCalendarShell", () => {
         />,
       )
       await waitFor(() => expect(focus).toHaveBeenCalledTimes(2))
+      expect(screen.getByTestId("owned-calendar-date-0-2026-06-15")).toHaveProp(
+        "accessibilityRole",
+        "header",
+      )
       await view.rerender(
         <OwnedCalendarShell
           {...props}
@@ -577,8 +588,75 @@ describe("OwnedCalendarShell", () => {
         />,
       )
       await waitFor(() => expect(focus).toHaveBeenCalledTimes(3))
+      await view.rerender(
+        <OwnedCalendarShell
+          {...props}
+          mode="day"
+          generation={4}
+          revisionFloor={4}
+          acceptedTransitionRevision={4}
+          presentation={buildCalendarTimelinePresentation({
+            range: planCalendarThreePageRange({ ...props, mode: "day" }),
+            generation: 4,
+            events,
+          })}
+        />,
+      )
+      await waitFor(() => expect(focus).toHaveBeenCalledTimes(4))
     } finally {
       focus.mockRestore()
+    }
+  })
+
+  it("reveals an offscreen focus target through the existing vertical owner", async () => {
+    const scrollRef = { current: null } as ReturnType<
+      typeof Reanimated.useAnimatedRef
+    >
+    const refSpy = jest
+      .spyOn(Reanimated, "useAnimatedRef")
+      .mockReturnValue(scrollRef)
+    const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
+    try {
+      const events = [
+        timedEvent(
+          "offscreen-late",
+          "2026-06-15T23:00:00.000Z",
+          "2026-06-15T23:45:00.000Z",
+        ),
+      ]
+      const presentation = buildCalendarTimelinePresentation({
+        range: planCalendarThreePageRange(props),
+        generation: 0,
+        events,
+      })
+      const view = await render(
+        <OwnedCalendarShell {...props} presentation={presentation} />,
+      )
+      await fireEvent(
+        screen.getByRole("button", { name: /offscreen-late/ }),
+        "focus",
+      )
+      const scrollTo = jest.spyOn(scrollRef.current as ScrollView, "scrollTo")
+      try {
+        await view.rerender(
+          <OwnedCalendarShell
+            {...props}
+            focusReturnEpoch={1}
+            presentation={presentation}
+          />,
+        )
+        expect(scrollTo).toHaveBeenCalledWith({
+          y: 23 * 60 - 96,
+          animated: false,
+        })
+        await waitFor(() => expect(focus).toHaveBeenCalledTimes(1))
+      } finally {
+        scrollTo.mockRestore()
+      }
+    } finally {
+      await cleanup()
+      focus.mockRestore()
+      refSpy.mockRestore()
     }
   })
 

@@ -7,7 +7,7 @@ import {
   waitFor,
 } from "@testing-library/react-native"
 import * as Localization from "expo-localization"
-import { router, useLocalSearchParams } from "expo-router"
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router"
 import {
   AccessibilityInfo,
   AppState,
@@ -99,8 +99,9 @@ jest.mock("expo-router", () => {
   return {
     router: { push: jest.fn(), setParams: jest.fn() },
     useLocalSearchParams: jest.fn(() => ({})),
-    useFocusEffect: (callback: () => void) =>
+    useFocusEffect: jest.fn((callback: () => void) =>
       React.useEffect(callback, [callback]),
+    ),
     Stack: {
       Screen: ({
         options,
@@ -150,6 +151,7 @@ const mockUseCalendarClock = useCalendarClock as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
 const mockUseChecklistProgress = useChecklistProgress as jest.Mock
 const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock
+const mockUseFocusEffect = jest.mocked(useFocusEffect)
 const mockIsDevVariant = isDevVariant as jest.Mock
 const mockRecordAccessibilityProbeDiagnostic =
   recordAccessibilityProbeDiagnostic as jest.Mock
@@ -243,6 +245,7 @@ beforeEach(() => {
   mockUseSyncCalendars.mockReturnValue(syncState())
   mockUseChecklistProgress.mockReturnValue(new Map())
   mockUseLocalSearchParams.mockReturnValue({})
+  mockUseFocusEffect.mockClear()
   mockIsDevVariant.mockReturnValue(false)
   mockRecordAccessibilityProbeDiagnostic.mockReset()
   mockSync.mockReset()
@@ -454,6 +457,41 @@ describe("CalendarScreen owned shell", () => {
     expect(mockPush).toHaveBeenLastCalledWith(
       "/event-details/personal-original",
     )
+  })
+
+  it("restores the activated event when Calendar regains route focus", async () => {
+    setCalendarView("day")
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-16" })
+    const event = calendarEvent({
+      identity: { source: "synced", uid: "return-identity" },
+      id: "return-identity",
+      title: "Return class",
+    })
+    mockUseCalendarTimelinePresentation.mockImplementation((input) => ({
+      presentation: buildCalendarTimelinePresentation({
+        range: planCalendarThreePageRange(input),
+        generation: input.generation,
+        events: [event],
+      }),
+      ready: true,
+      error: undefined,
+    }))
+    const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
+    try {
+      await render(<CalendarScreen />)
+      await fireEvent.press(
+        await screen.findByRole("button", { name: /^Return class,/ }),
+      )
+      expect(mockPush).toHaveBeenLastCalledWith(
+        "/event-details/return-identity",
+      )
+      await act(async () => {
+        mockUseFocusEffect.mock.lastCall?.[0]()
+      })
+      await waitFor(() => expect(focus).toHaveBeenCalledTimes(1))
+    } finally {
+      focus.mockRestore()
+    }
   })
 
   it("opens each crowded synced and personal semantic identity directly", async () => {
