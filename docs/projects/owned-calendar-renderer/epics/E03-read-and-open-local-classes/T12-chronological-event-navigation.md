@@ -104,8 +104,8 @@ renderer, change stored event facts, or weaken a final product gate to make this
 Review status: pending on PR #428. Code head
 `d3e4e30ddd52cacc22ab40aa821dafe0bce9e8cd` contains the single-target native
 focus observer and a ref-backed visible month/year title fallback. The OpenSpec
-change remains active until exact-final-head CI and both-platform compilation
-complete; archive and merge are pending. Native assistive-technology operation
+change remains active until final-head verification and archive complete; merge
+is pending. Native assistive-technology operation
 remains final QA and has no recorded pass.
 
 - `cd mobile && npx tsc --noEmit && npm run lint && npm test -- --coverage`:
@@ -120,14 +120,15 @@ navigate-populated-calendar-accessibly --strict`, `bash -n
 scripts/accessibility-probe.sh`, `bash e2e/test_run_e2e.sh`, and
   `bash e2e/test_ci_mobile_e2e.sh` passed. The disclosure scan reported zero
   findings before publication.
-- Exact-head PR CI and [manual native workflow #36337639222](https://github.com/timecalendar/timecalendar/actions/runs/36337639222)
-  for the code head above are running. The earlier observer checkpoint
-  `081de18906086f13966c15beaea3af3fdf229706` compiled both iOS and Android
-  in [workflow #36334945788](https://github.com/timecalendar/timecalendar/actions/runs/36334945788).
-  Its Maestro flows failed after compilation on
-  onboarding/import assertions; those failures are recorded separately from
-  compile proof. That earlier workflow does not prove the final head, and no
-  assistive-technology execution is inferred from either workflow.
+- [Mobile CI #36337566781](https://github.com/timecalendar/timecalendar/actions/runs/36337566781)
+  and [repository CI #36337566791](https://github.com/timecalendar/timecalendar/actions/runs/36337566791)
+  passed on the code head above. [Repository CI #36337929551](https://github.com/timecalendar/timecalendar/actions/runs/36337929551)
+  passed on documentation head `9873f5dad4744065ca278db3125c24f745c6f55b`.
+  [Native workflow #36337639222](https://github.com/timecalendar/timecalendar/actions/runs/36337639222)
+  passed both iOS `Build Release simulator app` and Android `Build release APK`
+  compilation steps on the code head. Its Android Maestro flow failed after
+  compilation; the iOS flow is still running. Build success is not a native
+  assistive-technology result.
 - The fabricated probe contains 11 events: ten on 15 June 2026 and one on the
   next date. It starts at a 09:00 vertical offset, with 01:00 and 23:00 targets
   outside the starting viewport. Component tests retain and activate the
