@@ -102,15 +102,15 @@ renderer, change stored event facts, or weaken a final product gate to make this
 ## Execution evidence
 
 Review status: pending on PR #428. Code head
-`19a7dd3e05f2ad30d8cf1af0d70f761ed8563613` contains the single-target native
+`d3e4e30ddd52cacc22ab40aa821dafe0bce9e8cd` contains the single-target native
 focus observer and a ref-backed visible month/year title fallback. The OpenSpec
 change remains active until exact-final-head CI and both-platform compilation
 complete; archive and merge are pending. Native assistive-technology operation
 remains final QA and has no recorded pass.
 
 - `cd mobile && npx tsc --noEmit && npm run lint && npm test -- --coverage`:
-  passed on the code head above, 210 suites and 2,031 tests. Global coverage:
-  98.33% lines and 92.68% branches. The introduced pure accessibility
+  passed on the code head above, 210 suites and 2,032 tests. Global coverage:
+  98.33% lines and 92.69% branches. The introduced pure accessibility
   projection covered 26/26 statements and 16/16 branches.
 - Focused renderer, Calendar screen, and owned-shell contract suites passed;
   the screen suite passed again after the title-registration refactor.
@@ -120,10 +120,14 @@ navigate-populated-calendar-accessibly --strict`, `bash -n
 scripts/accessibility-probe.sh`, `bash e2e/test_run_e2e.sh`, and
   `bash e2e/test_ci_mobile_e2e.sh` passed. The disclosure scan reported zero
   findings before publication.
-- Exact-head PR CI is running. The manual native workflow targeting the earlier
-  observer checkpoint `081de18906086f13966c15beaea3af3fdf229706` has compiled
-  iOS; Android compilation is still running. That workflow does not prove the
-  final head, and no assistive-technology execution is inferred from it.
+- Exact-head PR CI and [manual native workflow #36337639222](https://github.com/timecalendar/timecalendar/actions/runs/36337639222)
+  for the code head above are running. The earlier observer checkpoint
+  `081de18906086f13966c15beaea3af3fdf229706` compiled both iOS and Android
+  in [workflow #36334945788](https://github.com/timecalendar/timecalendar/actions/runs/36334945788).
+  Its Maestro flows failed after compilation on
+  onboarding/import assertions; those failures are recorded separately from
+  compile proof. That earlier workflow does not prove the final head, and no
+  assistive-technology execution is inferred from either workflow.
 - The fabricated probe contains 11 events: ten on 15 June 2026 and one on the
   next date. It starts at a 09:00 vertical offset, with 01:00 and 23:00 targets
   outside the starting viewport. Component tests retain and activate the
