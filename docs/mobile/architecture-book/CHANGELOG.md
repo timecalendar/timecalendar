@@ -1,5 +1,11 @@
 # Architecture Book changelog
 
+## 2026-09-27 — Server calendar-source validation
+
+- Recorded server pre-fetch calendar-source validation: exact known timetable UI paths and
+  malformed sources fail before outbound work, while valid exports, failure recording,
+  and eventless-feed rejection retain their existing behavior. No ADR or device QA note.
+
 ## 2026-09-22 — Stable simultaneous Calendar classes
 
 - Added complete-day, identity-stable positive-interval packing into minimum equal-width columns, with
