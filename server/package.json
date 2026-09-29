@@ -41,12 +41,12 @@
     ]
   },
   "dependencies": {
-    "@ai-sdk/openai": "^2.0.106",
+    "@ai-sdk/openai": "^4.0.80",
     "@bull-board/api": "^8.6.0",
     "@bull-board/express": "^8.6.0",
     "@eslint/js": "^9",
     "@golevelup/ts-jest": "^0.7.0",
-    "@lyrolab/nest-shared": "^1.13.0",
+    "@lyrolab/nest-shared": "^2.0.0",
     "@nestjs/bullmq": "^11",
     "@nestjs/cli": "^11",
     "@nestjs/common": "^11",
@@ -85,7 +85,7 @@
     "@types/slug": "^5.0.2",
     "@types/supertest": "^7.2.0",
     "@types/wtfnode": "^0.7.0",
-    "ai": "^5.0.192",
+    "ai": "^7.0.122",
     "axios": "^1.4.0",
     "bullmq": "^5.77.1",
     "bullmq-otel": "^2.0.0",
@@ -135,7 +135,7 @@
     "typescript-eslint": "^8",
     "uuid": "^11.1.1",
     "wtfnode": "^0.9.1",
-    "zod": "^4.1.5"
+    "zod": "^4.1.13"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -164,7 +164,7 @@
       ]
     },
     "transformIgnorePatterns": [
-      "/node_modules/(?!(msw|@mswjs|@bundled-es-modules|@open-draft|headers-polyfill|rettime|until-async)/)"
+      "/node_modules/(?!(msw|@mswjs|@bundled-es-modules|@open-draft|headers-polyfill|rettime|until-async|ai|@ai-sdk|@workflow)/)"
     ],
     "collectCoverageFrom": [
       "**/*.(t|j)s"
