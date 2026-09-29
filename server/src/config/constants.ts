@@ -74,6 +74,5 @@ export const CRISP_WEBSITE_ID = env.CRISP_WEBSITE_ID ?? ""
 export const PROXY_URL = env.PROXY_URL ?? ""
 
 export const OTEL_ENABLED = isEnvTrue(env.OTEL_ENABLED)
-export const OTEL_EXPORTER_URL = env.OTEL_EXPORTER_URL ?? ""
 
 export const OPENAI_API_KEY = env.OPENAI_API_KEY ?? ""
