@@ -4,7 +4,7 @@ import {
   InMemorySpanExporter,
   SimpleSpanProcessor,
 } from "@opentelemetry/sdk-trace-base"
-import { createNodeInstrumentations } from "./tracer"
+import { createNodeInstrumentations } from "./instrumentations"
 
 const SYNTHETIC_TOKEN = "synthetic-calendar-token-never-export"
 
