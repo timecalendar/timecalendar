@@ -118,7 +118,8 @@ function PagingSpike() {
   const previousOffset = useSharedValue(-1)
   const pinching = useSharedValue(false)
   const verticalTouched = useSharedValue(false)
-  const verticalLocked = useSharedValue(false)
+  const horizontalTouched = useSharedValue(false)
+  const scrollLocked = useSharedValue(false)
 
   const crossingStartedAt = useRef(0)
   const crossingCount = useRef(0)
@@ -201,6 +202,14 @@ function PagingSpike() {
     scheduleOnRN(onSettle, index)
   }
 
+  const unlockScrollIfReleased = () => {
+    "worklet"
+    if (pinching.get() || verticalTouched.get() || horizontalTouched.get()) {
+      return
+    }
+    scrollLocked.set(false)
+  }
+
   const horizontalHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       const x = event.contentOffset.x
@@ -238,6 +247,25 @@ function PagingSpike() {
     },
   })
 
+  // A pager locked mid-drag never received its lift, so it neither snapped nor
+  // reported the drag's end.
+  useAnimatedReaction(
+    () => scrollLocked.get(),
+    (locked, previous) => {
+      if (locked || previous !== true) return
+      dragging.set(false)
+      momentum.set(false)
+      const w = pageWidthValue.get()
+      const x = scrollX.get()
+      const page = Math.round(x / w)
+      if (Math.abs(x - page * w) > 1 / PIXEL_RATIO) {
+        scrollTo(horizontalRef, page * w, 0, true)
+      } else {
+        settleIfAligned(x)
+      }
+    },
+  )
+
   useAnimatedReaction(
     () => pinchOffset.get(),
     (offset, previous) => {
@@ -247,14 +275,15 @@ function PagingSpike() {
     },
   )
 
-  // While locked the vertical ScrollView ignores touches, so it neither follows
-  // the pinch fingers nor flings on lift. It unlocks once its own touch ends: a
-  // finger left down would otherwise scroll it by everything it moved meanwhile.
+  // A pinch locks both ScrollViews: the vertical one would follow the fingers
+  // and fling on lift, and the horizontal one would bring in neighbour pages,
+  // which do not follow the live scale. They unlock once every touch on them
+  // ends: a finger left down would scroll by everything it moved meanwhile.
   const pinch = Gesture.Pinch()
     .onStart((event) => {
       pinchLifted.set(false)
       pinching.set(true)
-      verticalLocked.set(true)
+      scrollLocked.set(true)
       pinchBaseScale.set(liveScale.get())
       pinchBaseOffset.set(verticalOffset.get())
       pinchBaseFocal.set(event.focalY - HEADER_HEIGHT)
@@ -292,7 +321,7 @@ function PagingSpike() {
     })
     .onFinalize(() => {
       pinching.set(false)
-      if (!verticalTouched.get()) verticalLocked.set(false)
+      unlockScrollIfReleased()
     })
   // A native handler is interruptible by default: the vertical ScrollView
   // activating mid-swipe cancels the horizontal one, which then never snaps.
@@ -305,13 +334,20 @@ function PagingSpike() {
     })
     .onFinalize(() => {
       verticalTouched.set(false)
-      if (!pinching.get()) verticalLocked.set(false)
+      unlockScrollIfReleased()
     })
   const horizontalNative = Gesture.Native()
     .disallowInterruption(true)
     .simultaneousWithExternalGesture(pinch)
-  const verticalProps = useAnimatedProps(() => ({
-    scrollEnabled: !verticalLocked.get(),
+    .onBegin(() => {
+      horizontalTouched.set(true)
+    })
+    .onFinalize(() => {
+      horizontalTouched.set(false)
+      unlockScrollIfReleased()
+    })
+  const scrollProps = useAnimatedProps(() => ({
+    scrollEnabled: !scrollLocked.get(),
   }))
 
   const stripStyle = useAnimatedStyle(() => ({
@@ -383,7 +419,7 @@ function PagingSpike() {
             <GestureDetector gesture={verticalNative}>
               <Animated.ScrollView
                 ref={verticalRef}
-                animatedProps={verticalProps}
+                animatedProps={scrollProps}
                 testID="paging-spike-vertical"
                 style={styles.vertical}
                 onScroll={verticalHandler}
@@ -417,6 +453,7 @@ function PagingSpike() {
                   <GestureDetector gesture={horizontalNative}>
                     <Animated.ScrollView
                       ref={horizontalRef}
+                      animatedProps={scrollProps}
                       key={contentSize}
                       testID="paging-spike-horizontal"
                       horizontal
