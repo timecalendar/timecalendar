@@ -2,7 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change add-mobile-calendar-sync. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Synced calendar events are persisted durably in the database seam
 The app SHALL persist synced server calendar events in the device-local SQLite store
 (the `@/db` seam) in a `calendar_events` table, NOT in an ephemeral holder or the
@@ -143,62 +145,60 @@ type touches the data layer.
 
 ### Requirement: The events-source seam sources synced events without a consumer change
 
-The app SHALL swap `useCalendarEvents(range)` to source synced `calendar_events` rows
-(reactively) merged with the personal-events read, range-filtered, behind the existing
-seam signature and the unchanged `CalendarEvent` domain shape. No calendar view consumer
-(timeline screen, agenda list) SHALL require a change. The dense-week fixture SHALL no
-longer be part of the default runtime merge. The seam SHALL ADDITIONALLY filter out hidden
-events (the `mobile-hidden-events` capability): it reads the hidden set and excludes any
-merged event whose uid is in `uidHiddenEvents` OR whose title is in `namedHiddenEvents`,
-applied to the merged list before the range filter — still behind the unchanged seam
-signature and `CalendarEvent` shape, so no view consumer changes.
+The app SHALL retain `useCalendarEvents(range)` as the shared Home/Agenda source while implementing it through bounded synced and personal local queries plus the validated V1 tagged projection. Existing consumers SHALL receive the presentation fields and timed/date-only semantics they require without learning about SQLite rows, and event details SHALL keep its separate rich by-UID read. The dense-week fixture SHALL remain absent from the default runtime merge.
 
-The seam SHALL ALSO filter out events belonging to a calendar whose visibility is off (the
-`mobile-user-calendars` capability): it reads `useUserCalendars()`, builds the set of ids
-of calendars whose `visible` flag is true, and keeps a merged event iff it is a personal
-event (`userCalendarId === undefined`, always shown) OR its `userCalendarId` is in that
-visible set. This visibility filter applies to the merged list alongside the hidden-events
-filter, before the range filter, still behind the unchanged seam signature and
-`CalendarEvent` shape — so every view (timeline, agenda, home) honors calendar visibility
-with no consumer change. Because a deleted calendar drops out of `useUserCalendars()`, its
-id leaves the visible set and its events are excluded immediately, with no `calendar_events`
-purge required.
+The seam SHALL filter hidden events by UID or name, cancelled synced events, and events owned by an absent or invisible user calendar before any consumer projection. Personal events SHALL remain visible independent of calendar visibility. Because a deleted calendar leaves the visible source set, its cached rows SHALL disappear immediately without a `calendar_events` purge. The seam SHALL isolate malformed rows individually and SHALL never require a storage rewrite to admit the tagged rendering model.
 
 #### Scenario: The calendar renders synced events through the unchanged seam
-- **WHEN** synced events exist and a view reads `useCalendarEvents(range)`
-- **THEN** it returns the synced events (mapped to `CalendarEvent`) merged with personal
-  events, filtered to the range
-- **AND** the timeline screen and agenda list render them with no source-related change to
-  their code
+
+- **WHEN** valid synced and personal rows intersect a consumer's requested range
+- **THEN** `useCalendarEvents(range)` returns their validated V1 presentation values without exposing storage rows
+- **AND** Home and Agenda retain their current source behavior while the timeline can build page models from the same domain
 
 #### Scenario: The fixture is dev/test-only
-- **WHEN** the app runs normally (not a test or dev seed)
+
+- **WHEN** the app runs normally outside an explicit fabricated seed
 - **THEN** `useCalendarEvents` does not include the dense-week fixture in its result
 
 #### Scenario: Hidden events are excluded by the seam
-- **WHEN** the hidden set contains an event's uid or title
-- **THEN** `useCalendarEvents` excludes that event (and all same-titled events for a name match) from
-  the merged result before the range filter
-- **AND** every view (timeline, agenda, home) renders without it, with no consumer change
+
+- **WHEN** the hidden set contains an event's UID or title
+- **THEN** the seam excludes that event and any required same-title matches before Home, Agenda, or timeline projection
+- **AND** no consumer duplicates the hidden-event filter
+
+#### Scenario: Cancelled events are excluded by the seam
+
+- **WHEN** a synced event's validated cancellation field is exactly true
+- **THEN** the seam excludes it before every visual, semantic, checklist, and activation projection
 
 #### Scenario: A hidden calendar's events are excluded by the seam
-- **WHEN** a calendar's `visible` flag is false
-- **THEN** `useCalendarEvents` excludes every event whose `userCalendarId` is that calendar's id
-  from the merged result before the range filter
-- **AND** every view (timeline, agenda, home) renders without those events, with no consumer change
+
+- **WHEN** a calendar's visible flag is false
+- **THEN** the seam excludes every event whose source calendar identity matches it
+- **AND** the cached rows remain intact for a later visibility restore
 
 #### Scenario: Personal events are always kept regardless of calendar visibility
-- **WHEN** an event has no `userCalendarId` (a personal event)
-- **THEN** `useCalendarEvents` always keeps it, independent of any calendar's visibility
+
+- **WHEN** a valid event has personal source identity
+- **THEN** it remains eligible independent of the user-calendar visibility set
+- **AND** the ordinary validation and hidden-event rules still apply
 
 #### Scenario: Toggling a calendar back to visible re-includes its events
-- **WHEN** a previously-hidden calendar's `visible` flag is set back to true
-- **THEN** `useCalendarEvents` includes its events again (the reactive read re-renders the views)
+
+- **WHEN** a previously invisible calendar becomes visible
+- **THEN** the reactive bounded read/projection includes its valid in-range events again
 
 #### Scenario: A deleted calendar's events vanish without a purge
-- **WHEN** a calendar is deleted (it leaves `useUserCalendars()`)
-- **THEN** its id is absent from the visible set and its still-present `calendar_events` rows are
-  excluded from `useCalendarEvents` immediately, with no `calendar_events` purge
+
+- **WHEN** a calendar is deleted and leaves the visible source set
+- **THEN** its still-cached rows are excluded immediately from every calendar consumer
+- **AND** no `calendar_events` purge is required
+
+#### Scenario: One malformed row cannot fail valid siblings
+
+- **WHEN** a requested local range contains both malformed and valid stored rows
+- **THEN** the seam returns the valid projections and rejects the bad rows with aggregate-only reasons
+- **AND** no whole-list exception reaches Home, Agenda, or the timeline
 
 ### Requirement: Sync is triggered at startup and by pull-to-refresh with an accessible status surface
 The app SHALL trigger a sync fire-and-forget at startup (offline-safe; a failure is
@@ -310,3 +310,88 @@ Completed Calendar snapshots SHALL report rejected content at most once per non-
 - **THEN** no diagnostic for that reason/revision is emitted again
 - **AND** a later completed revision may emit its own new aggregate count once
 
+### Requirement: Local rendering reads are bounded by separate instant and civil-date ranges
+
+The calendar data seam SHALL derive one bounded three-page local range and issue reactive SQLite predicates for timed intersections, personal timed intersections, and date-only civil-range intersections separately. Timed positive intervals SHALL use half-open intersection (`startsAt < range.to` and `endsAt > range.from`); date-only rows SHALL use their UTC-encoded floating civil start and exclusive end against a civil-day envelope. The reads SHALL select no row outside the required envelope, SHALL use no arbitrary result cap, and SHALL not change stored facts or start a network request.
+
+#### Scenario: Timed intersection includes long coverage at either boundary
+
+- **WHEN** a timed row starts before the envelope but ends inside it, or starts inside it and ends after it
+- **THEN** the local query returns the row because its interval intersects the half-open instant range
+- **AND** a row ending exactly at `from` or starting exactly at `to` is excluded
+
+#### Scenario: Date-only read uses floating civil keys
+
+- **WHEN** a date-only row's stored UTC fields represent a civil-date range intersecting the three-page day envelope
+- **THEN** the date-only query returns it by civil start/exclusive-end semantics
+- **AND** it is not shifted or excluded by the current display-zone offset
+
+#### Scenario: Personal rows are range scoped
+
+- **WHEN** personal events exist both inside and outside the instant envelope
+- **THEN** the personal repository returns only intersecting rows
+- **AND** it does not read the entire personal-events table first
+
+### Requirement: Local rows decode independently into a tagged V1 calendar domain
+
+Every local row presented to calendar consumers SHALL decode independently into a `version: 1` discriminated timed or date-only event carrying stable source kind and UID. Stored `allDay` SHALL choose the tag; midnight and duration SHALL not infer it. Required timestamps, interval ordering, identity, colors, optional strings, teachers, tags, fields, and date-only civil bounds SHALL be narrowed before any formatter, sorter, tag mapper, or page builder reads them. One malformed row SHALL yield an allowlisted aggregate rejection reason and SHALL NOT throw, discard valid siblings, mutate storage, or expose raw row content.
+
+#### Scenario: Valid timed and date-only rows receive distinct tags
+
+- **WHEN** one valid `allDay = false` row and one valid `allDay = true` row decode
+- **THEN** the result contains one timed interval with instant endpoints and one date-only interval with civil start/exclusive-end keys
+- **AND** both carry their original source kind and UID under schema version 1
+
+#### Scenario: Malformed tag element cannot throw the list
+
+- **WHEN** a stored tags array contains a non-object, missing name, or otherwise unusable element
+- **THEN** that optional element is omitted or the row is rejected according to the closed validation rule
+- **AND** every valid sibling row still decodes and reaches the applicable consumer
+
+#### Scenario: Invalid required fields reject one row
+
+- **WHEN** a row has an invalid start/end, non-positive required range, invalid date-only range, or unusable identity
+- **THEN** it is excluded with one allowlisted rejection count
+- **AND** no exception, UID, title, location, timestamp, source token, calendar id, or query value reaches diagnostics
+
+#### Scenario: Offset-changing timed interval is explicit but deferred
+
+- **WHEN** a valid timed interval crosses a display-zone offset transition
+- **THEN** the tagged domain preserves its original instant identity and endpoints
+- **AND** the T09 page projection classifies it as unsupported rather than drawing misleading endpoint-subtraction geometry
+
+### Requirement: Calendar presentation filters precede visual and semantic models
+
+The shared event-source seam SHALL remove exactly cancelled synced events, hidden UID/name matches, and events whose user calendar is absent or invisible before constructing Home, Agenda, timeline visual models, timeline semantic models, or checklist UID sets. Personal events SHALL remain independent of user-calendar visibility. A filtered event SHALL not become activatable through a stale presentation.
+
+#### Scenario: Cancelled synced event is absent everywhere
+
+- **WHEN** a synced row's validated cancellation field is exactly true
+- **THEN** Home, Agenda, timeline tiles, timeline accessibility traversal, and checklist summary input all exclude it
+
+#### Scenario: Hidden and invisible-source filters stay shared
+
+- **WHEN** a UID/name is hidden or its owning user calendar is invisible/deleted
+- **THEN** the event is removed once at the calendar data seam before all consumer projections
+- **AND** screens and the renderer do not duplicate the filter
+
+#### Scenario: Personal event ignores source visibility
+
+- **WHEN** a valid personal event intersects the requested range
+- **THEN** it remains eligible regardless of the user-calendar set
+- **AND** hidden UID/name and validation rules still apply
+
+### Requirement: Invalid-row diagnostics are aggregate and revision scoped
+
+A completed local snapshot containing rejected rows SHALL emit at most one content-free diagnostic per allowlisted reason for that snapshot revision. Diagnostics SHALL contain only a static calendar-read context, reason code, and aggregate count. Re-rendering the same snapshot SHALL not emit duplicates, and a fully valid or merely filtered snapshot SHALL emit none.
+
+#### Scenario: Rejected rows produce bounded content-free evidence
+
+- **WHEN** one snapshot rejects multiple rows for the same allowlisted reason
+- **THEN** one diagnostic records that reason and aggregate count
+- **AND** it contains no raw exception, event content, identity, timestamp, calendar identity, or query value
+
+#### Scenario: Filtering is not reported as corruption
+
+- **WHEN** valid rows are removed only because they are cancelled, hidden, unsupported by T09 presentation, or owned by an invisible source
+- **THEN** no malformed-row diagnostic is emitted

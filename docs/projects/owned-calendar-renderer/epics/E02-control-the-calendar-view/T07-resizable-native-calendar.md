@@ -2,7 +2,7 @@
 kind: ticket
 id: T07
 epic: E02
-status: planned
+status: completed
 traces-to: [P02, P07, P08, D02, D03, D07]
 depends-on: [T06]
 size: M
@@ -113,6 +113,8 @@ Follow the ticket scope and approved data/renderer boundary. Do not introduce a 
 renderer, change stored event facts, or weaken a final product gate to make this slice pass.
 
 ## Execution evidence
+
+Merged PR #416 at `253e40d4`. No explicit owner acceptance is recorded in this ticket.
 
 Implementation host evidence was produced on 2026-09-17; the exact pushed revision and final
 command results are recorded in the issue handoff. Source config resolves `orientation: default`,

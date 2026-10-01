@@ -94,7 +94,7 @@ The app SHALL retain `useCalendarEvents(range)` as the shared Home/Agenda source
 
 The seam SHALL filter hidden events by UID or name, cancelled synced events, and events owned by an absent or invisible user calendar before any consumer projection. Personal events SHALL remain visible independent of calendar visibility. Because a deleted calendar leaves the visible source set, its cached rows SHALL disappear immediately without a `calendar_events` purge. The seam SHALL isolate malformed rows individually and SHALL never require a storage rewrite to admit the tagged rendering model.
 
-#### Scenario: Calendar consumers read validated synced and personal events
+#### Scenario: The calendar renders synced events through the unchanged seam
 
 - **WHEN** valid synced and personal rows intersect a consumer's requested range
 - **THEN** `useCalendarEvents(range)` returns their validated V1 presentation values without exposing storage rows

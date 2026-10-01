@@ -2,7 +2,7 @@
 kind: ticket
 id: T08
 epic: E02
-status: planned
+status: completed
 traces-to: [P01, P02, P05, D01, D02, D08]
 depends-on: [T07]
 size: S
@@ -112,6 +112,8 @@ renderer, change stored event facts, or weaken a final product gate to make this
 
 ## Execution evidence
 
+Merged PR #417 at `5d1adbdf`. No explicit owner acceptance is recorded in this ticket.
+
 Implementation and host verification were completed on 2026-09-18 at final tested runtime
 revision `1a2ece9670cc7bdff8cbe1d84ebf2dc776854197`. The acceptance build is the normal mobile
 application from that revision: it uses the production real-clock path and contains no clock
@@ -165,6 +167,5 @@ substitute for the presentation check.
       resize/rotation anchoring, Agenda, and event details—and record any regression before accepting.
 
 No owner acceptance or owner-authorized T28 deferral exists in the issue record as of 2026-09-18.
-The unchecked rows above therefore remain pending rather than being inferred from automation.
-Reviewer merge remains gated on an explicit owner verdict for every row, an explicit acceptance
-with its source and date, and green checks for the exact final PR head.
+The unchecked rows above therefore remain pending rather than being inferred from automation or
+from the merge.

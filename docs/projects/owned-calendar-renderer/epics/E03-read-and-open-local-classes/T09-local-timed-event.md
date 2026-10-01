@@ -2,7 +2,7 @@
 kind: ticket
 id: T09
 epic: E03
-status: planned
+status: completed
 traces-to: [P01, P03, P04, P06, D01, D02, D05, D06]
 depends-on: [T08]
 size: M
@@ -109,9 +109,11 @@ renderer, change stored event facts, or weaken a final product gate to make this
 
 ## Execution evidence
 
+Merged PR #418 at `3e5c818e`. No explicit owner acceptance is recorded in this ticket.
+
 Implementation runtime revision: `8f98a4a16c584f2e5cbd22e9d12a670eed61f5c3` on PR #418.
 No native build or device result is claimed: this host has neither KVM nor an iOS simulator, so
-the mandatory owner run remains unchecked and no owner acceptance or merge is recorded.
+the mandatory owner run remains unchecked and no owner acceptance is recorded.
 
 ### Fabricated aggregate evidence
 
