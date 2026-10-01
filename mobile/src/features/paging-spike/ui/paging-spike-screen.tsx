@@ -73,7 +73,6 @@ function PagingSpike() {
   const today = todayEpochDay()
   const todayPage = pageIndexOfDay(today)
   const [width, setWidth] = useState(0)
-  const [initialX, setInitialX] = useState(0)
   const [androidPaging, setAndroidPaging] = useState<AndroidPaging>(
     params.android === "paging" ? "paging" : "snap",
   )
@@ -100,6 +99,7 @@ function PagingSpike() {
   const horizontalRef = useAnimatedRef<Animated.ScrollView>()
   const verticalRef = useAnimatedRef<Animated.ScrollView>()
   const scrollX = useSharedValue(0)
+  const positioned = useSharedValue(false)
   const dragging = useSharedValue(false)
   const momentum = useSharedValue(false)
   const roundedIndex = useSharedValue(todayPage)
@@ -214,6 +214,7 @@ function PagingSpike() {
     onScroll: (event) => {
       const x = event.contentOffset.x
       scrollX.set(x)
+      positioned.set(true)
       const w = pageWidthValue.get()
       if (w <= 0) return
       const index = contentStartIndex.get() + Math.round(x / w)
@@ -353,6 +354,12 @@ function PagingSpike() {
     scrollEnabled: !scrollLocked.get(),
   }))
 
+  // Android re-applies a `contentOffset` prop whenever the view's props are
+  // re-sent, which a Reanimated `scrollEnabled` update does, so the pager is
+  // placed with `scrollTo` instead and stays hidden until it has moved there.
+  const horizontalStyle = useAnimatedStyle(() => ({
+    opacity: positioned.get() ? 1 : 0,
+  }))
   const stripStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: -scrollX.get() }],
   }))
@@ -373,8 +380,9 @@ function PagingSpike() {
     if (nextWidth === width) return
     const nextPageWidth =
       Math.round((nextWidth - GUTTER) * PIXEL_RATIO) / PIXEL_RATIO
-    pendingScroll.current = { index: settled, animated: false }
-    setInitialX((settled - contentStart) * nextPageWidth)
+    if (nextPageWidth > 0) {
+      pendingScroll.current = { index: settled, animated: false }
+    }
     setWidth(nextWidth)
   }
 
@@ -470,9 +478,12 @@ function PagingSpike() {
                       showsHorizontalScrollIndicator={false}
                       scrollEventThrottle={16}
                       importantForAccessibility="no"
-                      contentOffset={{ x: initialX, y: 0 }}
                       onScroll={horizontalHandler}
-                      style={[styles.horizontal, { width: pageWidth }]}
+                      style={[
+                        styles.horizontal,
+                        { width: pageWidth },
+                        horizontalStyle,
+                      ]}
                       contentContainerStyle={{
                         width: contentWidth,
                         height: MAX_CONTENT_HEIGHT,
@@ -527,10 +538,7 @@ function PagingSpike() {
             testID="paging-spike-content-size"
             onPress={() => {
               pendingScroll.current = { index: settled, animated: false }
-              setInitialX(
-                CONTENT_RADIUS[contentSize === "full" ? "small" : "full"] *
-                  pageWidth,
-              )
+              positioned.set(false)
               setBase(settled)
               setContentSize((size) => (size === "full" ? "small" : "full"))
             }}
