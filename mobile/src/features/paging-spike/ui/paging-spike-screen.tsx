@@ -113,6 +113,9 @@ function PagingSpike() {
   const pinchBaseOffset = useSharedValue(0)
   const pinchBaseFocal = useSharedValue(0)
   const pinchOffset = useSharedValue(-1)
+  const pinchLifted = useSharedValue(false)
+  const previousScale = useSharedValue(DEFAULT_PIXELS_PER_HOUR)
+  const previousOffset = useSharedValue(-1)
   const pinching = useSharedValue(false)
   const verticalTouched = useSharedValue(false)
   const verticalLocked = useSharedValue(false)
@@ -249,6 +252,7 @@ function PagingSpike() {
   // finger left down would otherwise scroll it by everything it moved meanwhile.
   const pinch = Gesture.Pinch()
     .onStart((event) => {
+      pinchLifted.set(false)
       pinching.set(true)
       verticalLocked.set(true)
       pinchBaseScale.set(liveScale.get())
@@ -256,9 +260,9 @@ function PagingSpike() {
       pinchBaseFocal.set(event.focalY - HEADER_HEIGHT)
     })
     .onUpdate((event) => {
-      // The update sent as a finger lifts puts the focal point on the finger
-      // left down, which would scroll the anchored hour by the whole spread.
-      if (event.numberOfPointers < 2) return
+      if (pinchLifted.get() || event.numberOfPointers < 2) return
+      previousScale.set(liveScale.get())
+      previousOffset.set(pinchOffset.get())
       const scale = Math.min(
         Math.max(pinchBaseScale.get() * event.scale, MIN_PIXELS_PER_HOUR),
         MAX_PIXELS_PER_HOUR,
@@ -272,6 +276,16 @@ function PagingSpike() {
       )
       liveScale.set(scale)
       pinchOffset.set(offset)
+    })
+    // The pinch stays active until every finger lifts, and the event that lifts
+    // the first one already moves the focal point onto the finger left down. The
+    // update it carries would scroll the anchored hour by half the spread, so it
+    // is undone and the zoom holds until the last finger lifts.
+    .onTouchesUp(() => {
+      if (pinchLifted.get()) return
+      pinchLifted.set(true)
+      liveScale.set(previousScale.get())
+      pinchOffset.set(previousOffset.get())
     })
     .onEnd(() => {
       scheduleOnRN(onPinchEnd, liveScale.get())
