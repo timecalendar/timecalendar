@@ -101,7 +101,6 @@ function PagingSpike() {
   const contentStartIndex = useSharedValue(contentStart)
   const pageWidthValue = useSharedValue(pageWidth)
   const liveScale = useSharedValue(DEFAULT_PIXELS_PER_HOUR)
-  const stillScale = useSharedValue(DEFAULT_PIXELS_PER_HOUR)
   const verticalOffset = useSharedValue(0)
   const viewportHeight = useSharedValue(0)
   const pinchBaseScale = useSharedValue(DEFAULT_PIXELS_PER_HOUR)
@@ -110,20 +109,28 @@ function PagingSpike() {
   const pinchOffset = useSharedValue(-1)
 
   const crossingStartedAt = useRef(0)
+  const crossingCount = useRef(0)
+  const commitTimes = useRef({ last: 0, max: 0 })
   const pendingScroll = useRef<{ index: number; animated: boolean } | null>(
     null,
   )
 
   const onCross = (index: number) => {
     crossingStartedAt.current = performance.now()
+    crossingCount.current += 1
     setCenter(index)
-    setStats((previous) => ({ ...previous, crossings: previous.crossings + 1 }))
   }
 
   const onSettle = (index: number) => {
     setSettled(index)
     setCenter(index)
-    setStats((previous) => ({ ...previous, settles: previous.settles + 1 }))
+    setStats((previous) => ({
+      ...previous,
+      settles: previous.settles + 1,
+      crossings: crossingCount.current,
+      lastCommitMs: commitTimes.current.last,
+      maxCommitMs: commitTimes.current.max,
+    }))
     console.log(
       `PAGING_SPIKE settle page=${index} day=${isoDate(pageStartDay(index))}`,
     )
@@ -142,12 +149,11 @@ function PagingSpike() {
     if (crossingStartedAt.current === 0) return
     const elapsed = performance.now() - crossingStartedAt.current
     crossingStartedAt.current = 0
+    commitTimes.current = {
+      last: elapsed,
+      max: Math.max(commitTimes.current.max, elapsed),
+    }
     console.log(`PAGING_SPIKE commit center=${center} ms=${elapsed.toFixed(1)}`)
-    setStats((previous) => ({
-      ...previous,
-      lastCommitMs: elapsed,
-      maxCommitMs: Math.max(previous.maxCommitMs, elapsed),
-    }))
   }, [center])
 
   useLayoutEffect(() => {
@@ -390,7 +396,7 @@ function PagingSpike() {
                           width={pageWidth}
                           today={today}
                           pixelsPerHour={pixelsPerHour}
-                          scale={index === settled ? liveScale : stillScale}
+                          scale={liveScale}
                           live={index === settled}
                         />
                       ))}
