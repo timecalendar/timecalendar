@@ -12,9 +12,6 @@ public class CalendarFocusObserverModule: Module {
       Prop("dateKey") { (view: CalendarFocusObserverView, dateKey: String) in
         view.dateKey = dateKey
       }
-      Prop("generation") { (view: CalendarFocusObserverView, generation: Int) in
-        view.generation = generation
-      }
     }
   }
 }

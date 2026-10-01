@@ -10,6 +10,7 @@ import {
 
 import { readCalendarWindow } from "./calendar-window-reader"
 import {
+  type CalendarWindowReader,
   type CalendarWindowSnapshot,
   type CalendarWindowStore,
   createCalendarWindowStore,
@@ -32,11 +33,12 @@ function subscribeToCalendarChanges(listener: () => void): () => void {
 export function useCalendarWindow(environment: {
   displayZone: string
   firstWeekday: FirstWeekday
+  reader?: CalendarWindowReader | undefined
 }): { store: CalendarWindowStore; snapshot: CalendarWindowSnapshot } {
   const [store] = useState(() => {
     const reporter = createCalendarRejectionReporter()
     return createCalendarWindowStore({
-      reader: readCalendarWindow,
+      reader: environment.reader ?? readCalendarWindow,
       subscribeToChanges: subscribeToCalendarChanges,
       displayZone: environment.displayZone,
       firstWeekday: environment.firstWeekday,

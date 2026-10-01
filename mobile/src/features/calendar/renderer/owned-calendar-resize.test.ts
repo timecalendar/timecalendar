@@ -7,7 +7,6 @@ import {
 const presentation = {
   dateIdentity: "2026-09-17",
   mode: "week" as const,
-  rendererGeneration: 7,
   pixelsPerHour: 90,
   rawOffset: 12 * 90 - 240,
 }
@@ -60,7 +59,7 @@ describe("owned Calendar resize model", () => {
     expect(replaced.geometryRevision).toBe(2)
     expect(replaced.dateIdentity).toBe(first.dateIdentity)
     expect(replaced.mode).toBe(first.mode)
-    expect(replaced.rendererGeneration).toBe(first.rendererGeneration)
+    expect(replaced.mode).toBe(first.mode)
     expect(replaced.pixelsPerHour).toBe(first.pixelsPerHour)
     expect(replaced.clockAnchor).toBeCloseTo(first.clockAnchor)
   })

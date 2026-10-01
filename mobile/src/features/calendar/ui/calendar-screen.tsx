@@ -11,40 +11,37 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { ThemedView } from "@/components/themed-view"
 import { isDevVariant } from "@/config/variant"
 import {
-  buildCalendarTimelinePresentation,
   DEFAULT_PIXELS_PER_HOUR,
   eventRoute,
   formatFullDay,
   formatMonthYear,
   MAX_PIXELS_PER_HOUR,
   MIN_PIXELS_PER_HOUR,
-  planCalendarThreePageRange,
+  pageIndexOfInstant,
+  pageKey,
   resolveLocale,
-  useCalendarEvents,
-  useCalendarTimelinePresentation,
+  useCalendarWindow,
+  usePagePresenter,
   useSyncCalendars,
 } from "@/features/calendar/data"
 import {
   OwnedCalendarShell,
   type OwnedCalendarShellHandle,
 } from "@/features/calendar/renderer"
-import { useChecklistProgress } from "@/features/event-checklists"
 import { useShowWeekendsPreference } from "@/features/settings/prefs"
 import {
   ACCESSIBILITY_PROBE_INITIAL_VERTICAL_OFFSET,
-  accessibilityProbeFixture,
+  accessibilityProbeReader,
   recordAccessibilityProbeDiagnostic,
 } from "@/test-support/owned-calendar/accessibility-probe"
 import { Spacing, useTheme } from "@/theme"
 
-import { AgendaList } from "./agenda-list"
+import { CalendarAgendaPane } from "./calendar-agenda-pane"
 import { CalendarAddFab } from "./calendar-screen/calendar-screen-actions"
 import { CalendarScreenHeader } from "./calendar-screen/calendar-screen-header"
-import { CalendarScreenStatus } from "./calendar-screen/calendar-screen-status"
 import { useCalendarScreenController } from "./calendar-screen/use-calendar-screen-controller"
 import { useCalendarTitleFocus } from "./calendar-screen/use-calendar-title-focus"
 
@@ -66,20 +63,13 @@ export function CalendarScreen() {
     selectedDate,
     firstWeekday,
     displayZone,
-    range,
     canGoToToday,
     goToToday,
-    rendererGeneration,
-    transitionRevision,
-    acceptedTransitionRevision,
-    transitionPending,
+    commitDate,
     verticalOffset,
     pixelsPerHour,
     settleVerticalOffset,
     settleZoom,
-    requestTransition,
-    settleTransition,
-    cancelTransition,
   } = useCalendarScreenController()
   const { showWeekends } = useShowWeekendsPreference()
   const timelineHeading = formatFullDay(selectedDate, locale, displayZone)
@@ -92,16 +82,20 @@ export function CalendarScreen() {
     wasFocused.current = isFocused
   }, [isFocused])
 
-  const storedEvents = useCalendarEvents(range)
-  const timeline = useCalendarTimelinePresentation({
-    anchor: selectedDate,
-    mode: timelineMode,
+  const space = { mode: timelineMode, firstWeekday }
+  const { store, snapshot } = useCalendarWindow({
     displayZone,
     firstWeekday,
-    showWeekends,
-    generation: rendererGeneration,
+    reader: isAccessibilityProbe ? accessibilityProbeReader : undefined,
   })
-  const presentationReady = timeline.ready && timeline.error === undefined
+  const presentPage = usePagePresenter({
+    snapshot,
+    space,
+    locale,
+    displayZone,
+    showWeekends,
+  })
+  const selectedIndex = pageIndexOfInstant(space, selectedDate, displayZone)
   const {
     pageTitleTarget,
     setPageTitleTarget,
@@ -110,33 +104,11 @@ export function CalendarScreen() {
   } = useCalendarTitleFocus({
     view,
     routeFocused: isFocused,
-    transitionPending,
-    presentationReady,
-    presentationGeneration: timeline.presentation.generation,
-    generation: rendererGeneration,
-    acceptedRevision: acceptedTransitionRevision,
+    presentationReady: presentPage(selectedIndex).status === "ready",
+    pageKey: pageKey(space, selectedIndex),
     heading: timelineHeading,
   })
-  const probeEvents = isAccessibilityProbe ? accessibilityProbeFixture() : null
-  const events = probeEvents === null ? storedEvents : [...probeEvents]
-  const probePresentation =
-    probeEvents === null
-      ? null
-      : buildCalendarTimelinePresentation({
-          range: planCalendarThreePageRange({
-            anchor: selectedDate,
-            mode: timelineMode,
-            displayZone,
-            firstWeekday,
-            showWeekends,
-          }),
-          generation: rendererGeneration,
-          events: probeEvents,
-        })
-  const eventUids = events.map((event) => event.id)
-  const checklistProgress = useChecklistProgress(eventUids)
   const { sync, isSyncing, isError } = useSyncCalendars()
-  const agendaLayout = useAdaptiveLayout("standard")
 
   const onPressEvent = (uid: string) => {
     if (isAccessibilityProbe) {
@@ -169,22 +141,13 @@ export function CalendarScreen() {
       accessibilityLabel={t("calendar.sync.refreshingLabel")}
     />
   )
-  const status = (
-    <CalendarScreenStatus
-      isEmpty={events.length === 0}
-      isError={isError}
-      isSyncing={isSyncing}
-      onRetry={onSync}
-    />
-  )
 
   return (
     <ThemedView collapsable={false} style={styles.container}>
       <CalendarScreenHeader
         title={formatMonthYear(selectedDate, locale, displayZone)}
         contextHeading={timelineHeading}
-        generation={rendererGeneration}
-        acceptedRevision={acceptedTransitionRevision ?? 0}
+        pageKey={pageKey(space, selectedIndex)}
         titleTargetActive={titleTargetActive}
         onTitleTargetChange={setPageTitleTarget}
         view={view}
@@ -204,26 +167,16 @@ export function CalendarScreen() {
           testID="calendar-full-bleed-owner"
         >
           {view === "agenda" ? (
-            <View
-              testID="calendar-agenda-responsive-owner"
-              style={styles.agendaOwner}
-              onLayout={agendaLayout.onLayout}
-            >
-              <View
-                testID="calendar-agenda-responsive-lane"
-                style={[agendaLayout.laneStyle, styles.agendaLane]}
-              >
-                {status}
-                <AgendaList
-                  events={events}
-                  checklistProgress={checklistProgress}
-                  locale={locale}
-                  displayZone={displayZone}
-                  refreshControl={refreshControl}
-                  onPressEvent={(event) => onPressEvent(event.id)}
-                />
-              </View>
-            </View>
+            <CalendarAgendaPane
+              selectedDate={selectedDate}
+              displayZone={displayZone}
+              locale={locale}
+              isSyncing={isSyncing}
+              isError={isError}
+              onSync={onSync}
+              refreshControl={refreshControl}
+              onPressEvent={onPressEvent}
+            />
           ) : (
             <OwnedCalendarShell
               ref={calendarShellRef}
@@ -244,15 +197,10 @@ export function CalendarScreen() {
                   : verticalOffset
               }
               initialPixelsPerHour={pixelsPerHour}
-              generation={rendererGeneration}
-              revisionFloor={transitionRevision}
-              acceptedTransitionRevision={acceptedTransitionRevision}
-              transitionPending={transitionPending}
-              presentationReady={presentationReady}
+              presentPage={presentPage}
               routeFocused={isFocused}
-              onTransitionRequest={requestTransition}
-              onTransitionSettled={settleTransition}
-              onTransitionCancelled={cancelTransition}
+              onDateCommitted={commitDate}
+              onPageWindowChange={(center) => store.ensure(space, center)}
               onVerticalOffsetSettled={settleVerticalOffset}
               onZoomSettled={(settlement) => {
                 settleZoom(settlement)
@@ -267,7 +215,6 @@ export function CalendarScreen() {
                   )
                 }
               }}
-              presentation={probePresentation ?? timeline.presentation}
               onEventPress={onPressEvent}
               onProbeDiagnostic={
                 isAccessibilityProbe
@@ -287,6 +234,4 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
   calendar: { flex: 1, gap: Spacing.two },
-  agendaOwner: { flex: 1 },
-  agendaLane: { flex: 1, gap: Spacing.two },
 })

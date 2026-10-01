@@ -7,41 +7,31 @@ import type { CalendarView } from "@/features/settings/prefs"
 export function useCalendarTitleFocus({
   view,
   routeFocused,
-  transitionPending,
   presentationReady,
-  presentationGeneration,
-  generation,
-  acceptedRevision,
+  pageKey,
   heading,
 }: {
   view: CalendarView
   routeFocused: boolean
-  transitionPending: boolean
   presentationReady: boolean
-  presentationGeneration: number
-  generation: number
-  acceptedRevision: number | null
+  pageKey: string
   heading: string
 }) {
   const [pageTitleTarget, setPageTitleTarget] =
     useState<CalendarPageTitleTarget | null>(null)
-  const announcedRevision = useRef<number | null>(null)
+  // The page shown on arrival is not a change of context.
+  const announcedPageKey = useRef(pageKey)
   const titleTargetActive =
-    view !== "agenda" &&
-    routeFocused &&
-    !transitionPending &&
-    presentationReady &&
-    presentationGeneration === generation
+    view !== "agenda" && routeFocused && presentationReady
 
-  const onContextSettled = (revision: number, titleFocused: boolean) => {
+  const onContextSettled = (settledPageKey: string, titleFocused: boolean) => {
     if (
-      acceptedRevision === null ||
-      revision !== acceptedRevision ||
-      announcedRevision.current === revision ||
+      settledPageKey !== pageKey ||
+      announcedPageKey.current === settledPageKey ||
       !routeFocused
     )
       return
-    announcedRevision.current = revision
+    announcedPageKey.current = settledPageKey
     if (!titleFocused) AccessibilityInfo.announceForAccessibility(heading)
   }
 

@@ -10,7 +10,6 @@ import expo.modules.kotlin.views.ExpoView
 class CalendarFocusObserverView(context: Context, appContext: AppContext) : ExpoView(context, appContext) {
   var identity = ""
   var dateKey = ""
-  var generation = -1
   private val onAccessibilityFocused by EventDispatcher<Map<String, Any>>()
 
   init {
@@ -21,12 +20,11 @@ class CalendarFocusObserverView(context: Context, appContext: AppContext) : Expo
     if (
       isAttachedToWindow && childCount == 1 && child === getChildAt(0) &&
       event.eventType == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED &&
-      identity.isNotEmpty() && generation >= 0
+      identity.isNotEmpty()
     ) {
       onAccessibilityFocused(mapOf(
         "identity" to identity,
-        "dateKey" to dateKey,
-        "generation" to generation
+        "dateKey" to dateKey
       ))
     }
     return super.requestSendAccessibilityEvent(child, event)

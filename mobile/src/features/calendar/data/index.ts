@@ -121,13 +121,11 @@ export {
   type PageTileV1,
 } from "./page-presentation"
 export {
-  createPagerState,
-  type PagerEpochs,
-  pagerEpochs,
-  type PagerEvent,
-  type PagerState,
-  reducePager,
-} from "./page-settlement"
+  type PagePresenter,
+  type PagePresenterSource,
+  presentPage,
+  usePagePresenter,
+} from "./page-presenter"
 export {
   createPageWindow,
   isInPageWindow,
@@ -142,12 +140,6 @@ export {
   pageWindowSlotCount,
   planPageRebase,
 } from "./page-window"
-export {
-  type CalendarPageDirection,
-  type CalendarRangePageV1,
-  type CalendarThreePageRangeV1,
-  planCalendarThreePageRange,
-} from "./range-plan"
 export { eventRoute } from "./routes"
 export {
   type CalendarSyncOptions,
@@ -214,19 +206,11 @@ export {
   type VerticalGeometry,
 } from "./timeline-geometry"
 export {
-  buildCalendarTimelinePresentation,
   type CalendarTimelineColumnV1,
   type CalendarTimelinePageV1,
-  type CalendarTimelinePresentationV1,
   type TimedTileV1,
   type TimelineChecklistProgressV1,
-  timelinePresentationUids,
-  timelineRangeUids,
 } from "./timeline-presentation"
-export {
-  type CalendarTimelinePresentationInput,
-  useCalendarTimelinePresentation,
-} from "./timeline-presentation-hook"
 export {
   CALENDAR_EVENT_FALLBACK_COLOR,
   type CalendarEvent,
@@ -246,17 +230,7 @@ export {
 } from "./week"
 export {
   type CalendarTimelineMode,
-  type CalendarTransitionRequest,
-  type CalendarTransitionSource,
-  type CalendarTransitionState,
-  cancelCalendarTransition,
-  createCalendarTransitionState,
   normalizeTimelineAnchor,
-  replaceCalendarTransition,
-  requestCalendarTransition,
-  settleCalendarTransition,
-  shiftTimelineAnchor,
-  timelineColumns,
 } from "./week-transition"
 export {
   CHUNK_DAYS,

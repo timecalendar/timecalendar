@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef } from "react"
-import { type LayoutChangeEvent, ScrollView } from "react-native"
+import type { LayoutChangeEvent } from "react-native"
 import { Gesture } from "react-native-gesture-handler"
-import {
+import Animated, {
   scrollTo,
   useAnimatedReaction,
   useAnimatedRef,
@@ -24,7 +24,6 @@ import type { TimedViewportGeometry } from "./owned-calendar-resize"
 export type CalendarZoomCommand = "in" | "out" | "reset"
 
 export type CalendarZoomSettlement = {
-  generation: number
   geometryRevision: number
   pixelsPerHour: number
   rawOffset: number
@@ -33,7 +32,6 @@ export type CalendarZoomSettlement = {
 }
 
 export function useOwnedCalendarZoom({
-  generation,
   initialPixelsPerHour,
   initialRawOffset,
   onZoomSettled,
@@ -41,7 +39,6 @@ export function useOwnedCalendarZoom({
   onInteractionInterrupted,
   onInteractionFinished,
 }: {
-  generation: number
   initialPixelsPerHour: number
   initialRawOffset: number
   onZoomSettled: (settlement: CalendarZoomSettlement) => void
@@ -51,11 +48,8 @@ export function useOwnedCalendarZoom({
   onInteractionInterrupted: () => void
   onInteractionFinished: () => void
 }) {
-  const appliedInputs = useRef<{
-    generation: number
-    pixelsPerHour: number
-  } | null>(null)
-  const scrollRef = useAnimatedRef<ScrollView>()
+  const appliedPixelsPerHour = useRef<number | null>(null)
+  const scrollRef = useAnimatedRef<Animated.ScrollView>()
   const pixelsPerHour = useSharedValue(
     resolvePixelsPerHour(initialPixelsPerHour),
   )
@@ -73,23 +67,36 @@ export function useOwnedCalendarZoom({
   const pinchBaselinePointerCount = useSharedValue(0)
   const pinchActive = useSharedValue(false)
   const pinchStarted = useSharedValue(false)
-  const pinchGeneration = useSharedValue(generation)
   const pinchSequence = useSharedValue(0)
   const pinchInterruptionSequence = useSharedValue(0)
   const verticalCallbacksBlocked = useSharedValue(false)
-  const horizontalCallbacksBlocked = useSharedValue(false)
+  const scrollLocked = useSharedValue(false)
+  const verticalTouched = useSharedValue(false)
+  const horizontalTouched = useSharedValue(false)
   const scrollRevision = useSharedValue(0)
   const geometryRevision = useSharedValue(0)
   const pinchGeometryRevision = useSharedValue(0)
+  const unlockScrollIfReleased = () => {
+    "worklet"
+    if (pinchStarted.get() || verticalTouched.get() || horizontalTouched.get())
+      return
+    scrollLocked.set(false)
+  }
+  // A second finger locks both scroll views: the vertical one would follow the
+  // fingers against the focal scroll, and the horizontal one would page. They
+  // unlock once every touch on them ends.
   const pinchGesture = Gesture.Pinch()
     .withTestId("owned-calendar-pinch")
     .cancelsTouchesInView(true)
+    .onTouchesDown((event) => {
+      "worklet"
+      if (event.numberOfTouches >= 2) scrollLocked.set(true)
+    })
     .onStart((event) => {
       "worklet"
-      pinchGeneration.set(generation)
+      scrollLocked.set(true)
       pinchGeometryRevision.set(geometryRevision.get())
       verticalCallbacksBlocked.set(true)
-      horizontalCallbacksBlocked.set(true)
       pinchInterruptionSequence.set(pinchInterruptionSequence.get() + 1)
       pinchSequence.set(pinchSequence.get() + 1)
       pinchBaselineScale.set(pixelsPerHour.get())
@@ -105,7 +112,6 @@ export function useOwnedCalendarZoom({
       "worklet"
       if (
         !pinchActive.get() ||
-        pinchGeneration.get() !== generation ||
         pinchGeometryRevision.get() !== geometryRevision.get()
       )
         return
@@ -142,14 +148,12 @@ export function useOwnedCalendarZoom({
       if (
         !success ||
         !pinchActive.get() ||
-        pinchGeneration.get() !== generation ||
         pinchGeometryRevision.get() !== geometryRevision.get()
       )
         return
       const settledScale = resolvePixelsPerHour(pixelsPerHour.get())
       const settledOffset = rawOffset.get()
       scheduleOnRN(onZoomSettled, {
-        generation,
         geometryRevision: geometryRevision.get(),
         pixelsPerHour: settledScale,
         rawOffset: settledOffset,
@@ -159,20 +163,27 @@ export function useOwnedCalendarZoom({
     })
     .onFinalize((_event, success) => {
       "worklet"
-      if (!pinchStarted.get() || pinchGeneration.get() !== generation) return
+      if (!pinchStarted.get()) {
+        unlockScrollIfReleased()
+        return
+      }
       pinchStarted.set(false)
-      if (
-        !success &&
-        pinchGeneration.get() === generation &&
-        pinchGeometryRevision.get() === geometryRevision.get()
-      ) {
+      if (!success && pinchGeometryRevision.get() === geometryRevision.get()) {
         pixelsPerHour.set(pinchBaselineScale.get())
         rawOffset.set(pinchBaselineOffset.get())
         scrollRevision.set(scrollRevision.get() + 1)
       }
       pinchActive.set(false)
+      unlockScrollIfReleased()
       scheduleOnRN(onInteractionFinished)
     })
+
+  const trackNativeTouch = (axis: "vertical" | "horizontal", down: boolean) => {
+    "worklet"
+    if (axis === "vertical") verticalTouched.set(down)
+    else horizontalTouched.set(down)
+    if (!down) unlockScrollIfReleased()
+  }
 
   useAnimatedReaction(
     () => scrollRevision.get(),
@@ -236,7 +247,6 @@ export function useOwnedCalendarZoom({
       pinchActive.set(false)
       pinchInterruptionSequence.set(interruptionSequence)
       verticalCallbacksBlocked.set(true)
-      horizontalCallbacksBlocked.set(true)
     }
     rawOffset.set(nextRawOffset)
     scrollRevision.set(scrollRevision.get() + 1)
@@ -273,7 +283,6 @@ export function useOwnedCalendarZoom({
     rawOffset.set(nextOffset)
     scrollRevision.set(scrollRevision.get() + 1)
     onZoomSettled({
-      generation,
       geometryRevision: geometryRevision.get(),
       pixelsPerHour: nextScale,
       rawOffset: nextOffset,
@@ -284,27 +293,13 @@ export function useOwnedCalendarZoom({
 
   useLayoutEffect(() => {
     const nextScale = resolvePixelsPerHour(initialPixelsPerHour)
-    const previousInputs = appliedInputs.current
-    appliedInputs.current = { generation, pixelsPerHour: nextScale }
-    if (previousInputs?.generation !== generation) {
-      if (previousInputs !== null && pinchActive.get()) {
-        pixelsPerHour.set(pinchBaselineScale.get())
-        rawOffset.set(pinchBaselineOffset.get())
-        scrollRevision.set(scrollRevision.get() + 1)
-      }
-      pinchActive.set(false)
-      pinchStarted.set(false)
-      pinchGeneration.set(generation)
-      verticalCallbacksBlocked.set(false)
-      horizontalCallbacksBlocked.set(false)
-    }
+    const previous = appliedPixelsPerHour.current
+    appliedPixelsPerHour.current = nextScale
     // Settled props acknowledge native motion. Replaying them with scrollTo
     // clamps away UIKit's automatic tab-bar inset in React Native's iOS command.
-    // Date changes retain the mounted viewport, including its automatic seek.
     if (
-      previousInputs !== null &&
-      (previousInputs.pixelsPerHour === nextScale ||
-        pixelsPerHour.get() === nextScale)
+      previous !== null &&
+      (previous === nextScale || pixelsPerHour.get() === nextScale)
     )
       return
     pixelsPerHour.set(nextScale)
@@ -313,25 +308,17 @@ export function useOwnedCalendarZoom({
     pinchBaselineOffset.set(initialRawOffset)
     pinchActive.set(false)
     pinchStarted.set(false)
-    pinchGeneration.set(generation)
     scrollRef.current?.scrollTo({ y: initialRawOffset, animated: false })
   }, [
-    generation,
-    horizontalCallbacksBlocked,
     initialPixelsPerHour,
     initialRawOffset,
     pinchActive,
     pinchBaselineOffset,
     pinchBaselineScale,
-    pinchGeneration,
-    pinchSequence,
     pinchStarted,
     pixelsPerHour,
-    geometryRevision,
     rawOffset,
     scrollRef,
-    scrollRevision,
-    verticalCallbacksBlocked,
   ])
 
   return {
@@ -340,15 +327,15 @@ export function useOwnedCalendarZoom({
     onViewportLayout,
     invalidateForGeometry,
     pinchActive,
-    pinchGeneration,
     pinchGesture,
     pinchInterruptionSequence,
     pinchSequence,
     pixelsPerHour,
     rawOffset,
     requestZoom,
+    scrollLocked,
     scrollRef,
-    horizontalCallbacksBlocked,
+    trackNativeTouch,
     verticalCallbacksBlocked,
   }
 }

@@ -17,7 +17,6 @@ export type TimedViewportGeometry = {
 export type CalendarResizeSnapshot = {
   dateIdentity: string
   mode: CalendarTimelineMode
-  rendererGeneration: number
   geometryRevision: number
   geometry: TimedViewportGeometry
   pixelsPerHour: number
@@ -27,7 +26,7 @@ export type CalendarResizeSnapshot = {
 
 export type CalendarResizePresentation = Pick<
   CalendarResizeSnapshot,
-  "dateIdentity" | "mode" | "rendererGeneration" | "pixelsPerHour" | "rawOffset"
+  "dateIdentity" | "mode" | "pixelsPerHour" | "rawOffset"
 >
 
 const finiteNonNegative = (value: number): number =>

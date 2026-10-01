@@ -1,5 +1,6 @@
 import type {
   CalendarEventSource,
+  CalendarWindowReader,
   TimedCalendarEventV1,
 } from "@/features/calendar/data"
 
@@ -102,3 +103,23 @@ export function accessibilityProbeFixture(): readonly TimedCalendarEventV1[] {
     ),
   ]
 }
+
+/** A window reader that serves the fixture in every chunk, for the probe route. */
+export const accessibilityProbeReader: CalendarWindowReader = async ({
+  chunks,
+}) => ({
+  chunks: new Map(
+    chunks.map((chunk) => [
+      chunk.start,
+      { events: accessibilityProbeFixture(), checklist: new Map() },
+    ]),
+  ),
+  visibleCalendarIds: new Set(["fixture-calendar"]),
+  rejectedCounts: {
+    "invalid-identity": 0,
+    "invalid-start": 0,
+    "invalid-end": 0,
+    "reversed-range": 0,
+    "invalid-date-range": 0,
+  },
+})

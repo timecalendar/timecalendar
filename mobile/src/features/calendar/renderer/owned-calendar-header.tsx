@@ -1,39 +1,48 @@
-import type { ViewStyle } from "react-native"
+import { memo } from "react"
 import { StyleSheet, View } from "react-native"
-import Animated, { type AnimatedStyle } from "react-native-reanimated"
+import Animated, {
+  type SharedValue,
+  useAnimatedStyle,
+} from "react-native-reanimated"
 
 import { ThemedText } from "@/components/themed-text"
 import {
-  type AppLocale,
-  formatDayHeaderParts,
-  formatNarrowWeekday,
   HOURS_COLUMN_WIDTH,
+  type PagePresentationV1,
 } from "@/features/calendar/data"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { useTheme } from "@/theme"
 
-import type { CalendarPage } from "./owned-calendar-coordinator"
+export type HeaderPage = {
+  presentation: PagePresentationV1
+  left: number
+  committed: boolean
+}
 
 export function OwnedCalendarDateHeader({
   registerHeading,
   pages,
-  locale,
-  displayZone,
+  pageWidth,
+  contentWidth,
+  scrollX,
+  positioned,
   todayKey,
   todayLabel,
-  stripStyle,
 }: {
   registerHeading: (dateKey: string, node: View | null) => void
-  pages: readonly CalendarPage[]
-  locale: AppLocale
-  displayZone: string
+  pages: readonly HeaderPage[]
+  pageWidth: number
+  contentWidth: number
+  scrollX: SharedValue<number>
+  positioned: SharedValue<boolean>
   todayKey: string
   todayLabel: string
-  stripStyle: AnimatedStyle<ViewStyle>
 }) {
   const theme = useTheme()
-  const colorScheme = useColorScheme()
-  const dateColor = colorScheme === "dark" ? theme.textSecondary : theme.text
+  const stripStyle = useAnimatedStyle(() => ({
+    opacity: positioned.get() ? 1 : 0,
+    transform: [{ translateX: -scrollX.get() }],
+  }))
   return (
     <View
       testID="owned-calendar-date-header"
@@ -58,91 +67,108 @@ export function OwnedCalendarDateHeader({
         <Animated.View
           testID="owned-calendar-date-header-strip"
           pointerEvents="none"
-          style={[styles.dateHeaderStrip, stripStyle]}
+          style={[styles.dateHeaderStrip, { width: contentWidth }, stripStyle]}
         >
           {pages.map((page) => (
-            <View
-              key={page.key}
-              testID={`owned-calendar-date-header-slot-${page.direction}`}
-              accessible={false}
-              accessibilityElementsHidden={page.direction !== 0}
-              importantForAccessibility={
-                page.direction === 0 ? "auto" : "no-hide-descendants"
-              }
-              style={styles.dateHeaderSlot}
-            >
-              {page.columns.map((column) => {
-                const parts = formatDayHeaderParts(
-                  column.date,
-                  locale,
-                  displayZone,
-                )
-                const narrowWeekday = formatNarrowWeekday(
-                  column.date,
-                  locale,
-                  displayZone,
-                )
-                const isToday = column.key === todayKey
-                const dateLabel = `${parts.weekday} ${parts.dayOfMonth}`
-                return (
-                  <View
-                    ref={(node) => {
-                      if (page.direction === 0)
-                        registerHeading(column.key, node)
-                    }}
-                    key={column.key}
-                    testID={`owned-calendar-date-${page.direction}-${column.key}`}
-                    accessible={page.direction === 0}
-                    accessibilityRole={
-                      page.direction === 0 ? "header" : undefined
-                    }
-                    accessibilityLabel={
-                      isToday ? `${dateLabel}, ${todayLabel}` : dateLabel
-                    }
-                    style={styles.dateHeaderCell}
-                  >
-                    <ThemedText
-                      accessible={false}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit
-                      minimumFontScale={0.8}
-                      style={[
-                        styles.weekdayLabel,
-                        { color: isToday ? theme.primary : dateColor },
-                      ]}
-                    >
-                      {narrowWeekday}
-                    </ThemedText>
-                    <View
-                      accessible={false}
-                      style={[
-                        styles.dateBadge,
-                        isToday && {
-                          backgroundColor: theme.primary,
-                        },
-                      ]}
-                    >
-                      <ThemedText
-                        accessible={false}
-                        numberOfLines={1}
-                        style={[
-                          styles.dayNumber,
-                          { color: isToday ? theme.background : dateColor },
-                        ]}
-                      >
-                        {parts.dayOfMonth}
-                      </ThemedText>
-                    </View>
-                  </View>
-                )
-              })}
-            </View>
+            <HeaderSlot
+              key={page.presentation.pageKey}
+              presentation={page.presentation}
+              left={page.left}
+              width={pageWidth}
+              committed={page.committed}
+              todayKey={todayKey}
+              todayLabel={todayLabel}
+              registerHeading={registerHeading}
+            />
           ))}
         </Animated.View>
       </View>
     </View>
   )
 }
+
+const HeaderSlot = memo(function HeaderSlot({
+  presentation,
+  left,
+  width,
+  committed,
+  todayKey,
+  todayLabel,
+  registerHeading,
+}: {
+  presentation: PagePresentationV1
+  left: number
+  width: number
+  committed: boolean
+  todayKey: string
+  todayLabel: string
+  registerHeading: (dateKey: string, node: View | null) => void
+}) {
+  const theme = useTheme()
+  const colorScheme = useColorScheme()
+  const dateColor = colorScheme === "dark" ? theme.textSecondary : theme.text
+  return (
+    <View
+      testID={`owned-calendar-date-header-slot-${presentation.pageKey}`}
+      accessible={false}
+      accessibilityElementsHidden={!committed}
+      importantForAccessibility={committed ? "auto" : "no-hide-descendants"}
+      style={[styles.dateHeaderSlot, { left, width }]}
+    >
+      {presentation.columns.map((column) => {
+        const isToday = column.key === todayKey
+        return (
+          <View
+            ref={(node) => {
+              if (committed) registerHeading(column.key, node)
+            }}
+            key={column.key}
+            testID={`owned-calendar-date-${column.key}`}
+            accessible={committed}
+            accessibilityRole={committed ? "header" : undefined}
+            accessibilityLabel={
+              isToday
+                ? `${column.header.label}, ${todayLabel}`
+                : column.header.label
+            }
+            style={styles.dateHeaderCell}
+          >
+            <ThemedText
+              accessible={false}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+              style={[
+                styles.weekdayLabel,
+                { color: isToday ? theme.primary : dateColor },
+              ]}
+            >
+              {column.header.narrowWeekday}
+            </ThemedText>
+            <View
+              accessible={false}
+              style={[
+                styles.dateBadge,
+                isToday && { backgroundColor: theme.primary },
+              ]}
+            >
+              <ThemedText
+                accessible={false}
+                numberOfLines={1}
+                style={[
+                  styles.dayNumber,
+                  { color: isToday ? theme.background : dateColor },
+                ]}
+              >
+                {column.header.dayOfMonth}
+              </ThemedText>
+            </View>
+          </View>
+        )
+      })}
+    </View>
+  )
+})
 
 const styles = StyleSheet.create({
   dateHeader: {
@@ -155,15 +181,13 @@ const styles = StyleSheet.create({
     borderRightWidth: StyleSheet.hairlineWidth,
   },
   dateHeaderViewport: { flex: 1, overflow: "hidden" },
-  dateHeaderStrip: {
+  dateHeaderStrip: { position: "absolute", top: 0, bottom: 0, left: 0 },
+  dateHeaderSlot: {
     position: "absolute",
     top: 0,
     bottom: 0,
-    left: "-100%",
-    width: "300%",
     flexDirection: "row",
   },
-  dateHeaderSlot: { flex: 1, flexDirection: "row" },
   dateHeaderCell: {
     flex: 1,
     minWidth: 0,
