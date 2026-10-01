@@ -280,6 +280,9 @@ function PagingSpike() {
   // which do not follow the live scale. They unlock once every touch on them
   // ends: a finger left down would scroll by everything it moved meanwhile.
   const pinch = Gesture.Pinch()
+    .onTouchesDown((event) => {
+      if (event.numberOfTouches >= 2) scrollLocked.set(true)
+    })
     .onStart((event) => {
       pinchLifted.set(false)
       pinching.set(true)
