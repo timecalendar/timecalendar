@@ -1,3 +1,9 @@
+## 2026-10-01 — Perf variant for the Android performance harness
+
+- `APP_VARIANT=perf` resolves the development runtime under `fr.samuelprak.timecalendar.perf`
+  (scheme `timecalendar-perf`) as a profileable release APK with Reanimated profiling, for the
+  `mobile/perf/` harness. No EAS profile sets it (runtime.md, eas.md).
+
 ## 2026-10-01 — Frozen per-page calendar presentation
 
 - `calendar/data` gains `buildPagePresentation`, a frozen per-page presentation with tile, header
