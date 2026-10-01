@@ -171,6 +171,18 @@ function PagingSpike() {
     horizontalRef,
   ])
 
+  const settleIfAligned = (x: number) => {
+    "worklet"
+    if (dragging.get() || momentum.get()) return
+    const w = pageWidthValue.get()
+    const page = Math.round(x / w)
+    if (Math.abs(x - page * w) > 1 / PIXEL_RATIO) return
+    const index = contentStartIndex.get() + page
+    if (index === settledIndex.get()) return
+    settledIndex.set(index)
+    scheduleOnRN(onSettle, index)
+  }
+
   const horizontalHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       const x = event.contentOffset.x
@@ -200,18 +212,6 @@ function PagingSpike() {
       settleIfAligned(event.contentOffset.x)
     },
   })
-
-  function settleIfAligned(x: number) {
-    "worklet"
-    if (dragging.get() || momentum.get()) return
-    const w = pageWidthValue.get()
-    const page = Math.round(x / w)
-    if (Math.abs(x - page * w) > 1 / PIXEL_RATIO) return
-    const index = contentStartIndex.get() + page
-    if (index === settledIndex.get()) return
-    settledIndex.set(index)
-    scheduleOnRN(onSettle, index)
-  }
 
   const verticalHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
