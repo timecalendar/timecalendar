@@ -256,6 +256,9 @@ function PagingSpike() {
       pinchBaseFocal.set(event.focalY - HEADER_HEIGHT)
     })
     .onUpdate((event) => {
+      // The update sent as a finger lifts puts the focal point on the finger
+      // left down, which would scroll the anchored hour by the whole spread.
+      if (event.numberOfPointers < 2) return
       const scale = Math.min(
         Math.max(pinchBaseScale.get() * event.scale, MIN_PIXELS_PER_HOUR),
         MAX_PIXELS_PER_HOUR,
