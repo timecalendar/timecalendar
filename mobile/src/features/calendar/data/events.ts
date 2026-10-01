@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useState } from "react"
 
 import { useUserCalendarsSnapshot } from "@/features/calendar-sources/data"
 import { useHiddenEvents } from "@/features/hidden-events/data"
@@ -6,12 +6,11 @@ import { usePersonalEventRowsInRange } from "@/features/personal-events"
 
 import { utcDayKey } from "./day-key"
 import {
-  CALENDAR_EVENT_REJECTION_REASONS,
   type CalendarEventRejectionCounts,
   decodePersonalEventRows,
   decodeSyncedEventRows,
 } from "./event-decoder"
-import { recordCalendarEventRejection } from "./rejection-diagnostics"
+import { createCalendarRejectionReporter } from "./rejection-diagnostics"
 import { useSyncedEventRowsInRange } from "./sync/hooks"
 import { type CalendarEvent } from "./types"
 
@@ -78,18 +77,10 @@ function useRejectedRowDiagnostics(
   revision: string,
   counts: CalendarEventRejectionCounts,
 ): void {
-  const reported = useRef(new Set<string>())
+  const [reporter] = useState(createCalendarRejectionReporter)
   useEffect(() => {
-    if (!ready) return
-    for (const reason of CALENDAR_EVENT_REJECTION_REASONS) {
-      const count = counts[reason]
-      if (count === 0) continue
-      const key = `${revision}:${reason}`
-      if (reported.current.has(key)) continue
-      reported.current.add(key)
-      recordCalendarEventRejection(reason, count)
-    }
-  }, [counts, ready, revision])
+    if (ready) reporter.report(revision, counts)
+  }, [counts, ready, reporter, revision])
 }
 
 /** Bounded, validated, shared local Calendar read. */

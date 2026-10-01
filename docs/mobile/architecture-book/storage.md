@@ -20,6 +20,22 @@ SQL half-open intersection predicates over the complete three-page instant range
 UTC-midnight civil envelope for date-only rows; they apply no `LIMIT` and do not pre-read either
 event table. Other existing whole-table consumers remain intentional for their current data size.
 
+`@/db.subscribeToTableChanges(tables, listener)` is the change signal for a store that owns its
+reads instead of mounting live queries: one `addDatabaseChangeListener` per subscription, filtered
+to the given tables and coalesced into one trailing call per burst, like live queries. The
+Calendar window store (`calendar/data/calendar-window-store.ts`) is its consumer. It holds 28-day
+chunks aligned to the first weekday (the mounted pages' chunks plus one chunk either side, at most
+six resident, least recently required evicted). One batched read per request scans
+`calendar_events` (timed rows only) and `personal_events` once over the union of the chunks with
+the same half-open predicates as the range live queries, reads `user_calendars`, then reads
+checklist progress for the UIDs found. Each chunk write is guarded by the sequence of the read
+that requested it, so a late result never overwrites a newer one; a re-read keeps the previous
+rows until it lands. Table changes re-read every resident chunk in one batch and one publish.
+A chunk never read is `loading`, never an empty `ready`. Hidden events, cancellation and calendar
+visibility are filtered when a page selects its rows, not in SQL. The event tables have no index;
+an index migration waits for a dense-store measurement on a low-end device. The Calendar screen
+does not mount the store yet; it reads through the range live queries above.
+
 Checklist summary progress is the scoped-query case: the event-checklists data layer
 normalizes the rendered UID set and selects only `event_uid` plus `is_checked` through
 one live query per Home or Calendar screen. It deliberately applies no `deleted_at`

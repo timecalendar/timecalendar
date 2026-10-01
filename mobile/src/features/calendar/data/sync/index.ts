@@ -3,6 +3,7 @@
 // alias path (the ../ ban) — the specific files (types/events), never this barrel
 // nor the feature barrel.
 export {
+  selectSyncedTimedRowsInRange,
   type SyncedEventRowRange,
   useSyncedEventRowsInRange,
   useSyncedEvents,

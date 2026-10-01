@@ -30,8 +30,11 @@ jest.mock("@/db", () => ({
 const { checklistItems } = mockFake.module as {
   checklistItems: { eventUid: string; isChecked: string }
 }
-const { aggregateChecklistProgress, useChecklistProgress } =
-  jest.requireActual<typeof import("./progress")>("./progress")
+const {
+  aggregateChecklistProgress,
+  readChecklistProgress,
+  useChecklistProgress,
+} = jest.requireActual<typeof import("./progress")>("./progress")
 const { add, remove, reorder, setChecked } =
   jest.requireActual<typeof import("./repository")>("./repository")
 const { checklistItemToRow } =
@@ -74,6 +77,32 @@ describe("aggregateChecklistProgress", () => {
       total: 2,
       isComplete: true,
     })
+  })
+})
+
+describe("readChecklistProgress", () => {
+  it("reads progress once for the normalized UID set", async () => {
+    mockFake.seed("checklistItems", [
+      checklistItemToRow(item({ uuid: "a", eventUid: "e-1", isChecked: true })),
+      checklistItemToRow(item({ uuid: "b", eventUid: "e-1" })),
+      checklistItemToRow(item({ uuid: "c", eventUid: "outside" })),
+    ])
+
+    const progress = await readChecklistProgress(["e-1", "e-1", ""])
+
+    expect(mockFake.spies.inArray).toHaveBeenCalledWith(
+      checklistItems.eventUid,
+      ["e-1"],
+    )
+    expect([...progress]).toEqual([
+      ["e-1", { completed: 1, total: 2, isComplete: false }],
+    ])
+  })
+
+  it("reads nothing for an empty UID set", async () => {
+    mockFake.seed("checklistItems", [checklistItemToRow(item())])
+    expect((await readChecklistProgress([])).size).toBe(0)
+    expect(mockFake.spies.inArray).not.toHaveBeenCalled()
   })
 })
 

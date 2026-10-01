@@ -23,6 +23,33 @@ export function useSyncedEvents(): CalendarEvent[] {
   return [...decodeSyncedEventRows(data).accepted]
 }
 
+export function selectSyncedTimedRowsInRange(range: { from: Date; to: Date }) {
+  const fromIso = range.from.toISOString()
+  const toIso = range.to.toISOString()
+  return db
+    .select()
+    .from(calendarEvents)
+    .where(
+      and(
+        eq(calendarEvents.allDay, false),
+        or(
+          and(
+            lt(calendarEvents.startsAt, toIso),
+            gt(calendarEvents.endsAt, fromIso),
+          ),
+          and(
+            gte(calendarEvents.startsAt, fromIso),
+            lt(calendarEvents.startsAt, toIso),
+          ),
+          and(
+            gt(calendarEvents.endsAt, fromIso),
+            lt(calendarEvents.endsAt, toIso),
+          ),
+        ),
+      ),
+    )
+}
+
 export interface SyncedEventRowRange {
   instant: { from: Date; to: Date }
   civil: { fromDay: string; toDay: string }
@@ -33,31 +60,9 @@ export function useSyncedEventRowsInRange(range: SyncedEventRowRange) {
   const toIso = range.instant.to.toISOString()
   const fromDayIso = `${range.civil.fromDay}T00:00:00.000Z`
   const toDayIso = `${range.civil.toDay}T00:00:00.000Z`
-  const timed = useLiveQuery(
-    db
-      .select()
-      .from(calendarEvents)
-      .where(
-        and(
-          eq(calendarEvents.allDay, false),
-          or(
-            and(
-              lt(calendarEvents.startsAt, toIso),
-              gt(calendarEvents.endsAt, fromIso),
-            ),
-            and(
-              gte(calendarEvents.startsAt, fromIso),
-              lt(calendarEvents.startsAt, toIso),
-            ),
-            and(
-              gt(calendarEvents.endsAt, fromIso),
-              lt(calendarEvents.endsAt, toIso),
-            ),
-          ),
-        ),
-      ),
-    [`timed:${fromIso}:${toIso}`],
-  )
+  const timed = useLiveQuery(selectSyncedTimedRowsInRange(range.instant), [
+    `timed:${fromIso}:${toIso}`,
+  ])
   const dateOnly = useLiveQuery(
     db
       .select()

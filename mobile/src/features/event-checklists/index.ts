@@ -11,6 +11,7 @@ export {
   type ChecklistProgress,
   type ChecklistProgressMap,
   findByEvent,
+  readChecklistProgress,
   remove,
   reorder,
   rowToChecklistItem,

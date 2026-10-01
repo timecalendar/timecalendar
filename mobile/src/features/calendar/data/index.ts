@@ -8,6 +8,20 @@ export {
   projectCalendarAccessibilityEntries,
 } from "./accessibility-projection"
 export { type AgendaDay, groupEventsByDay } from "./agenda"
+export {
+  type CalendarWindowRead,
+  type CalendarWindowReader,
+  type CalendarWindowSnapshot,
+  type CalendarWindowStore,
+  type ChunkEntry,
+  type ChunkRead,
+  createCalendarWindowStore,
+  MAX_RESIDENT_CHUNKS,
+  type PageEventFilter,
+  type PageEvents,
+  type PageStatus,
+  selectPageEvents,
+} from "./calendar-window-store"
 export { useCalendarClock } from "./clock"
 export {
   addDaysInZone,
@@ -208,6 +222,7 @@ export {
   type DateOnlyCalendarEventV1,
   type TimedCalendarEventV1,
 } from "./types"
+export { useCalendarWindow } from "./use-calendar-window"
 export {
   type FirstWeekday,
   shiftWeekInZone,
@@ -230,3 +245,13 @@ export {
   shiftTimelineAnchor,
   timelineColumns,
 } from "./week-transition"
+export {
+  CHUNK_DAYS,
+  CHUNK_PREFETCH,
+  chunkOfPage,
+  type ChunkRange,
+  chunkRange,
+  type ChunkStart,
+  chunkStartOfDay,
+  requiredChunks,
+} from "./window-chunks"
