@@ -119,3 +119,10 @@ and package paths that the disclosure scan rejects.
 
 - `main-a922a6e2`: the Calendar of `main` at a922a6e2 (PagerView renderer), seeded with a
   588-event dev calendar (about 17 events a week), week mode, OnePlus 6 on Android 15 at 60 Hz.
+- `main-40eb2241`: the same Calendar and data at 40eb2241 with the 30° diagonal starting from rest.
+  Its probe found no label; `main-40eb2241-landing` repeats the swipe scenarios with
+  `--probe owned-calendar-canvas` for the landed weeks.
+- `spike-d5038fad-snap`, `spike-d5038fad-paging`, `spike-d5038fad-small-k`: the dev-only paging
+  spike (`/dev-paging-spike`, fixture weeks) with Android `snapToInterval`, with `pagingEnabled`,
+  and with ±8 pages of content so swipe chains re-base. Read with
+  `docs/perf/E02-spike-evidence.md`.
