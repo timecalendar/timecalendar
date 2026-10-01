@@ -98,5 +98,11 @@
     "eslint-plugin-react-native-a11y": {
       "eslint": "$eslint"
     }
+  },
+  "reanimated": {
+    "staticFeatureFlags": {
+      "ANDROID_SYNCHRONOUSLY_UPDATE_UI_PROPS": true,
+      "IOS_SYNCHRONOUSLY_UPDATE_UI_PROPS": true
+    }
   }
 }
