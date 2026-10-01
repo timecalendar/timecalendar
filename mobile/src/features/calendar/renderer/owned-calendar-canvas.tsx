@@ -827,9 +827,12 @@ function TimedCalendarTile({
       testID={`owned-calendar-event-${tile.identity.uid}`}
       pointerEvents="box-none"
       onLayout={
-        accessible && projectionIndex !== undefined && projectionIndex >= 0
+        onProbeDiagnostic !== undefined &&
+        accessible &&
+        projectionIndex !== undefined &&
+        projectionIndex >= 0
           ? ({ nativeEvent }) =>
-              onProbeDiagnostic?.({
+              onProbeDiagnostic({
                 kind: "target-frame",
                 identity: tile.key,
                 order: projectionIndex,

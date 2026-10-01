@@ -4,6 +4,7 @@ import {
   useImperativeHandle,
   useLayoutEffect,
   useRef,
+  useState,
 } from "react"
 import { useTranslation } from "react-i18next"
 import {
@@ -191,8 +192,8 @@ export const OwnedCalendarShell = forwardRef<
     routeFocused,
     transitionPending,
   } = props
-  const targets = useRef(new Map<string, FocusTarget>()).current
-  const headings = useRef(new Map<string, View>()).current
+  const [targets] = useState(() => new Map<string, FocusTarget>())
+  const [headings] = useState(() => new Map<string, View>())
   const activeGeneration = useRef(props.generation)
   const focusContext = useRef<FocusContext>({
     generation: props.generation,
