@@ -14,7 +14,9 @@ recorded here; the verdict is the owner's.**
 | Perfetto traces | spike at `1e126ec7`                     | Same pinch and fling code paths as `d5038fad`, which only changes how the pager is first positioned |
 
 - The spike SHAs name the APKs as built from `spike-native-paging-t04` before it was rebased onto
-  `main`. The merged spike has the same code, plus its root-layout route registration.
+  `main`. The merged spike has the same behaviour, split into a screen, a pinch hook, chrome and
+  panel files, plus its root-layout route registration. A smoke run of that split code (`fc84c461`)
+  landed +15 / −16 on the 20-swipe chains, 20/20 diagonals and 0 pages during the pinch.
 - Device: OnePlus 6 (A6003), Android 15 (LineageOS userdebug), 60 Hz, 1080×2280, density 450
   (2.8125 px/dp).
 - Builds: `APP_VARIANT=perf` release APKs (`fr.samuelprak.timecalendar.perf`), Hermes, profileable,
