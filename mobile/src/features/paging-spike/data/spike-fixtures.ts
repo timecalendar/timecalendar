@@ -76,10 +76,10 @@ export const pageEvents = (pageIndex: number): SpikeEvent[] => {
     const epochDay = pageStartDay(pageIndex) + column
     const seed = hash(epochDay)
     SLOTS.forEach((slot, index) => {
-      if ((seed >> index) % 5 === 0) return
+      if ((seed >>> index) % 5 === 0) return
       events.push({
         key: `${epochDay}:${index}`,
-        startMinute: slot.start + ((seed >> (index + 4)) % 3) * 15,
+        startMinute: slot.start + ((seed >>> (index + 4)) % 3) * 15,
         durationMinutes: slot.duration,
         column,
         lane: 0,

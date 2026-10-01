@@ -45,6 +45,9 @@ describe("paging spike fixtures", () => {
     expect(events.length).toBeGreaterThanOrEqual(14)
     expect(events.every(({ column }) => column < 5)).toBe(true)
     expect(events.filter(({ laneCount }) => laneCount === 2)).toHaveLength(2)
+    expect(
+      Math.min(...events.map(({ startMinute }) => startMinute)),
+    ).toBeGreaterThanOrEqual(8 * 60)
   })
 
   it("reads today in local time", () => {
