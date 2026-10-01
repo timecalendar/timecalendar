@@ -13,7 +13,7 @@ import {
   type SpikeEvent,
 } from "@/features/paging-spike/data"
 
-import { spikeCounters } from "./spike-counters"
+import { countPageMount } from "./spike-counters"
 
 const PIXEL_RATIO = PixelRatio.get()
 
@@ -325,7 +325,7 @@ function SpikePage({
   live: boolean
 }) {
   useEffect(() => {
-    spikeCounters.pageMounts += 1
+    countPageMount()
   }, [])
   const columnWidth = width / 7
   const days = pageDays(pageIndex, today)
