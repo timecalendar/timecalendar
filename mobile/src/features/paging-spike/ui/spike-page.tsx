@@ -158,9 +158,10 @@ function LiveTile({
     pixelsPerHour,
   )
 
-  const liveHeight = () => {
+  // Each updater reads `scale` itself: Reanimated subscribes a style only to the
+  // shared values its updater captures, not to those of a worklet it calls.
+  const liveHeight = (s: number) => {
     "worklet"
-    const s = scale.get()
     const liveTop = minuteY(event.startMinute, s)
     return {
       delta: liveTop - top,
@@ -168,24 +169,30 @@ function LiveTile({
     }
   }
   const containerStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: liveHeight().delta }],
+    transform: [{ translateY: liveHeight(scale.get()).delta }],
   }))
   const middleStyle = useAnimatedStyle(() => {
-    const next = Math.max(liveHeight().height - 2 * CAP, 0)
+    const next = Math.max(liveHeight(scale.get()).height - 2 * CAP, 0)
     return {
       transform: [{ scaleY: middleHeight === 0 ? 0 : next / middleHeight }],
     }
   })
   const bottomCapStyle = useAnimatedStyle(() => ({
     transform: [
-      { translateY: Math.max(liveHeight().height, 2 * CAP) - height },
+      {
+        translateY: Math.max(liveHeight(scale.get()).height, 2 * CAP) - height,
+      },
     ],
   }))
   const clipStyle = useAnimatedStyle(() => ({
-    transform: [{ scaleY: Math.max(liveHeight().height, 1) / height }],
+    transform: [
+      { scaleY: Math.max(liveHeight(scale.get()).height, 1) / height },
+    ],
   }))
   const textStyle = useAnimatedStyle(() => ({
-    transform: [{ scaleY: height / Math.max(liveHeight().height, 1) }],
+    transform: [
+      { scaleY: height / Math.max(liveHeight(scale.get()).height, 1) },
+    ],
   }))
 
   return (
