@@ -1,5 +1,5 @@
 /* eslint-disable i18next/no-literal-string -- dev-only spike with fixture copy */
-import { Stack } from "expo-router"
+import { Stack, useLocalSearchParams } from "expo-router"
 import { useLayoutEffect, useRef, useState } from "react"
 import {
   type LayoutChangeEvent,
@@ -68,12 +68,17 @@ export function PagingSpikeScreen() {
 }
 
 function PagingSpike() {
+  const params = useLocalSearchParams<{ android?: string; k?: string }>()
   const today = todayEpochDay()
   const todayPage = pageIndexOfDay(today)
   const [width, setWidth] = useState(0)
   const [initialX, setInitialX] = useState(0)
-  const [androidPaging, setAndroidPaging] = useState<AndroidPaging>("snap")
-  const [contentSize, setContentSize] = useState<ContentSize>("full")
+  const [androidPaging, setAndroidPaging] = useState<AndroidPaging>(
+    params.android === "paging" ? "paging" : "snap",
+  )
+  const [contentSize, setContentSize] = useState<ContentSize>(
+    params.k === "small" ? "small" : "full",
+  )
   const [base, setBase] = useState(todayPage)
   const [center, setCenter] = useState(todayPage)
   const [settled, setSettled] = useState(todayPage)
