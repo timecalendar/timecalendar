@@ -15,7 +15,7 @@ import {
 const CAP = 4
 const PIXEL_RATIO = PixelRatio.get()
 
-export const spikeCounters = { pageMounts: 0, tileMounts: 0 }
+export const spikeCounters = { pageMounts: 0 }
 
 const toPixel = (value: number) => {
   "worklet"
@@ -76,32 +76,91 @@ export function HourLabel({
   )
 }
 
-function SpikeTile({
+type TileGeometry = {
+  top: number
+  left: number
+  width: number
+  height: number
+  middleHeight: number
+}
+
+const tileGeometry = (
+  event: SpikeEvent,
+  columnWidth: number,
+  pixelsPerHour: number,
+): TileGeometry => {
+  const top = minuteY(event.startMinute, pixelsPerHour)
+  const height =
+    minuteY(event.startMinute + event.durationMinutes, pixelsPerHour) - top
+  const laneWidth = columnWidth / event.laneCount
+  return {
+    top,
+    left: event.column * columnWidth + event.lane * laneWidth + 1,
+    width: laneWidth - 2,
+    height,
+    middleHeight: Math.max(height - 2 * CAP, 0),
+  }
+}
+
+function TileText({ event }: { event: SpikeEvent }) {
+  return (
+    <>
+      <Text style={styles.tileTitle}>{event.title}</Text>
+      {`\n${event.location}`}
+    </>
+  )
+}
+
+// Pages other than the settled one never pinch, so their tiles carry no
+// animated styles: a window shift then mounts plain views only.
+function StaticTile({
+  event,
+  columnWidth,
+  pixelsPerHour,
+}: {
+  event: SpikeEvent
+  columnWidth: number
+  pixelsPerHour: number
+}) {
+  const { top, left, width, height, middleHeight } = tileGeometry(
+    event,
+    columnWidth,
+    pixelsPerHour,
+  )
+  return (
+    <View style={[styles.tile, { top, left, width, height }]}>
+      <View style={[styles.slice, styles.topCap]} />
+      <View style={[styles.slice, styles.middle, { height: middleHeight }]} />
+      <View style={[styles.slice, styles.bottomCap, { top: height - CAP }]} />
+      <View style={[styles.clip, { height }]}>
+        <Text style={styles.tileText} numberOfLines={4}>
+          <TileText event={event} />
+        </Text>
+      </View>
+    </View>
+  )
+}
+
+function LiveTile({
   event,
   columnWidth,
   pixelsPerHour,
   scale,
-  live,
 }: {
   event: SpikeEvent
   columnWidth: number
   pixelsPerHour: number
   scale: SharedValue<number>
-  live: boolean
 }) {
-  useEffect(() => {
-    spikeCounters.tileMounts += 1
-  }, [])
-  const top = minuteY(event.startMinute, pixelsPerHour)
-  const height =
-    minuteY(event.startMinute + event.durationMinutes, pixelsPerHour) - top
-  const middleHeight = Math.max(height - 2 * CAP, 0)
-  const laneWidth = columnWidth / event.laneCount
-  const left = event.column * columnWidth + event.lane * laneWidth + 1
+  const { top, left, width, height, middleHeight } = tileGeometry(
+    event,
+    columnWidth,
+    pixelsPerHour,
+  )
 
   const liveHeight = () => {
     "worklet"
-    const s = live ? scale.get() : pixelsPerHour
+    const s = scale.get()
     const liveTop = minuteY(event.startMinute, s)
     return {
       delta: liveTop - top,
@@ -131,11 +190,7 @@ function SpikeTile({
 
   return (
     <Animated.View
-      style={[
-        styles.tile,
-        { top, left, width: laneWidth - 2, height },
-        containerStyle,
-      ]}
+      style={[styles.tile, { top, left, width, height }, containerStyle]}
     >
       <View style={[styles.slice, styles.topCap]} />
       <Animated.View
@@ -156,8 +211,7 @@ function SpikeTile({
       />
       <Animated.View style={[styles.clip, { height }, clipStyle]}>
         <Animated.Text style={[styles.tileText, textStyle]} numberOfLines={4}>
-          <Text style={styles.tileTitle}>{event.title}</Text>
-          {`\n${event.location}`}
+          <TileText event={event} />
         </Animated.Text>
       </Animated.View>
     </Animated.View>
@@ -216,16 +270,24 @@ export function SpikePage({
           />
         ) : null,
       )}
-      {pageEvents(pageIndex).map((event) => (
-        <SpikeTile
-          key={event.key}
-          event={event}
-          columnWidth={columnWidth}
-          pixelsPerHour={pixelsPerHour}
-          scale={scale}
-          live={live}
-        />
-      ))}
+      {pageEvents(pageIndex).map((event) =>
+        live ? (
+          <LiveTile
+            key={event.key}
+            event={event}
+            columnWidth={columnWidth}
+            pixelsPerHour={pixelsPerHour}
+            scale={scale}
+          />
+        ) : (
+          <StaticTile
+            key={event.key}
+            event={event}
+            columnWidth={columnWidth}
+            pixelsPerHour={pixelsPerHour}
+          />
+        ),
+      )}
     </View>
   )
 }
