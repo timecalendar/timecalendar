@@ -1,4 +1,4 @@
-import { db, eq, personalEvents } from "@/db"
+import { and, db, eq, gt, gte, lt, or, personalEvents } from "@/db"
 
 import { eventToRow, type PersonalEvent, rowToEvent } from "./types"
 
@@ -35,4 +35,32 @@ export async function upsert(event: PersonalEvent): Promise<void> {
 
 export async function remove(uid: string): Promise<void> {
   await db.delete(personalEvents).where(eq(personalEvents.uid, uid))
+}
+
+// Half-open intersection with [from, to), plus point events starting inside it.
+export function selectPersonalEventRowsInRange(range: {
+  from: Date
+  to: Date
+}) {
+  const fromIso = range.from.toISOString()
+  const toIso = range.to.toISOString()
+  return db
+    .select()
+    .from(personalEvents)
+    .where(
+      or(
+        and(
+          lt(personalEvents.startsAt, toIso),
+          gt(personalEvents.endsAt, fromIso),
+        ),
+        and(
+          gte(personalEvents.startsAt, fromIso),
+          lt(personalEvents.startsAt, toIso),
+        ),
+        and(
+          gt(personalEvents.endsAt, fromIso),
+          lt(personalEvents.endsAt, toIso),
+        ),
+      ),
+    )
 }

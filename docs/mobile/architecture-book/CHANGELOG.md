@@ -1,3 +1,13 @@
+## 2026-10-01 — Calendar window store and table-change seam
+
+- `@/db` exports `subscribeToTableChanges`, a coalesced change listener over a set of tables for
+  stores that own their reads.
+- `calendar/data` gains the `CalendarWindowStore` (28-day chunks, ±1 chunk prefetch,
+  sequence-guarded writes, keep-previous re-reads, explicit `loading | ready | error` page status)
+  and its `useCalendarWindow` binding; see `storage.md`. It is not mounted by a screen yet.
+- Rejected-row diagnostics remember only the latest read revision, so the set stays bounded while
+  paging.
+
 ## 2026-09-27 — Blurred iOS bars and flat Android bars on every stack screen
 
 - `buildCompactRootScreenOptions` owns the header surface for the root and onboarding Stacks. iOS:

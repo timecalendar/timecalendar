@@ -12,6 +12,7 @@ export {
   aggregateChecklistProgress,
   type ChecklistProgress,
   type ChecklistProgressMap,
+  readChecklistProgress,
   useChecklistProgress,
 } from "./progress"
 export {

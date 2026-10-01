@@ -24,6 +24,7 @@ import {
   personalEvents,
   userCalendars,
 } from "./schema"
+import { subscribeToTableChanges } from "./table-changes"
 
 // Thin seam over expo-sqlite + Drizzle — the single place the app opens the
 // database and constructs Drizzle, so the backend stays swappable and feature
@@ -66,6 +67,8 @@ export function resetBackendDatabase(): void {
 // newest-first read, `lt` for its one-year age cutoff, `notInArray` for its
 // ownership prune, `inArray` for the event-checklist progress UID-set read, and
 // `sql` for that read's unconditional always-false empty-set predicate.
+// `subscribeToTableChanges` is the coalesced change signal for a store that
+// owns its reads (the calendar window store) instead of one live query per range.
 export {
   and,
   asc,
@@ -78,6 +81,7 @@ export {
   notInArray,
   or,
   sql,
+  subscribeToTableChanges,
   useLiveQuery,
 }
 

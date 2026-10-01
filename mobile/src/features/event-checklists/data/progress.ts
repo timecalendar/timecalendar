@@ -42,6 +42,29 @@ function normalizeEventUids(eventUids: readonly string[]): string[] {
   return [...new Set(eventUids.filter((uid) => uid.length > 0))].sort()
 }
 
+function selectProgressRows(normalizedUids: readonly string[]) {
+  return db
+    .select({
+      eventUid: checklistItems.eventUid,
+      isChecked: checklistItems.isChecked,
+    })
+    .from(checklistItems)
+    .where(
+      normalizedUids.length === 0
+        ? sql`0`
+        : inArray(checklistItems.eventUid, [...normalizedUids]),
+    )
+}
+
+/** One set-oriented checklist read, for a store that owns its own refresh. */
+export async function readChecklistProgress(
+  eventUids: readonly string[],
+): Promise<ChecklistProgressMap> {
+  return aggregateChecklistProgress(
+    await selectProgressRows(normalizeEventUids(eventUids)),
+  )
+}
+
 /** One reactive, set-oriented checklist read for a whole summary screen. */
 export function useChecklistProgress(
   eventUids: readonly string[],
@@ -51,20 +74,9 @@ export function useChecklistProgress(
     [eventUids],
   )
   const dependencyKey = normalizedUids.join("\u0000")
-  const predicate =
-    normalizedUids.length === 0
-      ? sql`0`
-      : inArray(checklistItems.eventUid, normalizedUids)
-  const { data } = useLiveQuery(
-    db
-      .select({
-        eventUid: checklistItems.eventUid,
-        isChecked: checklistItems.isChecked,
-      })
-      .from(checklistItems)
-      .where(predicate),
-    [dependencyKey],
-  )
+  const { data } = useLiveQuery(selectProgressRows(normalizedUids), [
+    dependencyKey,
+  ])
 
   return useMemo(() => aggregateChecklistProgress(data), [data])
 }

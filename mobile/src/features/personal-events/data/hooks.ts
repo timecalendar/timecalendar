@@ -1,5 +1,6 @@
-import { and, db, gt, gte, lt, or, personalEvents, useLiveQuery } from "@/db"
+import { db, personalEvents, useLiveQuery } from "@/db"
 
+import { selectPersonalEventRowsInRange } from "./repository"
 import { type PersonalEvent, rowToEvent } from "./types"
 
 // Reactive read over the seam's useLiveQuery (re-exported from @/db, never a
@@ -13,28 +14,9 @@ export function usePersonalEvents(): PersonalEvent[] {
 export function usePersonalEventRowsInRange(range: { from: Date; to: Date }) {
   const fromIso = range.from.toISOString()
   const toIso = range.to.toISOString()
-  const result = useLiveQuery(
-    db
-      .select()
-      .from(personalEvents)
-      .where(
-        or(
-          and(
-            lt(personalEvents.startsAt, toIso),
-            gt(personalEvents.endsAt, fromIso),
-          ),
-          and(
-            gte(personalEvents.startsAt, fromIso),
-            lt(personalEvents.startsAt, toIso),
-          ),
-          and(
-            gt(personalEvents.endsAt, fromIso),
-            lt(personalEvents.endsAt, toIso),
-          ),
-        ),
-      ),
-    [`personal:${fromIso}:${toIso}`],
-  )
+  const result = useLiveQuery(selectPersonalEventRowsInRange(range), [
+    `personal:${fromIso}:${toIso}`,
+  ])
   return {
     rows: result.data,
     error: result.error,
