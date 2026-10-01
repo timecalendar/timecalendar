@@ -180,6 +180,7 @@ describe("Settings route structure", () => {
       "profile",
       "more",
       "dev-import",
+      "dev-paging-spike",
       "calendar-import-result",
     ]) {
       expect(rootLayout).toMatch(
@@ -195,6 +196,7 @@ describe("Settings route structure", () => {
       "profile",
       "more",
       "dev-import",
+      "dev-paging-spike",
       "calendar-import-result",
     ])
     const registrations = rootRegistrations(rootLayout)

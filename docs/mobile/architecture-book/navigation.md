@@ -27,8 +27,8 @@ fills the viewport (`flexGrow: 1` — an `EmptyState variant="screen"`, a centre
 error) never scrolls under the bar: the automatic inset on top of a viewport-tall content makes it
 scroll by the header height. Such a page drops `scrollsUnderHeader` and its scroller spreads
 `headerScrollProps(false)` (inset `never`, no bounce); a list toggles both on whether it has rows
-(`headerScrollProps(hasRows)`); `KeyboardSafeActionLayout` takes `scrollsUnderHeader={false}`. `(tabs)`, `onboarding`, `profile`, `more`, and
-`dev-import` are explicit headerless exceptions. The route-structure test enumerates top-level
+(`headerScrollProps(hasRows)`); `KeyboardSafeActionLayout` takes `scrollsUnderHeader={false}`. `(tabs)`, `onboarding`, `profile`, `more`,
+`dev-import`, `dev-paging-spike` and `calendar-import-result` are explicit headerless exceptions. The route-structure test enumerates top-level
 siblings so a new route cannot inherit either posture accidentally. Features still own localized
 `Stack.Screen` titles and native header actions. See ADR [054](./decisions/054-shared-root-page-semantics.md).
 
@@ -40,6 +40,9 @@ native header is the route heading.
 The Settings tab root is the one titled-tab exception: its nested Stack shows a native large title
 (`headerLargeTitle: true`) that collapses into the compact bar on scroll. Every Settings destination
 pushed on the root Stack stays compact.
+
+`/dev-paging-spike` is a dev-only, headerless root sibling reached only by deep link
+(`timecalendar-dev://dev-paging-spike`); outside dev variants it renders a placeholder.
 
 `/settings-gallery` is a dev-only root sibling reached from the Settings hub's environment section.
 It renders every `native-settings` primitive for a one-pass device check in both schemes and

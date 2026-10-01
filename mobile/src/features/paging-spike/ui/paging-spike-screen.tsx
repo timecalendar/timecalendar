@@ -1,5 +1,5 @@
 /* eslint-disable i18next/no-literal-string -- dev-only spike with fixture copy */
-import { Stack, useLocalSearchParams } from "expo-router"
+import { useLocalSearchParams } from "expo-router"
 import { useLayoutEffect, useRef, useState } from "react"
 import {
   type LayoutChangeEvent,
@@ -56,15 +56,10 @@ type ContentSize = keyof typeof CONTENT_RADIUS
 type AndroidPaging = "snap" | "paging"
 
 export function PagingSpikeScreen() {
-  return (
-    <>
-      <Stack.Screen options={{ headerShown: false }} />
-      {isDevVariant() ? (
-        <PagingSpike />
-      ) : (
-        <Text testID="paging-spike-unavailable">Not available</Text>
-      )}
-    </>
+  return isDevVariant() ? (
+    <PagingSpike />
+  ) : (
+    <Text testID="paging-spike-unavailable">Not available</Text>
   )
 }
 

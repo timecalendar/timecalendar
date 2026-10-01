@@ -225,6 +225,12 @@ export default function RootLayout() {
                 name="dev-import"
                 options={{ headerShown: false }}
               />
+              {/* The dev-only native paging spike (E02): renders only in dev
+                variants and is reached by deep link, never from navigation. */}
+              <Stack.Screen
+                name="dev-paging-spike"
+                options={{ headerShown: false }}
+              />
             </Stack>
             {/* Above the Stack: covers the whole app during startup, fades out (or
               cuts under reduced motion) once useAppReady() resolves. */}
