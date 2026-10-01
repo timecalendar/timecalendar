@@ -13,9 +13,9 @@ import {
   type SpikeEvent,
 } from "@/features/paging-spike/data"
 
-const PIXEL_RATIO = PixelRatio.get()
+import { spikeCounters } from "./spike-counters"
 
-export const spikeCounters = { pageMounts: 0 }
+const PIXEL_RATIO = PixelRatio.get()
 
 const toPixel = (value: number) => {
   "worklet"
@@ -246,7 +246,68 @@ function NowLine({
   return <Animated.View style={[styles.nowLine, { left, width, top }, style]} />
 }
 
-export function SpikePage({
+export function PageWindow({
+  pages,
+  contentStart,
+  pageWidth,
+  today,
+  pixelsPerHour,
+  scale,
+  settled,
+}: {
+  pages: number[]
+  contentStart: number
+  pageWidth: number
+  today: number
+  pixelsPerHour: number
+  scale: SharedValue<number>
+  settled: number
+}) {
+  return (
+    <>
+      {pages.map((index) => (
+        <SpikePage
+          key={index}
+          pageIndex={index}
+          left={(index - contentStart) * pageWidth}
+          width={pageWidth}
+          today={today}
+          pixelsPerHour={pixelsPerHour}
+          scale={scale}
+          live={index === settled}
+        />
+      ))}
+    </>
+  )
+}
+
+export function HeaderWindow({
+  pages,
+  contentStart,
+  pageWidth,
+  today,
+}: {
+  pages: number[]
+  contentStart: number
+  pageWidth: number
+  today: number
+}) {
+  return (
+    <>
+      {pages.map((index) => (
+        <HeaderSlot
+          key={index}
+          pageIndex={index}
+          left={(index - contentStart) * pageWidth}
+          width={pageWidth}
+          today={today}
+        />
+      ))}
+    </>
+  )
+}
+
+function SpikePage({
   pageIndex,
   left,
   width,
@@ -315,7 +376,7 @@ export function SpikePage({
   )
 }
 
-export function HeaderSlot({
+function HeaderSlot({
   pageIndex,
   left,
   width,

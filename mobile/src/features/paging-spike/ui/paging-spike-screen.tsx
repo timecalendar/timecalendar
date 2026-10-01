@@ -5,15 +5,13 @@ import {
   type LayoutChangeEvent,
   PixelRatio,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   View,
 } from "react-native"
-import { Gesture, GestureDetector } from "react-native-gesture-handler"
+import { GestureDetector } from "react-native-gesture-handler"
 import Animated, {
   scrollTo,
-  useAnimatedProps,
   useAnimatedReaction,
   useAnimatedRef,
   useAnimatedScrollHandler,
@@ -27,30 +25,27 @@ import { isDevVariant } from "@/config/variant"
 import {
   DEFAULT_PIXELS_PER_HOUR,
   isoDate,
-  MAX_CONTENT_HEIGHT,
-  MAX_PIXELS_PER_HOUR,
-  MIN_PIXELS_PER_HOUR,
   pageIndexOfDay,
   pageStartDay,
   todayEpochDay,
 } from "@/features/paging-spike/data"
 
 import {
-  GridLine,
-  HeaderSlot,
-  HourLabel,
-  spikeCounters,
-  SpikePage,
-} from "./spike-page"
+  GUTTER,
+  HEADER_HEIGHT,
+  SharedGrid,
+  SpikeHeader,
+  SpikePager,
+} from "./spike-chrome"
+import { spikeCounters } from "./spike-counters"
+import { PageWindow } from "./spike-page"
+import { SpikePanel } from "./spike-panel"
+import { useSpikePinch } from "./use-spike-pinch"
 
-const GUTTER = 50
-const HEADER_HEIGHT = 52
 const WINDOW_RADIUS = 2
 const PIXEL_RATIO = PixelRatio.get()
 const CONTENT_RADIUS = { full: 260, small: 8 } as const
 const REBASE_EDGE = { full: 30, small: 3 } as const
-const GRID_MINUTES = Array.from({ length: 49 }, (_, index) => index * 30)
-const HOURS = Array.from({ length: 23 }, (_, index) => index + 1)
 
 type ContentSize = keyof typeof CONTENT_RADIUS
 type AndroidPaging = "snap" | "paging"
@@ -101,20 +96,6 @@ function PagingSpike() {
   const settledIndex = useSharedValue(todayPage)
   const contentStartIndex = useSharedValue(contentStart)
   const pageWidthValue = useSharedValue(pageWidth)
-  const liveScale = useSharedValue(DEFAULT_PIXELS_PER_HOUR)
-  const verticalOffset = useSharedValue(0)
-  const viewportHeight = useSharedValue(0)
-  const pinchBaseScale = useSharedValue(DEFAULT_PIXELS_PER_HOUR)
-  const pinchBaseOffset = useSharedValue(0)
-  const pinchBaseFocal = useSharedValue(0)
-  const pinchOffset = useSharedValue(-1)
-  const pinchLifted = useSharedValue(false)
-  const previousScale = useSharedValue(DEFAULT_PIXELS_PER_HOUR)
-  const previousOffset = useSharedValue(-1)
-  const pinching = useSharedValue(false)
-  const verticalTouched = useSharedValue(false)
-  const horizontalTouched = useSharedValue(false)
-  const scrollLocked = useSharedValue(false)
 
   const crossingStartedAt = useRef(0)
   const crossingCount = useRef(0)
@@ -149,9 +130,19 @@ function PagingSpike() {
     }
   }
 
-  const onPinchEnd = (scale: number) => {
-    setPixelsPerHour(scale)
-  }
+  const {
+    liveScale,
+    scrollLocked,
+    pinch,
+    verticalNative,
+    horizontalNative,
+    scrollProps,
+    verticalHandler,
+  } = useSpikePinch({
+    verticalRef,
+    focalTop: HEADER_HEIGHT,
+    onPinchEnd: setPixelsPerHour,
+  })
 
   useLayoutEffect(() => {
     if (crossingStartedAt.current === 0) return
@@ -197,14 +188,6 @@ function PagingSpike() {
     scheduleOnRN(onSettle, index)
   }
 
-  const unlockScrollIfReleased = () => {
-    "worklet"
-    if (pinching.get() || verticalTouched.get() || horizontalTouched.get()) {
-      return
-    }
-    scrollLocked.set(false)
-  }
-
   const horizontalHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       const x = event.contentOffset.x
@@ -236,13 +219,6 @@ function PagingSpike() {
     },
   })
 
-  const verticalHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      verticalOffset.set(event.contentOffset.y)
-      viewportHeight.set(event.layoutMeasurement.height)
-    },
-  })
-
   // A pager locked mid-drag never received its lift, so it neither snapped nor
   // reported the drag's end.
   useAnimatedReaction(
@@ -262,102 +238,6 @@ function PagingSpike() {
     },
   )
 
-  useAnimatedReaction(
-    () => pinchOffset.get(),
-    (offset, previous) => {
-      if (offset < 0 || offset === previous) return
-      verticalOffset.set(offset)
-      scrollTo(verticalRef, 0, offset, false)
-    },
-  )
-
-  // A pinch locks both ScrollViews: the vertical one would follow the fingers
-  // and fling on lift, and the horizontal one would bring in neighbour pages,
-  // which do not follow the live scale. They unlock once every touch on them
-  // ends: a finger left down would scroll by everything it moved meanwhile.
-  const pinch = Gesture.Pinch()
-    .onTouchesDown((event) => {
-      if (event.numberOfTouches >= 2) scrollLocked.set(true)
-    })
-    .onStart((event) => {
-      pinchLifted.set(false)
-      pinching.set(true)
-      scrollLocked.set(true)
-      pinchBaseScale.set(liveScale.get())
-      pinchBaseOffset.set(verticalOffset.get())
-      pinchBaseFocal.set(event.focalY - HEADER_HEIGHT)
-    })
-    .onUpdate((event) => {
-      if (pinchLifted.get() || event.numberOfPointers < 2) return
-      previousScale.set(liveScale.get())
-      previousOffset.set(pinchOffset.get())
-      const scale = Math.min(
-        Math.max(pinchBaseScale.get() * event.scale, MIN_PIXELS_PER_HOUR),
-        MAX_PIXELS_PER_HOUR,
-      )
-      const clockHour =
-        (pinchBaseOffset.get() + pinchBaseFocal.get()) / pinchBaseScale.get()
-      const maxOffset = Math.max(24 * scale - viewportHeight.get(), 0)
-      const offset = Math.min(
-        Math.max(clockHour * scale - (event.focalY - HEADER_HEIGHT), 0),
-        maxOffset,
-      )
-      liveScale.set(scale)
-      pinchOffset.set(offset)
-    })
-    // The pinch stays active until every finger lifts, and the event that lifts
-    // the first one already moves the focal point onto the finger left down. The
-    // update it carries would scroll the anchored hour by half the spread, so it
-    // is undone and the zoom holds until the last finger lifts.
-    .onTouchesUp(() => {
-      if (pinchLifted.get()) return
-      pinchLifted.set(true)
-      liveScale.set(previousScale.get())
-      pinchOffset.set(previousOffset.get())
-    })
-    .onEnd(() => {
-      scheduleOnRN(onPinchEnd, liveScale.get())
-    })
-    .onFinalize(() => {
-      pinching.set(false)
-      unlockScrollIfReleased()
-    })
-  // A native handler is interruptible by default: the vertical ScrollView
-  // activating mid-swipe cancels the horizontal one, which then never snaps.
-  // Uninterruptible handlers keep a touch on whichever axis claims it first.
-  const verticalNative = Gesture.Native()
-    .disallowInterruption(true)
-    .simultaneousWithExternalGesture(pinch)
-    .onBegin(() => {
-      verticalTouched.set(true)
-    })
-    .onFinalize(() => {
-      verticalTouched.set(false)
-      unlockScrollIfReleased()
-    })
-  const horizontalNative = Gesture.Native()
-    .disallowInterruption(true)
-    .simultaneousWithExternalGesture(pinch)
-    .onBegin(() => {
-      horizontalTouched.set(true)
-    })
-    .onFinalize(() => {
-      horizontalTouched.set(false)
-      unlockScrollIfReleased()
-    })
-  const scrollProps = useAnimatedProps(() => ({
-    scrollEnabled: !scrollLocked.get(),
-  }))
-
-  // Android re-applies a `contentOffset` prop whenever the view's props are
-  // re-sent, which a Reanimated `scrollEnabled` update does, so the pager is
-  // placed with `scrollTo` instead and stays hidden until it has moved there.
-  const horizontalStyle = useAnimatedStyle(() => ({
-    opacity: positioned.get() ? 1 : 0,
-  }))
-  const stripStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: -scrollX.get() }],
-  }))
   const dayHeightStyle = useAnimatedStyle(() => ({
     height: 24 * liveScale.get(),
   }))
@@ -400,28 +280,15 @@ function PagingSpike() {
       {pageWidth > 0 ? (
         <GestureDetector gesture={pinch}>
           <View style={styles.body}>
-            <View style={styles.header}>
-              <View style={styles.corner}>
-                <Text style={styles.cornerText}>
-                  {isoDate(pageStartDay(settled)).slice(5)}
-                </Text>
-              </View>
-              <View style={[styles.headerViewport, { width: pageWidth }]}>
-                <Animated.View
-                  style={[styles.strip, { width: contentWidth }, stripStyle]}
-                >
-                  {windowPages.map((index) => (
-                    <HeaderSlot
-                      key={index}
-                      pageIndex={index}
-                      left={(index - contentStart) * pageWidth}
-                      width={pageWidth}
-                      today={today}
-                    />
-                  ))}
-                </Animated.View>
-              </View>
-            </View>
+            <SpikeHeader
+              settled={settled}
+              scrollX={scrollX}
+              pages={windowPages}
+              contentStart={contentStart}
+              contentWidth={contentWidth}
+              pageWidth={pageWidth}
+              today={today}
+            />
             <GestureDetector gesture={verticalNative}>
               <Animated.ScrollView
                 ref={verticalRef}
@@ -440,174 +307,58 @@ function PagingSpike() {
                     dayHeightStyle,
                   ]}
                 >
-                  <View style={styles.gutter}>
-                    {HOURS.map((hour) => (
-                      <HourLabel key={hour} hour={hour} liveScale={liveScale} />
-                    ))}
-                  </View>
-                  <View style={[styles.gridLayer, { width: pageWidth }]}>
-                    {GRID_MINUTES.map((minute) => (
-                      <GridLine
-                        key={minute}
-                        minute={minute}
-                        liveScale={liveScale}
-                        width={pageWidth}
-                        major={minute % 60 === 0}
-                      />
-                    ))}
-                  </View>
-                  <GestureDetector gesture={horizontalNative}>
-                    <Animated.ScrollView
-                      ref={horizontalRef}
-                      animatedProps={scrollProps}
-                      key={contentSize}
-                      testID="paging-spike-horizontal"
-                      horizontal
-                      pagingEnabled={pagingEnabled}
-                      snapToInterval={snapToInterval}
-                      disableIntervalMomentum
-                      decelerationRate="fast"
-                      directionalLockEnabled
-                      bounces={false}
-                      overScrollMode="never"
-                      showsHorizontalScrollIndicator={false}
-                      scrollEventThrottle={16}
-                      importantForAccessibility="no"
-                      onScroll={horizontalHandler}
-                      style={[
-                        styles.horizontal,
-                        { width: pageWidth },
-                        horizontalStyle,
-                      ]}
-                      contentContainerStyle={{
-                        width: contentWidth,
-                        height: MAX_CONTENT_HEIGHT,
-                      }}
-                    >
-                      {windowPages.map((index) => (
-                        <SpikePage
-                          key={index}
-                          pageIndex={index}
-                          left={(index - contentStart) * pageWidth}
-                          width={pageWidth}
-                          today={today}
-                          pixelsPerHour={pixelsPerHour}
-                          scale={liveScale}
-                          live={index === settled}
-                        />
-                      ))}
-                    </Animated.ScrollView>
-                  </GestureDetector>
+                  <SharedGrid liveScale={liveScale} pageWidth={pageWidth} />
+                  <SpikePager
+                    key={contentSize}
+                    scrollRef={horizontalRef}
+                    gesture={horizontalNative}
+                    scrollLocked={scrollLocked}
+                    positioned={positioned}
+                    pagingEnabled={pagingEnabled}
+                    snapToInterval={snapToInterval}
+                    onScroll={horizontalHandler}
+                    pageWidth={pageWidth}
+                    contentWidth={contentWidth}
+                  >
+                    <PageWindow
+                      pages={windowPages}
+                      contentStart={contentStart}
+                      pageWidth={pageWidth}
+                      today={today}
+                      pixelsPerHour={pixelsPerHour}
+                      scale={liveScale}
+                      settled={settled}
+                    />
+                  </SpikePager>
                 </Animated.View>
               </Animated.ScrollView>
             </GestureDetector>
           </View>
         </GestureDetector>
       ) : null}
-      <SafeAreaView edges={["bottom"]} style={styles.panel}>
-        <View style={styles.buttons}>
-          <SpikeButton
-            label="−20"
-            onPress={() => jumpTo(settled - 20, false)}
-          />
-          <SpikeButton label="‹" onPress={() => jumpTo(settled - 1, true)} />
-          <SpikeButton label="Today" onPress={() => jumpTo(todayPage, false)} />
-          <SpikeButton label="›" onPress={() => jumpTo(settled + 1, true)} />
-          <SpikeButton
-            label="+20"
-            onPress={() => jumpTo(settled + 20, false)}
-          />
-          {Platform.OS === "android" ? (
-            <SpikeButton
-              label={androidPaging}
-              testID="paging-spike-android-mode"
-              onPress={() =>
-                setAndroidPaging((mode) =>
-                  mode === "snap" ? "paging" : "snap",
-                )
-              }
-            />
-          ) : null}
-          <SpikeButton
-            label={`K=${radius}`}
-            testID="paging-spike-content-size"
-            onPress={() => {
-              pendingScroll.current = { index: settled, animated: false }
-              positioned.set(false)
-              setBase(settled)
-              setContentSize((size) => (size === "full" ? "small" : "full"))
-            }}
-          />
-        </View>
-        <Text testID="paging-spike-status" style={styles.status}>
-          {`settled=${isoDate(pageStartDay(settled))} page=${settled - todayPage} base=${base - todayPage} pph=${pixelsPerHour.toFixed(0)} cross=${stats.crossings} settle=${stats.settles} rebase=${stats.rebases} pageMounts=${spikeCounters.pageMounts} commit=${stats.lastCommitMs.toFixed(1)}/${stats.maxCommitMs.toFixed(1)}ms`}
-        </Text>
-      </SafeAreaView>
+      <SpikePanel
+        status={`settled=${isoDate(pageStartDay(settled))} page=${settled - todayPage} base=${base - todayPage} pph=${pixelsPerHour.toFixed(0)} cross=${stats.crossings} settle=${stats.settles} rebase=${stats.rebases} pageMounts=${spikeCounters.pageMounts} commit=${stats.lastCommitMs.toFixed(1)}/${stats.maxCommitMs.toFixed(1)}ms`}
+        androidPaging={androidPaging}
+        radius={radius}
+        onJump={(pages, animated) => jumpTo(settled + pages, animated)}
+        onToday={() => jumpTo(todayPage, false)}
+        onToggleAndroidPaging={() =>
+          setAndroidPaging((mode) => (mode === "snap" ? "paging" : "snap"))
+        }
+        onToggleContentSize={() => {
+          pendingScroll.current = { index: settled, animated: false }
+          positioned.set(false)
+          setBase(settled)
+          setContentSize((size) => (size === "full" ? "small" : "full"))
+        }}
+      />
     </SafeAreaView>
-  )
-}
-
-function SpikeButton({
-  label,
-  onPress,
-  testID,
-}: {
-  label: string
-  onPress: () => void
-  testID?: string
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={styles.button}
-      {...(testID === undefined ? {} : { testID })}
-    >
-      <Text style={styles.buttonText}>{label}</Text>
-    </Pressable>
   )
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#ffffff" },
   body: { flex: 1 },
-  header: {
-    height: HEADER_HEIGHT,
-    flexDirection: "row",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#c7c7cc",
-  },
-  corner: { width: GUTTER, alignItems: "center", justifyContent: "center" },
-  cornerText: { fontSize: 11, color: "#8e8e93" },
-  headerViewport: { overflow: "hidden" },
-  strip: { position: "absolute", top: 0, bottom: 0, left: 0 },
   vertical: { flex: 1 },
   day: { backgroundColor: "#ffffff" },
-  gutter: { position: "absolute", top: 0, left: 0, width: GUTTER },
-  gridLayer: { position: "absolute", top: 0, left: GUTTER },
-  horizontal: {
-    position: "absolute",
-    top: 0,
-    left: GUTTER,
-    height: MAX_CONTENT_HEIGHT,
-  },
-  panel: {
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#c7c7cc",
-    backgroundColor: "#f2f2f7",
-  },
-  buttons: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  button: {
-    minHeight: 36,
-    minWidth: 44,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    backgroundColor: "#ffffff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  buttonText: { fontSize: 15, color: "#e91e63" },
-  status: { fontSize: 10, color: "#3a3a3c", marginTop: 4 },
 })
