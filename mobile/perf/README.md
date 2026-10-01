@@ -53,7 +53,7 @@ APK to `PERF_OUT` (default `~/perf-apks`). It bakes `EXPO_PUBLIC_API_URL=PERF_AP
 cd mobile
 node perf/run.mjs --serial 86fa07cc --apk /tmp/timecalendar-perf-<sha>.apk \
   --seed-token <dev calendar token> --label main-<sha> --out perf/out \
-  --probe owned-calendar-pager
+  --probe owned-calendar-canvas
 ```
 
 - `--apk` installs with `adb install -r`. The harness never uninstalls anything.
