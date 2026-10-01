@@ -1,3 +1,11 @@
+## 2026-10-02 — Native paging spike and synchronous UI props
+
+- The dev-only `/dev-paging-spike` route (`paging-spike` feature) renders the E02 spike of
+  windowed native ScrollView paging over fixture weeks; it is reachable only by deep link in dev
+  variants (features.md, navigation.md).
+- Reanimated's `ANDROID_/IOS_SYNCHRONOUSLY_UPDATE_UI_PROPS` static flags are on; they change the
+  runtime fingerprint (runtime.md).
+
 ## 2026-10-01 — Perf variant for the Android performance harness
 
 - `APP_VARIANT=perf` resolves the development runtime under `fr.samuelprak.timecalendar.perf`

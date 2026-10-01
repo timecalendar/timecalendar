@@ -115,6 +115,7 @@ const report = (pointers) => [
 ]
 
 const easeOut = (t) => 1 - (1 - t) ** 2
+const easeInOut = (t) => t * t * (3 - 2 * t)
 
 // All pointers go down together, follow their paths for durationMs, and lift
 // together one frame later.
@@ -150,7 +151,9 @@ const horizontalStroke = (screen, direction, angleDegrees = 0) => {
 }
 
 // `directions` lists each swipe's direction; an angle tilts every swipe upward
-// along its travel, as a thumb does.
+// along its travel, as a thumb does. A tilted swipe starts from rest: with the
+// fast ease-out start, the first move already passes the touch slop on both
+// axes, and the parent vertical ScrollView, which checks first, always wins.
 export const swipeChain = (
   screen,
   { directions, strokeMs, gapMs, angleDegrees = 0 },
@@ -161,7 +164,7 @@ export const swipeChain = (
         index * (strokeMs + gapMs),
         strokeMs,
         [horizontalStroke(screen, direction, angleDegrees)],
-        easeOut,
+        angleDegrees === 0 ? easeOut : easeInOut,
       ),
     )
     .flat()

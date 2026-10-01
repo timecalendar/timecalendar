@@ -1,0 +1,321 @@
+{
+  "label": "main-40eb2241-landing",
+  "url": "timecalendar-perf://calendar?focusDate=2026-10-05",
+  "package": "fr.samuelprak.timecalendar.perf",
+  "recordedAt": "2026-10-01T22:43:33.256Z",
+  "device": {
+    "model": "ONEPLUS A6003",
+    "android": "15",
+    "build": "lineage_enchilada-userdebug 15 BP1A.250505.005 5a3c5bc8b4",
+    "refreshHz": 60,
+    "size": "Physical size: 1080x2280",
+    "density": "Physical density: 450",
+    "packageVersion": "4.0.0"
+  },
+  "launchTotalTimeMs": 7544,
+  "viewsBefore": 692,
+  "viewsAfter": 495,
+  "scenarios": {
+    "swipe-forward-20": {
+      "plannedGestureMs": 5858,
+      "achievedGestureMs": 7066,
+      "probeBefore": "Monday, October 5th, 2026",
+      "probeAfter": "Monday, November 9th, 2026",
+      "reported": {
+        "totalFrames": 309,
+        "jankyFrames": 14,
+        "jankyPct": 4.53,
+        "missedVsync": 6,
+        "slowUiThread": 13,
+        "slowIssueDrawCommands": 3,
+        "frameDeadlineMissed": 14
+      },
+      "histogram": {
+        "frames": 309,
+        "p50Ms": 15,
+        "p90Ms": 20,
+        "p95Ms": 31,
+        "p99Ms": 105,
+        "maxMs": 150,
+        "framesOver16Ms": 43,
+        "framesOver33Ms": 13,
+        "withinDeadlinePct": 86.1
+      },
+      "lastFrames": {
+        "count": 120,
+        "total": {
+          "p50Ms": 15.9,
+          "p90Ms": 20,
+          "p95Ms": 37.5,
+          "p99Ms": 136.1
+        },
+        "uiThreadTraversal": {
+          "p50Ms": 0.2,
+          "p90Ms": 0.4,
+          "p95Ms": 0.5,
+          "p99Ms": 0.6
+        },
+        "renderThread": {
+          "p50Ms": 11.1,
+          "p90Ms": 14.8,
+          "p95Ms": 14.9,
+          "p99Ms": 15.1
+        }
+      },
+      "threadCpuMs": {
+        "mqt_v_js": 6582.3,
+        "mecalendar.perf": 2890.8,
+        "RenderThread": 1361.1,
+        "hades": 276.6,
+        "HeapTaskDaemon": 272.2,
+        "Jit thread pool": 124.6,
+        "binder:29745_1": 44.7,
+        "binder:29745_3": 32.2,
+        "binder:29745_4": 32,
+        "HybridData Dest": 26.7,
+        "ReferenceQueueD": 20.3,
+        "mqt_v_native": 13.1,
+        "FinalizerDaemon": 1.2
+      }
+    },
+    "swipe-back-20": {
+      "plannedGestureMs": 5858,
+      "achievedGestureMs": 7051,
+      "probeBefore": "Monday, November 9th, 2026",
+      "probeAfter": "Monday, October 5th, 2026",
+      "reported": {
+        "totalFrames": 302,
+        "jankyFrames": 12,
+        "jankyPct": 3.97,
+        "missedVsync": 8,
+        "slowUiThread": 11,
+        "slowIssueDrawCommands": 1,
+        "frameDeadlineMissed": 12
+      },
+      "histogram": {
+        "frames": 302,
+        "p50Ms": 15,
+        "p90Ms": 21,
+        "p95Ms": 30,
+        "p99Ms": 121,
+        "maxMs": 150,
+        "framesOver16Ms": 41,
+        "framesOver33Ms": 13,
+        "withinDeadlinePct": 86.4
+      },
+      "lastFrames": {
+        "count": 120,
+        "total": {
+          "p50Ms": 15.9,
+          "p90Ms": 31.8,
+          "p95Ms": 41.8,
+          "p99Ms": 123.3
+        },
+        "uiThreadTraversal": {
+          "p50Ms": 0.1,
+          "p90Ms": 0.3,
+          "p95Ms": 0.4,
+          "p99Ms": 0.4
+        },
+        "renderThread": {
+          "p50Ms": 12.1,
+          "p90Ms": 16.9,
+          "p95Ms": 26.3,
+          "p99Ms": 27.9
+        }
+      },
+      "threadCpuMs": {
+        "mqt_v_js": 7132.3,
+        "mecalendar.perf": 2683.6,
+        "RenderThread": 1316.5,
+        "HeapTaskDaemon": 313.3,
+        "hades": 272,
+        "Jit thread pool": 83.2,
+        "binder:29745_1": 44.4,
+        "binder:29745_4": 35.3,
+        "HybridData Dest": 34.2,
+        "binder:29745_3": 23.4,
+        "ReferenceQueueD": 18.7,
+        "mqt_v_native": 16.1,
+        "pool-7-thread-1": 12.7,
+        "FinalizerDaemon": 1.1,
+        "Thread-8": 1
+      }
+    },
+    "fling-5": {
+      "plannedGestureMs": 4358,
+      "achievedGestureMs": 5596,
+      "probeBefore": "Monday, October 5th, 2026",
+      "probeAfter": "Monday, October 26th, 2026",
+      "reported": {
+        "totalFrames": 112,
+        "jankyFrames": 9,
+        "jankyPct": 8.04,
+        "missedVsync": 3,
+        "slowUiThread": 8,
+        "slowIssueDrawCommands": 2,
+        "frameDeadlineMissed": 9
+      },
+      "histogram": {
+        "frames": 112,
+        "p50Ms": 16,
+        "p90Ms": 31,
+        "p95Ms": 48,
+        "p99Ms": 129,
+        "maxMs": 150,
+        "framesOver16Ms": 53,
+        "framesOver33Ms": 10,
+        "withinDeadlinePct": 52.7
+      },
+      "lastFrames": {
+        "count": 112,
+        "total": {
+          "p50Ms": 17.3,
+          "p90Ms": 35.8,
+          "p95Ms": 51.2,
+          "p99Ms": 132.1
+        },
+        "uiThreadTraversal": {
+          "p50Ms": 0.5,
+          "p90Ms": 0.6,
+          "p95Ms": 0.7,
+          "p99Ms": 0.9
+        },
+        "renderThread": {
+          "p50Ms": 7.9,
+          "p90Ms": 23.4,
+          "p95Ms": 24.8,
+          "p99Ms": 39.7
+        }
+      },
+      "threadCpuMs": {
+        "mqt_v_js": 3816.7,
+        "mecalendar.perf": 1961.9,
+        "RenderThread": 742.5,
+        "HeapTaskDaemon": 140.8,
+        "hades": 131.9,
+        "Jit thread pool": 50,
+        "binder:29745_1": 41.4,
+        "binder:29745_3": 13.5,
+        "HybridData Dest": 9.8,
+        "ReferenceQueueD": 9.4,
+        "mqt_v_native": 8.4
+      }
+    },
+    "reversal-10": {
+      "plannedGestureMs": 5288,
+      "achievedGestureMs": 6592,
+      "probeBefore": "Monday, October 26th, 2026",
+      "probeAfter": "Monday, October 26th, 2026",
+      "reported": {
+        "totalFrames": 315,
+        "jankyFrames": 18,
+        "jankyPct": 5.71,
+        "missedVsync": 1,
+        "slowUiThread": 15,
+        "slowIssueDrawCommands": 4,
+        "frameDeadlineMissed": 18
+      },
+      "histogram": {
+        "frames": 315,
+        "p50Ms": 18,
+        "p90Ms": 21,
+        "p95Ms": 25,
+        "p99Ms": 30,
+        "maxMs": 48,
+        "framesOver16Ms": 207,
+        "framesOver33Ms": 2,
+        "withinDeadlinePct": 34.3
+      },
+      "lastFrames": {
+        "count": 120,
+        "total": {
+          "p50Ms": 18.4,
+          "p90Ms": 21.3,
+          "p95Ms": 23.7,
+          "p99Ms": 26.3
+        },
+        "uiThreadTraversal": {
+          "p50Ms": 0.5,
+          "p90Ms": 0.6,
+          "p95Ms": 0.6,
+          "p99Ms": 1
+        },
+        "renderThread": {
+          "p50Ms": 9.5,
+          "p90Ms": 11.9,
+          "p95Ms": 12.1,
+          "p99Ms": 14.7
+        }
+      },
+      "threadCpuMs": {
+        "mecalendar.perf": 3460.9,
+        "RenderThread": 2530,
+        "mqt_v_js": 338.9,
+        "Jit thread pool": 129.6,
+        "binder:29745_3": 75.5,
+        "binder:29745_1": 72.5,
+        "binder:29745_4": 10.5
+      }
+    },
+    "diagonal-20": {
+      "plannedGestureMs": 25808,
+      "achievedGestureMs": 27077,
+      "probeBefore": "Monday, October 26th, 2026",
+      "probeAfter": "Monday, October 26th, 2026",
+      "reported": {
+        "totalFrames": 916,
+        "jankyFrames": 39,
+        "jankyPct": 4.26,
+        "missedVsync": 0,
+        "slowUiThread": 4,
+        "slowIssueDrawCommands": 2,
+        "frameDeadlineMissed": 39
+      },
+      "histogram": {
+        "frames": 916,
+        "p50Ms": 14,
+        "p90Ms": 17,
+        "p95Ms": 19,
+        "p99Ms": 25,
+        "maxMs": 38,
+        "framesOver16Ms": 97,
+        "framesOver33Ms": 2,
+        "withinDeadlinePct": 89.4
+      },
+      "lastFrames": {
+        "count": 120,
+        "total": {
+          "p50Ms": 14.8,
+          "p90Ms": 16.9,
+          "p95Ms": 17.1,
+          "p99Ms": 20.3
+        },
+        "uiThreadTraversal": {
+          "p50Ms": 0.3,
+          "p90Ms": 0.4,
+          "p95Ms": 0.5,
+          "p99Ms": 0.8
+        },
+        "renderThread": {
+          "p50Ms": 12.5,
+          "p90Ms": 14,
+          "p95Ms": 15,
+          "p99Ms": 17.9
+        }
+      },
+      "threadCpuMs": {
+        "RenderThread": 8214.4,
+        "mecalendar.perf": 3852.8,
+        "mqt_v_js": 986.1,
+        "binder:29745_3": 281.2,
+        "hades": 149.4,
+        "binder:29745_1": 92.6,
+        "Profile Saver": 83.2,
+        "binder:29745_4": 69.2,
+        "Jit thread pool": 59.1,
+        "mqt_v_native": 1.6
+      }
+    }
+  }
+}
