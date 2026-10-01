@@ -681,6 +681,24 @@ function eventLabel(
   )
 }
 
+function probeTargetFrame(
+  onProbeDiagnostic:
+    | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
+    | undefined,
+  identity: string,
+  order: number | undefined,
+) {
+  if (onProbeDiagnostic === undefined || order === undefined || order < 0)
+    return undefined
+  return ({ nativeEvent }: LayoutChangeEvent) =>
+    onProbeDiagnostic({
+      kind: "target-frame",
+      identity,
+      order,
+      frame: nativeEvent.layout,
+    })
+}
+
 function TimedCalendarTile({
   tile,
   dateKey,
@@ -827,17 +845,8 @@ function TimedCalendarTile({
       testID={`owned-calendar-event-${tile.identity.uid}`}
       pointerEvents="box-none"
       onLayout={
-        onProbeDiagnostic !== undefined &&
-        accessible &&
-        projectionIndex !== undefined &&
-        projectionIndex >= 0
-          ? ({ nativeEvent }) =>
-              onProbeDiagnostic({
-                kind: "target-frame",
-                identity: tile.key,
-                order: projectionIndex,
-                frame: nativeEvent.layout,
-              })
+        accessible
+          ? probeTargetFrame(onProbeDiagnostic, tile.key, projectionIndex)
           : undefined
       }
       style={[
