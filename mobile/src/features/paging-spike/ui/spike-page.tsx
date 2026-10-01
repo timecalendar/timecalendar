@@ -6,13 +6,13 @@ import Animated, {
 } from "react-native-reanimated"
 
 import {
+  DEFAULT_PIXELS_PER_HOUR,
   MAX_CONTENT_HEIGHT,
   pageDays,
   pageEvents,
   type SpikeEvent,
 } from "@/features/paging-spike/data"
 
-const CAP = 4
 const PIXEL_RATIO = PixelRatio.get()
 
 export const spikeCounters = { pageMounts: 0 }
@@ -22,6 +22,16 @@ const toPixel = (value: number) => {
   return Math.round(value * PIXEL_RATIO) / PIXEL_RATIO
 }
 
+const CAP = toPixel(4)
+// The middle slice reaches one device pixel under each cap: abutting slices
+// leave an antialiased seam once a scaled edge lands between pixels.
+const SEAM_OVERLAP = 1 / PIXEL_RATIO
+
+// Live geometry is laid out once at this scale and follows the pinch through
+// transforms only. A React commit that moved a `top` would land before the
+// transform recomputed against it, and the view would jump for a frame.
+const LAYOUT_PIXELS_PER_HOUR = DEFAULT_PIXELS_PER_HOUR
+
 const minuteY = (minute: number, pixelsPerHour: number) => {
   "worklet"
   return toPixel((minute / 60) * pixelsPerHour)
@@ -29,18 +39,16 @@ const minuteY = (minute: number, pixelsPerHour: number) => {
 
 export function GridLine({
   minute,
-  pixelsPerHour,
   liveScale,
   width,
   major,
 }: {
   minute: number
-  pixelsPerHour: number
   liveScale: SharedValue<number>
   width: number
   major: boolean
 }) {
-  const top = minuteY(minute, pixelsPerHour)
+  const top = minuteY(minute, LAYOUT_PIXELS_PER_HOUR)
   const style = useAnimatedStyle(() => ({
     transform: [{ translateY: minuteY(minute, liveScale.get()) - top }],
   }))
@@ -58,14 +66,12 @@ export function GridLine({
 
 export function HourLabel({
   hour,
-  pixelsPerHour,
   liveScale,
 }: {
   hour: number
-  pixelsPerHour: number
   liveScale: SharedValue<number>
 }) {
-  const top = minuteY(hour * 60, pixelsPerHour) - 7
+  const top = minuteY(hour * 60, LAYOUT_PIXELS_PER_HOUR) - 7
   const style = useAnimatedStyle(() => ({
     transform: [{ translateY: minuteY(hour * 60, liveScale.get()) - 7 - top }],
   }))
@@ -98,7 +104,7 @@ const tileGeometry = (
     left: event.column * columnWidth + event.lane * laneWidth + 1,
     width: laneWidth - 2,
     height,
-    middleHeight: Math.max(height - 2 * CAP, 0),
+    middleHeight: Math.max(height - 2 * CAP, 0) + 2 * SEAM_OVERLAP,
   }
 }
 
@@ -144,18 +150,16 @@ function StaticTile({
 function LiveTile({
   event,
   columnWidth,
-  pixelsPerHour,
   scale,
 }: {
   event: SpikeEvent
   columnWidth: number
-  pixelsPerHour: number
   scale: SharedValue<number>
 }) {
   const { top, left, width, height, middleHeight } = tileGeometry(
     event,
     columnWidth,
-    pixelsPerHour,
+    LAYOUT_PIXELS_PER_HOUR,
   )
 
   // Each updater reads `scale` itself: Reanimated subscribes a style only to the
@@ -172,10 +176,9 @@ function LiveTile({
     transform: [{ translateY: liveHeight(scale.get()).delta }],
   }))
   const middleStyle = useAnimatedStyle(() => {
-    const next = Math.max(liveHeight(scale.get()).height - 2 * CAP, 0)
-    return {
-      transform: [{ scaleY: middleHeight === 0 ? 0 : next / middleHeight }],
-    }
+    const next =
+      Math.max(liveHeight(scale.get()).height - 2 * CAP, 0) + 2 * SEAM_OVERLAP
+    return { transform: [{ scaleY: next / middleHeight }] }
   })
   const bottomCapStyle = useAnimatedStyle(() => ({
     transform: [
@@ -225,6 +228,24 @@ function LiveTile({
   )
 }
 
+function NowLine({
+  minute,
+  left,
+  width,
+  liveScale,
+}: {
+  minute: number
+  left: number
+  width: number
+  liveScale: SharedValue<number>
+}) {
+  const top = minuteY(minute, LAYOUT_PIXELS_PER_HOUR)
+  const style = useAnimatedStyle(() => ({
+    transform: [{ translateY: minuteY(minute, liveScale.get()) - top }],
+  }))
+  return <Animated.View style={[styles.nowLine, { left, width, top }, style]} />
+}
+
 export function SpikePage({
   pageIndex,
   left,
@@ -264,16 +285,12 @@ export function SpikePage({
       ))}
       {days.map((day, column) =>
         day.isToday ? (
-          <View
+          <NowLine
             key="now"
-            style={[
-              styles.nowLine,
-              {
-                left: column * columnWidth,
-                width: columnWidth,
-                top: minuteY(nowMinute, pixelsPerHour),
-              },
-            ]}
+            minute={nowMinute}
+            left={column * columnWidth}
+            width={columnWidth}
+            liveScale={scale}
           />
         ) : null,
       )}
@@ -283,7 +300,6 @@ export function SpikePage({
             key={event.key}
             event={event}
             columnWidth={columnWidth}
-            pixelsPerHour={pixelsPerHour}
             scale={scale}
           />
         ) : (
@@ -355,7 +371,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 4,
     borderTopRightRadius: 4,
   },
-  middle: { top: CAP, transformOrigin: "top" },
+  middle: { top: CAP - SEAM_OVERLAP, transformOrigin: "top" },
   bottomCap: {
     height: CAP,
     borderBottomLeftRadius: 4,

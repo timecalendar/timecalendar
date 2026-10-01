@@ -13,6 +13,7 @@ import {
 import { Gesture, GestureDetector } from "react-native-gesture-handler"
 import Animated, {
   scrollTo,
+  useAnimatedProps,
   useAnimatedReaction,
   useAnimatedRef,
   useAnimatedScrollHandler,
@@ -112,6 +113,9 @@ function PagingSpike() {
   const pinchBaseOffset = useSharedValue(0)
   const pinchBaseFocal = useSharedValue(0)
   const pinchOffset = useSharedValue(-1)
+  const pinching = useSharedValue(false)
+  const verticalTouched = useSharedValue(false)
+  const verticalLocked = useSharedValue(false)
 
   const crossingStartedAt = useRef(0)
   const crossingCount = useRef(0)
@@ -240,8 +244,13 @@ function PagingSpike() {
     },
   )
 
+  // While locked the vertical ScrollView ignores touches, so it neither follows
+  // the pinch fingers nor flings on lift. It unlocks once its own touch ends: a
+  // finger left down would otherwise scroll it by everything it moved meanwhile.
   const pinch = Gesture.Pinch()
     .onStart((event) => {
+      pinching.set(true)
+      verticalLocked.set(true)
       pinchBaseScale.set(liveScale.get())
       pinchBaseOffset.set(verticalOffset.get())
       pinchBaseFocal.set(event.focalY - HEADER_HEIGHT)
@@ -264,9 +273,29 @@ function PagingSpike() {
     .onEnd(() => {
       scheduleOnRN(onPinchEnd, liveScale.get())
     })
-  const verticalNative = Gesture.Native().simultaneousWithExternalGesture(pinch)
-  const horizontalNative =
-    Gesture.Native().simultaneousWithExternalGesture(pinch)
+    .onFinalize(() => {
+      pinching.set(false)
+      if (!verticalTouched.get()) verticalLocked.set(false)
+    })
+  // A native handler is interruptible by default: the vertical ScrollView
+  // activating mid-swipe cancels the horizontal one, which then never snaps.
+  // Uninterruptible handlers keep a touch on whichever axis claims it first.
+  const verticalNative = Gesture.Native()
+    .disallowInterruption(true)
+    .simultaneousWithExternalGesture(pinch)
+    .onBegin(() => {
+      verticalTouched.set(true)
+    })
+    .onFinalize(() => {
+      verticalTouched.set(false)
+      if (!pinching.get()) verticalLocked.set(false)
+    })
+  const horizontalNative = Gesture.Native()
+    .disallowInterruption(true)
+    .simultaneousWithExternalGesture(pinch)
+  const verticalProps = useAnimatedProps(() => ({
+    scrollEnabled: !verticalLocked.get(),
+  }))
 
   const stripStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: -scrollX.get() }],
@@ -337,6 +366,7 @@ function PagingSpike() {
             <GestureDetector gesture={verticalNative}>
               <Animated.ScrollView
                 ref={verticalRef}
+                animatedProps={verticalProps}
                 testID="paging-spike-vertical"
                 style={styles.vertical}
                 onScroll={verticalHandler}
@@ -353,12 +383,7 @@ function PagingSpike() {
                 >
                   <View style={styles.gutter}>
                     {HOURS.map((hour) => (
-                      <HourLabel
-                        key={hour}
-                        hour={hour}
-                        pixelsPerHour={pixelsPerHour}
-                        liveScale={liveScale}
-                      />
+                      <HourLabel key={hour} hour={hour} liveScale={liveScale} />
                     ))}
                   </View>
                   <View style={[styles.gridLayer, { width: pageWidth }]}>
@@ -366,7 +391,6 @@ function PagingSpike() {
                       <GridLine
                         key={minute}
                         minute={minute}
-                        pixelsPerHour={pixelsPerHour}
                         liveScale={liveScale}
                         width={pageWidth}
                         major={minute % 60 === 0}
