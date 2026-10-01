@@ -67,13 +67,13 @@ export const readCalendarWindow: CalendarWindowReader = async ({ chunks }) => {
       checklist,
     })
   }
+  const visibleCalendarIds = new Set<string>()
+  for (const calendar of calendars) {
+    if (calendar.visible) visibleCalendarIds.add(calendar.id)
+  }
   const read: CalendarWindowRead = {
     chunks: reads,
-    visibleCalendarIds: new Set(
-      calendars
-        .filter((calendar) => calendar.visible)
-        .map((calendar) => calendar.id),
-    ),
+    visibleCalendarIds,
     rejectedCounts: addCounts(synced.rejectedCounts, personal.rejectedCounts),
   }
   return read
