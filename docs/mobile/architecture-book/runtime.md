@@ -36,6 +36,7 @@ Most native deps **autolink with no `plugins` entry** (`react-native-mmkv` v4/Ni
 - Dynamic `app.config.ts`, switched on `APP_VARIANT`:
   - unset / `production` → `fr.samuelprak.timecalendar` / "TimeCalendar" / scheme `timecalendar` — **preserves store identity** (RN ships as an _update_ to the Flutter app).
   - `development` → `fr.samuelprak.timecalendar.dev` / "TimeCalendar (Dev)" / scheme `timecalendar-dev` — **coexists** with the store app on devices.
+  - `perf` → `fr.samuelprak.timecalendar.perf` / "TimeCalendar (Perf)" / scheme `timecalendar-perf` — the development runtime (dev Firebase, `extra.appVariant: "development"`, OTA off) built as a profileable Gradle release APK for `mobile/perf/`. Its prebuild-only plugin (`mobile/perf/with-perf-build.js`) adds `<profileable android:shell="true"/>`, Reanimated profiling and a perf client cloned from the dev `google-services.json`. No `eas.json` profile sets it; it is built on the Android build host only (`mobile/perf/README.md`).
 - The `ios` / `android` / `start` npm scripts set `APP_VARIANT=development`. Switching variants requires `expo prebuild --clean`.
 - The `.dev` identifier needs its own Firebase registration (owned by the Firebase setup).
 

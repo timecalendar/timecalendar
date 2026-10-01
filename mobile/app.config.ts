@@ -1,5 +1,7 @@
 import type { ConfigContext, ExpoConfig } from "expo/config"
 
+import { PERF_APPLICATION_ID, withPerfBuild } from "./perf/with-perf-build"
+
 type BackendEnvironmentCapability = "development" | "preview" | "production"
 
 const parseBackendEnvironmentCapability = (
@@ -25,14 +27,19 @@ const getOtaChannel = (
 }
 
 export default ({ config }: ConfigContext): ExpoConfig => {
-  const isDev = process.env.APP_VARIANT === "development"
+  // `perf` is the development identity's runtime in a profileable release APK
+  // with its own id, so it installs beside `.dev` (mobile/perf/README.md).
+  const isPerf = process.env.APP_VARIANT === "perf"
+  const isDev = process.env.APP_VARIANT === "development" || isPerf
   const otaChannel = getOtaChannel(isDev)
   const backendEnvironmentCapability = parseBackendEnvironmentCapability(
     process.env.BACKEND_ENVIRONMENT_CAPABILITY,
   )
-  const appId = isDev
-    ? "fr.samuelprak.timecalendar.dev"
-    : "fr.samuelprak.timecalendar"
+  const appId = isPerf
+    ? PERF_APPLICATION_ID
+    : isDev
+      ? "fr.samuelprak.timecalendar.dev"
+      : "fr.samuelprak.timecalendar"
 
   // One Firebase project per environment (Google best practice — Analytics,
   // Crashlytics, quotas and billing are all project-scoped). The dev variant
@@ -53,14 +60,22 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   const easProjectId =
     process.env.EAS_PROJECT_ID ?? "3b427ef6-1aae-4175-8217-ea447ee6df6b"
 
-  return {
+  const expoConfig: ExpoConfig = {
     ...config,
-    name: isDev ? "TimeCalendar (Dev)" : "TimeCalendar",
+    name: isPerf
+      ? "TimeCalendar (Perf)"
+      : isDev
+        ? "TimeCalendar (Dev)"
+        : "TimeCalendar",
     slug: "timecalendar",
     version: "4.0.0",
     orientation: "default",
     icon: "./assets/images/icon.png",
-    scheme: isDev ? "timecalendar-dev" : "timecalendar",
+    scheme: isPerf
+      ? "timecalendar-perf"
+      : isDev
+        ? "timecalendar-dev"
+        : "timecalendar",
     userInterfaceStyle: "automatic",
     // fingerprint policy: an OTA JS update is only delivered to a build whose
     // native runtime is compatible; any native-affecting change (new plugin, a
@@ -234,4 +249,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           },
         },
   }
+
+  return isPerf ? withPerfBuild(expoConfig) : expoConfig
 }

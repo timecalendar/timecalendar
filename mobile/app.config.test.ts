@@ -2,6 +2,7 @@ import type { ConfigContext, ExpoConfig } from "expo/config"
 
 import configure from "./app.config"
 import easConfig from "./eas.json"
+import { addPerfClient } from "./perf/with-perf-build"
 
 type ConfigEnvironment = {
   APP_VARIANT?: string | undefined
@@ -12,7 +13,9 @@ type ConfigEnvironment = {
 
 const originalEnvironment = process.env
 
-const resolveConfig = (environment: ConfigEnvironment): ExpoConfig => {
+type ResolvedConfig = ExpoConfig & { mods?: Record<string, unknown> }
+
+const resolveConfig = (environment: ConfigEnvironment): ResolvedConfig => {
   process.env = { ...originalEnvironment, ...environment }
 
   for (const key of [
@@ -66,6 +69,62 @@ describe("Expo distribution configuration", () => {
     expect(config.updates).toEqual({ enabled: false })
     expect(config.runtimeVersion).toEqual({ policy: "fingerprint" })
     expect(config.extra?.backendEnvironmentCapability).toBe("development")
+  })
+
+  it("gives the perf variant its own id on the development runtime", () => {
+    const config = resolveConfig({
+      APP_VARIANT: "perf",
+      BACKEND_ENVIRONMENT_CAPABILITY: "development",
+    })
+
+    expect(config.android).toMatchObject({
+      package: "fr.samuelprak.timecalendar.perf",
+      googleServicesFile: "./firebase/google-services.dev.json",
+    })
+    expect(config.ios?.bundleIdentifier).toBe("fr.samuelprak.timecalendar.perf")
+    expect(config.scheme).toBe("timecalendar-perf")
+    expect(config.name).toBe("TimeCalendar (Perf)")
+    expect(config.updates).toEqual({ enabled: false })
+    expect(config.extra?.appVariant).toBe("development")
+    expect(config.mods?.android).toEqual(
+      expect.objectContaining({
+        appBuildGradle: expect.any(Function),
+        dangerous: expect.any(Function),
+        manifest: expect.any(Function),
+      }),
+    )
+  })
+
+  it("adds no perf mods outside the perf variant", () => {
+    const config = resolveConfig({
+      APP_VARIANT: "development",
+      BACKEND_ENVIRONMENT_CAPABILITY: "development",
+    })
+
+    expect(config.mods).toBeUndefined()
+  })
+
+  it("registers the perf id beside the dev Firebase client", () => {
+    const devClient = {
+      client_info: {
+        android_client_info: { package_name: "fr.samuelprak.timecalendar.dev" },
+      },
+    }
+
+    const { client } = addPerfClient({ client: [devClient] })
+
+    expect(
+      client.map(
+        (entry: typeof devClient) =>
+          entry.client_info.android_client_info.package_name,
+      ),
+    ).toEqual([
+      "fr.samuelprak.timecalendar.dev",
+      "fr.samuelprak.timecalendar.perf",
+    ])
+    expect(devClient.client_info.android_client_info.package_name).toBe(
+      "fr.samuelprak.timecalendar.dev",
+    )
   })
 
   it.each(["preview", "production"] as const)(

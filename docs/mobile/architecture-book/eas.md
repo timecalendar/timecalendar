@@ -22,6 +22,8 @@ identity, Firebase, OTA header/signing, artifact or submission setting (ADR 043)
 
 **Both release profiles are `distribution: "store"`** (ADR 040): Android `app-bundle`, store `.ipa`, `autoIncrement`, with `cli.appVersionSource: "remote"` so EAS owns the build number. `preview` reaches TestFlight internal + Play internal testing; `production` reaches the App Store and the Play production track. There is deliberately **no directly-installable release artifact** — an ad hoc `.ipa` or a raw `.apk` cannot enter either store's testing track, and there is no audience for one.
 
+The `perf` `APP_VARIANT` (runtime.md) is a third identity outside EAS: no profile sets it, and `app.config.test.ts` pins every profile's exact `env`, so no EAS build, store or otherwise, can resolve it.
+
 **Variant-drift is the headline risk** — a `preview`/`production` profile accidentally carrying `APP_VARIANT=development` would ship the `.dev` id + dev Firebase + cleartext to testers or the store. The guard: only `development` sets the env var, and the `expo config --json` **variant diff** verifies it (production → prod id/Firebase, dev → `.dev`). Can't be a lint rule (config-shape, not source), hence this prose (R-1).
 
 ## iOS device-family and orientation contract
