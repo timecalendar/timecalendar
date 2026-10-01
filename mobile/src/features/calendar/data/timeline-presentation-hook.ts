@@ -8,7 +8,7 @@ import { useCalendarEventsSnapshot } from "./events"
 import { planCalendarThreePageRange } from "./range-plan"
 import {
   buildCalendarTimelinePresentation,
-  timelinePresentationUids,
+  timelineRangeUids,
 } from "./timeline-presentation"
 import type { CalendarEvent } from "./types"
 import { useCalendarIncreasedContrast } from "./use-increased-contrast"
@@ -61,16 +61,9 @@ export function useCalendarTimelinePresentation(
   const retainedEvents = retained?.events
   const events = complete ? snapshot.events : (retainedEvents ?? EMPTY_EVENTS)
   const localizedNoTitle = t("calendar.event.noTitle")
-  const identityPresentation = buildCalendarTimelinePresentation({
-    range,
-    generation: input.generation,
-    events,
-    localizedNoTitle,
-    scheme,
-    increasedContrast,
-  })
-  const scopedUids = timelinePresentationUids(identityPresentation)
-  const checklistProgress = useChecklistProgress(scopedUids)
+  const checklistProgress = useChecklistProgress(
+    timelineRangeUids(range, events),
+  )
 
   const presentation = buildCalendarTimelinePresentation({
     range,

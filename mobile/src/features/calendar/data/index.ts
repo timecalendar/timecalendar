@@ -109,6 +109,18 @@ export {
   pageStartDay,
 } from "./page-index"
 export {
+  buildPagePresentation,
+  createPagePresentationCache,
+  type DayHeaderLabelsV1,
+  PAGE_PRESENTATION_CACHE_SIZE,
+  type PageColumnV1,
+  type PagePresentationCache,
+  pagePresentationCacheKey,
+  type PagePresentationEnvironment,
+  type PagePresentationV1,
+  type PageTileV1,
+} from "./page-presentation"
+export {
   createPagerState,
   type PagerEpochs,
   pagerEpochs,
@@ -209,6 +221,7 @@ export {
   type TimedTileV1,
   type TimelineChecklistProgressV1,
   timelinePresentationUids,
+  timelineRangeUids,
 } from "./timeline-presentation"
 export {
   type CalendarTimelinePresentationInput,
