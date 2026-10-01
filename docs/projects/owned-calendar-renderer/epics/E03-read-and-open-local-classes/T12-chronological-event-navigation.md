@@ -2,7 +2,7 @@
 kind: ticket
 id: T12
 epic: E03
-status: planned
+status: completed
 traces-to: [P01, P02, P04, D02, D05, D06]
 depends-on: [T11]
 size: M
@@ -100,6 +100,8 @@ Follow the ticket scope and approved data/renderer boundary. Do not introduce a 
 renderer, change stored event facts, or weaken a final product gate to make this slice pass.
 
 ## Execution evidence
+
+Merged PR #428 at `cce259e8`. No explicit owner acceptance is recorded in this ticket.
 
 Review status: pending on PR #428. Code head
 `d3e4e30ddd52cacc22ab40aa821dafe0bce9e8cd` contains the single-target native

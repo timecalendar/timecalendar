@@ -2,7 +2,7 @@
 kind: ticket
 id: T06
 epic: E02
-status: planned
+status: completed
 traces-to: [P02, P04, P05, D02, D04, D06]
 depends-on: [T05]
 size: M
@@ -125,4 +125,4 @@ renderer, change stored event facts, or weaken a final product gate to make this
 
 ## Execution evidence
 
-Not started. Agent checks and owner QA have not run. No owner acceptance or merge is recorded.
+Merged PR #415 at `3f996e2f`. No explicit owner acceptance is recorded in this ticket.

@@ -9,9 +9,9 @@ status: approved
 
 The product owner approved all architecture decisions and the sequential small-slice delivery
 policy on 2026-09-12. This roadmap implements that approved policy. Epic grouping and ticket
-details are the delivery decomposition. E01/T01–T04 are completed and merged; T05–T29 remain
-planned. See [E01 completion evidence](./research/results/E01/completion.md). The next
-implementation acceptance applies to T05, one tested slice at a time.
+details are the delivery decomposition. E01/T01–T04 are completed and merged; T05–T12 are merged (PRs #414–#418 and #426–#428);
+T13–T29 remain planned. See [E01 completion evidence](./research/results/E01/completion.md). The
+next implementation acceptance applies to T13, one tested slice at a time.
 
 ## Sequencing principles
 

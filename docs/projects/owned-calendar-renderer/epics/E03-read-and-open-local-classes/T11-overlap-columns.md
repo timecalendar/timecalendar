@@ -2,7 +2,7 @@
 kind: ticket
 id: T11
 epic: E03
-status: implementing
+status: completed
 traces-to: [P01, P03, P04, P05, D01, D04, D05, D06]
 depends-on: [T10]
 size: M
@@ -96,6 +96,8 @@ renderer, change stored event facts, or weaken a final product gate to make this
 
 ## Execution evidence
 
+Merged PR #427 at `e113e5dd`. No explicit owner acceptance is recorded in this ticket.
+
 Implementation proof uses the fixed UTC week anchored at `2026-06-15T00:00:00.000Z`: 16 fabricated
 events, 15 positive-interval placements, largest cluster five, 16 mounted visual nodes, 15 committed
 event semantic paths (14 direct targets plus one chooser trigger), and three modal semantic actions while
@@ -115,4 +117,4 @@ The repaired source revision is `49e9c2b96785cbad71675c0461f22b7546266f06`:
 - The disclosure scan reported zero findings for the repaired source contents.
 
 This host supplies no physical target-feel, VoiceOver, or TalkBack acceptance; T28 retains that planned
-evidence. No Reviewer acceptance or merge is recorded yet.
+evidence. No explicit Reviewer acceptance is recorded.

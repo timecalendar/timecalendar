@@ -2,22 +2,20 @@
 
 The full **Architecture Book** for `mobile/` (the React Native app) lives at
 **`docs/mobile/architecture-book/`**. It is *not* auto-loaded into context — read the
-relevant file(s) on demand when working on `mobile/`. (It used to live under
-`.claude/rules/mobile/`, which loaded all ~170k tokens every turn; it was relocated so
-only this index is always in context.)
+relevant file(s) on demand when working on `mobile/`. Only this index is always in context.
 
 ## When to read it
 
 Working on `mobile/`? Read the topical file for the area you're touching **before**
-making changes — these are binding rules (R-1: prose only carries what lint/types/CI
-can't encode). For a load-bearing decision, also read the relevant ADR.
+making changes — these are binding rules (Principle 1: constraints are encoded in types,
+lint, tests or CI before they are documented). For a load-bearing decision, also read the relevant ADR.
 
-## The five living artifacts (all under `docs/mobile/architecture-book/`)
+## Core artifacts (all under `docs/mobile/architecture-book/`)
 
-- **`architecture.md`** — the hub: the five artifacts, working rules R-1…R-6, the topical-file index.
-- **`decisions/`** — ADR log (`README.md` is the index; one file per decision, 001–024+).
+- **`architecture.md`** — the hub: Principles 1–5, the module structure, the topical-file index.
+- **`decisions/`** — ADR log (`README.md` is the index; one numbered file per decision).
 - **`definition-of-done.md`** — the per-feature finite-perfection checklist (every feature passes it).
-- **`architecture-changelog.md`** — dated append-only log of every rule change.
+- **`CHANGELOG.md`** — dated log of every rule change, newest entry first.
 - **`golden-path.md`** (+ `golden-path-template/`) — the blessed how-to for a new feature.
 
 ## Topical rule files (read the one that matches your change)
@@ -46,5 +44,5 @@ can't encode). For a load-bearing decision, also read the relevant ADR.
 - **`docs/mobile/ota/`** is **exploration**: how that decision was reached. It is not maintained
   against the config and must not be read as rules. `eas.md` and the ADRs win.
 
-> Changing a rule? Update the topical file **and** append to `architecture-changelog.md`
-> (migration-approach §7). Adding a load-bearing decision? Write an ADR in `decisions/`.
+> Changing a rule? Update the topical file **and** add a dated entry to `CHANGELOG.md`.
+> Adding a load-bearing decision? Write an ADR in `decisions/` (Principle 4).
