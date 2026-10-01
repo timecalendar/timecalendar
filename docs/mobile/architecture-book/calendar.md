@@ -209,6 +209,17 @@ it onto the current three-page range. An already-loaded adjacent week therefore 
 when it becomes the centre page. Dates outside the retained snapshot have empty tiles until the
 replacement read completes; event completion does not reorder the native pager's pages.
 
+The hook builds the presentation once: checklist progress is read for `timelineRangeUids`, the
+UIDs that become tiles on the range's pages, derived without placing or styling them.
+`buildPagePresentation` is the per-page form for the windowed pager. For one page key it builds
+a frozen `PagePresentationV1` in one pass: placed tiles with time and accessibility labels and
+their chronological accessibility order, plus date-header label parts. It reuses the
+three-page builder's tile and overlap code, `format.ts` and `projectCalendarAccessibilityEntries`,
+so its output equals what the owned shell renders today. A `loading` or `error` page has headers
+and no tiles. Entries live in a 16-page LRU keyed by `pagePresentationCacheKey` (page key, status,
+row and filter revisions, every label input); formatter results are memoized per locale and zone.
+The zoom-dependent conflict plan is not part of it. No screen reads it yet.
+
 ## Sync and offline behavior
 
 Sync sends durable user-calendar tokens to the generated batch endpoint and replaces

@@ -1,3 +1,11 @@
+## 2026-10-01 — Frozen per-page calendar presentation
+
+- `calendar/data` gains `buildPagePresentation`, a frozen per-page presentation with tile, header
+  and accessibility labels and order, and a 16-page LRU cache keyed by `pagePresentationCacheKey`;
+  see `calendar.md`. No screen reads it yet.
+- The timeline presentation hook builds its presentation once; checklist UIDs come from
+  `timelineRangeUids`.
+
 ## 2026-10-01 — Calendar window store and table-change seam
 
 - `@/db` exports `subscribeToTableChanges`, a coalesced change listener over a set of tables for

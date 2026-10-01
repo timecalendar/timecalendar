@@ -129,18 +129,22 @@ function freezePresentation(
   return Object.freeze(presentation)
 }
 
-export function buildCalendarTimelinePresentation(input: {
-  range: CalendarThreePageRangeV1
-  generation: number
-  events: readonly CalendarEvent[]
+export interface TimelineTileOptions {
+  displayZone: string
   checklistProgress?: ReadonlyMap<string, TimelineChecklistProgressV1>
   localizedNoTitle?: string
   scheme?: EventAppearanceScheme
   increasedContrast?: boolean
-}): CalendarTimelinePresentationV1 {
+}
+
+/** Supported timed events as unplaced tiles, keyed by display-zone day. */
+export function bucketTimedTiles(
+  events: readonly CalendarEvent[],
+  options: TimelineTileOptions,
+): Map<string, TimedTileV1[]> {
   const tilesByDay = new Map<string, TimedTileV1[]>()
-  const displayZone = input.range.displayZone
-  for (const event of input.events) {
+  const displayZone = options.displayZone
+  for (const event of events) {
     const support = classifyTimedEventSupport(event, displayZone)
     if (!support.supported) continue
     const supported = support.event
@@ -152,19 +156,19 @@ export function buildCalendarTimelinePresentation(input: {
       shape: support.shape,
       title: displayEventTitle(
         supported.title,
-        input.localizedNoTitle ?? "(No title)",
+        options.localizedNoTitle ?? "(No title)",
       ),
       location: supported.location,
       appearance: resolveEventAppearance({
         color: supported.color,
-        scheme: input.scheme ?? "light",
-        increasedContrast: input.increasedContrast ?? false,
+        scheme: options.scheme ?? "light",
+        increasedContrast: options.increasedContrast ?? false,
       }),
       startsAt: new Date(supported.startsAt),
       endsAt: new Date(supported.endsAt),
       startMinute: minuteOfDayInZone(supported.startsAt, displayZone),
       endMinute: endMinute(supported, displayZone),
-      checklist: input.checklistProgress?.get(supported.identity.uid),
+      checklist: options.checklistProgress?.get(supported.identity.uid),
       column: 0,
       columns: 1,
       startX: 0,
@@ -174,6 +178,53 @@ export function buildCalendarTimelinePresentation(input: {
     if (current === undefined) tilesByDay.set(key, [tile])
     else current.push(tile)
   }
+  return tilesByDay
+}
+
+/** Placed, chronologically sorted tiles for one column's day. */
+export function timelineColumnTiles(
+  tilesByDay: ReadonlyMap<string, readonly TimedTileV1[]>,
+  dayKey: string,
+): TimedTileV1[] {
+  return placeDayTiles(tilesByDay.get(dayKey) ?? []).sort(compareTiles)
+}
+
+/**
+ * UIDs of the events that become tiles on the range's pages, without placing
+ * or styling them: the same set as `timelinePresentationUids` of the built
+ * presentation.
+ */
+export function timelineRangeUids(
+  range: CalendarThreePageRangeV1,
+  events: readonly CalendarEvent[],
+): readonly string[] {
+  const columnKeys = new Set(
+    range.pages.flatMap((page) => page.columns.map((column) => column.key)),
+  )
+  const uids = new Set<string>()
+  for (const event of events) {
+    const support = classifyTimedEventSupport(event, range.displayZone)
+    if (!support.supported) continue
+    if (columnKeys.has(dayKey(support.event.startsAt, range.displayZone))) {
+      uids.add(support.event.identity.uid)
+    }
+  }
+  return [...uids].sort()
+}
+
+export function buildCalendarTimelinePresentation(input: {
+  range: CalendarThreePageRangeV1
+  generation: number
+  events: readonly CalendarEvent[]
+  checklistProgress?: ReadonlyMap<string, TimelineChecklistProgressV1>
+  localizedNoTitle?: string
+  scheme?: EventAppearanceScheme
+  increasedContrast?: boolean
+}): CalendarTimelinePresentationV1 {
+  const tilesByDay = bucketTimedTiles(input.events, {
+    ...input,
+    displayZone: input.range.displayZone,
+  })
 
   const pages = input.range.pages.map(
     (page): CalendarTimelinePageV1 => ({
@@ -187,9 +238,7 @@ export function buildCalendarTimelinePresentation(input: {
           date: new Date(column.date),
           weekday: column.weekday,
           isWeekend: column.isWeekend,
-          tiles: placeDayTiles(tilesByDay.get(column.key) ?? []).sort(
-            compareTiles,
-          ),
+          tiles: timelineColumnTiles(tilesByDay, column.key),
         }),
       ),
     }),

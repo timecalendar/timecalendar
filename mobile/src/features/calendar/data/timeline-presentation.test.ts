@@ -2,6 +2,7 @@ import { planCalendarThreePageRange } from "./range-plan"
 import {
   buildCalendarTimelinePresentation,
   timelinePresentationUids,
+  timelineRangeUids,
 } from "./timeline-presentation"
 import type { CalendarEvent, TimedCalendarEventV1 } from "./types"
 
@@ -225,6 +226,13 @@ describe("buildCalendarTimelinePresentation", () => {
     })
     expect(timelinePresentationUids(presentation)).toEqual(["a", "b"])
     expect(
+      timelineRangeUids(range, [
+        event("b", "2026-09-14T08:00:00Z", "2026-09-14T09:00:00Z"),
+        event("a", "2026-09-14T10:00:00Z", "2026-09-14T11:00:00Z"),
+        event("a", "2026-09-15T12:00:00Z", "2026-09-15T13:00:00Z"),
+      ]),
+    ).toEqual(["a", "b"])
+    expect(
       presentation.pages.flatMap((page) =>
         page.columns.flatMap((column) =>
           column.tiles.map(({ checklist }) => checklist),
@@ -258,5 +266,40 @@ describe("buildCalendarTimelinePresentation", () => {
     })
     expect(tile.startsAt.getTime()).toBe(tile.endsAt.getTime())
     expect(Object.isFrozen(tile.appearance)).toBe(true)
+  })
+})
+
+describe("timelineRangeUids", () => {
+  it("equals the UIDs of the built presentation without building it", () => {
+    const range = planCalendarThreePageRange({
+      anchor: new Date("2026-09-16T12:00:00Z"),
+      mode: "week",
+      displayZone: "Europe/Paris",
+      firstWeekday: 1,
+      showWeekends: false,
+    })
+    const events: CalendarEvent[] = [
+      event("weekday", "2026-09-16T08:00:00Z", "2026-09-16T09:00:00Z"),
+      event("saturday", "2026-09-19T08:00:00Z", "2026-09-19T09:00:00Z"),
+      event("previous-week", "2026-09-08T08:00:00Z", "2026-09-08T09:00:00Z"),
+      event("next-week", "2026-09-22T08:00:00Z", "2026-09-22T09:00:00Z"),
+      event("out-of-range", "2026-10-22T08:00:00Z", "2026-10-22T09:00:00Z"),
+      event("overnight", "2026-09-16T21:00:00Z", "2026-09-17T01:00:00Z"),
+      event("point", "2026-09-17T10:00:00Z", "2026-09-17T10:00:00Z"),
+    ]
+    const presentation = buildCalendarTimelinePresentation({
+      range,
+      generation: 0,
+      events,
+    })
+    expect(timelineRangeUids(range, events)).toEqual(
+      timelinePresentationUids(presentation),
+    )
+    expect(timelineRangeUids(range, events)).toEqual([
+      "next-week",
+      "point",
+      "previous-week",
+      "weekday",
+    ])
   })
 })
