@@ -304,7 +304,11 @@ function PagingSpike() {
       : undefined
 
   return (
-    <SafeAreaView style={styles.root} onLayout={onLayout}>
+    <SafeAreaView
+      edges={["top", "left", "right"]}
+      style={styles.root}
+      onLayout={onLayout}
+    >
       {pageWidth > 0 ? (
         <GestureDetector gesture={pinch}>
           <View style={styles.body}>
@@ -413,7 +417,7 @@ function PagingSpike() {
           </View>
         </GestureDetector>
       ) : null}
-      <View style={styles.panel}>
+      <SafeAreaView edges={["bottom"]} style={styles.panel}>
         <View style={styles.buttons}>
           <SpikeButton
             label="−20"
@@ -454,7 +458,7 @@ function PagingSpike() {
         <Text testID="paging-spike-status" style={styles.status}>
           {`settled=${isoDate(pageStartDay(settled))} page=${settled - todayPage} base=${base - todayPage} pph=${pixelsPerHour.toFixed(0)} cross=${stats.crossings} settle=${stats.settles} rebase=${stats.rebases} pageMounts=${spikeCounters.pageMounts} commit=${stats.lastCommitMs.toFixed(1)}/${stats.maxCommitMs.toFixed(1)}ms`}
         </Text>
-      </View>
+      </SafeAreaView>
     </SafeAreaView>
   )
 }
