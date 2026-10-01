@@ -18,7 +18,7 @@ status: approved
 ## Epic order and dependencies
 
 1. E01 — Quick wins and planning housekeeping (done: #437, #436)
-2. E02 — Prove native ScrollView paging on device. Depends on E01, so the harness measures a
+2. E02 — Prove native ScrollView paging on device (done: #441, #442; verdict continue, see evidence/E02-spike.md). Depends on E01, so the harness measures a
    compiled shell.
 3. E03 — Page identity and windowed data in `calendar/data` (done: #438, #439, #440).
 4. E04 — The Calendar pages on the native ScrollView. Depends on E02 (go verdict) and E03 (index,

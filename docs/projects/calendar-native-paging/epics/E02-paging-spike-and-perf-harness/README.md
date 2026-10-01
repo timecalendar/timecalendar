@@ -1,7 +1,7 @@
 ---
 kind: epic
 id: E02
-status: planned
+status: done
 traces-to: [P01, P02, P04, P06, D01, D02, D03, D04, D08]
 depends-on: [E01]
 ---
