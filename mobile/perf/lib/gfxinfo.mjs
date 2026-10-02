@@ -132,15 +132,25 @@ export const parseGfxinfo = (text) => {
 // `dumpsys activity top` prints each resumed activity's view hierarchy, one
 // line per android.view.View. meminfo's "Views:" relies on instance counting,
 // which only works in debuggable apps.
-export const countHierarchyViews = (dump, pkg) => {
+export const hierarchyViewClasses = (dump, pkg) => {
   const section = dump
     .split(/^TASK /m)
     .find((task) => task.includes(`ACTIVITY ${pkg}/`))
   const hierarchy = section?.split("View Hierarchy:")[1]
   if (!hierarchy) return null
-  return hierarchy
-    .split("\n")
-    .filter((line) => /^\s+[\w.$]+\{[0-9a-f]+ [VIG.]/.test(line)).length
+  const classes = {}
+  for (const line of hierarchy.split("\n")) {
+    const match = line.match(/^\s+([\w.$]+)\{[0-9a-f]+ [VIG.]/)
+    if (match) classes[match[1]] = (classes[match[1]] ?? 0) + 1
+  }
+  return classes
+}
+
+export const countHierarchyViews = (dump, pkg) => {
+  const classes = hierarchyViewClasses(dump, pkg)
+  return classes === null
+    ? null
+    : Object.values(classes).reduce((total, count) => total + count, 0)
 }
 
 // /proc/<pid>/task/*/schedstat gives each thread's on-CPU nanoseconds.

@@ -29,6 +29,8 @@ The unlocked soak's 38 native-view samples ranged from 397 to 855 against a star
 
 The mixed stress's 29 view samples ranged from 585 to 803 against a starting count of 803, so its maximum deviation of 218 also **fails** the ±50 requirement. Native allocated heap was 230,820 → 276,567 KiB with a 292,041 KiB sampled peak. Peak growth exceeded the runner's provisional 47.3 MB diagnostic budget; end growth was below it and sustained-tail growth was false. Dalvik allocated heap was 13,593 → 14,091 KiB and total PSS was 420,121 → 544,383 KiB. Hermes JavaScript heap remains unknown. After initialization, mixed frame windows reached 6.22% reported jank and 61 ms histogram p99; the initialization sample recorded 11.83% and 200 ms. These windows also cannot establish the named P02 gates. The automated sequence does not switch Calendar modes.
 
+The [native-view diagnosis and exact-revision measurement plan](E07-view-stability.md) compare the original activity hierarchy classes with the renderer's mounted-page boundary. The content-density explanation is a strong inference, while the P03 view failure and heap unknowns remain unchanged.
+
 The original summaries, app logs, view hierarchies, memory and frame samples for all three sessions are preserved outside Git in the private local archive `e07-151ace57.tar.gz` (SHA-256 `5bdb15d169dd9636f9fcf073edd68927bb5276556b5d3c3051518112a43bfb06`). Its local storage path is recorded in the uncommitted session handover. The raw `/tmp` paths above refer to the source files captured before archiving.
 
 ## Release gates
