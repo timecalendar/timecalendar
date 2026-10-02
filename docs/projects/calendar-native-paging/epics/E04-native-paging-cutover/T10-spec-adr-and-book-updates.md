@@ -2,7 +2,7 @@
 kind: ticket
 id: T10
 epic: E04
-status: planned
+status: done
 traces-to: [P05, D01, D02, D07]
 depends-on: [T08]
 size: M

@@ -1,12 +1,18 @@
 ---
 kind: decision
 id: D05
-status: approved
+status: superseded
 traces-to: [P02, P03, P04, P05, P06]
 supersedes: []
+superseded-by: [calendar-native-paging/D02, calendar-native-paging/D05]
 ---
 
 # D05 — Use a bounded local range and mounted working set
+
+> **Superseded** by
+> [calendar-native-paging D02](../../calendar-native-paging/decisions/D02-page-identity-and-window.md)
+> and [D05](../../calendar-native-paging/decisions/D05-window-data-store-and-presentation-cache.md).
+> Its bounded-work intent (no unbounded page cache, no query cap that omits valid events) is kept.
 
 ## Context and evidence
 

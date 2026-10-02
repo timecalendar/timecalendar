@@ -1,3 +1,15 @@
+## 2026-10-02 — Windowed native ScrollView paging owns the Calendar
+
+- [ADR 062](./decisions/062-calendar-windowed-native-scrollview-paging.md): one windowed native
+  horizontal `ScrollView` owns Day/Week paging. Pages are absolute `EpochDay`-based indexes keyed
+  `mode:epochDay` in a re-based `±260`-page window with about five mounted pages; the UI thread
+  detects settlement and drives the dated header. `react-native-pager-view` serves onboarding only
+  (ADR 036). ADRs 019, 033 and 061 point to it.
+- `calendar.md` describes the pager, the controller's single committed date, and the
+  `CalendarWindowStore` plus per-page `PagePresentationV1` as the timeline's read path;
+  `data.md`, `storage.md`, `testing.md` and `features.md` follow. The timeline's per-range live
+  queries are replaced by the window store; Agenda and Home keep their range live queries.
+
 ## 2026-10-02 — Native paging spike and synchronous UI props
 
 - The dev-only `/dev-paging-spike` route (`paging-spike` feature) renders the E02 spike of

@@ -11,6 +11,10 @@ confidence: medium
 
 # T07 — Use the calendar in landscape and resized windows
 
+> **Superseded note.** This ticket's pager, three-page and generation requirements are
+> superseded by [calendar-native-paging D01 and D02](../../../calendar-native-paging/design.md)
+> and [ADR 062](../../../../mobile/architecture-book/decisions/062-calendar-windowed-native-scrollview-paging.md).
+
 ## Outcome
 
 The same calendar works in portrait, landscape and tablet split/resized windows without resetting mode or clock position.

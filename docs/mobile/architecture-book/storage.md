@@ -15,14 +15,15 @@ Bundled Drizzle migrations run before the application becomes ready. A migration
 blocks readiness and is recorded; the app must not continue against an unknown schema.
 
 Live queries observe SQLite update notifications and coalesce bursts into one read per
-macrotask. They ignore an in-flight result after unmount. Calendar timeline repositories use
-SQL half-open intersection predicates over the complete three-page instant range, plus a separate
-UTC-midnight civil envelope for date-only rows; they apply no `LIMIT` and do not pre-read either
-event table. Other existing whole-table consumers remain intentional for their current data size.
+macrotask. They ignore an in-flight result after unmount. The Agenda and Home range live queries
+use SQL half-open intersection predicates over their instant range, plus a separate UTC-midnight
+civil envelope for date-only rows; they apply no `LIMIT` and do not pre-read either event table.
+Other existing whole-table consumers remain intentional for their current data size.
 
-`@/db.subscribeToTableChanges(tables, listener)` is the change signal for a store that owns its
-reads instead of mounting live queries: one `addDatabaseChangeListener` per subscription, filtered
-to the given tables and coalesced into one trailing call per burst, like live queries. The
+The Calendar timeline does not mount range live queries. `@/db.subscribeToTableChanges(tables,
+listener)` is the change signal for a store that owns its reads instead of mounting live queries:
+one `addDatabaseChangeListener` per subscription, filtered to the given tables and coalesced into
+one trailing call per burst, like live queries. The
 Calendar window store (`calendar/data/calendar-window-store.ts`) is its consumer. It holds 28-day
 chunks aligned to the first weekday (the mounted pages' chunks plus one chunk either side, at most
 six resident, least recently required evicted). One batched read per request scans
@@ -34,11 +35,13 @@ rows until it lands. Table changes re-read every resident chunk in one batch and
 A chunk never read is `loading`, never an empty `ready`. Hidden events, cancellation and calendar
 visibility are filtered when a page selects its rows, not in SQL. The event tables have no index;
 an index migration waits for a dense-store measurement on a low-end device. The Calendar screen
-does not mount the store yet; it reads through the range live queries above.
+mounts one store for its lifetime and connects it to `calendar_events`, `personal_events`,
+`checklist_items` and `user_calendars` changes.
 
 Checklist summary progress is the scoped-query case: the event-checklists data layer
 normalizes the rendered UID set and selects only `event_uid` plus `is_checked` through
-one live query per Home or Calendar screen. It deliberately applies no `deleted_at`
+one live query per Home screen or Agenda, and through one read per batch in the Calendar window
+store (`readChecklistProgress`). It deliberately applies no `deleted_at`
 predicate; imported non-null values retain the existing Flutter-compatible counting
 semantics, while application deletes remain hard deletes.
 

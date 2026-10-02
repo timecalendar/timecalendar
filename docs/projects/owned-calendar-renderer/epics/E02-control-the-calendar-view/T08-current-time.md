@@ -11,6 +11,10 @@ confidence: high
 
 # T08 — Find the current time when opening Calendar
 
+> **Superseded note.** This ticket's pager, three-page and generation requirements are
+> superseded by [calendar-native-paging D01 and D02](../../../calendar-native-paging/design.md)
+> and [ADR 062](../../../../mobile/architecture-book/decisions/062-calendar-windowed-native-scrollview-paging.md).
+
 ## Outcome
 
 A fresh timeline opens around the current clock time and shows a current-time indicator with a non-color cue.

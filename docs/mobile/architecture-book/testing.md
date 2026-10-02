@@ -40,14 +40,14 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   the projected vendor array and objects.
 - **Coverage** is collected via `npm test -- --coverage`. The `coverageThreshold` is **enforced** — 90% logic / 70% global; see [ADR 003](./decisions/003-coverage-threshold.md). Gated by the `test-mobile` job (R-1).
 - **Calendar T05 proof** combines total preference/reset tests, pure display-zone civil
-  transition tables, one/five/seven-column renderer and stale-generation tests, screen/menu/i18n
+  transition tables, one/five/seven-column renderer and stale-event tests, screen/menu/i18n
   integration, and `calendar-owned-shell.contract.test.ts`. Native partial-drag feel, restart,
   visible-hour continuity, platform menus, and assistive technology remain revision-bound owner
   checks; host tests do not claim them.
 - **Calendar T06 zoom proof** adds 100%-targeted pure focal/clamp properties, total shared
   preference/reset coverage, real-screen center-command and limit-state tests, pinch lifecycle and
-  settlement tests, and repository inventory assertions for one native scroll owner, one pager,
-  three pages and no per-frame React-state or `runOnJS` path. Host tests do not claim native
+  settlement tests, and repository inventory assertions for one native vertical scroll owner, one
+  windowed horizontal pager and no per-frame React-state or `runOnJS` path. Host tests do not claim native
   recognizer precedence, release feel, assistive announcements or low-end timing; those stay in
   the revision-bound device worksheet and final T28 matrix.
 - **Calendar T07 resize proof** adds a pure atomic geometry model, clock-anchor/boundary tables,
@@ -62,7 +62,7 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   renderer timer-free, and rejects repeating animation work. Host tests do not claim device
   appearance, assistive-technology quality, or physical background behavior.
 - **Calendar T09 ordinary timed-event proof** combines 100% statement/branch coverage for the pure
-  decoder, three-page planner, support classifier, and immutable presentation builder; fake-database
+  decoder, page index/window/chunk planners, support classifier, and immutable presentation builder; fake-database
   SQL-shape tests; malformed-sibling/privacy-safe diagnostic tests; and renderer/screen proofs for
   actual-time geometry, one committed-page label, checklist projection, and original-UID routing.
   The repository contract excludes generated API/fetch/sync dependencies from page navigation.
@@ -142,7 +142,7 @@ invalid colors, mixed malformed optional arrays, missing/invalid/reversed requir
 Maths sibling. Pure decoder, range, support, title, color, presentation and geometry suites prove boundary
 membership, total normalization, deterministic contrast and exact/clamped geometry. Renderer, screen,
 details, Agenda, Home and real-catalog tests prove one semantic target, complete labels, original-UID
-activation and localized fallback. The Calendar-owned-shell contract keeps one pager/scroll/pinch tree and
+activation and localized fallback. The Calendar-owned-shell contract keeps one vertical/horizontal scroll and pinch tree and
 bans vendor, compatibility, network and sensitive-surface dependencies.
 
 These host checks are structural evidence only. They do not certify physical 44pt/48dp target feel,
