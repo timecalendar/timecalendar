@@ -1,5 +1,6 @@
 import {
   formatClockTime,
+  formatCompactMonthYear,
   formatDayHeaderParts,
   formatDayMonth,
   formatEventDateRange,
@@ -318,6 +319,11 @@ describe("formatMonthYear", () => {
 
   it("shows the locale-appropriate month + year (FR)", () => {
     expect(formatMonthYear(day, "fr", "Europe/Paris")).toBe("juillet 2026")
+  })
+
+  it("provides a localized compact title for large text", () => {
+    expect(formatCompactMonthYear(day, "en", "Europe/Paris")).toBe("Jul 2026")
+    expect(formatCompactMonthYear(day, "fr", "Europe/Paris")).toBe("juil. 2026")
   })
 
   it("rolls the month across the zone's month boundary", () => {

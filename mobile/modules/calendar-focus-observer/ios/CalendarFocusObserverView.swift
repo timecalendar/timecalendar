@@ -4,6 +4,7 @@ import UIKit
 class CalendarFocusObserverView: ExpoView {
   var identity = ""
   var dateKey = ""
+  var pageKey = ""
   let onAccessibilityFocused = EventDispatcher()
   private var observer: NSObjectProtocol?
 
@@ -56,6 +57,7 @@ class CalendarFocusObserverView: ExpoView {
     onAccessibilityFocused([
       "identity": identity,
       "dateKey": dateKey,
+      "pageKey": pageKey,
     ])
   }
 }

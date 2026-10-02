@@ -46,6 +46,10 @@ the fixed hour gutter inside the vertical ScrollView (`renderer/owned-calendar-p
 - **The controller stores only the committed date.** The shell reports one
   `onDateCommitted` per settle. Today, `focusDate` and mode switches move the pager to an index;
   accessibility increment and decrement step one page through the same path.
+- **Accessible paging has a separate control.** A plain adjustable header-gutter View owns
+  increment and decrement. Neither ScrollView is an accessible leaf, and Android hides only
+  the horizontal scroll node while retaining its event descendants
+  ([D06](../../../projects/calendar-native-paging/decisions/D06-accessible-paging-control.md)).
 - **Data follows the window.** The screen-level `CalendarWindowStore` reads 28-day chunks
   around the mounted pages, and each page has an explicit `loading | ready | error` status and a
   frozen, cached `PagePresentationV1` ([storage.md](../storage.md), [calendar.md](../calendar.md)).
@@ -59,7 +63,8 @@ a native module or `@expo/ui` (iOS 17 floor or a second native codebase).
 
 ## Consequences
 
-Native physics, interruptibility and screen-reader scrolling come from the platform. The
+Native physics and interruptibility come from the platform. The adjustable control owns
+screen-reader paging. The
 re-base and the stale-event filter are owned mechanisms that need their own tests. A chain of
 fast swipes can scroll a page into view before it mounts; that page shows the shared grid and a
 busy, never-empty state until it mounts. Android arbitrates the nested scroll views on equal

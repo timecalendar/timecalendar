@@ -1,4 +1,9 @@
 import { act, fireEvent, render, screen } from "@testing-library/react-native"
+import { State } from "react-native-gesture-handler"
+import {
+  fireGestureHandler,
+  getByGestureTestId,
+} from "react-native-gesture-handler/jest-utils"
 import * as Reanimated from "react-native-reanimated"
 
 import {
@@ -11,6 +16,7 @@ import {
   type PageSpace,
   pageStartDay,
 } from "@/features/calendar/data"
+import { useReducedMotion } from "@/hooks/use-reduced-motion"
 import i18n from "@/i18n"
 import {
   flushUiThread,
@@ -22,6 +28,9 @@ import { OwnedCalendarShell } from "./owned-calendar-shell"
 
 jest.mock("@/hooks/use-color-scheme", () => ({
   useColorScheme: jest.fn(() => "light"),
+}))
+jest.mock("@/hooks/use-reduced-motion", () => ({
+  useReducedMotion: jest.fn(() => false),
 }))
 
 const ZONE = "UTC"
@@ -61,6 +70,40 @@ const pageId = (index: PageIndex) =>
 const weekStartKey = (index: PageIndex) =>
   epochDayKey(pageStartDay(SPACE, index))
 
+function recordAnimatedReactions() {
+  const sites = new Map<
+    string,
+    {
+      prepare: () => unknown
+      react: (value: unknown, previous: unknown) => void
+      last: unknown
+    }
+  >()
+  const spy = jest
+    .spyOn(Reanimated, "useAnimatedReaction")
+    .mockImplementation((prepare, react) => {
+      const key = react.toString()
+      const previous = sites.get(key)
+      sites.set(key, {
+        prepare,
+        react: react as (value: unknown, previous: unknown) => void,
+        last: previous === undefined ? prepare() : previous.last,
+      })
+    })
+  return {
+    flush: () => {
+      for (const site of sites.values()) {
+        const value = site.prepare()
+        if (value === site.last) continue
+        const previous = site.last
+        site.last = value
+        site.react(value, previous)
+      }
+    },
+    restore: () => spy.mockRestore(),
+  }
+}
+
 async function renderShell() {
   const onDateCommitted = jest.fn()
   const presentPage = presenter()
@@ -93,6 +136,10 @@ async function renderShell() {
 }
 
 describe("owned Calendar windowed pager", () => {
+  beforeEach(() => {
+    jest.mocked(useReducedMotion).mockReturnValue(false)
+  })
+
   it("mounts the settled page and two neighbours each way, keyed by page", async () => {
     await renderShell()
     for (let offset = -2; offset <= 2; offset += 1) {
@@ -185,7 +232,7 @@ describe("owned Calendar windowed pager", () => {
     )
   })
 
-  it("moves to a date shown from outside without animation, then commits where it lands", async () => {
+  it("jumps beside a distant date, then animates one page and commits only the target", async () => {
     const scrollTo = jest.spyOn(Reanimated, "scrollTo")
     const { onDateCommitted, pager, showAnchor } = await renderShell()
     scrollTo.mockClear()
@@ -194,20 +241,170 @@ describe("owned Calendar windowed pager", () => {
 
     const target = ANCHOR_INDEX + 20
     expect(screen.getByTestId(pageId(target), HIDDEN)).toBeTruthy()
-    expect(scrollTo).toHaveBeenCalledTimes(1)
-    expect(scrollTo.mock.calls[0]?.slice(1)).toEqual([
-      pager.origin + 20 * pager.pageWidth,
-      0,
-      false,
+    expect(scrollTo.mock.calls.map((call) => call.slice(1))).toEqual([
+      [pager.origin + 19 * pager.pageWidth, 0, false],
+      [pager.origin + 20 * pager.pageWidth, 0, true],
     ])
-    await act(async () => {
-      pager.send(20)
-    })
+    await pager.send(19)
+    expect(onDateCommitted).not.toHaveBeenCalled()
+    await pager.send(20)
     expect(onDateCommitted).toHaveBeenCalledTimes(1)
     expect(onDateCommitted.mock.calls[0]?.[0].toISOString().slice(0, 10)).toBe(
       "2026-11-02",
     )
     scrollTo.mockRestore()
+  })
+
+  it("jumps directly to a distant date when reduced motion changes while open", async () => {
+    const scrollTo = jest.spyOn(Reanimated, "scrollTo")
+    try {
+      const { onDateCommitted, pager, showAnchor } = await renderShell()
+      jest.mocked(useReducedMotion).mockReturnValue(true)
+      scrollTo.mockClear()
+
+      await showAnchor(new Date("2026-11-02T00:00:00.000Z"))
+
+      expect(scrollTo.mock.calls.map((call) => call.slice(1))).toEqual([
+        [pager.origin + 20 * pager.pageWidth, 0, false],
+      ])
+      await pager.send(20)
+      expect(onDateCommitted).toHaveBeenCalledTimes(1)
+    } finally {
+      scrollTo.mockRestore()
+    }
+  })
+
+  it("lets a touch interrupt a distant navigation and settle the touched page", async () => {
+    const { onDateCommitted, pager, showAnchor } = await renderShell()
+    await showAnchor(new Date("2026-11-02T00:00:00.000Z"))
+
+    await pager.send(19, "onScrollBeginDrag")
+    await pager.send(18)
+    await pager.send(18, "onScrollEndDrag")
+
+    expect(onDateCommitted).toHaveBeenCalledTimes(1)
+    expect(onDateCommitted.mock.calls[0]?.[0].toISOString().slice(0, 10)).toBe(
+      weekStartKey(ANCHOR_INDEX + 18),
+    )
+    await pager.send(18, "onScrollBeginDrag")
+    await pager.send(18.6)
+    await pager.send(18.6, "onScrollEndDrag")
+    await pager.send(18.6, "onMomentumScrollBegin")
+    await pager.send(19)
+    await pager.send(19, "onMomentumScrollEnd")
+    expect(onDateCommitted).toHaveBeenCalledTimes(2)
+  })
+
+  it("clears a target already at the settled page before the next ordinary swipe", async () => {
+    const { onDateCommitted, pager, showAnchor } = await renderShell()
+    await showAnchor(new Date("2026-06-22T00:00:00.000Z"))
+    await showAnchor(ANCHOR)
+
+    await pager.send(0)
+    expect(onDateCommitted).not.toHaveBeenCalled()
+    await pager.send(0, "onScrollBeginDrag")
+    await pager.send(0.6)
+    await pager.send(0.6, "onScrollEndDrag")
+    await pager.send(0.6, "onMomentumScrollBegin")
+    await pager.send(1)
+    await pager.send(1, "onMomentumScrollEnd")
+
+    expect(onDateCommitted).toHaveBeenCalledTimes(1)
+    expect(onDateCommitted.mock.calls[0]?.[0].toISOString().slice(0, 10)).toBe(
+      weekStartKey(ANCHOR_INDEX + 1),
+    )
+  })
+
+  it("recovers a stationary touch that interrupts a programmatic page", async () => {
+    const reactions = recordAnimatedReactions()
+    try {
+      const { onDateCommitted, pager, showAnchor } = await renderShell()
+      await showAnchor(new Date("2026-11-02T00:00:00.000Z"))
+      await pager.send(19)
+      expect(onDateCommitted).not.toHaveBeenCalled()
+
+      await act(async () => {
+        fireGestureHandler(getByGestureTestId("owned-calendar-native-pager"), [
+          { state: State.BEGAN, numberOfPointers: 1 },
+          { state: State.END, numberOfPointers: 1 },
+        ])
+        reactions.flush()
+      })
+      await flushUiThread()
+
+      expect(onDateCommitted).toHaveBeenCalledTimes(1)
+      expect(
+        onDateCommitted.mock.calls[0]?.[0].toISOString().slice(0, 10),
+      ).toBe(weekStartKey(ANCHOR_INDEX + 19))
+    } finally {
+      reactions.restore()
+    }
+  })
+
+  it("settles iOS after end-drag arrives before the native touch finalizes", async () => {
+    const reactions = recordAnimatedReactions()
+    try {
+      const { onDateCommitted, pager } = await renderShell()
+      const nativePager = getByGestureTestId(
+        "owned-calendar-native-pager",
+      ) as unknown as {
+        handlers: {
+          onBegin: (event: Record<string, unknown>) => void
+          onFinalize: (event: Record<string, unknown>, success: boolean) => void
+        }
+      }
+
+      await act(async () =>
+        nativePager.handlers.onBegin({ numberOfPointers: 1 }),
+      )
+      await pager.send(0, "onScrollBeginDrag")
+      await pager.send(1)
+      await pager.send(1, "onScrollEndDrag")
+      expect(onDateCommitted).not.toHaveBeenCalled()
+
+      await act(async () => {
+        nativePager.handlers.onFinalize({ numberOfPointers: 0 }, true)
+        reactions.flush()
+      })
+      await flushUiThread()
+
+      expect(onDateCommitted).toHaveBeenCalledTimes(1)
+      expect(
+        onDateCommitted.mock.calls[0]?.[0].toISOString().slice(0, 10),
+      ).toBe(weekStartKey(ANCHOR_INDEX + 1))
+    } finally {
+      reactions.restore()
+    }
+  })
+
+  it("lets a pinch cancel a pending navigation and settle its observed page", async () => {
+    const reactions = recordAnimatedReactions()
+    try {
+      const { onDateCommitted, pager, showAnchor } = await renderShell()
+      await showAnchor(new Date("2026-11-02T00:00:00.000Z"))
+      await pager.send(19)
+      const pinch = getByGestureTestId("owned-calendar-pinch") as unknown as {
+        handlers: {
+          onStart: (event: Record<string, unknown>) => void
+          onFinalize: (event: Record<string, unknown>, success: boolean) => void
+        }
+      }
+
+      await act(async () => {
+        pinch.handlers.onStart({ focalY: 200, numberOfPointers: 2 })
+        reactions.flush()
+        pinch.handlers.onFinalize({ numberOfPointers: 0 }, false)
+        reactions.flush()
+      })
+      await flushUiThread()
+
+      expect(onDateCommitted).toHaveBeenCalledTimes(1)
+      expect(
+        onDateCommitted.mock.calls[0]?.[0].toISOString().slice(0, 10),
+      ).toBe(weekStartKey(ANCHOR_INDEX + 19))
+    } finally {
+      reactions.restore()
+    }
   })
 
   it("re-bases the content window near its edge without moving the page", async () => {

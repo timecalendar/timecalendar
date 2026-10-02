@@ -1,7 +1,7 @@
 import {
   type RefObject,
   useEffect,
-  useLayoutEffect,
+  useEffectEvent,
   useRef,
   useState,
 } from "react"
@@ -20,12 +20,10 @@ type FocusTarget = { node: View; dateKey: string; minute: number }
 type FocusMemory = { key: string; dateKey: string }
 export type CalendarPageTitleTarget = {
   node: Text
-  visibleTitle: string
   label: string
   contextHeading: string
   pageKey: string
 }
-type FocusContext = { pageKey: string; ready: boolean }
 
 function requestRestoredFocus({
   targets,
@@ -57,7 +55,7 @@ function requestRestoredFocus({
   pixelsPerHour: number
   scrollTo: (y: number) => void
   isCurrent: () => boolean
-  onFocused?: (titleFocused: boolean) => void
+  onFocused: (titleFocused: boolean) => void
 }): number | "waiting" | null {
   if (lastRestore.current === restoreKey || lastFocused.current === null)
     return null
@@ -75,7 +73,6 @@ function requestRestoredFocus({
   const title =
     pageTitleTarget?.pageKey === pageKey &&
     pageTitleTarget.contextHeading === heading &&
-    pageTitleTarget.label.includes(pageTitleTarget.visibleTitle) &&
     pageTitleTarget.label.includes(heading)
       ? pageTitleTarget
       : null
@@ -90,16 +87,12 @@ function requestRestoredFocus({
     if (handle !== null) {
       lastRestore.current = restoreKey
       AccessibilityInfo.setAccessibilityFocus(handle)
-      onFocused?.(titleFocused)
+      onFocused(titleFocused)
     }
   })
 }
 
-/**
- * Accessibility focus memory for the committed page: remembers the event a
- * screen reader last focused, and restores it (or its date, or the title) when
- * the page settles or the route regains focus.
- */
+/** Remembers the focused event and returns focus on a committed page or route visit. */
 export function useCalendarFocusRestoration({
   committedKey,
   currentColumns,
@@ -125,30 +118,12 @@ export function useCalendarFocusRestoration({
 }) {
   const [targets] = useState(() => new Map<string, FocusTarget>())
   const [headings] = useState(() => new Map<string, View>())
-  const focusContext = useRef<FocusContext>({
-    pageKey: committedKey,
-    ready: false,
-  })
-  const titleContext = useRef(pageTitleTarget)
-  const returnFrame = useRef<number | null>(null)
-  useLayoutEffect(() => {
-    titleContext.current = pageTitleTarget
-    focusContext.current = {
-      pageKey: committedKey,
-      ready: contextReady && routeFocused !== false,
-    }
-    if (returnFrame.current !== null) {
-      cancelAnimationFrame(returnFrame.current)
-      returnFrame.current = null
-    }
-  }, [committedKey, contextReady, pageTitleTarget, routeFocused])
   const lastFocused = useRef<FocusMemory | null>(null)
   const lastRestore = useRef<string | null>(null)
-  const lastAutoContext = useRef<string | null>(null)
-  const returnEpoch = useRef(0)
-  const pendingReturn = useRef(false)
-  const isFocusContextCurrent = (key: string) =>
-    focusContext.current.pageKey === key && focusContext.current.ready
+  const lastAnnounced = useRef<string | null>(null)
+  const visit = useRef(0)
+  const wasFocused = useRef(false)
+
   const registerTarget = (
     key: string,
     dateKey: string,
@@ -158,113 +133,93 @@ export function useCalendarFocusRestoration({
     if (node === null) targets.delete(key)
     else if (!targets.has(key)) targets.set(key, { node, dateKey, minute })
   }
-  const rememberTarget = (key: string, dateKey: string) => {
+  const rememberTarget = (key: string, dateKey: string, pageKey: string) => {
     if (
-      !isFocusContextCurrent(focusContext.current.pageKey) ||
-      targets.get(key)?.dateKey !== dateKey ||
-      (lastFocused.current?.key === key &&
-        lastFocused.current.dateKey === dateKey)
+      pageKey !== committedKey ||
+      !contextReady ||
+      routeFocused === false ||
+      targets.get(key)?.dateKey !== dateKey
     )
       return
     lastFocused.current = { key, dateKey }
   }
-  useEffect(() => {
-    if (routeFocused === false || !contextReady) return
-    if (lastAutoContext.current === committedKey) return
-    const frame = requestRestoredFocus({
-      targets,
-      headings,
-      pageTitleTarget,
-      heading,
-      pageKey: committedKey,
-      currentColumns,
-      lastFocused,
-      lastRestore,
-      restoreKey: `${committedKey}:${returnEpoch.current}`,
-      pixelsPerHour: pixelsPerHour.get(),
-      scrollTo: (y) => scrollRef.current?.scrollTo({ y, animated: false }),
-      isCurrent: () =>
-        focusContext.current.pageKey === committedKey &&
-        focusContext.current.ready &&
-        titleContext.current === pageTitleTarget,
-      onFocused: (titleFocused) => {
-        pendingReturn.current = false
-        lastAutoContext.current = committedKey
-        onContextSettled?.(committedKey, titleFocused)
-      },
-    })
-    if (frame === "waiting") return
-    if (frame !== null) return () => cancelAnimationFrame(frame)
-    // Nothing to restore: the context still settles, a frame later like a
-    // restored focus does, so the heading is announced from one place.
-    lastAutoContext.current = committedKey
-    requestAnimationFrame(() => {
-      if (focusContext.current.pageKey === committedKey)
-        onContextSettled?.(committedKey, false)
-    })
-  }, [
-    committedKey,
-    contextReady,
-    pixelsPerHour,
-    scrollRef,
-    currentColumns,
-    heading,
-    headings,
-    onContextSettled,
-    pageTitleTarget,
-    routeFocused,
-    targets,
-  ])
-  const restoreFocus = () => {
-    returnEpoch.current += 1
-    if (routeFocused === false || !contextReady) return
-    if (returnFrame.current !== null) cancelAnimationFrame(returnFrame.current)
-    const frame = requestRestoredFocus({
-      targets,
-      headings,
-      pageTitleTarget,
-      heading,
-      pageKey: committedKey,
-      currentColumns,
-      lastFocused,
-      lastRestore,
-      restoreKey: `${committedKey}:${returnEpoch.current}`,
-      pixelsPerHour: pixelsPerHour.get(),
-      scrollTo: (y) => scrollRef.current?.scrollTo({ y, animated: false }),
-      isCurrent: () =>
-        isFocusContextCurrent(committedKey) &&
-        titleContext.current === pageTitleTarget,
-      onFocused: () => {
-        pendingReturn.current = false
-      },
-    })
-    pendingReturn.current = frame !== null
-    returnFrame.current = typeof frame === "number" ? frame : null
-  }
-  const restoreFocusRef = useRef(restoreFocus)
-  useLayoutEffect(() => {
-    restoreFocusRef.current = restoreFocus
-  })
-  useEffect(() => {
-    if (
-      pendingReturn.current &&
-      routeFocused !== false &&
-      contextReady &&
-      pageTitleTarget !== null &&
-      pageTitleTarget !== undefined
-    )
-      restoreFocusRef.current()
-  }, [committedKey, contextReady, pageTitleTarget, routeFocused])
-  useEffect(
-    () => () => {
-      if (returnFrame.current !== null)
-        cancelAnimationFrame(returnFrame.current)
-    },
-    [],
-  )
   const registerHeading = (dateKey: string, node: View | null) => {
     if (node === null) headings.delete(dateKey)
     else headings.set(dateKey, node)
   }
-  return { registerTarget, rememberTarget, registerHeading, restoreFocus }
+
+  const isRestorationCurrent = useEffectEvent(
+    (restoreKey: string) =>
+      routeFocused !== false &&
+      contextReady &&
+      `${committedKey}:${visit.current}` === restoreKey,
+  )
+
+  const restore = useEffectEvent(
+    (
+      restoreKey: string,
+      isCurrent: () => boolean,
+      onFocused: (titleFocused: boolean) => void,
+    ) => {
+      if (!isRestorationCurrent(restoreKey)) return "waiting"
+      return requestRestoredFocus({
+        targets,
+        headings,
+        pageTitleTarget,
+        heading,
+        pageKey: committedKey,
+        currentColumns,
+        lastFocused,
+        lastRestore,
+        restoreKey,
+        pixelsPerHour: pixelsPerHour.get(),
+        scrollTo: (y) => scrollRef.current?.scrollTo({ y, animated: false }),
+        isCurrent,
+        onFocused,
+      })
+    },
+  )
+
+  useEffect(() => {
+    if (routeFocused === false) {
+      wasFocused.current = false
+      return
+    }
+    if (!wasFocused.current) {
+      wasFocused.current = true
+      visit.current += 1
+    }
+    if (!contextReady) return
+    let active = true
+    const restoreKey = `${committedKey}:${visit.current}`
+    const onFocused = (titleFocused: boolean) => {
+      if (lastAnnounced.current === committedKey) return
+      lastAnnounced.current = committedKey
+      onContextSettled?.(committedKey, titleFocused)
+    }
+    const frame = restore(
+      restoreKey,
+      () => active && isRestorationCurrent(restoreKey),
+      onFocused,
+    )
+    if (frame === "waiting") return
+    if (frame !== null) {
+      return () => {
+        active = false
+        cancelAnimationFrame(frame)
+      }
+    }
+    if (lastAnnounced.current === committedKey) return
+    onFocused(false)
+  }, [
+    committedKey,
+    contextReady,
+    currentColumns,
+    heading,
+    onContextSettled,
+    pageTitleTarget,
+    routeFocused,
+  ])
+
+  return { registerTarget, rememberTarget, registerHeading }
 }

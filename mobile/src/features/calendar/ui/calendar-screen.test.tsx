@@ -312,7 +312,9 @@ describe("CalendarScreen owned shell", () => {
     const early = await screen.findByRole("button", {
       name: /^Fixture probe-early,/,
     })
-    const late = screen.getByRole("button", { name: /^Fixture probe-late,/ })
+    const late = await screen.findByRole("button", {
+      name: /^Fixture probe-late,/,
+    })
     expect(
       screen.getByTestId("owned-calendar-canvas").props.contentOffset,
     ).toEqual({ x: 0, y: 540 })
@@ -440,6 +442,7 @@ describe("CalendarScreen owned shell", () => {
         nativeEvent: {
           identity: observer.props.identity,
           dateKey: observer.props.dateKey,
+          pageKey: observer.props.pageKey,
         },
       })
       await fireEvent.press(
@@ -779,7 +782,7 @@ describe("CalendarScreen owned shell", () => {
     expect(mockScrollTo.mock.calls[0]?.slice(1)).toEqual([
       pager.origin + (pager.position.current - 1) * pager.pageWidth,
       0,
-      false,
+      true,
     ])
     await landWherePlaced(pager, pager.position)
     expect(
@@ -871,6 +874,7 @@ describe("CalendarScreen owned shell", () => {
         nativeEvent: {
           identity: observer.props.identity,
           dateKey: observer.props.dateKey,
+          pageKey: observer.props.pageKey,
         },
       })
       mockAnnounce.mockClear()
@@ -1043,7 +1047,7 @@ describe("CalendarScreen owned shell", () => {
     const pager = await settleCalendarPager()
 
     await fireEvent(
-      screen.getByTestId("owned-calendar-canvas"),
+      screen.getByTestId("owned-calendar-page-control"),
       "accessibilityAction",
       { nativeEvent: { actionName: "increment" } },
     )
@@ -1157,13 +1161,7 @@ describe("CalendarScreen owned shell", () => {
     expectTodayCommitted()
   })
 
-  // Skipped: the pager keeps its momentum flag through a programmatic placement,
-  // so if the native view stops the fling for `scrollTo` without sending a
-  // momentum end, Today's page never settles: the previous week stays the
-  // committed (accessible, live-tile) page until the next touch. Whether iOS
-  // and Android send that event is unverified; see
-  // docs/react-native-migration/inbox/2026-10-02-calendar-paging-t09-placement-during-momentum.md.
-  it.skip("lets Today supersede a fling stopped by the placement without a momentum end", async () => {
+  it("lets Today supersede a fling stopped by the placement without a momentum end", async () => {
     const pager = await pressTodayDuringFling()
 
     await pager.send(pager.position.current)

@@ -75,6 +75,7 @@ export {
 export {
   type AppLocale,
   formatClockTime,
+  formatCompactMonthYear,
   formatDayHeaderParts,
   formatDayMonth,
   formatEventDateRange,

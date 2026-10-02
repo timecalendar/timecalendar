@@ -1,4 +1,3 @@
-import type { TFunction } from "i18next"
 import type { ComponentProps, ReactNode } from "react"
 import {
   type LayoutChangeEvent,
@@ -52,7 +51,6 @@ export type HorizontalPager = {
 }
 
 export function OwnedCalendarCanvas({
-  heading,
   mode,
   locale,
   uses24HourClock,
@@ -66,15 +64,12 @@ export function OwnedCalendarCanvas({
   onViewportLayout,
   onMomentumScrollBegin,
   onMomentumScrollEnd,
-  onAccessiblePageRequest,
   pixelsPerHour,
   settledPixelsPerHour,
   pagerRef,
   pager,
-  t,
   children,
 }: {
-  heading: string
   mode: CalendarTimelineMode
   locale: AppLocale
   uses24HourClock: boolean | null
@@ -88,12 +83,10 @@ export function OwnedCalendarCanvas({
   onViewportLayout: (event: LayoutChangeEvent) => void
   onMomentumScrollBegin: () => void
   onMomentumScrollEnd: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
-  onAccessiblePageRequest: (direction: -1 | 1) => void
   pixelsPerHour: SharedValue<number>
   settledPixelsPerHour: number
   pagerRef: AnimatedRef<Animated.ScrollView>
   pager: HorizontalPager
-  t: TFunction
   children: ReactNode
 }) {
   const theme = useTheme()
@@ -128,32 +121,7 @@ export function OwnedCalendarCanvas({
         onScrollEndDrag={onScrollEndDrag}
         onMomentumScrollBegin={onMomentumScrollBegin}
         onMomentumScrollEnd={onMomentumScrollEnd}
-        accessible
-        accessibilityRole="adjustable"
-        accessibilityLabel={heading}
-        accessibilityActions={[
-          {
-            name: "decrement",
-            label: t(
-              mode === "day"
-                ? "calendar.previousDayLabel"
-                : "calendar.previousWeekLabel",
-            ),
-          },
-          {
-            name: "increment",
-            label: t(
-              mode === "day"
-                ? "calendar.nextDayLabel"
-                : "calendar.nextWeekLabel",
-            ),
-          },
-        ]}
-        onAccessibilityAction={({ nativeEvent }) => {
-          if (nativeEvent.actionName === "increment") onAccessiblePageRequest(1)
-          if (nativeEvent.actionName === "decrement")
-            onAccessiblePageRequest(-1)
-        }}
+        accessible={false}
       >
         <Animated.View
           testID="owned-calendar-day"
@@ -310,6 +278,8 @@ function HourLabel({
         type="captionSmall"
         themeColor="textSecondary"
         testID={`owned-calendar-hour-label-${hour}`}
+        numberOfLines={1}
+        maxFontSizeMultiplier={1.2}
       >
         {label}
       </ThemedText>

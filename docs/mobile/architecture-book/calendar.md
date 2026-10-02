@@ -38,9 +38,11 @@ tab-bar inset, so replaying a native settlement would hide the final hours behin
 Pinch ownership starts on activation. A touch pinch keeps its last two-finger anchor when
 release updates report fewer than two fingers; an unactivated gesture cannot restore a
 pinch baseline.
-Calendar tab reselect-to-top is disabled. The ScrollView
-exposes the committed localized day or week date context as an adjustable accessibility label
-with mode-specific translated previous/next actions.
+Calendar tab reselect-to-top is disabled. A plain adjustable View in the date header's
+52-point gutter corner exposes the committed localized day or week context and translated
+previous/next actions. It is at least 56 points tall. Neither ScrollView is an accessible
+leaf; Android omits the horizontal scroll node while retaining the committed page's event
+descendants. One action pages from the committed index, and another action waits for its settle.
 One clipped weekday/date strip remains pinned above vertical motion beneath the native month
 title. Its fixed spacer matches the hour gutter, and it holds one header slot per mounted page,
 keyed and positioned like that page and built from the same frozen page presentation. Each visual
@@ -51,6 +53,8 @@ native horizontal offset to a shared value whose `useAnimatedStyle` projection
 (`translateX = −scrollX`) moves the strip with the pages on the UI thread, so there is no React
 Native `Animated`, per-frame React state, second pager, responder, timer, or animation owner.
 Only the committed slot is accessible; neighbour slots stay hidden until their page settles.
+The header grows with the system text scale. Its narrow weekday font size follows measured
+cell width, and the date badge bounds its scaled number to the available cell width.
 Snap-back, a weekend-preference change, and a geometry change leave the committed date in place
 and commit nothing. Monday is an explicit launch input; the pure
 display-zone transition model advances Day by one civil date and Week by one Monday-first civil
@@ -104,8 +108,10 @@ are ignored, which filters stale geometry and the previous mode's content. A pag
 the window never remounts, so a crossing renders only the page that enters it; the shell
 presents the next pages to enter one frame after each crossing. Day/Week switches remount the
 horizontal view (`key=mode`). The controller stores only the committed date: the shell reports
-`onDateCommitted` once per settle, and Today, `focusDate` and mode switches move the pager to the
-matching index without animation. Going to the background keeps the committed date and the
+`onDateCommitted` once per settle. Today and `focusDate` animate one page when motion is
+allowed; a distant target first jumps beside that page, then animates the final page. Live
+reduced motion uses one direct jump. Mode switches replace geometry without animation.
+Going to the background keeps the committed date and the
 horizontal offset. The grid uses filled physical-hairline views in static scroll content, with one
 extra hairline of render height so the exact 24:00 closing boundary is not clipped.
 

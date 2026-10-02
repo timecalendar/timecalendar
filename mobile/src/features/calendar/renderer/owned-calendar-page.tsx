@@ -41,7 +41,7 @@ const PIXEL_RATIO = PixelRatio.get()
 
 export type PageEventHandlers = {
   onEventPress: (uid: string) => void
-  onEventFocused: (key: string, dateKey: string) => void
+  onEventFocused: (key: string, dateKey: string, pageKey: string) => void
   onChooseConflict: (tiles: readonly PageTileV1[]) => void
   registerTarget: (
     key: string,
@@ -167,6 +167,7 @@ export function CalendarPage({
         {presentation.columns.map((column) => (
           <TileColumn
             key={column.key}
+            pageKey={pageKey}
             dateKey={column.key}
             tiles={column.tiles}
             committed={committed}
@@ -182,6 +183,7 @@ export function CalendarPage({
 }
 
 function TileColumn({
+  pageKey,
   dateKey,
   tiles,
   committed,
@@ -190,6 +192,7 @@ function TileColumn({
   handlers,
   t,
 }: {
+  pageKey: string
   dateKey: string
   tiles: readonly PageTileV1[]
   committed: boolean
@@ -221,6 +224,7 @@ function TileColumn({
       {tiles.map((tile) => (
         <TimedCalendarTile
           key={tile.key}
+          pageKey={pageKey}
           tile={tile}
           dateKey={dateKey}
           pixelsPerHour={pixelsPerHour}
@@ -367,6 +371,7 @@ function StaticCalendarTile({
 }
 
 function TimedCalendarTile({
+  pageKey,
   tile,
   dateKey,
   pixelsPerHour,
@@ -374,6 +379,7 @@ function TimedCalendarTile({
   handlers,
   t,
 }: {
+  pageKey: string
   tile: PageTileV1
   dateKey: string
   pixelsPerHour: SharedValue<number>
@@ -453,8 +459,13 @@ function TimedCalendarTile({
         testID={`owned-calendar-focus-observer-${tile.identity.uid}`}
         identity={tile.key}
         dateKey={dateKey}
+        pageKey={pageKey}
         onAccessibilityFocused={({ nativeEvent }) =>
-          handlers.onEventFocused(nativeEvent.identity, nativeEvent.dateKey)
+          handlers.onEventFocused(
+            nativeEvent.identity,
+            nativeEvent.dateKey,
+            nativeEvent.pageKey,
+          )
         }
         style={styles.tileTarget}
       >

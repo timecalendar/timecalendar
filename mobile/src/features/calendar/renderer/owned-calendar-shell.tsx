@@ -1,8 +1,13 @@
-import { type Ref, useImperativeHandle, useState } from "react"
+import {
+  type Ref,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, View } from "react-native"
 import { GestureDetector } from "react-native-gesture-handler"
-import { useReducedMotion } from "react-native-reanimated"
 
 import {
   type AppLocale,
@@ -21,6 +26,7 @@ import {
   type PagePresenter,
   type PageTileV1,
 } from "@/features/calendar/data"
+import { useReducedMotion } from "@/hooks/use-reduced-motion"
 import { useTheme } from "@/theme"
 
 import { OwnedCalendarCanvas } from "./owned-calendar-canvas"
@@ -52,7 +58,6 @@ export type OwnedCalendarProbeDiagnostic = {
 
 export type OwnedCalendarShellHandle = {
   requestZoom: (command: CalendarZoomCommand) => void
-  restoreFocus: () => void
 }
 
 type OwnedCalendarShellProps = {
@@ -144,6 +149,7 @@ export function OwnedCalendarShell({
     space,
     anchorIndex,
     pageWidth: pagerPageWidth(coordinator.viewportWidth),
+    reduceMotion: reduceMotion !== false,
     scrollLocked: coordinator.scrollLocked,
     pinchGesture: coordinator.pinchGesture,
     trackNativeTouch: coordinator.trackNativeTouch,
@@ -175,9 +181,13 @@ export function OwnedCalendarShell({
     committed.status === "ready" &&
     !moving &&
     committedKey === pageKey(space, anchorIndex)
+  const accessibleActionInFlight = useRef(false)
+  useEffect(() => {
+    if (contextReady) accessibleActionInFlight.current = false
+  }, [contextReady])
 
   const [chooser, setChooser] = useState<readonly PageTileV1[] | null>(null)
-  const { registerTarget, rememberTarget, registerHeading, restoreFocus } =
+  const { registerTarget, rememberTarget, registerHeading } =
     useCalendarFocusRestoration({
       committedKey,
       currentColumns: committed.columns,
@@ -207,7 +217,6 @@ export function OwnedCalendarShell({
   }
   useImperativeHandle(ref, () => ({
     requestZoom: coordinator.requestZoom,
-    restoreFocus,
   }))
 
   const todayKey = dayKey(currentDate, displayZone)
@@ -250,12 +259,32 @@ export function OwnedCalendarShell({
         contentWidth={contentWidth}
         scrollX={scrollX}
         positioned={positioned}
+        heading={heading}
+        controlSymbol={t("calendar.pageControlSymbol")}
+        previousPageLabel={t(
+          mode === "day"
+            ? "calendar.previousDayLabel"
+            : "calendar.previousWeekLabel",
+        )}
+        nextPageLabel={t(
+          mode === "day" ? "calendar.nextDayLabel" : "calendar.nextWeekLabel",
+        )}
+        onAccessiblePageRequest={(direction) => {
+          if (
+            accessibleActionInFlight.current ||
+            !contextReady ||
+            coordinator.scrollLocked.get() ||
+            isMoving()
+          )
+            return
+          accessibleActionInFlight.current = true
+          step(direction, reduceMotion === false)
+        }}
         todayKey={todayKey}
         todayLabel={t("calendar.today")}
       />
       <GestureDetector gesture={coordinator.pinchGesture}>
         <OwnedCalendarCanvas
-          heading={heading}
           mode={mode}
           locale={locale}
           uses24HourClock={uses24HourClock}
@@ -269,14 +298,10 @@ export function OwnedCalendarShell({
           onViewportLayout={coordinator.onViewportLayout}
           onMomentumScrollBegin={coordinator.onMomentumScrollBegin}
           onMomentumScrollEnd={coordinator.settleVertical}
-          onAccessiblePageRequest={(direction) => {
-            if (!coordinator.scrollLocked.get()) step(direction, !reduceMotion)
-          }}
           pixelsPerHour={coordinator.pixelsPerHour}
           settledPixelsPerHour={initialPixelsPerHour}
           pagerRef={pagerRef}
           pager={pager}
-          t={t}
         >
           {pages.map((page) => (
             <CalendarPage
