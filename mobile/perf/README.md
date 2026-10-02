@@ -153,3 +153,7 @@ and package paths that the disclosure scan rejects.
   forward chain ended without a settle, so its probe did not move and the backward chain, landing
   back on the never-settled week, reported no change either; other runs land +15 to +17 and −15
   to −16 (T08 pull request).
+- `t08b-55574e46-1` through `t08b-55574e46-5`: Android rest-recovery candidate on the same
+  OnePlus 6 and calendar. Each summary includes forward/back 20-swipe chains, reversal-10,
+  diagonal-20 and fling-5. All ten chains settle, but land only +15–16/20 and −16/20; one
+  reversal ends one page behind its start. See `docs/projects/calendar-native-paging/evidence/E04-android-chained-swipes.md`.
