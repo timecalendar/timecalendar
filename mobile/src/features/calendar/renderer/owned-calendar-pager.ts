@@ -449,6 +449,7 @@ export function useOwnedCalendarPager({
     scheduleOnRN(pagingLog.placement, "place", {
       generation,
       activeGeneration: activeGeneration.get(),
+      nativeRefReady: typeof scrollRef === "function" && Boolean(scrollRef()),
       first,
       width,
       target,
@@ -592,6 +593,7 @@ export function useOwnedCalendarPager({
     appliedPlacement.current = placement.id
     pagingLog.placement("schedule-initial", {
       generation,
+      jsRefReady: scrollRef.current !== null,
       pending,
       placementId: placement.id,
       firstIndex: window.firstIndex,
@@ -606,6 +608,7 @@ export function useOwnedCalendarPager({
   const onPagerLayout = (width: number) => {
     pagingLog.placement("layout", {
       generation,
+      jsRefReady: scrollRef.current !== null,
       activeGeneration: resetGeneration.current,
       width,
       pageWidth,
@@ -619,6 +622,7 @@ export function useOwnedCalendarPager({
   const onContentSizeChange = (width: number) => {
     pagingLog.placement("content", {
       generation,
+      jsRefReady: scrollRef.current !== null,
       activeGeneration: resetGeneration.current,
       width,
       contentWidth,
