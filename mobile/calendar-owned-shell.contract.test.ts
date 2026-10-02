@@ -438,9 +438,14 @@ describe("owned Calendar paging repository contract", () => {
       ].map(([, callback]) => callback)
       expect(frameCallbacks).toEqual(
         file.endsWith("owned-calendar-pager.ts")
-          ? ["checkRest", "checkRest"]
+          ? ["checkRest", "checkRest", "sample", "sample"]
           : [],
       )
+      if (file.endsWith("owned-calendar-pager.ts")) {
+        expect(source).toContain(
+          "if (frame < 90) requestAnimationFrame(sample)",
+        )
+      }
       expect(source).not.toMatch(/withTiming\([^)]*\)[\s\S]{0,120}withTiming\(/)
     }
   })

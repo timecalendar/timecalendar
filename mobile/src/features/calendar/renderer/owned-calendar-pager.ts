@@ -191,6 +191,68 @@ function useRestWatcher({
   }
 }
 
+function useNativePositionSampler({
+  activeGeneration,
+  generation,
+  scrollRef,
+  probeRef,
+  sampleRunning,
+  sampleFrame,
+  sampleWidth,
+  requestedOffset,
+}: {
+  activeGeneration: SharedValue<number>
+  generation: number
+  scrollRef: AnimatedRef<Animated.ScrollView>
+  probeRef: AnimatedRef<Animated.View>
+  sampleRunning: SharedValue<boolean>
+  sampleFrame: SharedValue<number>
+  sampleWidth: SharedValue<number>
+  requestedOffset: SharedValue<number>
+}) {
+  function sample() {
+    "worklet"
+    if (activeGeneration.get() !== generation) return
+    const frame = sampleFrame.get() + 1
+    sampleFrame.set(frame)
+    if (frame === 1 || frame === 6 || frame === 30 || frame === 90) {
+      const viewport =
+        typeof scrollRef === "function" && Boolean(scrollRef())
+          ? measure(scrollRef)
+          : null
+      const marker =
+        typeof probeRef === "function" && Boolean(probeRef())
+          ? measure(probeRef)
+          : null
+      const width = sampleWidth.get()
+      scheduleOnRN(pagingLog.placement, "native-position", {
+        generation,
+        frame,
+        viewportX: viewport?.pageX ?? null,
+        markerX: marker?.pageX ?? null,
+        observedOffset:
+          viewport && marker
+            ? PAGE_WINDOW_RADIUS * width - (marker.pageX - viewport.pageX)
+            : null,
+        requestedOffset: requestedOffset.get(),
+      })
+    }
+    if (frame < 90) requestAnimationFrame(sample)
+    else sampleRunning.set(false)
+  }
+
+  return (width: number, targetOffset: number) => {
+    "worklet"
+    if (activeGeneration.get() !== generation) return
+    sampleWidth.set(width)
+    requestedOffset.set(targetOffset)
+    sampleFrame.set(0)
+    if (sampleRunning.get()) return
+    sampleRunning.set(true)
+    requestAnimationFrame(sample)
+  }
+}
+
 /**
  * The windowed horizontal pager. The UI thread owns motion and settlement: it
  * derives the rounded and settled page from the native offset and tells React
@@ -234,6 +296,10 @@ export function useOwnedCalendarPager({
 
   const scrollRef = useAnimatedRef<Animated.ScrollView>()
   const probeRef = useAnimatedRef<Animated.View>()
+  const sampleRunning = useSharedValue(false)
+  const sampleFrame = useSharedValue(0)
+  const sampleWidth = useSharedValue(0)
+  const requestedOffset = useSharedValue(0)
   const scrollX = useSharedValue(0)
   const activeGeneration = useSharedValue(generation)
   const positioned = useSharedValue(false)
@@ -378,6 +444,16 @@ export function useOwnedCalendarPager({
     scrollRef,
     settleIfAligned,
   })
+  const sampleNativePosition = useNativePositionSampler({
+    activeGeneration,
+    generation,
+    scrollRef,
+    probeRef,
+    sampleRunning,
+    sampleFrame,
+    sampleWidth,
+    requestedOffset,
+  })
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -474,29 +550,9 @@ export function useOwnedCalendarPager({
       dragging.set(false)
       momentum.set(false)
     }
-    scrollTo(scrollRef, (position - first) * width, 0, animated)
-    requestAnimationFrame(() => {
-      "worklet"
-      if (activeGeneration.get() !== generation) return
-      const viewport =
-        typeof scrollRef === "function" && Boolean(scrollRef())
-          ? measure(scrollRef)
-          : null
-      const marker =
-        typeof probeRef === "function" && Boolean(probeRef())
-          ? measure(probeRef)
-          : null
-      scheduleOnRN(pagingLog.placement, "native-position", {
-        generation,
-        viewportX: viewport?.pageX ?? null,
-        markerX: marker?.pageX ?? null,
-        observedOffset:
-          viewport && marker
-            ? PAGE_WINDOW_RADIUS * width - (marker.pageX - viewport.pageX)
-            : null,
-        requestedOffset: (position - first) * width,
-      })
-    })
+    const offset = (position - first) * width
+    scrollTo(scrollRef, offset, 0, animated)
+    sampleNativePosition(width, offset)
   }
 
   const placeNavigation = (
@@ -542,6 +598,7 @@ export function useOwnedCalendarPager({
     restWatching.set(false)
     restFrames.set(0)
     restSnaps.set(0)
+    sampleRunning.set(false)
     tracedScrollMask.set(0)
     settledIndex.set(anchorIndex)
     navigationTarget.set(null)
@@ -562,6 +619,7 @@ export function useOwnedCalendarPager({
     restWatching,
     restFrames,
     restSnaps,
+    sampleRunning,
     tracedScrollMask,
     settledIndex,
     navigationTarget,
