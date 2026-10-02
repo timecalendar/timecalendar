@@ -26,6 +26,16 @@ function countPageMount(): number {
 }
 
 export const pagingLog = {
+  initialPlacementMiss(
+    generation: number,
+    target: number,
+    observed: number | null,
+  ): void {
+    if (enabled)
+      console.warn(
+        `CALENDAR_PAGING initial-placement-miss generation=${generation} target=${target} observed=${observed}`,
+      )
+  },
   now: (): number => (enabled ? performance.now() : 0),
   commit(center: number, elapsedMs: number): void {
     if (!enabled) return

@@ -5,7 +5,10 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler"
 import { getByGestureTestId } from "react-native-gesture-handler/jest-utils"
 import * as Reanimated from "react-native-reanimated"
 
-import { useOwnedCalendarPager } from "./owned-calendar-pager"
+import {
+  initialPlacementDecision,
+  useOwnedCalendarPager,
+} from "./owned-calendar-pager"
 
 type NativeHandlers = {
   onBegin: (event: Record<string, unknown>) => void
@@ -18,6 +21,14 @@ const nativeHandlers = () =>
       handlers: NativeHandlers
     }
   ).handlers
+
+test("initial placement reveals only a measured target and bounds retries", () => {
+  expect(initialPlacementDecision(0, 91520, 0)).toBe("retry")
+  expect(initialPlacementDecision(null, 91520, 2)).toBe("retry")
+  expect(initialPlacementDecision(Number.NaN, 91520, 3)).toBe("hide")
+  expect(initialPlacementDecision(91520, Number.NaN, 0)).toBe("hide")
+  expect(initialPlacementDecision(91520, 91520, 3)).toBe("reveal")
+})
 
 function PagerProbe({
   mode,

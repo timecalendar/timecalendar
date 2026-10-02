@@ -441,6 +441,11 @@ describe("owned Calendar paging repository contract", () => {
           ? ["checkRest", "checkRest"]
           : [],
       )
+      if (file.endsWith("owned-calendar-pager.ts")) {
+        expect(source).toContain("frame < INITIAL_PLACEMENT_WAIT_FRAMES")
+        expect(source).toContain("retries < INITIAL_PLACEMENT_RETRIES")
+        expect(source).toContain("run.get() !== owner")
+      }
       expect(source).not.toMatch(/withTiming\([^)]*\)[\s\S]{0,120}withTiming\(/)
     }
   })
