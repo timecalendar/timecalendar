@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native"
+import { PixelRatio, StyleSheet } from "react-native"
 import {
   type SharedValue,
   useAnimatedProps,
@@ -10,7 +10,7 @@ import {
   FULL_DAY_START_MINUTE,
   gridContentHeight,
   MAX_PIXELS_PER_HOUR,
-  minuteToPixel,
+  minutePositionTop,
 } from "@/features/calendar/data"
 
 export function dayRowHeight(pixelsPerHour: number) {
@@ -27,15 +27,28 @@ export function dayRowHeight(pixelsPerHour: number) {
 /** Pages are laid out once at the tallest zoom; the day row clips them to the live scale. */
 export const PAGE_CONTENT_HEIGHT = dayRowHeight(MAX_PIXELS_PER_HOUR)
 
+const PIXEL_RATIO = PixelRatio.get()
+
 export function useMinutePositionStyle(
   minute: number,
   pixelsPerHour: SharedValue<number>,
+  settledPixelsPerHour: number,
+  offset = 0,
 ) {
+  const top = minutePositionTop(
+    minute,
+    settledPixelsPerHour,
+    PIXEL_RATIO,
+    offset,
+  )
   return useAnimatedStyle(() => ({
-    top: minuteToPixel(minute, {
-      startMinute: FULL_DAY_START_MINUTE,
-      pixelsPerHour: pixelsPerHour.get(),
-    }),
+    transform: [
+      {
+        translateY:
+          minutePositionTop(minute, pixelsPerHour.get(), PIXEL_RATIO, offset) -
+          top,
+      },
+    ],
   }))
 }
 

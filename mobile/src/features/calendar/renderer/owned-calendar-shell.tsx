@@ -273,6 +273,7 @@ export function OwnedCalendarShell({
             if (!coordinator.scrollLocked.get()) step(direction, !reduceMotion)
           }}
           pixelsPerHour={coordinator.pixelsPerHour}
+          settledPixelsPerHour={initialPixelsPerHour}
           pagerRef={pagerRef}
           pager={pager}
           t={t}

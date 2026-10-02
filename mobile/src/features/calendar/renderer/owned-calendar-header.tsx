@@ -109,6 +109,10 @@ function HeaderSlot({
   const colorScheme = useColorScheme()
   pagingLog.render("slot")
   const dateColor = colorScheme === "dark" ? theme.textSecondary : theme.text
+  const weekdayFontSize = Math.min(
+    11,
+    Math.max(8, (width / presentation.columns.length - 8) * 0.75),
+  )
   return (
     <View
       testID={`owned-calendar-date-header-slot-${presentation.pageKey}`}
@@ -138,11 +142,13 @@ function HeaderSlot({
             <ThemedText
               accessible={false}
               numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.8}
               style={[
                 styles.weekdayLabel,
-                { color: isToday ? theme.primary : dateColor },
+                {
+                  color: isToday ? theme.primary : dateColor,
+                  fontSize: weekdayFontSize,
+                  lineHeight: weekdayFontSize + 2,
+                },
               ]}
             >
               {column.header.narrowWeekday}

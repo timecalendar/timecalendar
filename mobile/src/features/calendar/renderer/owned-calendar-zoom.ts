@@ -67,6 +67,7 @@ export function useOwnedCalendarZoom({
   const pinchBaselinePointerCount = useSharedValue(0)
   const pinchActive = useSharedValue(false)
   const pinchStarted = useSharedValue(false)
+  const pinchSettled = useSharedValue(false)
   const pinchSequence = useSharedValue(0)
   const pinchInterruptionSequence = useSharedValue(0)
   const verticalCallbacksBlocked = useSharedValue(false)
@@ -106,6 +107,7 @@ export function useOwnedCalendarZoom({
       focalY.set(event.focalY)
       pinchActive.set(true)
       pinchStarted.set(true)
+      pinchSettled.set(false)
       scheduleOnRN(onInteractionInterrupted)
     })
     .onUpdate((event) => {
@@ -153,6 +155,7 @@ export function useOwnedCalendarZoom({
         return
       const settledScale = resolvePixelsPerHour(pixelsPerHour.get())
       const settledOffset = rawOffset.get()
+      pinchSettled.set(true)
       scheduleOnRN(onZoomSettled, {
         geometryRevision: geometryRevision.get(),
         pixelsPerHour: settledScale,
@@ -168,7 +171,11 @@ export function useOwnedCalendarZoom({
         return
       }
       pinchStarted.set(false)
-      if (!success && pinchGeometryRevision.get() === geometryRevision.get()) {
+      if (
+        !success &&
+        !pinchSettled.get() &&
+        pinchGeometryRevision.get() === geometryRevision.get()
+      ) {
         pixelsPerHour.set(pinchBaselineScale.get())
         rawOffset.set(pinchBaselineOffset.get())
         scrollRevision.set(scrollRevision.get() + 1)

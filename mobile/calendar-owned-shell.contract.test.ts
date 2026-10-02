@@ -342,7 +342,7 @@ describe("owned Calendar paging repository contract", () => {
     expect(renderer).toContain("accessibilityElementsHidden")
     expect(renderer).toContain("isEventActivationBlocked")
     expect(renderer).toContain('tile.shape !== "interval"')
-    expect(renderer).toContain("minimumTarget")
+    expect(renderer).toContain("MINIMUM_TARGET")
     expect(renderer).not.toMatch(/onEventPress\([^)]*(?:index|direction|key)/)
     expect(navigationBoundary).not.toMatch(
       /@\/api|generated\/|customFetch|fetch\(|useSyncCalendars|syncCalendars/,

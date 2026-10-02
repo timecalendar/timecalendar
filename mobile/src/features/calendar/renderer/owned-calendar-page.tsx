@@ -2,6 +2,7 @@ import type { TFunction } from "i18next"
 import { useEffect } from "react"
 import {
   type LayoutChangeEvent,
+  PixelRatio,
   Platform,
   Pressable,
   StyleSheet,
@@ -14,9 +15,12 @@ import Animated, {
 
 import { ThemedText } from "@/components/themed-text"
 import {
+  MIN_PIXELS_PER_HOUR,
+  minutePositionTop,
   type PagePresentationV1,
   type PageTileV1,
   planTargetConflicts,
+  roundToDevicePixel,
 } from "@/features/calendar/data"
 import { ChecklistProgressIndicator } from "@/features/event-checklists"
 import { useTheme } from "@/theme"
@@ -32,6 +36,8 @@ import type { OwnedCalendarProbeDiagnostic } from "./owned-calendar-shell"
 /** Diameter of the indicator's leading cap — its non-color shape cue. */
 const NOW_CAP_SIZE = 8
 const POINT_MARKER_SIZE = 4
+const TILE_CAP_HEIGHT = 4
+const PIXEL_RATIO = PixelRatio.get()
 
 export type PageEventHandlers = {
   onEventPress: (uid: string) => void
@@ -56,10 +62,16 @@ function liveEventVisualGeometry(
   pixelsPerHour: number,
 ) {
   "worklet"
-  const top = (startMinute / 60) * pixelsPerHour
+  const top = minutePositionTop(startMinute, pixelsPerHour, PIXEL_RATIO)
   return shape === "point"
-    ? { top: top - POINT_MARKER_SIZE / 2, height: POINT_MARKER_SIZE }
-    : { top, height: ((endMinute - startMinute) / 60) * pixelsPerHour }
+    ? {
+        top: roundToDevicePixel(top - POINT_MARKER_SIZE / 2, PIXEL_RATIO),
+        height: POINT_MARKER_SIZE,
+      }
+    : {
+        top,
+        height: ((endMinute - startMinute) / 60) * pixelsPerHour,
+      }
 }
 
 function liveEventInteractionGeometry(
@@ -142,6 +154,7 @@ export function CalendarPage({
                   testID={`owned-calendar-now-${column.key}`}
                   minuteOfDay={nowMinuteOfDay}
                   pixelsPerHour={pixelsPerHour}
+                  settledPixelsPerHour={settledPixelsPerHour}
                   color={theme.primary}
                   accessibilityLabel={exposesNow ? nowLabel : undefined}
                 />
@@ -317,14 +330,14 @@ function StaticCalendarTile({
   tile: PageTileV1
   settledPixelsPerHour: number
 }) {
-  const visual = liveEventVisualGeometry(
+  const settledVisual = liveEventVisualGeometry(
     tile.shape,
     tile.startMinute,
     tile.endMinute,
     settledPixelsPerHour,
   )
   const interaction = liveEventInteractionGeometry(
-    visual,
+    settledVisual,
     24 * settledPixelsPerHour,
     MINIMUM_TARGET,
   )
@@ -341,7 +354,10 @@ function StaticCalendarTile({
         style={[
           styles.tile,
           tileSurfaceStyle(tile),
-          { top: visual.top - interaction.top, height: visual.height },
+          {
+            top: settledVisual.top - interaction.top,
+            height: settledVisual.height,
+          },
         ]}
       >
         <TileContent tile={tile} settledPixelsPerHour={settledPixelsPerHour} />
@@ -365,44 +381,41 @@ function TimedCalendarTile({
   handlers: PageEventHandlers
   t: TFunction
 }) {
-  const minimumTarget = MINIMUM_TARGET
-  const interactionStyle = useAnimatedStyle(() => {
-    const livePixelsPerHour = pixelsPerHour.get()
-    const visual = liveEventVisualGeometry(
-      tile.shape,
-      tile.startMinute,
-      tile.endMinute,
-      livePixelsPerHour,
-    )
-    return liveEventInteractionGeometry(
-      visual,
-      24 * livePixelsPerHour,
-      minimumTarget,
-    )
-  })
-  const visualStyle = useAnimatedStyle(() => {
-    const livePixelsPerHour = pixelsPerHour.get()
-    const visual = liveEventVisualGeometry(
-      tile.shape,
-      tile.startMinute,
-      tile.endMinute,
-      livePixelsPerHour,
-    )
-    const interaction = liveEventInteractionGeometry(
-      visual,
-      24 * livePixelsPerHour,
-      minimumTarget,
-    )
-    return { top: visual.top - interaction.top, height: visual.height }
-  })
+  const settledVisual = liveEventVisualGeometry(
+    tile.shape,
+    tile.startMinute,
+    tile.endMinute,
+    settledPixelsPerHour,
+  )
+  const interaction = liveEventInteractionGeometry(
+    settledVisual,
+    24 * settledPixelsPerHour,
+    MINIMUM_TARGET,
+  )
+  const anchorStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateY:
+          roundToDevicePixel(
+            liveEventVisualGeometry(
+              tile.shape,
+              tile.startMinute,
+              tile.endMinute,
+              pixelsPerHour.get(),
+            ).top,
+            PIXEL_RATIO,
+          ) - roundToDevicePixel(settledVisual.top, PIXEL_RATIO),
+      },
+    ],
+  }))
   const visual = (
-    <Animated.View
-      accessible={false}
-      pointerEvents="none"
-      style={[styles.tile, tileSurfaceStyle(tile), visualStyle]}
-    >
-      <TileContent tile={tile} settledPixelsPerHour={settledPixelsPerHour} />
-    </Animated.View>
+    <LiveTileVisual
+      tile={tile}
+      pixelsPerHour={pixelsPerHour}
+      settledPixelsPerHour={settledPixelsPerHour}
+      top={settledVisual.top - interaction.top}
+      height={settledVisual.height}
+    />
   )
   const button = (
     <Pressable
@@ -432,7 +445,8 @@ function TimedCalendarTile({
       style={[
         styles.tileAnchor,
         horizontalRectangleStyle({ left: tile.startX, right: tile.endX }),
-        interactionStyle,
+        interaction,
+        anchorStyle,
       ]}
     >
       <CalendarFocusObserverView
@@ -450,6 +464,108 @@ function TimedCalendarTile({
   )
 }
 
+function LiveTileVisual({
+  tile,
+  pixelsPerHour,
+  settledPixelsPerHour,
+  top,
+  height,
+}: {
+  tile: PageTileV1
+  pixelsPerHour: SharedValue<number>
+  settledPixelsPerHour: number
+  top: number
+  height: number
+}) {
+  const surface = tileSurfaceStyle(tile)
+  const minimumHeight =
+    tile.shape === "point"
+      ? POINT_MARKER_SIZE
+      : ((tile.endMinute - tile.startMinute) / 60) * MIN_PIXELS_PER_HOUR
+  const cap = Math.min(TILE_CAP_HEIGHT, height / 2, minimumHeight / 2)
+  const visibleHeight = Math.max(height, StyleSheet.hairlineWidth)
+  const middleHeight =
+    Math.max(visibleHeight - 2 * cap, 0) + StyleSheet.hairlineWidth * 2
+  const liveHeight = () => {
+    "worklet"
+    return tile.shape === "point"
+      ? POINT_MARKER_SIZE
+      : ((tile.endMinute - tile.startMinute) / 60) * pixelsPerHour.get()
+  }
+  const middleStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        scaleY:
+          (Math.max(liveHeight() - 2 * cap, 0) + StyleSheet.hairlineWidth * 2) /
+          middleHeight,
+      },
+    ],
+  }))
+  const bottomStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateY:
+          Math.max(liveHeight(), StyleSheet.hairlineWidth) - visibleHeight,
+      },
+    ],
+  }))
+  const clipStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        scaleY:
+          Math.max(liveHeight(), StyleSheet.hairlineWidth) / visibleHeight,
+      },
+    ],
+  }))
+  const textStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        scaleY:
+          visibleHeight / Math.max(liveHeight(), StyleSheet.hairlineWidth),
+      },
+    ],
+  }))
+  return (
+    <View
+      accessible={false}
+      pointerEvents="none"
+      style={[styles.liveTile, { top, height: visibleHeight }]}
+    >
+      <View
+        style={[styles.tileSlice, surface, styles.tileTopCap, { height: cap }]}
+      />
+      <Animated.View
+        style={[
+          styles.tileSlice,
+          surface,
+          styles.tileMiddle,
+          { top: cap - StyleSheet.hairlineWidth, height: middleHeight },
+          middleStyle,
+        ]}
+      />
+      <Animated.View
+        style={[
+          styles.tileSlice,
+          surface,
+          styles.tileBottomCap,
+          { top: visibleHeight - cap, height: cap },
+          bottomStyle,
+        ]}
+      />
+      <Animated.View
+        style={[styles.tileClip, { height: visibleHeight }, clipStyle]}
+      >
+        <Animated.View style={[styles.tileTextContent, textStyle]}>
+          <TileContent
+            tile={tile}
+            settledPixelsPerHour={settledPixelsPerHour}
+          />
+        </Animated.View>
+      </Animated.View>
+    </View>
+  )
+}
+
 // The current-time indicator. Its non-color cue is SHAPE: a filled cap at the
 // leading edge of the rule, legible in greyscale and without colour perception.
 // Vertical placement runs on the UI thread off the live pinch scale, so it
@@ -458,16 +574,23 @@ function NowIndicator({
   testID,
   minuteOfDay,
   pixelsPerHour,
+  settledPixelsPerHour,
   color,
   accessibilityLabel,
 }: {
   testID: string
   minuteOfDay: number
   pixelsPerHour: SharedValue<number>
+  settledPixelsPerHour: number
   color: string
   accessibilityLabel: string | undefined
 }) {
-  const positionStyle = useMinutePositionStyle(minuteOfDay, pixelsPerHour)
+  const positionStyle = useMinutePositionStyle(
+    minuteOfDay,
+    pixelsPerHour,
+    settledPixelsPerHour,
+    -NOW_CAP_SIZE / 2,
+  )
   return (
     <Animated.View
       testID={testID}
@@ -477,7 +600,18 @@ function NowIndicator({
       importantForAccessibility={
         accessibilityLabel === undefined ? "no-hide-descendants" : "yes"
       }
-      style={[styles.nowIndicator, positionStyle]}
+      style={[
+        styles.nowIndicator,
+        {
+          top: minutePositionTop(
+            minuteOfDay,
+            settledPixelsPerHour,
+            PIXEL_RATIO,
+            -NOW_CAP_SIZE / 2,
+          ),
+        },
+        positionStyle,
+      ]}
     >
       <View style={[styles.nowIndicatorCap, { backgroundColor: color }]} />
       <View style={[styles.nowIndicatorRule, { backgroundColor: color }]} />
@@ -502,7 +636,6 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: "row",
     alignItems: "center",
-    transform: [{ translateY: -NOW_CAP_SIZE / 2 }],
   },
   nowIndicatorCap: {
     width: NOW_CAP_SIZE,
@@ -531,5 +664,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingVertical: 2,
   },
+  liveTile: { position: "absolute", left: 0, right: 0 },
+  tileSlice: { position: "absolute", left: 0, right: 0 },
+  tileTopCap: {
+    top: 0,
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
+    borderBottomWidth: 0,
+  },
+  tileMiddle: {
+    borderTopWidth: 0,
+    borderBottomWidth: 0,
+    transformOrigin: "top",
+  },
+  tileBottomCap: {
+    borderBottomLeftRadius: 2,
+    borderBottomRightRadius: 2,
+    borderTopWidth: 0,
+  },
+  tileClip: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    overflow: "hidden",
+    paddingHorizontal: 4,
+    transformOrigin: "top",
+  },
+  tileTextContent: { paddingVertical: 2, transformOrigin: "top" },
   tileTitle: { fontWeight: 600 },
 })
