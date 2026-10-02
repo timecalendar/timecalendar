@@ -101,6 +101,15 @@ const nativePager = () =>
   getByGestureTestId("owned-calendar-native-pager") as unknown as {
     handlers: {
       onBegin: (event: Record<string, unknown>) => void
+      onTouchesDown: (event: Record<string, unknown>) => void
+      onFinalize: (event: Record<string, unknown>, success: boolean) => void
+    }
+  }
+
+const pinch = () =>
+  getByGestureTestId("owned-calendar-pinch") as unknown as {
+    handlers: {
+      onTouchesDown: (event: Record<string, unknown>) => void
       onFinalize: (event: Record<string, unknown>, success: boolean) => void
     }
   }
@@ -159,7 +168,7 @@ describe("owned Calendar pager rest check", () => {
     const { pager, scrollTo } = await renderShell("android")
 
     await act(async () => {
-      nativePager().handlers.onBegin({})
+      nativePager().handlers.onTouchesDown({})
       pager.send(0, "onScrollBeginDrag")
       pager.send(0.3)
     })
@@ -175,8 +184,25 @@ describe("owned Calendar pager rest check", () => {
     ])
   })
 
-  it("places and settles after three snaps that do not move the pager", async () => {
+  it("waits through a held pinch even when the offset is still", async () => {
     const { pager, scrollTo } = await renderShell("android")
+
+    await act(async () => {
+      pinch().handlers.onTouchesDown({ numberOfTouches: 2 })
+      pager.send(0.4)
+    })
+    await elapseFrames(3 * REST_FRAMES)
+    expect(scrollTo).not.toHaveBeenCalled()
+
+    await act(async () => {
+      pinch().handlers.onFinalize({ numberOfTouches: 0 }, true)
+    })
+    await elapseFrames(REST_FRAMES + 2)
+    expect(scrollTo).toHaveBeenCalledTimes(1)
+  })
+
+  it("waits for observed alignment after three ignored snap commands", async () => {
+    const { onDateCommitted, pager, scrollTo } = await renderShell("android")
 
     await act(async () => {
       pager.send(0.6)
@@ -189,6 +215,39 @@ describe("owned Calendar pager rest check", () => {
       pager.origin + pager.pageWidth,
       0,
       false,
+    ])
+    expect(onDateCommitted).not.toHaveBeenCalled()
+
+    await act(async () => {
+      pager.send(1)
+    })
+    expect(committedWeeks(onDateCommitted)).toEqual([
+      weekStartKey(ANCHOR_INDEX + 1),
+    ])
+  })
+
+  it("does not settle a delayed snap while a new finger is down", async () => {
+    const { onDateCommitted, pager, scrollTo } = await renderShell("android")
+
+    await act(async () => {
+      pager.send(0.6)
+    })
+    for (let attempt = 0; attempt < 3; attempt += 1)
+      await elapseFrames(REST_FRAMES + 2)
+    expect(scrollTo).toHaveBeenCalledTimes(3)
+
+    await act(async () => {
+      nativePager().handlers.onTouchesDown({})
+      pager.send(1)
+    })
+    expect(onDateCommitted).not.toHaveBeenCalled()
+
+    await act(async () => {
+      nativePager().handlers.onFinalize({}, true)
+    })
+    await elapseFrames(REST_FRAMES + 2)
+    expect(committedWeeks(onDateCommitted)).toEqual([
+      weekStartKey(ANCHOR_INDEX + 1),
     ])
   })
 
