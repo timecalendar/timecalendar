@@ -10,6 +10,83 @@ export const parseSettles = (lines) =>
     return match ? [Number(match[1])] : []
   })
 
+export const parseMountedModes = (lines) =>
+  lines.flatMap((line) => {
+    const match = line.match(/CALENDAR_PAGING mount page=(day|week):-?\d+/)
+    return match ? [match[1]] : []
+  })
+
+export const sameStateDiagnostic = (checkpoints = [], targetCrossings = SOAK_TARGET) => {
+  const baseline = checkpoints[0]
+  const expectedCrossings = Array.from(
+    { length: targetCrossings / 100 + 1 },
+    (_, index) => index * 100,
+  )
+  if (
+    checkpoints.length !== expectedCrossings.length ||
+    checkpoints.some((point, index) => point.crossings !== expectedCrossings[index]) ||
+    baseline?.witness?.matched !== true ||
+    !["day", "week"].includes(baseline.mode) ||
+    !Number.isSafeInteger(baseline.modeEpoch) ||
+    !Number.isSafeInteger(baseline.page) ||
+    !baseline.witness.locale ||
+    !Array.isArray(baseline.witness.dateKeys) ||
+    baseline.witness.dateKeys.length === 0 ||
+    !known(baseline.views)
+  )
+    return { status: "unknown", reason: "missing witnessed baseline or return" }
+  if (
+    checkpoints.some(
+      (point) =>
+        point.witness?.matched !== true ||
+        point.mode !== baseline.mode ||
+        point.page !== baseline.page ||
+        point.modeEpoch !== baseline.modeEpoch ||
+        point.witness.locale !== baseline.witness.locale ||
+        !Array.isArray(point.witness.dateKeys) ||
+        point.witness.dateKeys?.join("|") !==
+          baseline.witness.dateKeys?.join("|") ||
+        !known(point.views),
+    )
+  )
+    return { status: "unknown", reason: "state or UI witness changed" }
+  const deltas = checkpoints.slice(1).map((point) => point.views - baseline.views)
+  return {
+    status: "measured",
+    baseline: { mode: baseline.mode, page: baseline.page, views: baseline.views },
+    returns: deltas.length,
+    maxAbsoluteViewDelta: Math.max(...deltas.map(Math.abs)),
+    finalViewDelta: deltas.at(-1),
+  }
+}
+
+export const modeSwitchCoverage = (switches = [], attempts = []) => {
+  if (
+    switches.some(
+      (entry) =>
+        entry.observedMode !== null &&
+        entry.observedMode !== undefined &&
+        entry.observedMode !== entry.to,
+    )
+  )
+    return false
+  const verified = switches.filter(
+    (entry) =>
+      entry.verified === true &&
+      entry.mountedTarget === true &&
+      Number.isSafeInteger(entry.modeBaselinePage) &&
+      entry.modeBaselineSource === "stable-visible-date-header" &&
+      entry.observedMode === entry.to,
+  )
+  const hasBothDirections =
+    verified.some((entry) => entry.from === "week" && entry.to === "day") &&
+    verified.some((entry) => entry.from === "day" && entry.to === "week")
+  const hasBothGestureModes = ["day", "week"].every((mode) =>
+    attempts.some((attempt) => attempt.mode === mode),
+  )
+  return hasBothDirections && hasBothGestureModes ? true : "unknown"
+}
+
 export const accountSettles = (state, pages, expectedDirection = null) => {
   const next = { ...state }
   for (const page of pages) {
@@ -109,6 +186,9 @@ export const evaluate = ({
   samples = [],
   frameWindows = [],
   failures = [],
+  checkpoints = [],
+  modeSwitches = [],
+  attempts = [],
 }) => {
   const enoughSamples = samples.length >= 3
   const viewsKnown =
@@ -170,6 +250,8 @@ export const evaluate = ({
         ),
       }
     : null
+  const returns =
+    mode === "soak" ? sameStateDiagnostic(checkpoints) : { status: "unknown" }
   const checks = {
     durationOrCrossings:
       mode === "soak"
@@ -195,6 +277,11 @@ export const evaluate = ({
       !enoughSamples || state?.page === null || state?.page === undefined
         ? "unknown"
         : failures.length === 0,
+    ...(mode === "soak"
+      ? { sameStateObserved: returns.status === "measured" ? true : "unknown" }
+      : mode === "stress"
+        ? { modeSwitchCoverage: modeSwitchCoverage(modeSwitches, attempts) }
+        : {}),
   }
   const values = Object.values(checks)
   return {
@@ -208,5 +295,6 @@ export const evaluate = ({
     maxViewDeviation,
     nativeAllocationDiagnostic,
     frameDiagnostic,
+    sameStateDiagnostic: returns,
   }
 }

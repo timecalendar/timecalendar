@@ -4,10 +4,14 @@ import {
   accountSettles,
   createLogCursor,
   evaluate,
+  modeSwitchCoverage,
   parseMemory,
+  parseMountedModes,
   parseProcessStart,
   parseSettles,
+  sameStateDiagnostic,
 } from "./lib/soak.mjs"
+import { countHierarchyViews, hierarchyViewClasses } from "./lib/gfxinfo.mjs"
 
 const sample = (
   views = 400,
@@ -66,6 +70,96 @@ test("rejects skipped and wrong-direction settlements", () => {
     () => accountSettles({ page: 7, crossings: 0 }, [Number.NaN]),
     /invalid/,
   )
+})
+
+test("mount logs identify the mode without treating mounts as settlements", () => {
+  const lines = [
+    "CALENDAR_PAGING mount page=week:20738 total=5",
+    "CALENDAR_PAGING settle page=2962",
+    "CALENDAR_PAGING mount page=day:20738 total=10",
+  ]
+  assert.deepEqual(parseMountedModes(lines), ["week", "day"])
+  assert.deepEqual(parseSettles(lines), [2962])
+})
+
+test("same-state retention diagnostic needs witnessed mode, page and epoch returns", () => {
+  const baseline = {
+    crossings: 0,
+    mode: "week",
+    modeEpoch: 0,
+    page: 2962,
+    views: 400,
+    witness: { matched: true, locale: "en", dateKeys: ["2026-10-12"] },
+  }
+  const returns = [
+    { ...baseline, crossings: 100, views: 406 },
+    { ...baseline, crossings: 200, views: 398 },
+  ]
+  assert.deepEqual(sameStateDiagnostic([baseline, ...returns], 200), {
+    status: "measured",
+    baseline: { mode: "week", page: 2962, views: 400 },
+    returns: 2,
+    maxAbsoluteViewDelta: 6,
+    finalViewDelta: -2,
+  })
+  for (const invalid of [
+    { ...returns[0], mode: "day" },
+    { ...returns[0], page: 2963 },
+    { ...returns[0], modeEpoch: 1 },
+    { ...returns[0], witness: { matched: false } },
+    {
+      ...returns[0],
+      witness: { matched: true, locale: "fr", dateKeys: ["2026-10-12"] },
+    },
+    {
+      ...returns[0],
+      witness: { matched: true, locale: "en", dateKeys: ["2026-10-13"] },
+    },
+    { ...returns[0], views: null },
+  ])
+    assert.equal(sameStateDiagnostic([baseline, invalid], 100).status, "unknown")
+  assert.equal(sameStateDiagnostic([baseline], 100).status, "unknown")
+  assert.equal(sameStateDiagnostic([baseline, returns[1]], 100).status, "unknown")
+})
+
+test("stress mode coverage needs both observed directions and gestures in each mode", () => {
+  const switches = [
+    {
+      from: "week", to: "day", observedMode: "day", verified: true,
+      mountedTarget: true, modeBaselinePage: 20738,
+      modeBaselineSource: "stable-visible-date-header",
+    },
+    {
+      from: "day", to: "week", observedMode: "week", verified: true,
+      mountedTarget: true, modeBaselinePage: 2962,
+      modeBaselineSource: "stable-visible-date-header",
+    },
+  ]
+  const attempts = [{ mode: "week" }, { mode: "day" }]
+  assert.equal(modeSwitchCoverage(switches, attempts), true)
+  assert.equal(
+    modeSwitchCoverage([{ ...switches[0], mountedTarget: false }, switches[1]], attempts),
+    "unknown",
+  )
+  assert.equal(modeSwitchCoverage(switches, [{ mode: "week" }]), "unknown")
+  assert.equal(
+    modeSwitchCoverage([switches[0], { ...switches[1], verified: false }], attempts),
+    "unknown",
+  )
+  assert.equal(
+    modeSwitchCoverage([switches[0], { ...switches[1], observedMode: "day" }], attempts),
+    false,
+  )
+})
+
+test("activity hierarchy census counts only the target app's native view classes", () => {
+  const dump = `TASK other\nACTIVITY other/.Main\nView Hierarchy:\n  Other{a V.....}\nTASK app\nACTIVITY example.perf/.Main\nView Hierarchy:\n  ReactViewGroup{abc V.....}\n  ReactTextView{def V.....}\n  ReactViewGroup{123 G.....}`
+  assert.deepEqual(hierarchyViewClasses(dump, "example.perf"), {
+    ReactViewGroup: 2,
+    ReactTextView: 1,
+  })
+  assert.equal(countHierarchyViews(dump, "example.perf"), 3)
+  assert.equal(countHierarchyViews(dump, "missing.perf"), null)
 })
 
 test("continuous log cursor keeps split lines and fails if capture ends", () => {
@@ -187,6 +281,7 @@ test("PSS alone cannot pass heap stability and poor frame data stays unknown", (
     "unknown",
   )
   assert.equal(result().checks.productFrameGates, "unknown")
+  assert.equal(result().checks.sameStateObserved, "unknown")
   assert.equal(result().status, "incomplete")
 })
 
