@@ -52,6 +52,11 @@ test("applies the version-checked patch exactly once and blocks non-perf builds"
   assert.match(patched, /CALENDAR_NATIVE_PAGING/)
   assert.match(patched, /owned-calendar-pager/)
   assert.match(patched, /fr\.samuelprak\.timecalendar\.perf/)
+  assert.match(patched, /interceptDown eventTime=/)
+  assert.ok(
+    patched.indexOf("interceptDown eventTime=") <
+      patched.indexOf("super.onInterceptTouchEvent(ev)"),
+  )
   assert.equal(applyCalendarTrace(projectRoot, "perf"), TRACED_SHA256)
   assert.equal(readFileSync(source, "utf8"), patched)
   assert.throws(() => assertCalendarTraceAbsent(projectRoot), /pristine/)
