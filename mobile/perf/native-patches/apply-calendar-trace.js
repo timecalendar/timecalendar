@@ -9,9 +9,9 @@ const SOURCE =
 const PRISTINE_SHA256 =
   "6904d1897c2bb9531fb89e867d2e42db4a12dd7a3430da2f6e70336f399998e1"
 const TRACED_SHA256 =
-  "3eb5a958879b82f32e96e0057d60336742448e40ae09f1e109c296c41cb00956"
+  "34c15695f105c912db2092cca6d2ed2452c8436a34e7888dc37c6f421aa723d9"
 const PATCH_SHA256 =
-  "4eb4405382331b228cd03642b08f631b25014b490a3b2098434deee6acf9f6f2"
+  "eba4051f71c04d903d9829349392b20a97d3e18904bad6bfdcfe6fdc5488cfed"
 const PATCH = path.join(__dirname, "react-native-0.85.3-calendar-trace.patch")
 
 const digest = (file) =>

@@ -57,6 +57,13 @@ test("applies the version-checked patch exactly once and blocks non-perf builds"
     patched.indexOf("interceptDown eventTime=") <
       patched.indexOf("super.onInterceptTouchEvent(ev)"),
   )
+  assert.ok(
+    patched.indexOf(
+      "cancelPostTouchScrolling();",
+      patched.indexOf("interceptDown eventTime="),
+    ) < patched.indexOf("super.onInterceptTouchEvent(ev)"),
+  )
+  assert.match(patched, /pendingRunnable=/)
   assert.match(patched, /mScroller\.getFinalX\(\) == mCalendarTraceTarget/)
   assert.match(patched, /Math\.abs\(candidate - getScrollX\(\)\) <= interval/)
   assert.match(patched, /inputVelocityX == 0/)
@@ -73,6 +80,11 @@ test("applies the version-checked patch exactly once and blocks non-perf builds"
     patched,
     /!mCalendarInNativeTouch[\s\S]*?!mCalendarInNativeScroll/,
   )
+  const programmaticScroll = patched.slice(
+    patched.indexOf("public void scrollTo(int x, int y)"),
+    patched.indexOf("super.scrollTo(x, y);"),
+  )
+  assert.doesNotMatch(programmaticScroll, /x != getScrollX\(\)/)
   assert.match(
     patched,
     /protected void onDetachedFromWindow\(\) \{[\s\S]*?mCalendarCarryTarget = NO_SCROLL_POSITION;/,
