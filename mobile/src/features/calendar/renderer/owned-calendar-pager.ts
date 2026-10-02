@@ -123,6 +123,7 @@ export function useOwnedCalendarPager({
   const restX = useSharedValue(0)
   const restFrames = useSharedValue(0)
   const restSnaps = useSharedValue(0)
+  const geometryEvents = useSharedValue(0)
   const appliedPlacement = useRef(0)
   const placedFor = useRef<string | null>(null)
   const laidOutFor = useRef<string | null>(null)
@@ -273,6 +274,18 @@ export function useOwnedCalendarPager({
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
+      if (geometryEvents.get() < 5) {
+        geometryEvents.set(geometryEvents.get() + 1)
+        scheduleOnRN(
+          pagingLog.geometry,
+          describesPlacedContent(event) ? "scroll-accepted" : "scroll-rejected",
+          spaceKey,
+          event.contentOffset.x,
+          event.layoutMeasurement.width,
+          event.contentSize.width,
+          placedWidth.get(),
+        )
+      }
       if (!describesPlacedContent(event)) return
       const x = event.contentOffset.x
       scrollX.set(x)
@@ -336,6 +349,15 @@ export function useOwnedCalendarPager({
     },
     onMomentumEnd: (event) => {
       scheduleOnRN(
+        pagingLog.geometry,
+        "momentum-end",
+        spaceKey,
+        event.contentOffset.x,
+        event.layoutMeasurement.width,
+        event.contentSize.width,
+        placedWidth.get(),
+      )
+      scheduleOnRN(
         pagingLog.trace,
         "momentumEnd",
         event.contentOffset.x,
@@ -370,6 +392,15 @@ export function useOwnedCalendarPager({
       dragging.set(false)
       momentum.set(false)
     }
+    scheduleOnRN(
+      pagingLog.geometry,
+      "place",
+      spaceKey,
+      (position - first) * width,
+      width,
+      CONTENT_SLOTS * width,
+      previousWidth,
+    )
     scrollTo(scrollRef, (position - first) * width, 0, animated)
   }
 
@@ -392,6 +423,7 @@ export function useOwnedCalendarPager({
     contentLaidOutFor.current = null
     positioned.set(false)
     placedWidth.set(0)
+    geometryEvents.set(0)
     settledIndex.set(anchorIndex)
     navigationTarget.set(null)
     interruptedTarget.set(null)
@@ -400,6 +432,7 @@ export function useOwnedCalendarPager({
     anchorIndex,
     positioned,
     placedWidth,
+    geometryEvents,
     settledIndex,
     navigationTarget,
     interruptedTarget,
@@ -422,6 +455,14 @@ export function useOwnedCalendarPager({
   // scrollTo issued then may clamp to zero and produce no confirming scroll.
   const placeAfterLayout = () => {
     const key = `${spaceKey}:${pageWidth}`
+    pagingLog.geometry(
+      "layout-check",
+      spaceKey,
+      0,
+      pageWidth,
+      contentWidth,
+      placedFor.current === key ? 1 : 0,
+    )
     if (
       resetSpaceKey.current !== spaceKey ||
       placedFor.current === key ||
@@ -439,6 +480,14 @@ export function useOwnedCalendarPager({
   }
 
   const onPagerLayout = (width: number) => {
+    pagingLog.geometry(
+      "viewport-layout",
+      spaceKey,
+      0,
+      width,
+      contentWidth,
+      placedWidth.get(),
+    )
     if (resetSpaceKey.current !== spaceKey) return
     if (pageWidth <= 0 || Math.abs(width - pageWidth) > 1) return
     laidOutFor.current = `${spaceKey}:${pageWidth}`
@@ -446,6 +495,14 @@ export function useOwnedCalendarPager({
   }
 
   const onContentSizeChange = (width: number) => {
+    pagingLog.geometry(
+      "content-layout",
+      spaceKey,
+      0,
+      pageWidth,
+      width,
+      placedWidth.get(),
+    )
     if (resetSpaceKey.current !== spaceKey) return
     if (pageWidth <= 0 || Math.abs(width - contentWidth) > 1) return
     contentLaidOutFor.current = `${spaceKey}:${pageWidth}`

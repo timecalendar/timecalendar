@@ -52,6 +52,19 @@ export const pagingLog = {
         `CALENDAR_PAGING trace event=${event} x=${x.toFixed(1)} dragging=${dragging} momentum=${momentum}`,
       )
   },
+  geometry(
+    event: string,
+    space: string,
+    x: number,
+    viewport: number,
+    content: number,
+    placed: number,
+  ): void {
+    if (enabled)
+      console.log(
+        `CALENDAR_PAGING geometry event=${event} space=${space} x=${x.toFixed(1)} viewport=${viewport.toFixed(1)} content=${content.toFixed(1)} placed=${placed.toFixed(1)}`,
+      )
+  },
   mount(pageKey: string): void {
     if (enabled)
       console.log(
