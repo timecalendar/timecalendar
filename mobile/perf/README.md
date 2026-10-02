@@ -130,6 +130,8 @@ and package paths that the disclosure scan rejects.
   spike (`/dev-paging-spike`, fixture weeks) with Android `snapToInterval`, with `pagingEnabled`,
   and with ±8 pages of content so swipe chains re-base. Read with
   `docs/perf/E02-spike-evidence.md`.
-- `t08-2cc9ff0b`: the production Calendar on the windowed native ScrollView (E04 T08), same
-  device and dev calendar, week mode, `--logcat CALENDAR_PAGING`. The pinch ran first, on the
-  `focusDate` week with its events.
+- `t08-d569f309`: the production Calendar on the windowed native ScrollView (E04 T08), same
+  device and dev calendar, week mode, `--logcat CALENDAR_PAGING`. In this run the 20-swipe
+  forward chain ended without a settle, so its probe did not move and the backward chain, landing
+  back on the never-settled week, reported no change either; other runs land +15 to +17 and −15
+  to −16 (T08 pull request).
