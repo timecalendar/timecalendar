@@ -3,7 +3,6 @@ import { PixelRatio, Platform } from "react-native"
 import { Gesture, type GestureType } from "react-native-gesture-handler"
 import Animated, {
   type AnimatedRef,
-  measure,
   scrollTo,
   type SharedValue,
   useAnimatedReaction,
@@ -191,68 +190,6 @@ function useRestWatcher({
   }
 }
 
-function useNativePositionSampler({
-  activeGeneration,
-  generation,
-  scrollRef,
-  probeRef,
-  sampleRunning,
-  sampleFrame,
-  sampleWidth,
-  requestedOffset,
-}: {
-  activeGeneration: SharedValue<number>
-  generation: number
-  scrollRef: AnimatedRef<Animated.ScrollView>
-  probeRef: AnimatedRef<Animated.View>
-  sampleRunning: SharedValue<boolean>
-  sampleFrame: SharedValue<number>
-  sampleWidth: SharedValue<number>
-  requestedOffset: SharedValue<number>
-}) {
-  function sample() {
-    "worklet"
-    if (activeGeneration.get() !== generation) return
-    const frame = sampleFrame.get() + 1
-    sampleFrame.set(frame)
-    if (frame === 1 || frame === 6 || frame === 30 || frame === 90) {
-      const viewport =
-        typeof scrollRef === "function" && Boolean(scrollRef())
-          ? measure(scrollRef)
-          : null
-      const marker =
-        typeof probeRef === "function" && Boolean(probeRef())
-          ? measure(probeRef)
-          : null
-      const width = sampleWidth.get()
-      scheduleOnRN(pagingLog.placement, "native-position", {
-        generation,
-        frame,
-        viewportX: viewport?.pageX ?? null,
-        markerX: marker?.pageX ?? null,
-        observedOffset:
-          viewport && marker
-            ? PAGE_WINDOW_RADIUS * width - (marker.pageX - viewport.pageX)
-            : null,
-        requestedOffset: requestedOffset.get(),
-      })
-    }
-    if (frame < 90) requestAnimationFrame(sample)
-    else sampleRunning.set(false)
-  }
-
-  return (width: number, targetOffset: number) => {
-    "worklet"
-    if (activeGeneration.get() !== generation) return
-    sampleWidth.set(width)
-    requestedOffset.set(targetOffset)
-    sampleFrame.set(0)
-    if (sampleRunning.get()) return
-    sampleRunning.set(true)
-    requestAnimationFrame(sample)
-  }
-}
-
 /**
  * The windowed horizontal pager. The UI thread owns motion and settlement: it
  * derives the rounded and settled page from the native offset and tells React
@@ -295,11 +232,6 @@ export function useOwnedCalendarPager({
   const contentWidth = CONTENT_SLOTS * pageWidth
 
   const scrollRef = useAnimatedRef<Animated.ScrollView>()
-  const probeRef = useAnimatedRef<Animated.View>()
-  const sampleRunning = useSharedValue(false)
-  const sampleFrame = useSharedValue(0)
-  const sampleWidth = useSharedValue(0)
-  const requestedOffset = useSharedValue(0)
   const scrollX = useSharedValue(0)
   const activeGeneration = useSharedValue(generation)
   const positioned = useSharedValue(false)
@@ -315,7 +247,6 @@ export function useOwnedCalendarPager({
   const placedWidth = useSharedValue(0)
   const touching = useSharedValue(false)
   const nativeTouchGeneration = useSharedValue<number | null>(null)
-  const tracedScrollMask = useSharedValue(0)
   const mounted = useSharedValue(true)
   const restWatching = useSharedValue(false)
   const restX = useSharedValue(0)
@@ -444,35 +375,10 @@ export function useOwnedCalendarPager({
     scrollRef,
     settleIfAligned,
   })
-  const sampleNativePosition = useNativePositionSampler({
-    activeGeneration,
-    generation,
-    scrollRef,
-    probeRef,
-    sampleRunning,
-    sampleFrame,
-    sampleWidth,
-    requestedOffset,
-  })
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
-      const accepted = describesPlacedContent(event)
-      const traceBit = accepted ? 2 : 1
-      if (!(tracedScrollMask.get() & traceBit)) {
-        tracedScrollMask.set(tracedScrollMask.get() | traceBit)
-        scheduleOnRN(pagingLog.placement, "scroll", {
-          generation,
-          activeGeneration: activeGeneration.get(),
-          accepted,
-          x: event.contentOffset.x,
-          viewportWidth: event.layoutMeasurement.width,
-          contentWidth: event.contentSize.width,
-          placedWidth: placedWidth.get(),
-          positioned: positioned.get(),
-        })
-      }
-      if (!accepted) return
+      if (!describesPlacedContent(event)) return
       const x = event.contentOffset.x
       scrollX.set(x)
       positioned.set(true)
@@ -524,17 +430,6 @@ export function useOwnedCalendarPager({
     animated: boolean,
   ) => {
     "worklet"
-    scheduleOnRN(pagingLog.placement, "place", {
-      generation,
-      activeGeneration: activeGeneration.get(),
-      nativeRefReady: typeof scrollRef === "function" && Boolean(scrollRef()),
-      first,
-      width,
-      target,
-      animated,
-      placedWidth: placedWidth.get(),
-      observedX: scrollX.get(),
-    })
     if (activeGeneration.get() !== generation) return
     const previousWidth = placedWidth.get()
     const position =
@@ -550,9 +445,7 @@ export function useOwnedCalendarPager({
       dragging.set(false)
       momentum.set(false)
     }
-    const offset = (position - first) * width
-    scrollTo(scrollRef, offset, 0, animated)
-    sampleNativePosition(width, offset)
+    scrollTo(scrollRef, (position - first) * width, 0, animated)
   }
 
   const placeNavigation = (
@@ -578,13 +471,6 @@ export function useOwnedCalendarPager({
       touching.set(false)
     }
     resetGeneration.current = generation
-    pagingLog.placement("reset", {
-      generation,
-      spaceKey,
-      anchorIndex,
-      pageWidth,
-      placementId: state.placement.id,
-    })
     placedFor.current = null
     laidOutFor.current = null
     contentLaidOutFor.current = null
@@ -598,17 +484,12 @@ export function useOwnedCalendarPager({
     restWatching.set(false)
     restFrames.set(0)
     restSnaps.set(0)
-    sampleRunning.set(false)
-    tracedScrollMask.set(0)
     settledIndex.set(anchorIndex)
     navigationTarget.set(null)
     interruptedTarget.set(null)
     crossingStartedAt.current = 0
   }, [
     generation,
-    spaceKey,
-    pageWidth,
-    state.placement.id,
     activeGeneration,
     anchorIndex,
     positioned,
@@ -619,8 +500,6 @@ export function useOwnedCalendarPager({
     restWatching,
     restFrames,
     restSnaps,
-    sampleRunning,
-    tracedScrollMask,
     settledIndex,
     navigationTarget,
     interruptedTarget,
@@ -638,13 +517,6 @@ export function useOwnedCalendarPager({
     const { placement } = state
     if (pageWidth <= 0 || appliedPlacement.current === placement.id) return
     if (placedFor.current !== `${generation}:${pageWidth}`) return
-    pagingLog.placement("schedule-navigation", {
-      generation,
-      placementId: placement.id,
-      firstIndex: window.firstIndex,
-      pageWidth,
-      target: placement.index,
-    })
     appliedPlacement.current = placement.id
     scheduleOnUI(placeNavigation, window.firstIndex, pageWidth, placement)
   })
@@ -653,15 +525,6 @@ export function useOwnedCalendarPager({
   // scrollTo issued then may clamp to zero and produce no confirming scroll.
   const placeAfterLayout = () => {
     const key = `${generation}:${pageWidth}`
-    pagingLog.placement("readiness", {
-      generation,
-      key,
-      activeGeneration: resetGeneration.current,
-      placedFor: placedFor.current,
-      laidOutFor: laidOutFor.current,
-      contentLaidOutFor: contentLaidOutFor.current,
-      placementId: state.placement.id,
-    })
     if (
       resetGeneration.current !== generation ||
       placedFor.current === key ||
@@ -673,28 +536,12 @@ export function useOwnedCalendarPager({
     const { placement } = state
     const pending = appliedPlacement.current !== placement.id
     appliedPlacement.current = placement.id
-    pagingLog.placement("schedule-initial", {
-      generation,
-      jsRefReady: scrollRef.current !== null,
-      pending,
-      placementId: placement.id,
-      firstIndex: window.firstIndex,
-      pageWidth,
-      target: pending ? placement.index : state.settled,
-    })
     if (pending)
       scheduleOnUI(placeNavigation, window.firstIndex, pageWidth, placement)
     else scheduleOnUI(place, window.firstIndex, pageWidth, state.settled, false)
   }
 
   const onPagerLayout = (width: number) => {
-    pagingLog.placement("layout", {
-      generation,
-      jsRefReady: scrollRef.current !== null,
-      activeGeneration: resetGeneration.current,
-      width,
-      pageWidth,
-    })
     if (resetGeneration.current !== generation) return
     if (pageWidth <= 0 || Math.abs(width - pageWidth) > 1) return
     laidOutFor.current = `${generation}:${pageWidth}`
@@ -702,13 +549,6 @@ export function useOwnedCalendarPager({
   }
 
   const onContentSizeChange = (width: number) => {
-    pagingLog.placement("content", {
-      generation,
-      jsRefReady: scrollRef.current !== null,
-      activeGeneration: resetGeneration.current,
-      width,
-      contentWidth,
-    })
     if (resetGeneration.current !== generation) return
     if (pageWidth <= 0 || Math.abs(width - contentWidth) > 1) return
     contentLaidOutFor.current = `${generation}:${pageWidth}`
@@ -822,7 +662,6 @@ export function useOwnedCalendarPager({
   return {
     spaceKey,
     scrollRef,
-    probeRef,
     scrollHandler,
     scrollProps,
     nativeGesture,

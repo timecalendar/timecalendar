@@ -26,13 +26,6 @@ function countPageMount(): number {
 }
 
 export const pagingLog = {
-  placement(
-    stage: string,
-    details: Record<string, string | number | boolean | null>,
-  ): void {
-    if (enabled)
-      console.log(`CALENDAR_PLACEMENT ${stage} ${JSON.stringify(details)}`)
-  },
   now: (): number => (enabled ? performance.now() : 0),
   commit(center: number, elapsedMs: number): void {
     if (!enabled) return

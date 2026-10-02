@@ -132,7 +132,6 @@ export function OwnedCalendarShell({
   const {
     spaceKey,
     scrollRef: pagerRef,
-    probeRef,
     scrollHandler,
     scrollProps,
     nativeGesture,
@@ -305,7 +304,6 @@ export function OwnedCalendarShell({
           pixelsPerHour={coordinator.pixelsPerHour}
           settledPixelsPerHour={initialPixelsPerHour}
           pagerRef={pagerRef}
-          pagerProbeRef={probeRef}
           pager={pager}
         >
           {pages.map((page) => (
