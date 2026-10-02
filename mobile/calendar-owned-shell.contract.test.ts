@@ -102,14 +102,17 @@ describe("owned Calendar paging repository contract", () => {
     expect(ios).toContain("UIAccessibility.focusedElementUserInfoKey")
     expect(ios).toContain("view.isDescendant(of: target)")
     expect(ios).toContain("stopObserving()")
+    expect(ios).toContain('"pageKey": pageKey')
     expect(android).toContain("requestSendAccessibilityEvent")
     expect(android).toContain("TYPE_VIEW_ACCESSIBILITY_FOCUSED")
     expect(android).toContain("child === getChildAt(0)")
+    expect(android).toContain('"pageKey" to pageKey')
     expect(android).toContain(
       "super.requestSendAccessibilityEvent(child, event)",
     )
     expect(android).not.toContain("AccessibilityService")
     expect(canvas).toContain("<CalendarFocusObserverView")
+    expect(canvas).toContain("pageKey={pageKey}")
     expect(canvas).not.toContain("onFocus={")
     expect(canvas).toMatch(/<Pressable\b/g)
   })
@@ -241,7 +244,7 @@ describe("owned Calendar paging repository contract", () => {
     ).toEqual(new Set(["onCross", "onSettle"]))
     expect(
       new Set([...pager.matchAll(/scheduleOnUI\(\s*(\w+)/g)].map(([, f]) => f)),
-    ).toEqual(new Set(["place"]))
+    ).toEqual(new Set(["place", "placeNavigation"]))
     expect(pager).toMatch(/scrollTo\(scrollRef, /)
 
     const pagingOwners = [

@@ -38,7 +38,12 @@ export function pagerPageWidth(viewportWidth: number): number {
   )
 }
 
-type Placement = { id: number; index: PageIndex | null; animated: boolean }
+type Placement = {
+  id: number
+  index: PageIndex | null
+  animated: boolean
+  approachFrom: PageIndex | null
+}
 
 type PagerState = {
   spaceKey: string
@@ -54,7 +59,7 @@ function initialPagerState(spaceKey: string, index: PageIndex): PagerState {
     baseIndex: index,
     center: index,
     settled: index,
-    placement: { id: 0, index, animated: false },
+    placement: { id: 0, index, animated: false, approachFrom: null },
   }
 }
 
@@ -68,6 +73,7 @@ export function useOwnedCalendarPager({
   space,
   anchorIndex,
   pageWidth,
+  reduceMotion,
   scrollLocked,
   pinchGesture,
   trackNativeTouch,
@@ -77,6 +83,7 @@ export function useOwnedCalendarPager({
   space: PageSpace
   anchorIndex: PageIndex
   pageWidth: number
+  reduceMotion: boolean
   scrollLocked: SharedValue<boolean>
   pinchGesture: GestureType
   trackNativeTouch: (axis: "horizontal", down: boolean) => void
@@ -102,6 +109,7 @@ export function useOwnedCalendarPager({
   const momentum = useSharedValue(false)
   const roundedIndex = useSharedValue(anchorIndex)
   const settledIndex = useSharedValue(anchorIndex)
+  const navigationTarget = useSharedValue<PageIndex | null>(null)
   const firstIndex = useSharedValue(window.firstIndex)
   const placedWidth = useSharedValue(0)
   const appliedPlacement = useRef(0)
@@ -141,6 +149,7 @@ export function useOwnedCalendarPager({
                 id: current.placement.id + 1,
                 index: null,
                 animated: false,
+                approachFrom: null,
               },
             }),
       }
@@ -172,8 +181,11 @@ export function useOwnedCalendarPager({
     const slot = Math.round(x / width)
     if (Math.abs(x - slot * width) > ALIGNMENT_TOLERANCE) return
     const index = firstIndex.get() + slot
+    const target = navigationTarget.get()
+    if (target !== null && index !== target) return
     if (index === settledIndex.get()) return
     settledIndex.set(index)
+    if (target === index) navigationTarget.set(null)
     scheduleOnRN(onSettle, index)
   }
 
@@ -231,6 +243,17 @@ export function useOwnedCalendarPager({
     scrollTo(scrollRef, (position - first) * width, 0, animated)
   }
 
+  const placeNavigation = (
+    first: PageIndex,
+    width: number,
+    placement: Placement,
+  ) => {
+    "worklet"
+    if (placement.approachFrom !== null)
+      place(first, width, placement.approachFrom, false)
+    place(first, width, placement.index, placement.animated)
+  }
+
   useLayoutEffect(() => {
     positioned.set(false)
     placedWidth.set(0)
@@ -241,13 +264,7 @@ export function useOwnedCalendarPager({
     if (pageWidth <= 0 || appliedPlacement.current === placement.id) return
     if (placedFor.current !== `${spaceKey}:${pageWidth}`) return
     appliedPlacement.current = placement.id
-    scheduleOnUI(
-      place,
-      window.firstIndex,
-      pageWidth,
-      placement.index,
-      placement.animated,
-    )
+    scheduleOnUI(placeNavigation, window.firstIndex, pageWidth, placement)
   })
 
   // The content view lays out after mount and after every page-width change,
@@ -260,18 +277,15 @@ export function useOwnedCalendarPager({
     const { placement } = state
     const pending = appliedPlacement.current !== placement.id
     appliedPlacement.current = placement.id
-    scheduleOnUI(
-      place,
-      window.firstIndex,
-      pageWidth,
-      pending && placement.index !== null ? placement.index : state.settled,
-      false,
-    )
+    if (pending)
+      scheduleOnUI(placeNavigation, window.firstIndex, pageWidth, placement)
+    else scheduleOnUI(place, window.firstIndex, pageWidth, state.settled, false)
   }
 
   const jump = (index: PageIndex, animated: boolean) => {
     setState((current) => {
       const rebase = planPageRebase(createPageWindow(current.baseIndex), index)
+      const distance = index - current.settled
       return {
         ...current,
         baseIndex: rebase?.baseIndex ?? current.baseIndex,
@@ -279,7 +293,11 @@ export function useOwnedCalendarPager({
         placement: {
           id: current.placement.id + 1,
           index,
-          animated: animated && rebase === null,
+          animated,
+          approachFrom:
+            animated && (Math.abs(distance) > 1 || rebase !== null)
+              ? index - Math.sign(distance)
+              : null,
         },
       }
     })
@@ -289,8 +307,9 @@ export function useOwnedCalendarPager({
     const last = reported.current
     reported.current = { spaceKey, index: anchorIndex }
     if (last.spaceKey !== spaceKey || last.index === anchorIndex) return
-    jump(anchorIndex, false)
-  }, [anchorIndex, spaceKey])
+    navigationTarget.set(anchorIndex)
+    jump(anchorIndex, !reduceMotion)
+  }, [anchorIndex, navigationTarget, reduceMotion, spaceKey])
 
   useLayoutEffect(() => {
     if (crossingStartedAt.current === 0) return

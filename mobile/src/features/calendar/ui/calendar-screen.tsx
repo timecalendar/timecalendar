@@ -75,12 +75,6 @@ export function CalendarScreen() {
   const timelineHeading = formatFullDay(selectedDate, locale, displayZone)
   const calendarShellRef = useRef<OwnedCalendarShellHandle>(null)
   const isFocused = useIsFocused()
-  const wasFocused = useRef(false)
-  useEffect(() => {
-    if (isFocused && !wasFocused.current)
-      calendarShellRef.current?.restoreFocus()
-    wasFocused.current = isFocused
-  }, [isFocused])
 
   const space = { mode: timelineMode, firstWeekday }
   const { store, snapshot } = useCalendarWindow({

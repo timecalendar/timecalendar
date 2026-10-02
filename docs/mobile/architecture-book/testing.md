@@ -68,6 +68,14 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   The repository contract excludes generated API/fetch/sync dependencies from page navigation.
   Offline native paging, screen-reader quality, and synced read-only/personal editable details remain
   exact-build owner checks and are never inferred from Jest.
+- **Calendar E06 accessible paging proof** checks the sole plain adjustable header control,
+  scroll-view exposure, hidden neighbour pages, in-flight action guard, settled-context
+  announcements, page-key focus memory and route-return restoration. The shared reduced-motion
+  hook proves initial read, live changes and listener teardown; pager tests prove one-page
+  animation, distant jump then animation, and direct reduced-motion placement. Host tests do
+  not certify VoiceOver, TalkBack, large-text layout, or physical focus behavior. The native
+  focus observer now emits a page key, so assistive-technology checks require a rebuilt binary
+  at the exact tested revision.
 - **An explicit per-test time budget — `testTimeout: 30000` ([ADR 044](./decisions/044-jest-per-test-time-budget.md)).** RN/Expo host components register lazily on first render, so the one-time cost lands on whichever test mounts them first; ADR 044 is the canonical record of the load-regime measurements and sizing rationale. `mobile/jest.config.test.ts` guards the key against drift (floor 20 000 ms), the way `app.config.test.ts` guards config shape in the same job. **The budget bounds how long a test may take to execute; it is never a reason to lengthen a `waitFor`/`findBy`, add a retry, or weaken a matcher** — settling a red test that way converts an intermittent into an invisible one.
 - **Reset suite-owned spy state through exception-safe teardown before another test runs.** Clear owned call history and reset queued one-shot implementations to their harness defaults from an `afterEach` `finally` path, while preserving persistent spies installed by `jest/setup-*.ts`; do not substitute blanket global resets or restores. `src/features/splash/ui/splash-screen.test.tsx` is the concrete pattern: its dismissal block clears `Animated.timing`, resets the reduced-motion queue to resolved `false`, and restores real timers without removing the `jest/setup-splash.ts` spy wrappers.
 - **Restore every `Platform.OS` override before the next test, including when the overriding test throws.** `usePlatform` from `src/test-support/platform.ts` is the mechanism for a `describe`-scoped override; a `try`/`finally` that restores the captured original is equally conforming. Tests must not call `jest.replaceProperty(Platform, "OS", …)` inline in an `it`, and must not rely on `jest.restoreAllMocks()` for the restore — the latter would also discard the suite-wide `AccessibilityInfo` spies from `jest/setup-splash.ts`.

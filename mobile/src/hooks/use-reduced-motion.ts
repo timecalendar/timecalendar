@@ -6,7 +6,6 @@ export function useReducedMotion(): boolean | null {
 
   useEffect(() => {
     let active = true
-
     void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
       if (active) setReduceMotion(enabled)
     })
@@ -14,7 +13,6 @@ export function useReducedMotion(): boolean | null {
       "reduceMotionChanged",
       setReduceMotion,
     )
-
     return () => {
       active = false
       subscription.remove()

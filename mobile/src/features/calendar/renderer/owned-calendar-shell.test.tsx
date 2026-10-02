@@ -21,7 +21,6 @@ import {
   getByGestureTestId,
 } from "react-native-gesture-handler/jest-utils"
 import * as Reanimated from "react-native-reanimated"
-import { useReducedMotion } from "react-native-reanimated"
 
 import {
   buildPagePresentation,
@@ -38,6 +37,7 @@ import {
   type TimedCalendarEventV1,
 } from "@/features/calendar/data"
 import { useColorScheme } from "@/hooks/use-color-scheme"
+import { useReducedMotion } from "@/hooks/use-reduced-motion"
 import i18n from "@/i18n"
 import { accessibilityProbeFixture } from "@/test-support/owned-calendar/accessibility-probe"
 import {
@@ -53,6 +53,19 @@ import {
 
 jest.mock("@/hooks/use-color-scheme", () => ({
   useColorScheme: jest.fn(() => "light"),
+}))
+jest.mock("@/hooks/use-reduced-motion", () => ({
+  useReducedMotion: jest.fn(() => false),
+}))
+let mockFontScale = 1
+jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({
+  __esModule: true,
+  default: () => ({
+    width: 400,
+    height: 800,
+    scale: 1,
+    fontScale: mockFontScale,
+  }),
 }))
 
 const mockUseColorScheme = useColorScheme as jest.Mock
@@ -118,6 +131,7 @@ async function focusEvent(uid: string) {
     nativeEvent: {
       identity: observer.props.identity,
       dateKey: observer.props.dateKey,
+      pageKey: observer.props.pageKey,
     },
   })
 }
@@ -252,7 +266,7 @@ describe("OwnedCalendarShell", () => {
 
   const accessiblePage = (actionName: "increment" | "decrement") =>
     fireEvent(
-      screen.getByTestId("owned-calendar-canvas"),
+      screen.getByTestId("owned-calendar-page-control"),
       "accessibilityAction",
       {
         nativeEvent: { actionName },
@@ -297,18 +311,26 @@ describe("OwnedCalendarShell", () => {
   }
 
   beforeEach(() => {
+    mockFontScale = 1
     AppState.currentState = "active"
     jest.clearAllMocks()
     mockUseColorScheme.mockReturnValue("light")
     jest.mocked(useReducedMotion).mockReturnValue(false)
   })
 
-  it("uses one adjustable native vertical scroll owner", async () => {
+  it("uses one adjustable header control outside the native scroll views", async () => {
     await renderPlaced(shell())
 
     expect(
       screen.getByRole("adjustable", { name: props.heading }),
     ).toBeOnTheScreen()
+    expect(screen.getByTestId("owned-calendar-page-control")).toBe(
+      screen.getByRole("adjustable", { name: props.heading }),
+    )
+    expect(screen.getByTestId("owned-calendar-canvas")).toHaveProp(
+      "accessible",
+      false,
+    )
     expect(screen.getByTestId("owned-calendar-canvas")).toHaveProp(
       "contentInsetAdjustmentBehavior",
       "automatic",
@@ -673,26 +695,22 @@ describe("OwnedCalendarShell", () => {
       .spyOn(Reanimated, "useAnimatedRef")
       .mockReturnValue(scrollRef)
     const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
-    const shellRef = createRef<OwnedCalendarShellHandle>()
+    const presentPage = presenter({
+      events: [
+        timedEvent(
+          "offscreen-late",
+          "2026-06-15T23:00:00.000Z",
+          "2026-06-15T23:45:00.000Z",
+        ),
+      ],
+    })
     try {
-      await renderPlaced(
-        shell({
-          ref: shellRef,
-          presentPage: presenter({
-            events: [
-              timedEvent(
-                "offscreen-late",
-                "2026-06-15T23:00:00.000Z",
-                "2026-06-15T23:45:00.000Z",
-              ),
-            ],
-          }),
-        }),
-      )
+      const { view } = await renderPlaced(shell({ presentPage }))
       await focusEvent("offscreen-late")
       const scrollTo = jest.spyOn(scrollRef.current as ScrollView, "scrollTo")
       try {
-        await act(async () => shellRef.current?.restoreFocus())
+        await view.rerender(shell({ presentPage, routeFocused: false }))
+        await view.rerender(shell({ presentPage, routeFocused: true }))
         expect(scrollTo).toHaveBeenCalledWith({
           y: 23 * 60 - 96,
           animated: false,
@@ -711,26 +729,26 @@ describe("OwnedCalendarShell", () => {
   it.each([
     ["unmatched identity", { identity: "other" }, {}],
     ["wrong date", { dateKey: "2026-06-16" }, {}],
+    ["wrong page", { pageKey: "week:other" }, {}],
     ["route blur", {}, { routeFocused: false }],
   ] as const)(
     "ignores %s as accessibility-focus memory",
     async (_, override, state) => {
-      const shellRef = createRef<OwnedCalendarShellHandle>()
       const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
+      const presentPage = presenter({
+        events: [
+          timedEvent(
+            "observed",
+            "2026-06-15T10:00:00.000Z",
+            "2026-06-15T11:00:00.000Z",
+          ),
+        ],
+      })
       try {
-        await renderPlaced(
+        const { view } = await renderPlaced(
           shell({
             ...state,
-            ref: shellRef,
-            presentPage: presenter({
-              events: [
-                timedEvent(
-                  "observed",
-                  "2026-06-15T10:00:00.000Z",
-                  "2026-06-15T11:00:00.000Z",
-                ),
-              ],
-            }),
+            presentPage,
           }),
         )
         const observer = screen.getByTestId(
@@ -740,11 +758,17 @@ describe("OwnedCalendarShell", () => {
           nativeEvent: {
             identity: observer.props.identity,
             dateKey: observer.props.dateKey,
+            pageKey: observer.props.pageKey,
             ...override,
           },
         })
         await fireEvent.press(screen.getByRole("button", { name: /observed/ }))
-        await act(async () => shellRef.current?.restoreFocus())
+        await view.rerender(
+          shell({ ...state, routeFocused: false, presentPage }),
+        )
+        await view.rerender(
+          shell({ ...state, routeFocused: true, presentPage }),
+        )
         expect(focus).not.toHaveBeenCalled()
       } finally {
         focus.mockRestore()
@@ -764,10 +788,9 @@ describe("OwnedCalendarShell", () => {
           ),
         ],
       })
-      const shellRef = createRef<OwnedCalendarShellHandle>()
       const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
       const { view, pager } = await renderPlaced(
-        shell({ ref: shellRef, routeFocused: true, presentPage }),
+        shell({ routeFocused: true, presentPage }),
       )
       await focusEvent("return-target")
       let frame: FrameRequestCallback | undefined
@@ -779,13 +802,12 @@ describe("OwnedCalendarShell", () => {
         })
       const cancelFrame = jest.spyOn(global, "cancelAnimationFrame")
       try {
-        await act(async () => shellRef.current?.restoreFocus())
+        await view.rerender(shell({ routeFocused: false, presentPage }))
+        await view.rerender(shell({ routeFocused: true, presentPage }))
         const pendingFrame = frame
         expect(pendingFrame).toBeDefined()
         if (change === "route blur") {
-          await view.rerender(
-            shell({ ref: shellRef, routeFocused: false, presentPage }),
-          )
+          await view.rerender(shell({ routeFocused: false, presentPage }))
         } else {
           await pager.send(0, "onScrollBeginDrag")
           await pager.send(0.6)
@@ -1127,8 +1149,7 @@ describe("OwnedCalendarShell", () => {
     expect(header.parent).toBe(canvas.parent)
     expect(
       StyleSheet.flatten(
-        screen.getByTestId("owned-calendar-date-header-gutter", HIDDEN).props
-          .style,
+        screen.getByTestId("owned-calendar-page-control", HIDDEN).props.style,
       ).width,
     ).toBe(HOURS_COLUMN_WIDTH)
     expect(screen.getAllByTestId(/^owned-calendar-date-\d{4}-/)).toHaveLength(7)
@@ -1160,13 +1181,17 @@ describe("OwnedCalendarShell", () => {
       width: "100%",
       height: "100%",
       fontSize: 20,
-      lineHeight: 32,
       fontWeight: 700,
       textAlign: "center",
       textAlignVertical: "center",
       includeFontPadding: false,
     })
     expect(monday.getByText("15").props.adjustsFontSizeToFit).toBeUndefined()
+    expect(monday.getByText("15")).toHaveProp("maxFontSizeMultiplier", 1.25)
+    expect(screen.getByTestId("owned-calendar-page-control")).toHaveProp(
+      "accessible",
+      true,
+    )
     const today = within(screen.getByTestId("owned-calendar-date-2026-06-17"))
     expect(today.getByText("W")).toHaveStyle({ color: Colors.light.primary })
     expect(today.getByText("17").parent).toHaveStyle({
@@ -1190,6 +1215,28 @@ describe("OwnedCalendarShell", () => {
       ).toHaveProp("importantForAccessibility", "no-hide-descendants")
     }
     expect(screen.queryByRole("button", { name: /Today/ })).toBeNull()
+  })
+
+  it("grows the header at the largest text scale while bounding the date badge and gutter icon", async () => {
+    mockFontScale = 5
+    await renderPlaced(shell())
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-date-header").props.style,
+      ).minHeight,
+    ).toBe(105)
+    const control = screen.getByTestId("owned-calendar-page-control")
+    expect(StyleSheet.flatten(control.props.style).minHeight).toBe(56)
+    expect(within(control).getByText("‹ ›")).toHaveProp(
+      "maxFontSizeMultiplier",
+      1.5,
+    )
+    const date = within(screen.getByTestId("owned-calendar-date-2026-06-15"))
+    expect(date.getByText("15")).toHaveProp("maxFontSizeMultiplier", 1.25)
+    expect(
+      StyleSheet.flatten(date.getByText("15").parent?.props.style).width,
+    ).toBeLessThanOrEqual(32)
   })
 
   it("uses gray dates and the filled Today treatment in dark mode", async () => {
@@ -1266,7 +1313,7 @@ describe("OwnedCalendarShell", () => {
     ["week", "Previous week", "Next week"],
   ] as const)("labels %s paging by its unit", async (mode, previous, next) => {
     await render(shell({ mode, presentPage: presenter({ mode }) }))
-    expect(screen.getByTestId("owned-calendar-canvas")).toHaveProp(
+    expect(screen.getByTestId("owned-calendar-page-control")).toHaveProp(
       "accessibilityActions",
       [
         { name: "decrement", label: previous },
@@ -1399,7 +1446,7 @@ describe("OwnedCalendarShell", () => {
         scrollTo.mockClear()
 
         await fireEvent(
-          screen.getByTestId("owned-calendar-canvas"),
+          screen.getByTestId("owned-calendar-page-control"),
           "accessibilityAction",
           { nativeEvent: { actionName: action } },
         )
@@ -1503,12 +1550,10 @@ describe("OwnedCalendarShell", () => {
     const refSpy = jest
       .spyOn(Reanimated, "useAnimatedRef")
       .mockReturnValue(scrollRef)
-    const shellRef = createRef<OwnedCalendarShellHandle>()
     const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
     try {
       const { view } = await renderPlaced(
         shell({
-          ref: shellRef,
           presentPage: presenter({ events: [survivor] }),
         }),
       )
@@ -1522,20 +1567,26 @@ describe("OwnedCalendarShell", () => {
 
       await view.rerender(
         shell({
-          ref: shellRef,
+          routeFocused: false,
           presentPage: presenter({ events: [survivor] }),
         }),
       )
-      expect(focus).not.toHaveBeenCalled()
-      await act(async () => shellRef.current?.restoreFocus())
+      await view.rerender(
+        shell({
+          routeFocused: true,
+          presentPage: presenter({ events: [survivor] }),
+        }),
+      )
       await waitFor(() => expect(focus).toHaveBeenCalledTimes(1))
       expect(eventReveals()).toHaveLength(1)
 
       await view.rerender(
-        shell({ ref: shellRef, presentPage: presenter({ events: [] }) }),
+        shell({ routeFocused: false, presentPage: presenter({ events: [] }) }),
+      )
+      await view.rerender(
+        shell({ routeFocused: true, presentPage: presenter({ events: [] }) }),
       )
       expect(screen.queryByTestId("owned-calendar-event-late-focus")).toBeNull()
-      await act(async () => shellRef.current?.restoreFocus())
       await waitFor(() => expect(focus).toHaveBeenCalledTimes(2))
       expect(eventReveals()).toHaveLength(1)
       scrollTo.mockRestore()
@@ -1547,21 +1598,20 @@ describe("OwnedCalendarShell", () => {
   })
 
   it("remembers no accessibility focus while the page is moving", async () => {
-    const shellRef = createRef<OwnedCalendarShellHandle>()
     const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
     try {
-      const { pager } = await renderPlaced(
+      const presentPage = presenter({
+        events: [
+          timedEvent(
+            "moving",
+            "2026-06-15T10:00:00.000Z",
+            "2026-06-15T11:00:00.000Z",
+          ),
+        ],
+      })
+      const { view, pager } = await renderPlaced(
         shell({
-          ref: shellRef,
-          presentPage: presenter({
-            events: [
-              timedEvent(
-                "moving",
-                "2026-06-15T10:00:00.000Z",
-                "2026-06-15T11:00:00.000Z",
-              ),
-            ],
-          }),
+          presentPage,
         }),
       )
 
@@ -1573,7 +1623,8 @@ describe("OwnedCalendarShell", () => {
       await pager.send(0, "onScrollEndDrag")
       await pager.send(0)
       await flushUiThread()
-      await act(async () => shellRef.current?.restoreFocus())
+      await view.rerender(shell({ routeFocused: false, presentPage }))
+      await view.rerender(shell({ routeFocused: true, presentPage }))
 
       expect(focus).not.toHaveBeenCalled()
       expect(onDateCommitted).not.toHaveBeenCalled()
@@ -1663,7 +1714,7 @@ describe("OwnedCalendarShell", () => {
     },
   )
 
-  it("steps a second accessibility action from the settled page, landing one page", async () => {
+  it("ignores a second accessibility action until the first page settles", async () => {
     const scrollTo = jest.spyOn(Reanimated, "scrollTo")
     try {
       const { pager } = await renderPlaced(shell())
@@ -1675,7 +1726,6 @@ describe("OwnedCalendarShell", () => {
       await flushUiThread()
 
       expect(scrollTo.mock.calls.map((call) => call.slice(1))).toEqual([
-        [pager.origin + pager.pageWidth, 0, true],
         [pager.origin + pager.pageWidth, 0, true],
       ])
       await pager.send(1)

@@ -12,6 +12,9 @@ public class CalendarFocusObserverModule: Module {
       Prop("dateKey") { (view: CalendarFocusObserverView, dateKey: String) in
         view.dateKey = dateKey
       }
+      Prop("pageKey") { (view: CalendarFocusObserverView, pageKey: String) in
+        view.pageKey = pageKey
+      }
     }
   }
 }

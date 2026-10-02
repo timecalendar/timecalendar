@@ -395,6 +395,7 @@
   "calendar.previousDayLabel": "Jour précédent",
   "calendar.nextDayLabel": "Jour suivant",
   "calendar.previousWeekLabel": "Semaine précédente",
+  "calendar.pageControlSymbol": "‹ ›",
   "calendar.nextWeekLabel": "Semaine suivante",
   "calendar.nowLabel": "Heure actuelle, {{time}}",
   "calendar.add": "+",

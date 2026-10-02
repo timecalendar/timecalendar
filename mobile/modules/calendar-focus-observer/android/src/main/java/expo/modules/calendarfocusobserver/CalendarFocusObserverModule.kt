@@ -15,6 +15,9 @@ class CalendarFocusObserverModule : Module() {
       Prop("dateKey") { view: CalendarFocusObserverView, dateKey: String ->
         view.dateKey = dateKey
       }
+      Prop("pageKey") { view: CalendarFocusObserverView, pageKey: String ->
+        view.pageKey = pageKey
+      }
       GroupView<CalendarFocusObserverView> {
         AddChildView<android.view.View> { parent, child, index ->
           require(parent.childCount == 0 && index == 0)

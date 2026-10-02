@@ -140,7 +140,7 @@ At the T05 milestone, the feature `renderer/` sublayer SHALL provide horizontall
 
 ### Requirement: Internationalization and accessibility
 
-Every user-facing string added or retained on the T04 Calendar and Settings surfaces SHALL be translated in French and English with typed key parity. Numeric date labels SHALL use the pure locale/display-zone formatting seam, and hour labels SHALL use the pure explicit device-clock formatter rather than translation keys. The native month/year title SHALL remain the sole page header; the committed weekday/date row SHALL be chronological readable content beneath it, not a second page title or set of selectable controls. The canvas SHALL expose one committed locale- and display-zone-aware week label with translated increment/decrement actions. Today SHALL have localized semantics and a non-color cue. Neighbour pages, decorative boundaries, and duplicate gutter semantics SHALL not create additional focus contexts. Only an accepted changed-week settle SHALL announce the destination once; preference changes, vertical movement, intermediate motion, and neighbour pages SHALL not announce a week.
+Every user-facing string added or retained on the T04 Calendar and Settings surfaces SHALL be translated in French and English with typed key parity. Numeric date labels SHALL use the pure locale/display-zone formatting seam, and hour labels SHALL use the pure explicit device-clock formatter rather than translation keys. The native month/year title SHALL remain the sole page header; the committed weekday/date row SHALL be chronological readable content beneath it, not a second page title or set of selectable controls. One plain adjustable View in the header gutter, outside both scroll views, SHALL expose the committed locale- and display-zone-aware week label with translated increment/decrement actions. Today SHALL have localized semantics and a non-color cue. Neighbour pages, decorative boundaries, and duplicate gutter semantics SHALL not create additional focus contexts. Only an accepted changed-week settle SHALL announce the destination once; preference changes, vertical movement, intermediate motion, and neighbour pages SHALL not announce a week.
 
 #### Scenario: French and English dated headings
 
@@ -163,7 +163,7 @@ Every user-facing string added or retained on the T04 Calendar and Settings surf
 #### Scenario: Vertical movement preserves settled semantics
 
 - **WHEN** the student scrolls vertically without changing week
-- **THEN** the date row, canvas label, and native title continue to name the committed week
+- **THEN** the date row, paging control label, and native title continue to name the committed week
 - **AND** no date announcement is emitted
 
 #### Scenario: Settled week context is announced once
@@ -206,13 +206,13 @@ The T01 owned shell SHALL receive the complete positive width and height of the 
 
 ### Requirement: T01 exposes a stable owned Calendar shell
 
-The Calendar day/week branch SHALL render a feature-owned React Native surface with the native month/year title and a stable positive-size canvas. The committed week date SHALL be exposed as an adjustable canvas label, use the effective display zone and active French or English locale, and remain correct across Calendar mount/unmount and tab leave/return. The shell SHALL render no timeline events and SHALL NOT represent that intentional absence as an empty local-data result.
+The Calendar day/week branch SHALL render a feature-owned React Native surface with the native month/year title and a stable positive-size canvas. The committed week date SHALL be exposed through the adjustable header-gutter control, use the effective display zone and active French or English locale, and remain correct across Calendar mount/unmount and tab leave/return. The shell SHALL render no timeline events and SHALL NOT represent that intentional absence as an empty local-data result.
 
 #### Scenario: Calendar opens the owned shell
 
 - **WHEN** the student opens Calendar in the shell mode
 - **THEN** the native month/year title and owned canvas render without a crash
-- **AND** the committed week is discoverable as the adjustable canvas label
+- **AND** the committed week is discoverable through the adjustable header-gutter control
 
 #### Scenario: Calendar returns to a stable shell
 
@@ -268,7 +268,7 @@ The owned Calendar week surface SHALL resolve its committed date to the week con
 
 - **WHEN** movement does not qualify for a page change or is reversed back before release
 - **THEN** the surface settles on the current committed week
-- **AND** the selected date, native title, and canvas label remain unchanged
+- **AND** the selected date, native title, and paging control label remain unchanged
 
 #### Scenario: Week policy is explicit
 
@@ -284,7 +284,7 @@ The owned Calendar week surface SHALL resolve its committed date to the week con
 
 ### Requirement: T02 commits one settled date context
 
-The Calendar controller SHALL remain the authority for the committed date, native title, and canvas label, and SHALL store only the committed date. During finger-held or interrupted movement, the committed selected date, native title, and canvas accessibility context SHALL continue to represent the old settled page. A settle SHALL publish the destination selected date, native title, and canvas accessibility context together and SHALL be reported at most once per settled page. Snap-back, a settle on the already committed page, and scroll events that describe stale geometry or another mode's content MUST NOT change committed state.
+The Calendar controller SHALL remain the authority for the committed date, native title, and paging control label, and SHALL store only the committed date. During finger-held or interrupted movement, the committed selected date, native title, and paging control context SHALL continue to represent the old settled page. A settle SHALL publish the destination selected date, native title, and paging control context together and SHALL be reported at most once per settled page. Snap-back, a settle on the already committed page, and scroll events that describe stale geometry or another mode's content MUST NOT change committed state.
 
 #### Scenario: Held drag preserves the old heading
 
@@ -301,7 +301,7 @@ The Calendar controller SHALL remain the authority for the committed date, nativ
 #### Scenario: Obsolete completion is discarded
 
 - **WHEN** a scroll event describes a previous page width, content width, or mode, or a settle repeats the committed page
-- **THEN** it does not change the committed date, native title, canvas label, or announcement count
+- **THEN** it does not change the committed date, native title, paging control label, or announcement count
 
 #### Scenario: Today and retained direct dates resolve to whole weeks
 
@@ -311,7 +311,7 @@ The Calendar controller SHALL remain the authority for the committed date, nativ
 
 ### Requirement: T02 paging is operable and announces only settled context
 
-The Calendar week surface SHALL expose translated previous-week and next-week accessibility actions as decrement/increment on the adjustable canvas. Each action SHALL scroll the pager one page through the same settle path as a swipe. No separate full-date row or visible arrow toolbar SHALL render. One vertically pinned localized weekday/date strip SHALL render beneath the native month/year title and move from the same native horizontal offset as the clock pages. Its committed slot SHALL remain the sole accessible date row until settlement. Only a settle on a changed week SHALL announce the localized destination week once. Neighbour pages MUST NOT create duplicate native focus trees, and reduced-motion operation SHALL settle without nonessential travel animation.
+The Calendar week surface SHALL expose translated previous-week and next-week accessibility actions as decrement/increment on a plain adjustable header-gutter View outside both scroll views. Each action SHALL scroll the pager one page through the same settle path as a swipe, and a second action while the first is in flight SHALL be ignored. Neither ScrollView SHALL be an accessible leaf. Android SHALL hide the horizontal scroll node without hiding committed event descendants. No separate full-date row or visible arrow toolbar SHALL render. One vertically pinned localized weekday/date strip SHALL render beneath the native month/year title and move from the same native horizontal offset as the clock pages. Its committed slot SHALL remain the sole accessible date row until settlement. Only a settle on a changed week SHALL announce the localized destination week once. Neighbour pages MUST NOT create duplicate native focus trees. Today and valid `focusDate` targets SHALL animate one page when motion is allowed; a distant target SHALL jump beside its page before that final animation. The live reduced-motion preference SHALL make these targets and adjustable actions jump directly.
 
 #### Scenario: Previous and next actions move one week
 
@@ -584,7 +584,7 @@ The owned timeline SHALL render one vertically pinned, clipped date-header viewp
 
 - **WHEN** the student scrolls vertically or holds an unsettled horizontal page transition
 - **THEN** the header remains visible during vertical motion, and horizontal motion carries the source header out while the matching destination header and grid enter together from the pager's native offset
-- **AND** the native title, canvas label, Agenda range, committed anchor, and accessible date context remain on the settled page until a settle
+- **AND** the native title, paging control label, Agenda range, committed anchor, and accessible date context remain on the settled page until a settle
 
 #### Scenario: Pager wrapper receives a callable UI-thread handler
 
@@ -628,13 +628,13 @@ The Calendar controller SHALL own one committed timeline mode and civil anchor. 
 
 - **WHEN** a settled week is switched to Day
 - **THEN** the day anchor is that week's explicit first date
-- **AND** the title, single header column, canvas label, and selected date agree on it
+- **AND** the title, single header column, paging control label, and selected date agree on it
 
 #### Scenario: Day switches to its containing week
 
 - **WHEN** a settled day is switched to Week
 - **THEN** the week anchor is the Monday-first launch week containing that day
-- **AND** the title, visible week columns, canvas label, and selected date agree on it
+- **AND** the title, visible week columns, paging control label, and selected date agree on it
 
 #### Scenario: Repeated switching stays coherent
 
@@ -676,13 +676,13 @@ Agenda SHALL remain the existing separate view and its choice SHALL be persistab
 
 ### Requirement: T05 labels and announces the committed mode correctly
 
-French and English resources SHALL provide typed-parity Day, Week, Agenda, previous-day, next-day, previous-week, and next-week presentation. Day SHALL expose one chronological date header and a localized full-date canvas label; Week SHALL retain its chronological visible date headers and week label. Only an accepted horizontal date settlement SHALL announce the localized destination once. Intermediate paging, cancellation, stale callbacks, vertical movement, and mode replacement SHALL not announce an obsolete date.
+French and English resources SHALL provide typed-parity Day, Week, Agenda, previous-day, next-day, previous-week, and next-week presentation. Day SHALL expose one chronological date header and a localized full-date paging control label; Week SHALL retain its chronological visible date headers and week label. Only an accepted horizontal date settlement SHALL announce the localized destination once. Intermediate paging, cancellation, stale callbacks, vertical movement, and mode replacement SHALL not announce an obsolete date.
 
 #### Scenario: Day accessibility actions name days
 
 - **WHEN** assistive technology operates the settled Day canvas
 - **THEN** increment and decrement actions are labelled as next and previous day in the active language
-- **AND** the single committed date header and canvas label describe the same display-zone date
+- **AND** the single committed date header and paging control label describe the same display-zone date
 
 #### Scenario: Week accessibility actions retain week labels
 
@@ -1194,7 +1194,7 @@ The committed page SHALL keep every projected event natively reachable through t
 
 ### Requirement: T12 restores logical focus after accepted context changes
 
-The Calendar SHALL remember the last natively accessibility-focused event by original source/UID and relevant date, using an inbound platform accessibility-focus event tied to that event's sole visible target. Pointer press, event activation, keyboard/input `onFocus`, and an outbound focus request MUST NOT fabricate this memory. Only a live identity on the committed page of the focused Calendar route may update it. After details return, accepted paging, or a Day/Week mode change, Calendar SHALL wait for the complete matching presentation and native target registration, reveal the target when necessary, and request focus once on that surviving identity. If the identity is absent, focus SHALL fall back to its relevant committed date heading when present, otherwise to the existing visible month/year navigation title. That title SHALL have a header role and an accessible label containing its visible month/year words and the full date context of the accepted presentation. Stale settles, transient motion, zoom frames, and adjacent pages SHALL NOT move focus. The accepted date context SHALL be announced once; title focus that conveys the context MUST NOT be paired with a second settled-context announcement.
+The Calendar SHALL remember the last natively accessibility-focused event by original source/UID, relevant date, and committed page key, using an inbound platform accessibility-focus event tied to that event's sole visible target. The focus return request SHALL be keyed by committed page and route visit, with one effect owning restoration. Pointer press, event activation, keyboard/input `onFocus`, and an outbound focus request MUST NOT fabricate this memory. Only a live identity on the committed page of the focused Calendar route may update it. After details return, accepted paging, or a Day/Week mode change, Calendar SHALL wait for the complete matching presentation and native target registration, reveal the target when necessary, and request focus once on that surviving identity. If the identity is absent, focus SHALL fall back to its relevant committed date heading when present, otherwise to the existing visible month/year navigation title. That title SHALL have a header role and an accessible label containing its visible month/year words and the full date context of the accepted presentation. Stale settles, transient motion, zoom frames, and adjacent pages SHALL NOT move focus. The accepted date context SHALL be announced once; title focus that conveys the context MUST NOT be paired with a second settled-context announcement.
 
 #### Scenario: Native accessibility focus is the only event-memory signal
 

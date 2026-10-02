@@ -312,7 +312,9 @@ describe("CalendarScreen owned shell", () => {
     const early = await screen.findByRole("button", {
       name: /^Fixture probe-early,/,
     })
-    const late = screen.getByRole("button", { name: /^Fixture probe-late,/ })
+    const late = await screen.findByRole("button", {
+      name: /^Fixture probe-late,/,
+    })
     expect(
       screen.getByTestId("owned-calendar-canvas").props.contentOffset,
     ).toEqual({ x: 0, y: 540 })
@@ -440,6 +442,7 @@ describe("CalendarScreen owned shell", () => {
         nativeEvent: {
           identity: observer.props.identity,
           dateKey: observer.props.dateKey,
+          pageKey: observer.props.pageKey,
         },
       })
       await fireEvent.press(
@@ -779,7 +782,7 @@ describe("CalendarScreen owned shell", () => {
     expect(mockScrollTo.mock.calls[0]?.slice(1)).toEqual([
       pager.origin + (pager.position.current - 1) * pager.pageWidth,
       0,
-      false,
+      true,
     ])
     await landWherePlaced(pager, pager.position)
     expect(
@@ -871,6 +874,7 @@ describe("CalendarScreen owned shell", () => {
         nativeEvent: {
           identity: observer.props.identity,
           dateKey: observer.props.dateKey,
+          pageKey: observer.props.pageKey,
         },
       })
       mockAnnounce.mockClear()
@@ -1043,7 +1047,7 @@ describe("CalendarScreen owned shell", () => {
     const pager = await settleCalendarPager()
 
     await fireEvent(
-      screen.getByTestId("owned-calendar-canvas"),
+      screen.getByTestId("owned-calendar-page-control"),
       "accessibilityAction",
       { nativeEvent: { actionName: "increment" } },
     )

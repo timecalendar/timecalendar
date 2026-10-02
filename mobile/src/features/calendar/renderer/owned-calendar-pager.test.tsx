@@ -11,6 +11,7 @@ import {
   type PageSpace,
   pageStartDay,
 } from "@/features/calendar/data"
+import { useReducedMotion } from "@/hooks/use-reduced-motion"
 import i18n from "@/i18n"
 import {
   flushUiThread,
@@ -22,6 +23,9 @@ import { OwnedCalendarShell } from "./owned-calendar-shell"
 
 jest.mock("@/hooks/use-color-scheme", () => ({
   useColorScheme: jest.fn(() => "light"),
+}))
+jest.mock("@/hooks/use-reduced-motion", () => ({
+  useReducedMotion: jest.fn(() => false),
 }))
 
 const ZONE = "UTC"
@@ -93,6 +97,10 @@ async function renderShell() {
 }
 
 describe("owned Calendar windowed pager", () => {
+  beforeEach(() => {
+    jest.mocked(useReducedMotion).mockReturnValue(false)
+  })
+
   it("mounts the settled page and two neighbours each way, keyed by page", async () => {
     await renderShell()
     for (let offset = -2; offset <= 2; offset += 1) {
@@ -185,7 +193,7 @@ describe("owned Calendar windowed pager", () => {
     )
   })
 
-  it("moves to a date shown from outside without animation, then commits where it lands", async () => {
+  it("jumps beside a distant date, then animates one page and commits only the target", async () => {
     const scrollTo = jest.spyOn(Reanimated, "scrollTo")
     const { onDateCommitted, pager, showAnchor } = await renderShell()
     scrollTo.mockClear()
@@ -194,12 +202,14 @@ describe("owned Calendar windowed pager", () => {
 
     const target = ANCHOR_INDEX + 20
     expect(screen.getByTestId(pageId(target), HIDDEN)).toBeTruthy()
-    expect(scrollTo).toHaveBeenCalledTimes(1)
-    expect(scrollTo.mock.calls[0]?.slice(1)).toEqual([
-      pager.origin + 20 * pager.pageWidth,
-      0,
-      false,
+    expect(scrollTo.mock.calls.map((call) => call.slice(1))).toEqual([
+      [pager.origin + 19 * pager.pageWidth, 0, false],
+      [pager.origin + 20 * pager.pageWidth, 0, true],
     ])
+    await act(async () => {
+      pager.send(19)
+    })
+    expect(onDateCommitted).not.toHaveBeenCalled()
     await act(async () => {
       pager.send(20)
     })
@@ -208,6 +218,25 @@ describe("owned Calendar windowed pager", () => {
       "2026-11-02",
     )
     scrollTo.mockRestore()
+  })
+
+  it("jumps directly to a distant date when reduced motion changes while open", async () => {
+    const scrollTo = jest.spyOn(Reanimated, "scrollTo")
+    try {
+      const { onDateCommitted, pager, showAnchor } = await renderShell()
+      jest.mocked(useReducedMotion).mockReturnValue(true)
+      scrollTo.mockClear()
+
+      await showAnchor(new Date("2026-11-02T00:00:00.000Z"))
+
+      expect(scrollTo.mock.calls.map((call) => call.slice(1))).toEqual([
+        [pager.origin + 20 * pager.pageWidth, 0, false],
+      ])
+      await act(async () => pager.send(20))
+      expect(onDateCommitted).toHaveBeenCalledTimes(1)
+    } finally {
+      scrollTo.mockRestore()
+    }
   })
 
   it("re-bases the content window near its edge without moving the page", async () => {

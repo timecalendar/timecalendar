@@ -1,4 +1,4 @@
-import { StyleSheet, View } from "react-native"
+import { StyleSheet, useWindowDimensions, View } from "react-native"
 import Animated, {
   type SharedValue,
   useAnimatedStyle,
@@ -27,6 +27,11 @@ export function OwnedCalendarDateHeader({
   contentWidth,
   scrollX,
   positioned,
+  heading,
+  controlSymbol,
+  previousPageLabel,
+  nextPageLabel,
+  onAccessiblePageRequest,
   todayKey,
   todayLabel,
 }: {
@@ -36,10 +41,16 @@ export function OwnedCalendarDateHeader({
   contentWidth: number
   scrollX: SharedValue<number>
   positioned: SharedValue<boolean>
+  heading: string
+  controlSymbol: string
+  previousPageLabel: string
+  nextPageLabel: string
+  onAccessiblePageRequest: (direction: -1 | 1) => void
   todayKey: string
   todayLabel: string
 }) {
   const theme = useTheme()
+  const { fontScale } = useWindowDimensions()
   const stripStyle = useAnimatedStyle(() => ({
     opacity: positioned.get() ? 1 : 0,
     transform: [{ translateX: -scrollX.get() }],
@@ -52,15 +63,34 @@ export function OwnedCalendarDateHeader({
         {
           backgroundColor: theme.backgroundElement,
           borderColor: theme.separator,
+          minHeight: Math.max(56, 40 + 13 * fontScale),
         },
       ]}
     >
       <View
-        testID="owned-calendar-date-header-gutter"
-        accessible={false}
-        importantForAccessibility="no-hide-descendants"
+        testID="owned-calendar-page-control"
+        accessible
+        accessibilityRole="adjustable"
+        accessibilityLabel={heading}
+        accessibilityActions={[
+          { name: "decrement", label: previousPageLabel },
+          { name: "increment", label: nextPageLabel },
+        ]}
+        onAccessibilityAction={({ nativeEvent }) => {
+          if (nativeEvent.actionName === "increment") onAccessiblePageRequest(1)
+          if (nativeEvent.actionName === "decrement")
+            onAccessiblePageRequest(-1)
+        }}
         style={[styles.dateHeaderGutter, { borderColor: theme.separator }]}
-      />
+      >
+        <ThemedText
+          accessible={false}
+          maxFontSizeMultiplier={1.5}
+          style={styles.pageControlIcon}
+        >
+          {controlSymbol}
+        </ThemedText>
+      </View>
       <View
         testID="owned-calendar-date-header-viewport"
         style={styles.dateHeaderViewport}
@@ -113,6 +143,10 @@ function HeaderSlot({
     11,
     Math.max(8, (width / presentation.columns.length - 8) * 0.75),
   )
+  const badgeSize = Math.min(
+    32,
+    Math.max(24, width / presentation.columns.length - 2),
+  )
   return (
     <View
       testID={`owned-calendar-date-header-slot-${presentation.pageKey}`}
@@ -142,6 +176,10 @@ function HeaderSlot({
             <ThemedText
               accessible={false}
               numberOfLines={1}
+              maxFontSizeMultiplier={Math.max(
+                1,
+                (width / presentation.columns.length - 8) / weekdayFontSize,
+              )}
               style={[
                 styles.weekdayLabel,
                 {
@@ -157,12 +195,18 @@ function HeaderSlot({
               accessible={false}
               style={[
                 styles.dateBadge,
+                {
+                  width: badgeSize,
+                  height: badgeSize,
+                  borderRadius: badgeSize / 2,
+                },
                 isToday && { backgroundColor: theme.primary },
               ]}
             >
               <ThemedText
                 accessible={false}
                 numberOfLines={1}
+                maxFontSizeMultiplier={Math.min(1.25, (badgeSize - 4) / 20)}
                 style={[
                   styles.dayNumber,
                   { color: isToday ? theme.background : dateColor },
@@ -186,8 +230,12 @@ const styles = StyleSheet.create({
   },
   dateHeaderGutter: {
     width: HOURS_COLUMN_WIDTH,
+    minHeight: 56,
     borderRightWidth: StyleSheet.hairlineWidth,
+    alignItems: "center",
+    justifyContent: "center",
   },
+  pageControlIcon: { fontSize: 17, fontWeight: "600" },
   dateHeaderViewport: { flex: 1, overflow: "hidden" },
   dateHeaderStrip: { position: "absolute", top: 0, bottom: 0, left: 0 },
   dateHeaderSlot: {
@@ -213,7 +261,6 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     fontSize: 20,
-    lineHeight: 32,
     fontWeight: 700,
     textAlign: "center",
     textAlignVertical: "center",

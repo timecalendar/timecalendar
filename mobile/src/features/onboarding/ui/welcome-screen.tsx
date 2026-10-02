@@ -7,8 +7,8 @@ import PagerView, {
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedView } from "@/components/themed-view"
+import { useReducedMotion } from "@/hooks/use-reduced-motion"
 
-import { useReducedMotion } from "./use-reduced-motion"
 import { WelcomeFooter, WelcomeSkip } from "./welcome-controls"
 import { WelcomeEntrance } from "./welcome-entrance"
 import { WELCOME_PAGES } from "./welcome-page-catalog"
