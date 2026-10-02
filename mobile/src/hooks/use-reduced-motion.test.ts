@@ -61,4 +61,40 @@ describe("useReducedMotion", () => {
     expect(result.current).toBeNull()
     expect(remove).toHaveBeenCalledTimes(1)
   })
+
+  it("keeps a live change when the initial read resolves later", async () => {
+    let resolveInitial: ((enabled: boolean) => void) | undefined
+    const initialRead = new Promise<boolean>((resolve) => {
+      resolveInitial = resolve
+    })
+    let changeListener: ((enabled: boolean) => void) | undefined
+    jest
+      .mocked(AccessibilityInfo.isReduceMotionEnabled)
+      .mockReturnValueOnce(initialRead)
+    jest
+      .mocked(AccessibilityInfo.addEventListener)
+      .mockImplementationOnce((_event, listener) => {
+        changeListener = listener as unknown as (enabled: boolean) => void
+        return { remove: jest.fn() } as unknown as EmitterSubscription
+      })
+
+    const { result } = await renderHook(useReducedMotion)
+    await act(async () => changeListener?.(true))
+    await act(async () => {
+      resolveInitial?.(false)
+      await initialRead
+    })
+
+    expect(result.current).toBe(true)
+  })
+
+  it("defaults to reduced motion if the system preference read fails", async () => {
+    jest
+      .mocked(AccessibilityInfo.isReduceMotionEnabled)
+      .mockRejectedValueOnce(new Error("preference unavailable"))
+
+    const { result } = await renderHook(useReducedMotion)
+
+    expect(result.current).toBe(true)
+  })
 })

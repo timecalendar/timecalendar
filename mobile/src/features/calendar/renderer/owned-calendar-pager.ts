@@ -110,6 +110,7 @@ export function useOwnedCalendarPager({
   const roundedIndex = useSharedValue(anchorIndex)
   const settledIndex = useSharedValue(anchorIndex)
   const navigationTarget = useSharedValue<PageIndex | null>(null)
+  const interruptedTarget = useSharedValue<PageIndex | null>(null)
   const firstIndex = useSharedValue(window.firstIndex)
   const placedWidth = useSharedValue(0)
   const appliedPlacement = useRef(0)
@@ -183,9 +184,14 @@ export function useOwnedCalendarPager({
     const index = firstIndex.get() + slot
     const target = navigationTarget.get()
     if (target !== null && index !== target) return
-    if (index === settledIndex.get()) return
-    settledIndex.set(index)
     if (target === index) navigationTarget.set(null)
+    const interrupted = interruptedTarget.get()
+    if (interrupted !== null) interruptedTarget.set(null)
+    if (index === settledIndex.get()) {
+      if (interrupted !== null) scheduleOnRN(onSettle, index)
+      return
+    }
+    settledIndex.set(index)
     scheduleOnRN(onSettle, index)
   }
 
@@ -203,6 +209,11 @@ export function useOwnedCalendarPager({
       settleIfAligned(x)
     },
     onBeginDrag: () => {
+      const target = navigationTarget.get()
+      if (target !== null) {
+        interruptedTarget.set(target)
+        navigationTarget.set(null)
+      }
       dragging.set(true)
       momentum.set(false)
     },
@@ -307,9 +318,10 @@ export function useOwnedCalendarPager({
     const last = reported.current
     reported.current = { spaceKey, index: anchorIndex }
     if (last.spaceKey !== spaceKey || last.index === anchorIndex) return
+    interruptedTarget.set(null)
     navigationTarget.set(anchorIndex)
     jump(anchorIndex, !reduceMotion)
-  }, [anchorIndex, navigationTarget, reduceMotion, spaceKey])
+  }, [anchorIndex, interruptedTarget, navigationTarget, reduceMotion, spaceKey])
 
   useLayoutEffect(() => {
     if (crossingStartedAt.current === 0) return
@@ -322,7 +334,15 @@ export function useOwnedCalendarPager({
   useAnimatedReaction(
     () => scrollLocked.get(),
     (locked, previous) => {
-      if (locked || previous !== true) return
+      if (locked) {
+        const target = navigationTarget.get()
+        if (target !== null) {
+          interruptedTarget.set(target)
+          navigationTarget.set(null)
+        }
+        return
+      }
+      if (previous !== true) return
       dragging.set(false)
       momentum.set(false)
       const width = placedWidth.get()
@@ -371,6 +391,8 @@ export function useOwnedCalendarPager({
     isMoving: () => dragging.get() || momentum.get(),
     pageLeft: (index: PageIndex) => pageSlot(window, index) * pageWidth,
     step: (direction: -1 | 1, animated: boolean) => {
+      navigationTarget.set(null)
+      interruptedTarget.set(null)
       onCenterChange(state.settled + direction)
       jump(state.settled + direction, animated)
     },

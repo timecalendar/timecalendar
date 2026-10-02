@@ -206,13 +206,9 @@ describe("owned Calendar windowed pager", () => {
       [pager.origin + 19 * pager.pageWidth, 0, false],
       [pager.origin + 20 * pager.pageWidth, 0, true],
     ])
-    await act(async () => {
-      pager.send(19)
-    })
+    await pager.send(19)
     expect(onDateCommitted).not.toHaveBeenCalled()
-    await act(async () => {
-      pager.send(20)
-    })
+    await pager.send(20)
     expect(onDateCommitted).toHaveBeenCalledTimes(1)
     expect(onDateCommitted.mock.calls[0]?.[0].toISOString().slice(0, 10)).toBe(
       "2026-11-02",
@@ -232,11 +228,52 @@ describe("owned Calendar windowed pager", () => {
       expect(scrollTo.mock.calls.map((call) => call.slice(1))).toEqual([
         [pager.origin + 20 * pager.pageWidth, 0, false],
       ])
-      await act(async () => pager.send(20))
+      await pager.send(20)
       expect(onDateCommitted).toHaveBeenCalledTimes(1)
     } finally {
       scrollTo.mockRestore()
     }
+  })
+
+  it("lets a touch interrupt a distant navigation and settle the touched page", async () => {
+    const { onDateCommitted, pager, showAnchor } = await renderShell()
+    await showAnchor(new Date("2026-11-02T00:00:00.000Z"))
+
+    await pager.send(19, "onScrollBeginDrag")
+    await pager.send(18)
+    await pager.send(18, "onScrollEndDrag")
+
+    expect(onDateCommitted).toHaveBeenCalledTimes(1)
+    expect(onDateCommitted.mock.calls[0]?.[0].toISOString().slice(0, 10)).toBe(
+      weekStartKey(ANCHOR_INDEX + 18),
+    )
+    await pager.send(18, "onScrollBeginDrag")
+    await pager.send(18.6)
+    await pager.send(18.6, "onScrollEndDrag")
+    await pager.send(18.6, "onMomentumScrollBegin")
+    await pager.send(19)
+    await pager.send(19, "onMomentumScrollEnd")
+    expect(onDateCommitted).toHaveBeenCalledTimes(2)
+  })
+
+  it("clears a target already at the settled page before the next ordinary swipe", async () => {
+    const { onDateCommitted, pager, showAnchor } = await renderShell()
+    await showAnchor(new Date("2026-06-22T00:00:00.000Z"))
+    await showAnchor(ANCHOR)
+
+    await pager.send(0)
+    expect(onDateCommitted).not.toHaveBeenCalled()
+    await pager.send(0, "onScrollBeginDrag")
+    await pager.send(0.6)
+    await pager.send(0.6, "onScrollEndDrag")
+    await pager.send(0.6, "onMomentumScrollBegin")
+    await pager.send(1)
+    await pager.send(1, "onMomentumScrollEnd")
+
+    expect(onDateCommitted).toHaveBeenCalledTimes(1)
+    expect(onDateCommitted.mock.calls[0]?.[0].toISOString().slice(0, 10)).toBe(
+      weekStartKey(ANCHOR_INDEX + 1),
+    )
   })
 
   it("re-bases the content window near its edge without moving the page", async () => {
