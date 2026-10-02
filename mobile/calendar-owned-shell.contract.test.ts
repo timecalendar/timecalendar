@@ -205,8 +205,10 @@ describe("owned Calendar paging repository contract", () => {
     expect(pagerView).toMatch(/^\s+horizontal$/m)
     expect(canvas).toContain("<HorizontalPagerView key={mode}")
     expect(renderer).toMatch(/contentInsetAdjustmentBehavior="automatic"/)
-    expect(pagerView).toContain('pagingEnabled={Platform.OS === "ios"}')
-    expect(pagerView).toMatch(/snapToInterval=\{\s*Platform\.OS === "android"/)
+    expect(canvas).toContain('const IS_IOS = Platform.OS === "ios"')
+    expect(canvas).toContain('const IS_ANDROID = Platform.OS === "android"')
+    expect(pagerView).toContain("pagingEnabled={IS_IOS}")
+    expect(pagerView).toContain("snapToInterval={IS_ANDROID ? pager.pageWidth")
     expect(pagerView).toContain("disableIntervalMomentum")
     expect(pagerView).toContain("onScroll={pager.scrollHandler}")
     expect(pagerView).toContain(

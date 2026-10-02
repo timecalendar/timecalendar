@@ -2,7 +2,7 @@
 kind: ticket
 id: T14
 epic: E07
-status: planned
+status: implementing
 traces-to: [P05, D07]
 depends-on: []
 size: M
@@ -45,3 +45,12 @@ Mechanical after E04–E06.
 ## QA and sensitive surfaces
 
 Conflict chooser still opens and dismisses.
+
+## Current-state audit
+
+- The shell owns one conflict chooser and receives `ref` as a prop. The renderer has no page-level modal, development page overlay, `forwardRef`, or production `as unknown as` cast. Test casts remain permitted by R06.
+- The canvas derives its iOS/Android scroll props from module-level platform constants. The page derives conflict geometry and minimum target size from one module-level platform constant; no tile render reads `Platform.OS`.
+- Geometry-revision and callback guards in the coordinator reject late vertical or pinch events after a viewport replacement. Pager width/content checks reject events from an older placement, and focus identity checks prevent restoration to the wrong page. These protections have product-visible races and remain in place.
+- The incoming E06/T08b pager checks Android rest recovery and native touch setup once per hook invocation. Its Android/iOS host tests override `Platform.OS` after module import, so a module-load constant would change those tests' platform semantics. Neither read runs per tile or gesture frame.
+
+The host candidate needs the merged E06/T08b base and its CI result before this ticket is complete. Physical conflict-chooser, focus and gesture acceptance belongs to the exact-revision E07 device pass.

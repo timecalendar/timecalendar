@@ -39,6 +39,8 @@ const MAJOR_MINUTES = fullDayMajorMinutes()
 const MINOR_MINUTES = fullDayMinorMinutes()
 const HOURS = Array.from({ length: 23 }, (_, index) => index + 1)
 const PIXEL_RATIO = PixelRatio.get()
+const IS_IOS = Platform.OS === "ios"
+const IS_ANDROID = Platform.OS === "android"
 
 export type HorizontalPager = {
   scrollHandler: ComponentProps<typeof Animated.ScrollView>["onScroll"]
@@ -107,9 +109,7 @@ export function OwnedCalendarCanvas({
         // Android re-applies a `contentOffset` prop whenever the view's props
         // are re-sent, which the animated `scrollEnabled` does on every pinch.
         // There the first viewport measurement seeks instead.
-        contentOffset={
-          Platform.OS === "ios" ? { x: 0, y: initialVerticalOffset } : undefined
-        }
+        contentOffset={IS_IOS ? { x: 0, y: initialVerticalOffset } : undefined}
         scrollsToTop={false}
         removeClippedSubviews={false}
         directionalLockEnabled
@@ -177,10 +177,8 @@ function HorizontalPagerView({
         animatedProps={pager.scrollProps}
         testID="owned-calendar-pager"
         horizontal
-        pagingEnabled={Platform.OS === "ios"}
-        snapToInterval={
-          Platform.OS === "android" ? pager.pageWidth + 1e-3 : undefined
-        }
+        pagingEnabled={IS_IOS}
+        snapToInterval={IS_ANDROID ? pager.pageWidth + 1e-3 : undefined}
         disableIntervalMomentum
         decelerationRate="fast"
         directionalLockEnabled

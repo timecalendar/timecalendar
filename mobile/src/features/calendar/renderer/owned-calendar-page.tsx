@@ -38,6 +38,8 @@ const NOW_CAP_SIZE = 8
 const POINT_MARKER_SIZE = 4
 const TILE_CAP_HEIGHT = 4
 const PIXEL_RATIO = PixelRatio.get()
+const PAGE_PLATFORM = Platform.OS === "ios" ? "ios" : "android"
+const MINIMUM_TARGET = PAGE_PLATFORM === "ios" ? 44 : 48
 
 export type PageEventHandlers = {
   onEventPress: (uid: string) => void
@@ -217,7 +219,7 @@ function TileColumn({
   const conflicts = planTargetConflicts({
     items: tiles,
     pixelsPerHour: settledPixelsPerHour,
-    platform: Platform.OS === "ios" ? "ios" : "android",
+    platform: PAGE_PLATFORM,
   })
   return (
     <View pointerEvents="box-none" style={styles.tileColumn}>
@@ -274,8 +276,6 @@ function probeTargetFrame(
       frame: nativeEvent.layout,
     })
 }
-
-const MINIMUM_TARGET = Platform.OS === "ios" ? 44 : 48
 
 function tileSurfaceStyle(tile: PageTileV1) {
   return {
