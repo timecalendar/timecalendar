@@ -1,5 +1,4 @@
 import { act, fireEvent, render, screen } from "@testing-library/react-native"
-import { Platform } from "react-native"
 import * as Reanimated from "react-native-reanimated"
 
 import {
@@ -223,68 +222,6 @@ describe("owned Calendar windowed pager", () => {
     expect(scrollTo.mock.calls[0]?.slice(1)).toEqual([pager.origin, 0, false])
     expect(screen.getByTestId(pageId(ANCHOR_INDEX + 240), HIDDEN)).toBeTruthy()
     scrollTo.mockRestore()
-  })
-
-  it("re-aims an Android swipe that interrupts a snap one page past that snap", async () => {
-    const os = jest.replaceProperty(Platform, "OS", "android")
-    const scrollTo = jest.spyOn(Reanimated, "scrollTo")
-    const { onDateCommitted, pager } = await renderShell()
-    await act(async () => {
-      pager.send(0, "onScrollBeginDrag")
-      pager.send(0.6)
-      pager.send(0.6, "onScrollEndDrag")
-      pager.send(0.7)
-    })
-    scrollTo.mockClear()
-
-    await act(async () => {
-      pager.send(0.7, "onScrollBeginDrag")
-      pager.send(0.8)
-      pager.send(0.9, "onScrollEndDrag")
-    })
-    await flushUiThread()
-
-    expect(scrollTo.mock.calls.map((call) => call.slice(1))).toEqual([
-      [pager.origin + 0.7 * pager.pageWidth, 0, false],
-      [pager.origin + 2 * pager.pageWidth, 0, true],
-    ])
-    await act(async () => {
-      pager.send(1)
-      pager.send(2)
-    })
-    expect(
-      onDateCommitted.mock.calls.map(([date]: [Date]) =>
-        date.toISOString().slice(0, 10),
-      ),
-    ).toEqual([weekStartKey(ANCHOR_INDEX + 2)])
-    scrollTo.mockRestore()
-    os.restore()
-  })
-
-  it("leaves an Android reversal during a snap to the native snap", async () => {
-    const os = jest.replaceProperty(Platform, "OS", "android")
-    const scrollTo = jest.spyOn(Reanimated, "scrollTo")
-    const { pager } = await renderShell()
-    await act(async () => {
-      pager.send(0, "onScrollBeginDrag")
-      pager.send(0.6)
-      pager.send(0.6, "onScrollEndDrag")
-      pager.send(0.7)
-    })
-    scrollTo.mockClear()
-
-    await act(async () => {
-      pager.send(0.7, "onScrollBeginDrag")
-      pager.send(0.5)
-      pager.send(0.3, "onScrollEndDrag")
-    })
-    await flushUiThread()
-
-    expect(scrollTo.mock.calls.map((call) => call.slice(1))).toEqual([
-      [pager.origin + 0.7 * pager.pageWidth, 0, false],
-    ])
-    scrollTo.mockRestore()
-    os.restore()
   })
 
   it("settles a fling grabbed and released without moving, which sends no end-drag", async () => {

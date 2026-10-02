@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
-import { PixelRatio, Platform } from "react-native"
+import { PixelRatio } from "react-native"
 import { Gesture, type GestureType } from "react-native-gesture-handler"
 import Animated, {
   scrollTo,
@@ -28,8 +28,6 @@ import { pagingLog } from "./owned-calendar-paging-log"
 const PIXEL_RATIO = PixelRatio.get()
 const ALIGNMENT_TOLERANCE = 1 / PIXEL_RATIO
 const CONTENT_SLOTS = 2 * PAGE_WINDOW_RADIUS + 1
-/** A chained swipe shorter than this share of a page is left to the native snap. */
-const CHAINED_SWIPE_INTENT = 0.05
 
 /** The horizontal pager's page width: the viewport beside the hour gutter, on device pixels. */
 export function pagerPageWidth(viewportWidth: number): number {
@@ -106,16 +104,6 @@ export function useOwnedCalendarPager({
   const settledIndex = useSharedValue(anchorIndex)
   const firstIndex = useSharedValue(window.firstIndex)
   const placedWidth = useSharedValue(0)
-  const travel = useSharedValue(0)
-  const dragStartX = useSharedValue(0)
-  const chainedFromSlot = useSharedValue(Number.NaN)
-  const chainedTravel = useSharedValue(0)
-  const aimedSlot = useSharedValue(Number.NaN)
-  // Android snaps a lifted drag to the next page boundary from the lift
-  // position. A swipe that starts while the previous snap is still running in
-  // the same direction would then only finish that page, so it is re-aimed one
-  // page further. A reversal already lands right from where the finger lifts.
-  const aimsChainedSwipes = Platform.OS === "android"
   const appliedPlacement = useRef(0)
   const placedFor = useRef<string | null>(null)
   const reported = useRef({ spaceKey, index: anchorIndex })
@@ -183,9 +171,6 @@ export function useOwnedCalendarPager({
     const width = placedWidth.get()
     const slot = Math.round(x / width)
     if (Math.abs(x - slot * width) > ALIGNMENT_TOLERANCE) return
-    const aimed = aimedSlot.get()
-    if (!Number.isNaN(aimed) && slot !== aimed) return
-    aimedSlot.set(Number.NaN)
     const index = firstIndex.get() + slot
     if (index === settledIndex.get()) return
     settledIndex.set(index)
@@ -196,7 +181,6 @@ export function useOwnedCalendarPager({
     onScroll: (event) => {
       if (!describesPlacedContent(event)) return
       const x = event.contentOffset.x
-      if (x !== scrollX.get()) travel.set(Math.sign(x - scrollX.get()))
       scrollX.set(x)
       positioned.set(true)
       const index = firstIndex.get() + Math.round(x / placedWidth.get())
@@ -206,48 +190,13 @@ export function useOwnedCalendarPager({
       }
       settleIfAligned(x)
     },
-    onBeginDrag: (event) => {
+    onBeginDrag: () => {
       dragging.set(true)
       momentum.set(false)
-      chainedFromSlot.set(Number.NaN)
-      aimedSlot.set(Number.NaN)
-      if (!describesPlacedContent(event)) return
-      const x = event.contentOffset.x
-      dragStartX.set(x)
-      const width = placedWidth.get()
-      const slot = x / width
-      if (
-        !aimsChainedSwipes ||
-        Math.abs(x - Math.round(slot) * width) <= ALIGNMENT_TOLERANCE
-      )
-        return
-      chainedTravel.set(travel.get() < 0 ? -1 : 1)
-      chainedFromSlot.set(travel.get() < 0 ? Math.floor(slot) : Math.ceil(slot))
-      // The scroll command aborts the running snap, so the finger owns the offset.
-      scrollTo(scrollRef, x, 0, false)
     },
     onEndDrag: (event) => {
       dragging.set(false)
-      if (!describesPlacedContent(event)) return
-      const x = event.contentOffset.x
-      const fromSlot = chainedFromSlot.get()
-      if (!Number.isNaN(fromSlot)) {
-        chainedFromSlot.set(Number.NaN)
-        const width = placedWidth.get()
-        const displacement = x - dragStartX.get()
-        if (
-          Math.abs(displacement) >= CHAINED_SWIPE_INTENT * width &&
-          Math.sign(displacement) === chainedTravel.get()
-        ) {
-          const target = fromSlot + chainedTravel.get()
-          aimedSlot.set(target)
-          // The native snap starts after this event; the next frame replaces it.
-          requestAnimationFrame(() => {
-            scrollTo(scrollRef, target * width, 0, true)
-          })
-        }
-      }
-      settleIfAligned(x)
+      if (describesPlacedContent(event)) settleIfAligned(event.contentOffset.x)
     },
     // iOS sends no end-drag for a grab released without moving mid-fling;
     // the deceleration that resumes is the drag's end.
@@ -357,7 +306,6 @@ export function useOwnedCalendarPager({
       if (locked || previous !== true) return
       dragging.set(false)
       momentum.set(false)
-      aimedSlot.set(Number.NaN)
       const width = placedWidth.get()
       if (width <= 0) return
       const x = scrollX.get()
