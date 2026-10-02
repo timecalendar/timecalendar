@@ -83,9 +83,9 @@ This run installed Argent into a scratch directory only, with telemetry disabled
 environment. It ran no `init` and did not touch `~/.claude.json`, `~/.claude/settings.json` or the
 repo's `.claude/`.
 
-## Proposed setup for Claude Code
+## Setup in Claude Code
 
-A project-scoped `.mcp.json` at the repo root, pinned, with telemetry off and no auto-approval:
+The repo root `.mcp.json` registers Argent, pinned, with telemetry off; `.claude/settings.json` enables the server (`enabledMcpjsonServers`) and no tool is auto-approved:
 
 ```json
 {

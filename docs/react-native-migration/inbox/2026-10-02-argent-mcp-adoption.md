@@ -3,6 +3,8 @@
 **For:** the human owner (registering an MCP server changes the Claude Code setup, which agents
 must not do on their own).
 
+**Decision (owner, 2026-10-02):** adopt. Argent is registered in `.mcp.json` (pinned 0.26.0, telemetry off) and enabled in `.claude/settings.json`.
+
 ## What I need
 
 1. Decide whether to add Argent as a project-scoped MCP server. The proposed `.mcp.json` (pinned

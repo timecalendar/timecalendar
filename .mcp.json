@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "argent": {
+      "command": "npx",
+      "args": ["-y", "@swmansion/argent@0.26.0", "mcp"],
+      "env": { "DO_NOT_TRACK": "1", "ARGENT_TELEMETRY": "0" }
+    }
+  }
+}

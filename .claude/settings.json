@@ -1,5 +1,8 @@
 {
   "enabledPlugins": {
     "expo@claude-plugins-official": true
-  }
+  },
+  "enabledMcpjsonServers": [
+    "argent"
+  ]
 }
