@@ -46,6 +46,12 @@ export const pagingLog = {
   restSnap(index: number): void {
     if (enabled) console.log(`CALENDAR_PAGING rest-snap page=${index}`)
   },
+  trace(event: string, x: number, dragging: boolean, momentum: boolean): void {
+    if (enabled)
+      console.log(
+        `CALENDAR_PAGING trace event=${event} x=${x.toFixed(1)} dragging=${dragging} momentum=${momentum}`,
+      )
+  },
   mount(pageKey: string): void {
     if (enabled)
       console.log(

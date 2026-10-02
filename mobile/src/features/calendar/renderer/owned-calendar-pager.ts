@@ -280,12 +280,26 @@ export function useOwnedCalendarPager({
       const index = firstIndex.get() + Math.round(x / placedWidth.get())
       if (index !== roundedIndex.get()) {
         roundedIndex.set(index)
+        scheduleOnRN(
+          pagingLog.trace,
+          "cross",
+          x,
+          dragging.get(),
+          momentum.get(),
+        )
         scheduleOnRN(onCross, index)
       }
       settleIfAligned(x)
       watchRest()
     },
-    onBeginDrag: () => {
+    onBeginDrag: (event) => {
+      scheduleOnRN(
+        pagingLog.trace,
+        "beginDrag",
+        event.contentOffset.x,
+        dragging.get(),
+        momentum.get(),
+      )
       touchDragged.set(true)
       const target = navigationTarget.get()
       if (target !== null) {
@@ -296,17 +310,38 @@ export function useOwnedCalendarPager({
       momentum.set(false)
     },
     onEndDrag: (event) => {
+      scheduleOnRN(
+        pagingLog.trace,
+        "endDrag",
+        event.contentOffset.x,
+        dragging.get(),
+        momentum.get(),
+      )
       dragging.set(false)
       if (describesPlacedContent(event)) settleIfAligned(event.contentOffset.x)
       watchRest()
     },
     // iOS sends no end-drag for a grab released without moving mid-fling;
     // the deceleration that resumes is the drag's end.
-    onMomentumBegin: () => {
+    onMomentumBegin: (event) => {
+      scheduleOnRN(
+        pagingLog.trace,
+        "momentumBegin",
+        event.contentOffset.x,
+        dragging.get(),
+        momentum.get(),
+      )
       dragging.set(false)
       momentum.set(true)
     },
     onMomentumEnd: (event) => {
+      scheduleOnRN(
+        pagingLog.trace,
+        "momentumEnd",
+        event.contentOffset.x,
+        dragging.get(),
+        momentum.get(),
+      )
       momentum.set(false)
       if (describesPlacedContent(event)) settleIfAligned(event.contentOffset.x)
     },
@@ -494,6 +529,13 @@ export function useOwnedCalendarPager({
   // activating mid-swipe would otherwise cancel this one between pages.
   const finishNativeTouch = () => {
     "worklet"
+    scheduleOnRN(
+      pagingLog.trace,
+      "touchFinal",
+      scrollX.get(),
+      dragging.get(),
+      momentum.get(),
+    )
     touching.set(false)
     trackNativeTouch("horizontal", false)
     if (interruptedTarget.get() !== null && !touchDragged.get()) {
@@ -505,6 +547,13 @@ export function useOwnedCalendarPager({
 
   const beginNativeTouch = () => {
     "worklet"
+    scheduleOnRN(
+      pagingLog.trace,
+      "touchBegin",
+      scrollX.get(),
+      dragging.get(),
+      momentum.get(),
+    )
     touchDragged.set(false)
     touching.set(true)
     const target = navigationTarget.get()
