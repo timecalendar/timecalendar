@@ -183,7 +183,7 @@ function HorizontalPagerView({
         pagingEnabled={IS_IOS}
         snapToInterval={IS_ANDROID ? pager.pageWidth + 1e-3 : undefined}
         disableIntervalMomentum
-        decelerationRate="fast"
+        decelerationRate={IS_ANDROID ? 0.5 : "fast"}
         directionalLockEnabled
         bounces={false}
         overScrollMode="never"
