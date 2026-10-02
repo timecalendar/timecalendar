@@ -47,6 +47,7 @@ import { useOwnedCalendarCoordinator } from "./owned-calendar-coordinator"
 import { OwnedCalendarDateHeader } from "./owned-calendar-header"
 import { CalendarPage, type PageEventHandlers } from "./owned-calendar-page"
 import { pagerPageWidth, useOwnedCalendarPager } from "./owned-calendar-pager"
+import { pagingLog } from "./owned-calendar-paging-log"
 import type {
   CalendarZoomCommand,
   CalendarZoomSettlement,
@@ -385,6 +386,7 @@ export function OwnedCalendarShell({ ref, ...props }: OwnedCalendarShellProps) {
       props.uses24HourClock,
     ),
   })
+  const presentStartedAt = pagingLog.now()
   const pages = pager.mountedIndexes.map((index) => {
     const presentation = presentPage(index)
     const isCommitted = index === pager.settled
@@ -398,6 +400,7 @@ export function OwnedCalendarShell({ ref, ...props }: OwnedCalendarShellProps) {
       hasToday,
     }
   })
+  pagingLog.present(pagingLog.now() - presentStartedAt)
 
   return (
     <View

@@ -13,6 +13,8 @@ import {
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { useTheme } from "@/theme"
 
+import { pagingLog } from "./owned-calendar-paging-log"
+
 export type HeaderPage = {
   presentation: PagePresentationV1
   left: number
@@ -106,6 +108,7 @@ const HeaderSlot = memo(function HeaderSlot({
 }) {
   const theme = useTheme()
   const colorScheme = useColorScheme()
+  pagingLog.render("slot")
   const dateColor = colorScheme === "dark" ? theme.textSecondary : theme.text
   return (
     <View

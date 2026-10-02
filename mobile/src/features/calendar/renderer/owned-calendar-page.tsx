@@ -131,6 +131,7 @@ export const CalendarPage = memo(function CalendarPage({
 }) {
   const theme = useTheme()
   const { pageKey } = presentation
+  pagingLog.render("page")
   useEffect(() => {
     pagingLog.mount(pageKey)
   }, [pageKey])
