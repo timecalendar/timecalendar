@@ -411,74 +411,16 @@ try {
     })
     write()
   }
-  const switchMode = async (afterAttempt) => {
-    readNewLogs()
-    const name = `mode-${String(summary.modeSwitches.length + 1).padStart(2, "0")}`
-    const beforeXml = uiDump(`${name}-before`)
-    const selected = selectedCalendarView(beforeXml, viewLabels, screen)
-    const before = selected && observeCalendarUi(
-      beforeXml,
-      selected.mode,
-      state.page,
-      viewLabels,
-      screen,
-    )
-    if (selected === null || before?.matched !== true) {
-      summary.modeSwitches.push({
-        afterAttempt,
-        from: selected?.mode ?? null,
-        to: null,
-        observedMode: null,
-        verified: false,
-        reason: "source Calendar page not witnessed",
-      })
-      write()
-      throw new Error("source Calendar page not witnessed before switch")
-    }
-    if (observedMode !== null && observedMode !== selected.mode)
-      throw new Error("Calendar mode control disagrees with native mounts")
-    observedMode = selected.mode
-    const target = selected.mode === "week" ? "day" : "week"
-    const expectedTargetPage = convertedPageIndex(
-      selected.mode,
-      state.page,
-      target,
-    )
-    if (expectedTargetPage === null)
-      throw new Error("cannot convert witnessed source page")
-    const controlPoint = boundsCenter(selected.bounds, screen)
-    if (controlPoint === null) {
-      summary.modeSwitches.push({
-        afterAttempt,
-        from: selected.mode,
-        to: target,
-        observedMode: null,
-        verified: false,
-        reason: "Calendar mode control bounds not observed",
-      })
-      write()
-      throw new Error("Calendar mode control bounds not observed")
-    }
-    tap(controlPoint)
+  const openModeMenu = async (selected, target, name) => {
+    tap(boundsCenter(selected.bounds, screen))
     await sleep(400)
-    const option = menuItemPoint(
+    return menuItemPoint(
       uiDump(`${name}-menu`),
       viewLabels[selected.locale][target],
       screen,
     )
-    if (option === null) {
-      summary.modeSwitches.push({
-        afterAttempt,
-        from: selected.mode,
-        to: target,
-        observedMode: null,
-        verified: false,
-        reason: "target mode menu item not observed",
-      })
-      throw new Error("target mode menu item not observed")
-    }
-    readNewLogs()
-    tap(option)
+  }
+  const pollTargetWitness = async (name, from, sourcePage, target) => {
     let mountedTarget = false
     let modeBaseline = null
     let previousFingerprint = null
@@ -489,8 +431,8 @@ try {
       mountedTarget ||= parseMountedModes(fresh).includes(target)
       const witnessed = targetPageFromUi(
         uiDump(`${name}-after-${poll}`),
-        selected.mode,
-        state.page,
+        from,
+        sourcePage,
         target,
         viewLabels,
         screen,
@@ -508,6 +450,60 @@ try {
       }
       previousFingerprint = fingerprint
     }
+    return { mountedTarget, modeBaseline }
+  }
+  const switchMode = async (afterAttempt) => {
+    readNewLogs()
+    const name = `mode-${String(summary.modeSwitches.length + 1).padStart(2, "0")}`
+    const beforeXml = uiDump(`${name}-before`)
+    const selected = selectedCalendarView(beforeXml, viewLabels, screen)
+    const target = selected?.mode === "week" ? "day" : "week"
+    const expectedTargetPage = selected && convertedPageIndex(
+      selected.mode,
+      state.page,
+      target,
+    )
+    const sourceWitness = selected && observeCalendarUi(
+      beforeXml,
+      selected.mode,
+      state.page,
+      viewLabels,
+      screen,
+    )
+    const sourcePage = state.page
+    const failSwitch = (reason) => {
+      summary.modeSwitches.push({
+        afterAttempt,
+        from: selected?.mode ?? null,
+        to: selected ? target : null,
+        sourcePage,
+        expectedTargetPage,
+        observedMode: null,
+        verified: false,
+        reason,
+      })
+      write()
+      throw new Error(reason)
+    }
+    if (sourceWitness?.matched !== true)
+      failSwitch("source Calendar page not witnessed before switch")
+    if (observedMode !== null && observedMode !== selected.mode)
+      failSwitch("Calendar mode control disagrees with native mounts")
+    if (expectedTargetPage === null)
+      failSwitch("cannot convert witnessed source page")
+    observedMode = selected.mode
+    const option = await openModeMenu(selected, target, name)
+    if (option === null) failSwitch("target mode menu item not observed")
+    readNewLogs()
+    if (state.page !== sourcePage)
+      failSwitch("source page moved while mode menu was open")
+    tap(option)
+    const { mountedTarget, modeBaseline } = await pollTargetWitness(
+      name,
+      selected.mode,
+      sourcePage,
+      target,
+    )
     const verified = mountedTarget && modeBaseline !== null
     summary.modeSwitches.push({
       afterAttempt,
@@ -515,7 +511,7 @@ try {
       to: target,
       observedMode: modeBaseline?.mode ?? null,
       mountedTarget,
-      sourcePage: state.page,
+      sourcePage,
       expectedTargetPage,
       modeBaselinePage: modeBaseline?.page ?? null,
       modeBaselineSource: modeBaseline ? "stable-visible-date-header" : null,
