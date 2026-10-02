@@ -120,13 +120,20 @@ export function useOwnedCalendarPager({
   const placedFor = useRef<string | null>(null)
   const reported = useRef({ spaceKey, index: anchorIndex })
   const crossingStartedAt = useRef(0)
+  // The scroll handler worklet captures the crossing and settle callbacks. If
+  // they changed with every parent render, Reanimated would re-register the
+  // handler mid-gesture and could drop an end-drag, leaving a page unsettled.
+  const listeners = useRef({ onSettled, onCenterChange })
+  useLayoutEffect(() => {
+    listeners.current = { onSettled, onCenterChange }
+  })
 
   const onCross = (index: PageIndex) => {
     crossingStartedAt.current = pagingLog.now()
     setState((current) =>
       current.center === index ? current : { ...current, center: index },
     )
-    onCenterChange(index)
+    listeners.current.onCenterChange(index)
   }
 
   const onSettle = (index: PageIndex) => {
@@ -150,8 +157,8 @@ export function useOwnedCalendarPager({
             }),
       }
     })
-    onCenterChange(index)
-    onSettled(index)
+    listeners.current.onCenterChange(index)
+    listeners.current.onSettled(index)
   }
 
   // An event describes this content only when its viewport and content width
