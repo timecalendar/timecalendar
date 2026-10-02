@@ -4,7 +4,7 @@
 
 ```text
 approved git SHA
-  → eas build --local on the macOS host signs an iOS .ipa and Android .aab
+  → macOS signs the iOS .ipa; Windows PC/WSL builds the Android .aab
   → EAS Submit uploads those exact files
   → TestFlight / Play internal testing distributes them to the team
   → store review and staged rollout distribute a production candidate to users
@@ -25,13 +25,13 @@ step 4.
 
 ## 1.2 What changed since Flutter v3
 
-| Flutter v3                                                    | React Native v4                                                         |
-| ------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Flutter/Fastlane built the native binaries                    | `eas build --local` on our own macOS host builds and signs             |
-| Android read a local gitignored `key.properties` and keystore | EAS can hold/import the Android key used for uploads                    |
-| iOS Fastlane Match synchronized certificates/profiles         | EAS can manage a fresh valid certificate/profile on the same Apple team |
-| Fastlane Supply/Pilot uploaded builds                         | EAS Submit uploads the recorded local artifact                         |
-| Store consoles controlled testers and rollout                 | Still true; Expo does not replace them                                  |
+| Flutter v3                                                    | React Native v4                                                            |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Flutter/Fastlane built the native binaries                    | iOS builds on macOS; Android builds on the Windows PC through `ssh pc`/WSL |
+| Android read a local gitignored `key.properties` and keystore | EAS can hold/import the Android key used for uploads                       |
+| iOS Fastlane Match synchronized certificates/profiles         | EAS can manage a fresh valid certificate/profile on the same Apple team    |
+| Fastlane Supply/Pilot uploaded builds                         | EAS Submit uploads the recorded local artifact                             |
+| Store consoles controlled testers and rollout                 | Still true; Expo does not replace them                                     |
 
 The important continuity is the **store identity**, not the JavaScript framework:
 
@@ -48,7 +48,7 @@ selected Play track and release status control where the upload lands.
 
 TimeCalendar's process preserves this separation:
 
-- build deliberately, from a named commit — never as a side effect of merging;
+- build deliberately, from a named commit with its required device evidence and owner verdict — never as a side effect of merging;
 - submit only the recorded artifact, after the submission gate;
 - start or widen production rollout as a separate human-owned act;
 - never rebuild between approval and submission;

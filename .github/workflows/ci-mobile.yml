@@ -49,6 +49,10 @@ jobs:
         working-directory: ./mobile
         run: npm ci
 
+      - name: Test performance accounting without a device
+        working-directory: ./mobile
+        run: npm run test:perf
+
       - name: Check changed mobile code with React Doctor
         working-directory: ./mobile
         run: npm run react-doctor:changed

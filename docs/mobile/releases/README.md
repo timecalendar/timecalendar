@@ -7,8 +7,7 @@
 
 ## The one-minute answer
 
-React Native did not remove Apple and Android signing. **We run the Xcode/Gradle build on our own
-macOS host with `eas build --local`, and Expo holds the signing credentials for us.** EAS Submit
+React Native did not remove Apple and Android signing. **iOS local builds use the macOS host; Android release builds run on the Windows PC through `ssh pc` and WSL. Expo holds the signing credentials for store builds.** EAS Submit
 then uploads that signed file to App Store Connect or Play Console. Apple and Google still own
 testing, review and rollout.
 
@@ -29,20 +28,19 @@ For TimeCalendar, v4 will replace the existing Flutter app, keeping
   repeat builds and submissions later.
 
 This is reassuring overall: the code-side EAS project, production identity, version `4.0.0`, OTA
-fingerprint policy and **both store-build profiles** already exist, and the build runs on hardware
-we own with no EAS build quota and no paid plan. Android signing is settled. **No repository change
-now blocks the first preview** — everything remaining is an operator act with a live console.
+fingerprint policy and **both store-build profiles** already exist, and builds use hardware we own. Android signing is settled. A build carrying the native Calendar paging owner requires exact-revision device evidence and the owner's verdict before any preview, OTA or production distribution. See [Calendar paging release gate](./06-calendar-paging-gate.md).
 [Document 5](./05-readiness-and-gaps.md) turns those facts into a finite checklist.
 
 ## Reading order
 
-| #   | Document                                                           | Question answered                                          |
-| --- | ------------------------------------------------------------------ | ---------------------------------------------------------- |
-| 1   | [The release mental model](./01-mental-model.md)                   | What do Expo, Apple and Google each do?                    |
-| 2   | [Signing and credential recovery](./02-signing-and-credentials.md) | Which old files matter, and what if they are lost?         |
-| 3   | [First preview release](./03-first-preview.md)                     | What is needed for TestFlight and Play internal testing?   |
-| 4   | [Production v4 cutover](./04-production-cutover.md)                | How does an internal build become the v4 store update?     |
-| 5   | [Readiness and gaps](./05-readiness-and-gaps.md)                   | What exists today, what is unknown, and what happens next? |
+| #   | Document                                                           | Question answered                                            |
+| --- | ------------------------------------------------------------------ | ------------------------------------------------------------ |
+| 1   | [The release mental model](./01-mental-model.md)                   | What do Expo, Apple and Google each do?                      |
+| 2   | [Signing and credential recovery](./02-signing-and-credentials.md) | Which old files matter, and what if they are lost?           |
+| 3   | [First preview release](./03-first-preview.md)                     | What is needed for TestFlight and Play internal testing?     |
+| 4   | [Production v4 cutover](./04-production-cutover.md)                | How does an internal build become the v4 store update?       |
+| 5   | [Readiness and gaps](./05-readiness-and-gaps.md)                   | What exists today, what is unknown, and what happens next?   |
+| 6   | [Calendar paging release gate](./06-calendar-paging-gate.md)       | Which device evidence permits a paging build to reach users? |
 
 ## Decisions supplied by the owner
 
@@ -52,10 +50,10 @@ now blocks the first preview** — everything remaining is an operator act with 
 | Apple access             | Apple Developer and App Store Connect access available                                                    |
 | Expo ownership           | Keep the current personal Expo account for now                                                            |
 | First preview            | Store-internal first: TestFlight + Play internal                                                          |
-| Recovery custody         | the password manager                                                                                               |
+| Recovery custody         | the password manager                                                                                      |
 | Operator model           | Owner bootstraps; CI/automation later                                                                     |
 | Android Play App Signing | **Confirmed enabled**; Play signs releases, and the owner holds the upload key, backed up in three places |
-| Build host               | The owner's macOS host, via `eas build --local` — no EAS build quota, free Expo plan                      |
+| Build host               | iOS: macOS host; Android: Windows PC via `ssh pc` and WSL                                                 |
 | Release selection        | Annotated git tags on `main`; no long-lived release branch                                                |
 
 ## Vocabulary
