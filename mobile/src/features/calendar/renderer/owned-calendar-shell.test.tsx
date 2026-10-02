@@ -216,6 +216,84 @@ describe("OwnedCalendarShell", () => {
     ])
   }
 
+  const fireNativeOwnerStart = (
+    owner: "owned-calendar-native-scroll" | "owned-calendar-native-pager",
+  ) => {
+    fireGestureHandler(getByGestureTestId(owner), [
+      { state: State.BEGAN, numberOfPointers: 1 },
+      { state: State.ACTIVE, numberOfPointers: 1 },
+    ])
+  }
+
+  /** The pinch's handlers, for a gesture held between its start and its end. */
+  const pinchHandlers = () =>
+    (
+      getByGestureTestId("owned-calendar-pinch") as unknown as {
+        handlers: {
+          onStart: (event: Record<string, unknown>) => void
+          onEnd: (event: Record<string, unknown>, success: boolean) => void
+          onFinalize: (event: Record<string, unknown>, success: boolean) => void
+        }
+      }
+    ).handlers
+
+  const holdPinch = () =>
+    act(async () => {
+      const pinch = pinchHandlers()
+      pinch.onStart({
+        focalX: 160,
+        focalY: 250,
+        scale: 1.1,
+        numberOfPointers: 2,
+      })
+    })
+
+  const accessiblePage = (actionName: "increment" | "decrement") =>
+    fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "accessibilityAction",
+      {
+        nativeEvent: { actionName },
+      },
+    )
+
+  /**
+   * The Reanimated Jest mock never runs `useAnimatedReaction`. This records
+   * each reaction site's latest registration and runs the ones whose prepared
+   * value changed, the way the UI thread does after a shared value write.
+   */
+  const recordAnimatedReactions = () => {
+    const sites = new Map<
+      string,
+      {
+        prepare: () => unknown
+        react: (value: unknown, previous: unknown) => void
+        last: unknown
+      }
+    >()
+    const spy = jest
+      .spyOn(Reanimated, "useAnimatedReaction")
+      .mockImplementation((prepare, react) => {
+        const key = react.toString()
+        const site = sites.get(key)
+        sites.set(key, {
+          prepare,
+          react: react as (value: unknown, previous: unknown) => void,
+          last: site === undefined ? prepare() : site.last,
+        })
+      })
+    const flush = () => {
+      for (const site of sites.values()) {
+        const value = site.prepare()
+        if (value === site.last) continue
+        const previous = site.last
+        site.last = value
+        site.react(value, previous)
+      }
+    }
+    return { flush, restore: () => spy.mockRestore() }
+  }
+
   beforeEach(() => {
     AppState.currentState = "active"
     jest.clearAllMocks()
@@ -1325,6 +1403,352 @@ describe("OwnedCalendarShell", () => {
 
     await act(async () => firePinch(State.CANCELLED))
 
+    expect(onZoomSettled).not.toHaveBeenCalled()
+  })
+
+  it("restores a surviving event, then its date, after the committed page's presentation is replaced", async () => {
+    const survivor = timedEvent(
+      "late-focus",
+      "2026-06-15T23:00:00.000Z",
+      "2026-06-15T23:45:00.000Z",
+    )
+    const scrollRef = { current: null } as ReturnType<
+      typeof Reanimated.useAnimatedRef
+    >
+    const refSpy = jest
+      .spyOn(Reanimated, "useAnimatedRef")
+      .mockReturnValue(scrollRef)
+    const shellRef = createRef<OwnedCalendarShellHandle>()
+    const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
+    try {
+      const { view } = await renderPlaced(
+        shell({
+          ref: shellRef,
+          presentPage: presenter({ events: [survivor] }),
+        }),
+      )
+      await focusEvent("late-focus")
+      const scrollTo = jest.spyOn(scrollRef.current as ScrollView, "scrollTo")
+      const eventReveals = () =>
+        scrollTo.mock.calls.filter(
+          ([options]) =>
+            typeof options === "object" && options.y === 23 * 60 - 96,
+        )
+
+      await view.rerender(
+        shell({
+          ref: shellRef,
+          presentPage: presenter({ events: [survivor] }),
+        }),
+      )
+      expect(focus).not.toHaveBeenCalled()
+      await act(async () => shellRef.current?.restoreFocus())
+      await waitFor(() => expect(focus).toHaveBeenCalledTimes(1))
+      expect(eventReveals()).toHaveLength(1)
+
+      await view.rerender(
+        shell({ ref: shellRef, presentPage: presenter({ events: [] }) }),
+      )
+      expect(screen.queryByTestId("owned-calendar-event-late-focus")).toBeNull()
+      await act(async () => shellRef.current?.restoreFocus())
+      await waitFor(() => expect(focus).toHaveBeenCalledTimes(2))
+      expect(eventReveals()).toHaveLength(1)
+      scrollTo.mockRestore()
+    } finally {
+      await cleanup()
+      focus.mockRestore()
+      refSpy.mockRestore()
+    }
+  })
+
+  it("remembers no accessibility focus while the page is moving", async () => {
+    const shellRef = createRef<OwnedCalendarShellHandle>()
+    const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
+    try {
+      const { pager } = await renderPlaced(
+        shell({
+          ref: shellRef,
+          presentPage: presenter({
+            events: [
+              timedEvent(
+                "moving",
+                "2026-06-15T10:00:00.000Z",
+                "2026-06-15T11:00:00.000Z",
+              ),
+            ],
+          }),
+        }),
+      )
+
+      await pager.send(0, "onScrollBeginDrag")
+      await pager.send(0.6)
+      await flushUiThread()
+      await focusEvent("moving")
+      await pager.send(0.2)
+      await pager.send(0, "onScrollEndDrag")
+      await pager.send(0)
+      await flushUiThread()
+      await act(async () => shellRef.current?.restoreFocus())
+
+      expect(focus).not.toHaveBeenCalled()
+      expect(onDateCommitted).not.toHaveBeenCalled()
+    } finally {
+      focus.mockRestore()
+    }
+  })
+
+  it("settles the context of a loading committed page only once it is ready", async () => {
+    const onContextSettled = jest.fn()
+    const ready = presenter()
+    const loading: PagePresenter = (index) => ({
+      ...ready(index),
+      status: "loading",
+      columns: ready(index).columns.map((column) => ({ ...column, tiles: [] })),
+    })
+    const requestFrame = jest
+      .spyOn(global, "requestAnimationFrame")
+      .mockImplementation((callback) => {
+        callback(0)
+        return 1
+      })
+    try {
+      const { view } = await renderPlaced(
+        shell({ presentPage: loading, onContextSettled }),
+      )
+      expect(
+        screen.getByTestId(`owned-calendar-page-${ANCHOR_PAGE}`, HIDDEN),
+      ).toHaveProp("accessibilityState", { busy: true })
+      expect(onContextSettled).not.toHaveBeenCalled()
+
+      await view.rerender(shell({ presentPage: ready, onContextSettled }))
+
+      expect(
+        screen.getByTestId(`owned-calendar-page-${ANCHOR_PAGE}`, HIDDEN),
+      ).toHaveProp("accessibilityState", { busy: false })
+      expect(onContextSettled).toHaveBeenCalledTimes(1)
+      expect(onContextSettled).toHaveBeenCalledWith(ANCHOR_PAGE, false)
+    } finally {
+      requestFrame.mockRestore()
+    }
+  })
+
+  it("recentres a drag that snaps back to its page without committing", async () => {
+    const presentPage = presenter()
+    const { view, pager } = await renderPlaced(shell({ presentPage }))
+
+    await pager.send(0, "onScrollBeginDrag")
+    await pager.send(0.25)
+    await view.rerender(shell({ presentPage }))
+    expect(headerTranslateX()).toBe(-(pager.origin + 0.25 * pager.pageWidth))
+
+    await pager.send(0.25, "onScrollEndDrag")
+    await pager.send(0)
+    await view.rerender(shell({ presentPage }))
+
+    expect(headerTranslateX()).toBe(-pager.origin)
+    expect(onDateCommitted).not.toHaveBeenCalled()
+    expect(
+      screen.getByTestId(`owned-calendar-date-header-slot-${ANCHOR_PAGE}`),
+    ).toHaveProp("accessibilityElementsHidden", false)
+  })
+
+  it.each([
+    [-1, "2026-06-08"],
+    [1, "2026-06-22"],
+  ] as const)(
+    "commits native page %i only once no finger or momentum moves it",
+    async (direction, committedDate) => {
+      const { pager } = await renderPlaced(shell())
+
+      await pager.send(0, "onScrollBeginDrag")
+      await pager.send(direction)
+      expect(onDateCommitted).not.toHaveBeenCalled()
+      await pager.send(direction * 0.6)
+      await pager.send(direction * 0.6, "onScrollEndDrag")
+      await pager.send(direction * 0.6, "onMomentumScrollBegin")
+      await pager.send(direction)
+      expect(onDateCommitted).not.toHaveBeenCalled()
+
+      await pager.send(direction, "onMomentumScrollEnd")
+
+      expect(onDateCommitted).toHaveBeenCalledTimes(1)
+      expect(
+        onDateCommitted.mock.calls[0]?.[0].toISOString().slice(0, 10),
+      ).toBe(committedDate)
+    },
+  )
+
+  it("steps a second accessibility action from the settled page, landing one page", async () => {
+    const scrollTo = jest.spyOn(Reanimated, "scrollTo")
+    try {
+      const { pager } = await renderPlaced(shell())
+      scrollTo.mockClear()
+
+      await accessiblePage("increment")
+      await flushUiThread()
+      await accessiblePage("increment")
+      await flushUiThread()
+
+      expect(scrollTo.mock.calls.map((call) => call.slice(1))).toEqual([
+        [pager.origin + pager.pageWidth, 0, true],
+        [pager.origin + pager.pageWidth, 0, true],
+      ])
+      await pager.send(1)
+      expect(onDateCommitted).toHaveBeenCalledTimes(1)
+      expect(
+        onDateCommitted.mock.calls[0]?.[0].toISOString().slice(0, 10),
+      ).toBe("2026-06-22")
+    } finally {
+      scrollTo.mockRestore()
+    }
+  })
+
+  it.each([-1, 1])(
+    "keeps the landed header through duplicate idle events on page %i",
+    async (direction) => {
+      const presentPage = presenter()
+      const { view, pager } = await renderPlaced(shell({ presentPage }))
+
+      await pager.swipe(0, direction)
+      await pager.send(direction, "onMomentumScrollEnd")
+      await pager.send(direction, "onScrollEndDrag")
+      await pager.send(direction)
+      await view.rerender(shell({ presentPage }))
+
+      expect(headerTranslateX()).toBe(
+        -(pager.origin + direction * pager.pageWidth),
+      )
+      expect(onDateCommitted).toHaveBeenCalledTimes(1)
+      expect(
+        screen.getByTestId(
+          `owned-calendar-date-header-slot-${pageKey(WEEK, ANCHOR_INDEX + direction)}`,
+        ),
+      ).toHaveProp("accessibilityElementsHidden", false)
+    },
+  )
+
+  it("keeps a late event from another geometry from moving the landed header", async () => {
+    const presentPage = presenter()
+    const { view, pager } = await renderPlaced(shell({ presentPage }))
+    await pager.swipe(0, 1)
+
+    await act(async () => {
+      screen.getByTestId("owned-calendar-pager").props.onScroll({
+        nativeEvent: {
+          contentOffset: { x: pager.origin, y: 0 },
+          layoutMeasurement: { width: pager.pageWidth + 40, height: 1000 },
+          contentSize: { width: pager.contentWidth, height: 1000 },
+        },
+      })
+    })
+    await view.rerender(shell({ presentPage }))
+
+    expect(headerTranslateX()).toBe(-(pager.origin + pager.pageWidth))
+    expect(onDateCommitted).toHaveBeenCalledTimes(1)
+  })
+
+  it("keeps a swipe going while the weekend is hidden, then commits where it lands", async () => {
+    const weekdays = {
+      showWeekends: false,
+      presentPage: presenter({ showWeekends: false }),
+    }
+    const { view, pager } = await renderPlaced(shell())
+    const scrollOwner = screen.getByTestId("owned-calendar-pager")
+
+    await pager.send(0, "onScrollBeginDrag")
+    await pager.send(0.6)
+    await view.rerender(shell(weekdays))
+    await pager.send(0.6, "onScrollEndDrag")
+    await pager.send(1)
+
+    expect(screen.getByTestId("owned-calendar-pager")).toBe(scrollOwner)
+    expect(onDateCommitted).toHaveBeenCalledTimes(1)
+    expect(onDateCommitted.mock.calls[0]?.[0].toISOString().slice(0, 10)).toBe(
+      "2026-06-22",
+    )
+    expect(screen.getAllByTestId(/^owned-calendar-date-\d{4}-/)).toHaveLength(5)
+  })
+
+  it("mounts non-collapsible transparent pages over one hour-line surface", async () => {
+    await renderPlaced(shell())
+
+    const pages = screen.getAllByTestId(/^owned-calendar-page-week:/, HIDDEN)
+    expect(pages).toHaveLength(5)
+    for (const page of pages) {
+      expect(page).toHaveProp("collapsable", false)
+      expect(
+        StyleSheet.flatten(page.props.style).backgroundColor,
+      ).toBeUndefined()
+    }
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-hour-lines", HIDDEN).props.style,
+      ).backgroundColor,
+    ).toBe(Colors.light.backgroundElement)
+  })
+
+  it.each([true, false])(
+    "lets a pinch take the pager and re-aligns its cut drag without committing (pinch succeeded: %s)",
+    async (success) => {
+      const reactions = recordAnimatedReactions()
+      const scrollTo = jest.spyOn(Reanimated, "scrollTo")
+      const horizontalScrolls = () =>
+        scrollTo.mock.calls
+          .filter(([, x]) => x !== 0)
+          .map((call) => call.slice(1))
+      try {
+        const { pager } = await renderPlaced(shell())
+        await pager.send(0, "onScrollBeginDrag")
+        await pager.send(0.3)
+        scrollTo.mockClear()
+
+        await holdPinch()
+        await act(async () => reactions.flush())
+        await accessiblePage("increment")
+        await flushUiThread()
+        expect(horizontalScrolls()).toEqual([])
+
+        await act(async () => {
+          const pinch = pinchHandlers()
+          pinch.onEnd({}, success)
+          pinch.onFinalize({}, success)
+        })
+        await act(async () => reactions.flush())
+
+        expect(horizontalScrolls()).toEqual([[pager.origin, 0, true]])
+        await pager.send(0)
+        expect(onDateCommitted).not.toHaveBeenCalled()
+      } finally {
+        scrollTo.mockRestore()
+        reactions.restore()
+      }
+    },
+  )
+
+  it("ignores a vertical settle while a pinch blocks it, until the vertical owner starts again", async () => {
+    await renderPlaced(shell())
+    const canvas = screen.getByTestId("owned-calendar-canvas")
+
+    await act(async () => firePinch(State.END))
+    await fireEvent(canvas, "momentumScrollEnd", scrollEvent(901, 24, 96))
+    expect(onVerticalOffsetSettled).not.toHaveBeenCalled()
+
+    await act(async () => fireNativeOwnerStart("owned-calendar-native-scroll"))
+    await fireEvent(canvas, "scrollBeginDrag", scrollEvent(902, 24, 96))
+    await fireEvent(canvas, "momentumScrollEnd", scrollEvent(902, 24, 96))
+
+    expect(onVerticalOffsetSettled).toHaveBeenCalledWith(902)
+  })
+
+  it("commits nothing when unmounted during a pinch and a pending accessibility step", async () => {
+    const { view } = await renderPlaced(shell())
+    await accessiblePage("increment")
+    await holdPinch()
+
+    await act(async () => view.unmount())
+    await flushUiThread()
+
+    expect(onDateCommitted).not.toHaveBeenCalled()
     expect(onZoomSettled).not.toHaveBeenCalled()
   })
 })

@@ -79,6 +79,14 @@ jobs:
         working-directory: ./mobile
         run: npm run lint
 
+      # The production build runs the React Compiler with panicThreshold NONE,
+      # so a component it cannot compile ships unmemoized without an error, and
+      # lint cannot see it. The renderer's per-crossing cost depends on every
+      # component compiling.
+      - name: Check the calendar renderer compiles with the React Compiler
+        working-directory: ./mobile
+        run: npm run react-compiler:check
+
       # Coverage gated (K-3, ADR 003 — revisit fired): the coverageThreshold lives
       # in mobile/jest.config.js (90% logic / 70% global floor); CI just runs the
       # same `npm test -- --coverage` entrypoint as local — the gate is in config.
