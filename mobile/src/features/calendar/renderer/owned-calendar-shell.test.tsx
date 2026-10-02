@@ -90,16 +90,18 @@ function styledTestNode(node: unknown): StyledTestNode {
 
 function presenter({
   mode = "week",
+  firstWeekday = 1,
   events = [],
   showWeekends = true,
   increasedContrast = false,
 }: {
   mode?: CalendarTimelineMode
+  firstWeekday?: ShellProps["firstWeekday"]
   events?: readonly TimedCalendarEventV1[]
   showWeekends?: boolean
   increasedContrast?: boolean
 } = {}): PagePresenter {
-  const space = { mode, firstWeekday: 1 } as const
+  const space = { mode, firstWeekday } as const
   const pages = new Map<PageIndex, PagePresentationV1>()
   return (index) => {
     const cached = pages.get(index)
@@ -1319,6 +1321,131 @@ describe("OwnedCalendarShell", () => {
         { name: "increment", label: next },
       ],
     )
+  })
+
+  it("places both mode switches only after pager and content layout, then reveals the observed page", async () => {
+    const scrollTo = jest.spyOn(Reanimated, "scrollTo")
+    try {
+      const weekPages = presenter({ mode: "week" })
+      const dayPages = presenter({ mode: "day" })
+      const sundayPages = presenter({ mode: "week", firstWeekday: 0 })
+      const { view, pager } = await renderPlaced(
+        shell({ presentPage: weekPages }),
+      )
+      const control = screen.getByTestId("owned-calendar-page-control")
+      const labels = (previous: string, next: string) => [
+        { name: "decrement", label: previous },
+        { name: "increment", label: next },
+      ]
+      const reveal = async () => {
+        await act(async () => {
+          fireEvent.scroll(screen.getByTestId("owned-calendar-pager"), {
+            nativeEvent: {
+              contentOffset: { x: pager.origin, y: 0 },
+              layoutMeasurement: { width: pager.pageWidth, height: 800 },
+              contentSize: { width: pager.contentWidth, height: 1000 },
+            },
+          })
+        })
+      }
+      await reveal()
+
+      for (const [mode, firstWeekday, pages, previous, next] of [
+        ["day", 1, dayPages, "Previous day", "Next day"],
+        ["week", 1, weekPages, "Previous week", "Next week"],
+        ["week", 0, sundayPages, "Previous week", "Next week"],
+      ] as const) {
+        scrollTo.mockClear()
+        const oldPager = screen.getByTestId("owned-calendar-pager")
+        await view.rerender(shell({ mode, firstWeekday, presentPage: pages }))
+        expect(screen.getByTestId("owned-calendar-pager")).not.toBe(oldPager)
+        expect(screen.getByTestId("owned-calendar-page-control")).toBe(control)
+        expect(control.props.accessibilityActions).toEqual(
+          labels(previous, next),
+        )
+        await act(async () => {
+          fireEvent(
+            screen.getByTestId("owned-calendar-pager"),
+            "contentSizeChange",
+            pager.contentWidth,
+            1000,
+          )
+        })
+        await flushUiThread()
+        expect(scrollTo).not.toHaveBeenCalled()
+
+        await act(async () => {
+          fireEvent(screen.getByTestId("owned-calendar-pager"), "layout", {
+            nativeEvent: {
+              layout: { x: 0, y: 0, width: pager.pageWidth, height: 800 },
+            },
+          })
+        })
+        await flushUiThread()
+        expect(scrollTo).toHaveBeenCalledTimes(1)
+        expect(scrollTo.mock.calls[0]?.slice(1)).toEqual([
+          pager.origin,
+          0,
+          false,
+        ])
+        await reveal()
+        expect(onDateCommitted).not.toHaveBeenCalled()
+        expect(screen.getAllByRole("header")).toHaveLength(
+          mode === "day" ? 1 : 7,
+        )
+      }
+    } finally {
+      scrollTo.mockRestore()
+    }
+  })
+
+  it("re-places Week after a Day switch that never laid out", async () => {
+    const scrollTo = jest.spyOn(Reanimated, "scrollTo")
+    try {
+      const weekPages = presenter({ mode: "week" })
+      const { view, pager } = await renderPlaced(
+        shell({ presentPage: weekPages }),
+      )
+      await view.rerender(
+        shell({ mode: "day", presentPage: presenter({ mode: "day" }) }),
+      )
+      const abandonedDayPager = screen.getByTestId("owned-calendar-pager")
+      scrollTo.mockClear()
+      await view.rerender(shell({ presentPage: weekPages }))
+
+      await act(async () => {
+        abandonedDayPager.props.onLayout({
+          nativeEvent: {
+            layout: { x: 0, y: 0, width: pager.pageWidth, height: 800 },
+          },
+        })
+        abandonedDayPager.props.onContentSizeChange(pager.contentWidth, 1000)
+      })
+      await flushUiThread()
+      expect(scrollTo).not.toHaveBeenCalled()
+
+      await act(async () => {
+        fireEvent(screen.getByTestId("owned-calendar-pager"), "layout", {
+          nativeEvent: {
+            layout: { x: 0, y: 0, width: pager.pageWidth, height: 800 },
+          },
+        })
+        fireEvent(
+          screen.getByTestId("owned-calendar-pager"),
+          "contentSizeChange",
+          pager.contentWidth,
+          1000,
+        )
+      })
+      await flushUiThread()
+
+      expect(scrollTo.mock.calls.map((call) => call.slice(1))).toEqual([
+        [pager.origin, 0, false],
+      ])
+      expect(onDateCommitted).not.toHaveBeenCalled()
+    } finally {
+      scrollTo.mockRestore()
+    }
   })
 
   it("redistributes five weekday cells and restores seven without paging", async () => {

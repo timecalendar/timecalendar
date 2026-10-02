@@ -37,6 +37,11 @@ export async function placeCalendarPager({
   const pageWidth = pagerPageWidth(width)
   const contentWidth = CONTENT_SLOTS * pageWidth
   await act(async () => {
+    fireEvent(screen.getByTestId("owned-calendar-pager"), "layout", {
+      nativeEvent: {
+        layout: { x: 0, y: 0, width: pageWidth, height: height },
+      },
+    })
     fireEvent(
       screen.getByTestId("owned-calendar-pager"),
       "contentSizeChange",

@@ -106,8 +106,10 @@ finger down and no momentum. iOS uses `pagingEnabled`; Android uses `snapToInter
 scroll over natively. Scroll events whose layout or content width differs from the last placement
 are ignored, which filters stale geometry and the previous mode's content. A page that stays in
 the window never remounts, so a crossing renders only the page that enters it; the shell
-presents the next pages to enter one frame after each crossing. Day/Week switches remount the
-horizontal view (`key=mode`). The controller stores only the committed date: the shell reports
+presents the next pages to enter one frame after each crossing. A page-space change remounts the
+horizontal view (`key=mode:firstWeekday`). Placement waits for both the viewport layout and
+content-size layout; a matching native scroll event reveals the dated strip. The controller
+stores only the committed date: the shell reports
 `onDateCommitted` once per settle. Today and `focusDate` animate one page when motion is
 allowed; a distant target first jumps beside that page, then animates the final page. Live
 reduced motion uses one direct jump. Mode switches replace geometry without animation.

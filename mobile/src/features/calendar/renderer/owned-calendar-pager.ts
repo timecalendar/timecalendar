@@ -125,6 +125,9 @@ export function useOwnedCalendarPager({
   const restSnaps = useSharedValue(0)
   const appliedPlacement = useRef(0)
   const placedFor = useRef<string | null>(null)
+  const laidOutFor = useRef<string | null>(null)
+  const contentLaidOutFor = useRef<string | null>(null)
+  const resetSpaceKey = useRef<string | null>(null)
   const reported = useRef({ spaceKey, index: anchorIndex })
   const crossingStartedAt = useRef(0)
   // The scroll handler worklet captures the crossing and settle callbacks. If
@@ -136,6 +139,7 @@ export function useOwnedCalendarPager({
   })
 
   const onCross = (index: PageIndex) => {
+    if (resetSpaceKey.current !== spaceKey) return
     crossingStartedAt.current = pagingLog.now()
     setState((current) =>
       current.center === index ? current : { ...current, center: index },
@@ -144,6 +148,7 @@ export function useOwnedCalendarPager({
   }
 
   const onSettle = (index: PageIndex) => {
+    if (resetSpaceKey.current !== spaceKey) return
     reported.current = { spaceKey, index }
     pagingLog.settle(index)
     setState((current) => {
@@ -345,9 +350,25 @@ export function useOwnedCalendarPager({
   }
 
   useLayoutEffect(() => {
+    if (resetSpaceKey.current === spaceKey) return
+    resetSpaceKey.current = spaceKey
+    placedFor.current = null
+    laidOutFor.current = null
+    contentLaidOutFor.current = null
     positioned.set(false)
     placedWidth.set(0)
-  }, [spaceKey, positioned, placedWidth])
+    settledIndex.set(anchorIndex)
+    navigationTarget.set(null)
+    interruptedTarget.set(null)
+  }, [
+    spaceKey,
+    anchorIndex,
+    positioned,
+    placedWidth,
+    settledIndex,
+    navigationTarget,
+    interruptedTarget,
+  ])
 
   useEffect(() => {
     mounted.set(true)
@@ -362,12 +383,17 @@ export function useOwnedCalendarPager({
     scheduleOnUI(placeNavigation, window.firstIndex, pageWidth, placement)
   })
 
-  // The content view lays out after mount and after every page-width change,
-  // so this is the first moment a placement cannot be clamped to a stale size.
-  const onContentSizeChange = (width: number) => {
-    if (pageWidth <= 0 || Math.abs(width - contentWidth) > 1) return
+  // The content can report its size before the viewport has laid out. A
+  // scrollTo issued then may clamp to zero and produce no confirming scroll.
+  const placeAfterLayout = () => {
     const key = `${spaceKey}:${pageWidth}`
-    if (placedFor.current === key) return
+    if (
+      resetSpaceKey.current !== spaceKey ||
+      placedFor.current === key ||
+      laidOutFor.current !== key ||
+      contentLaidOutFor.current !== key
+    )
+      return
     placedFor.current = key
     const { placement } = state
     const pending = appliedPlacement.current !== placement.id
@@ -375,6 +401,20 @@ export function useOwnedCalendarPager({
     if (pending)
       scheduleOnUI(placeNavigation, window.firstIndex, pageWidth, placement)
     else scheduleOnUI(place, window.firstIndex, pageWidth, state.settled, false)
+  }
+
+  const onPagerLayout = (width: number) => {
+    if (resetSpaceKey.current !== spaceKey) return
+    if (pageWidth <= 0 || Math.abs(width - pageWidth) > 1) return
+    laidOutFor.current = `${spaceKey}:${pageWidth}`
+    placeAfterLayout()
+  }
+
+  const onContentSizeChange = (width: number) => {
+    if (resetSpaceKey.current !== spaceKey) return
+    if (pageWidth <= 0 || Math.abs(width - contentWidth) > 1) return
+    contentLaidOutFor.current = `${spaceKey}:${pageWidth}`
+    placeAfterLayout()
   }
 
   const jump = (index: PageIndex, animated: boolean) => {
@@ -487,11 +527,13 @@ export function useOwnedCalendarPager({
   }
 
   return {
+    spaceKey,
     scrollRef,
     scrollHandler,
     scrollProps,
     nativeGesture,
     onContentSizeChange,
+    onPagerLayout,
     scrollX,
     positioned,
     pageWidth,

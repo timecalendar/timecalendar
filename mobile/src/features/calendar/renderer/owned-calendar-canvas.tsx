@@ -19,7 +19,6 @@ import Animated, {
 import { ThemedText } from "@/components/themed-text"
 import {
   type AppLocale,
-  type CalendarTimelineMode,
   formatHourStartLabel,
   fullDayMajorMinutes,
   fullDayMinorMinutes,
@@ -43,17 +42,18 @@ const IS_IOS = Platform.OS === "ios"
 const IS_ANDROID = Platform.OS === "android"
 
 export type HorizontalPager = {
+  spaceKey: string
   scrollHandler: ComponentProps<typeof Animated.ScrollView>["onScroll"]
   scrollProps: ScrollLockProps
   nativeGesture: GestureType
   onContentSizeChange: (width: number) => void
+  onPagerLayout: (width: number) => void
   positioned: SharedValue<boolean>
   pageWidth: number
   contentWidth: number
 }
 
 export function OwnedCalendarCanvas({
-  mode,
   locale,
   uses24HourClock,
   initialVerticalOffset,
@@ -72,7 +72,6 @@ export function OwnedCalendarCanvas({
   pager,
   children,
 }: {
-  mode: CalendarTimelineMode
   locale: AppLocale
   uses24HourClock: boolean | null
   initialVerticalOffset: number
@@ -145,7 +144,11 @@ export function OwnedCalendarCanvas({
             color={theme.separator}
           />
           {pager.pageWidth > 0 && (
-            <HorizontalPagerView key={mode} scrollRef={pagerRef} pager={pager}>
+            <HorizontalPagerView
+              key={pager.spaceKey}
+              scrollRef={pagerRef}
+              pager={pager}
+            >
               {children}
             </HorizontalPagerView>
           )}
@@ -190,6 +193,9 @@ function HorizontalPagerView({
         importantForAccessibility="no"
         onScroll={pager.scrollHandler}
         onContentSizeChange={pager.onContentSizeChange}
+        onLayout={({ nativeEvent }) =>
+          pager.onPagerLayout(nativeEvent.layout.width)
+        }
         style={[styles.pager, { width: pager.pageWidth }, visibility]}
         contentContainerStyle={{
           width: pager.contentWidth,

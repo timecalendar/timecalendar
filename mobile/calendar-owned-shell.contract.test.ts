@@ -203,7 +203,7 @@ describe("owned Calendar paging repository contract", () => {
     expect(renderer.match(/<Animated\.ScrollView\s+ref=/g)).toHaveLength(2)
     expect(renderer.match(/^\s+horizontal$/gm)).toHaveLength(1)
     expect(pagerView).toMatch(/^\s+horizontal$/m)
-    expect(canvas).toContain("<HorizontalPagerView key={mode}")
+    expect(canvas).toMatch(/<HorizontalPagerView\s+key=\{pager\.spaceKey\}/)
     expect(renderer).toMatch(/contentInsetAdjustmentBehavior="automatic"/)
     expect(canvas).toContain('const IS_IOS = Platform.OS === "ios"')
     expect(canvas).toContain('const IS_ANDROID = Platform.OS === "android"')
