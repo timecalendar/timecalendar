@@ -548,7 +548,7 @@ describe("CalendarScreen owned shell", () => {
     const first = await render(<CalendarScreen />)
     const pager = await settleCalendarPager()
     await pager.swipe(1)
-    expect(mockAnnounce).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(mockAnnounce).toHaveBeenCalledTimes(1))
     await first.unmount()
     mockAnnounce.mockClear()
 
@@ -620,7 +620,7 @@ describe("CalendarScreen owned shell", () => {
     expect(
       screen.getByTestId("owned-calendar-date-2026-09-14"),
     ).toBeOnTheScreen()
-    expect(mockAnnounce).toHaveBeenCalledTimes(2)
+    await waitFor(() => expect(mockAnnounce).toHaveBeenCalledTimes(2))
   })
 
   it.each([
@@ -836,7 +836,7 @@ describe("CalendarScreen owned shell", () => {
       "accessibilityLabel",
       `${formatMonthYear(destination, "en", ZONE)}, ${formatFullDay(destination, "en", ZONE)}`,
     )
-    expect(mockAnnounce).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(mockAnnounce).toHaveBeenCalledTimes(1))
     expect(mockAnnounce).toHaveBeenCalledWith(
       formatFullDay(destination, "en", ZONE),
     )

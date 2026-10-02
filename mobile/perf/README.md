@@ -67,7 +67,7 @@ node perf/run.mjs --serial 86fa07cc --apk /tmp/timecalendar-perf-<sha>.apk \
   lines to `raw/<scenario>-logcat.txt`.
 - In development and perf builds the Calendar logs `CALENDAR_PAGING` lines (`--logcat
   CALENDAR_PAGING`): `commit center=<page> ms=<crossing to React commit>
-  pageRenders=<pages rendered> slotRenders=<header slots rendered> presentMs=<presentation lookups>`
+  columnRenders=<tile columns rendered> slotRenders=<header slots rendered> presentMs=<presentation lookups>`
   per page crossing, `mount page=<key> total=<count>` per page mount, and `settle page=<page>`.
 - `--scenarios a,b` runs a subset; `--trace` records a Perfetto trace per scenario with
   `perfetto.pbtx` into `raw/<scenario>.pftrace` (open it in ui.perfetto.dev).

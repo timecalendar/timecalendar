@@ -5,8 +5,8 @@ import { isDevVariant } from "@/config/variant"
 const enabled = isDevVariant()
 const counters = { pageMounts: 0, renders: 0, slots: 0, buildMs: 0 }
 
-function countRender(kind: "page" | "slot"): void {
-  if (kind === "page") counters.renders += 1
+function countRender(kind: "column" | "slot"): void {
+  if (kind === "column") counters.renders += 1
   else counters.slots += 1
 }
 
@@ -30,11 +30,11 @@ export const pagingLog = {
   commit(center: number, elapsedMs: number): void {
     if (!enabled) return
     console.log(
-      `CALENDAR_PAGING commit center=${center} ms=${elapsedMs.toFixed(1)} pageRenders=${counters.renders} slotRenders=${counters.slots} presentMs=${counters.buildMs.toFixed(1)}`,
+      `CALENDAR_PAGING commit center=${center} ms=${elapsedMs.toFixed(1)} columnRenders=${counters.renders} slotRenders=${counters.slots} presentMs=${counters.buildMs.toFixed(1)}`,
     )
     resetDiagnostics()
   },
-  render(kind: "page" | "slot"): void {
+  render(kind: "column" | "slot"): void {
     if (enabled) countRender(kind)
   },
   present(elapsedMs: number): void {

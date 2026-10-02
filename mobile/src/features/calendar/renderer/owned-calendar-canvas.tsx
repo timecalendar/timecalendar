@@ -13,7 +13,6 @@ import Animated, {
   type AnimatedRef,
   type ScrollHandlerProcessed,
   type SharedValue,
-  useAnimatedProps,
   useAnimatedStyle,
 } from "react-native-reanimated"
 
@@ -22,35 +21,22 @@ import {
   type AppLocale,
   type CalendarTimelineMode,
   formatHourStartLabel,
-  FULL_DAY_END_MINUTE,
-  FULL_DAY_START_MINUTE,
   fullDayMajorMinutes,
   fullDayMinorMinutes,
-  gridContentHeight,
   HOURS_COLUMN_WIDTH,
-  MAX_PIXELS_PER_HOUR,
 } from "@/features/calendar/data"
 import { useTheme } from "@/theme"
 
-import { useMinutePositionStyle } from "./owned-calendar-page"
+import {
+  dayRowHeight,
+  PAGE_CONTENT_HEIGHT,
+  type ScrollLockProps,
+  useMinutePositionStyle,
+} from "./owned-calendar-geometry"
 
 const MAJOR_MINUTES = fullDayMajorMinutes()
 const MINOR_MINUTES = fullDayMinorMinutes()
 const HOURS = Array.from({ length: 23 }, (_, index) => index + 1)
-
-function renderHeight(pixelsPerHour: number) {
-  "worklet"
-  return (
-    gridContentHeight(
-      FULL_DAY_START_MINUTE,
-      FULL_DAY_END_MINUTE,
-      pixelsPerHour,
-    ) + StyleSheet.hairlineWidth
-  )
-}
-
-/** Pages are laid out once at the tallest zoom; the day row clips them to the live scale. */
-export const PAGE_CONTENT_HEIGHT = renderHeight(MAX_PIXELS_PER_HOUR)
 
 export type HorizontalPager = {
   scrollHandler: ComponentProps<typeof Animated.ScrollView>["onScroll"]
@@ -107,7 +93,7 @@ export function OwnedCalendarCanvas({
 }) {
   const theme = useTheme()
   const fullDayRowStyle = useAnimatedStyle(() => ({
-    height: renderHeight(pixelsPerHour.get()),
+    height: dayRowHeight(pixelsPerHour.get()),
   }))
 
   return (
@@ -370,13 +356,6 @@ function GridLine({
     />
   )
 }
-
-/** A scroll view's `scrollEnabled`, locked while a pinch holds it. */
-export function useScrollLockProps(scrollLocked: SharedValue<boolean>) {
-  return useAnimatedProps(() => ({ scrollEnabled: !scrollLocked.get() }))
-}
-
-type ScrollLockProps = ReturnType<typeof useScrollLockProps>
 
 const styles = StyleSheet.create({
   viewport: { flex: 1 },

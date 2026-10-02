@@ -1,25 +1,9 @@
-import {
-  type Ref,
-  useEffect,
-  useImperativeHandle,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react"
+import { type Ref, useImperativeHandle, useState } from "react"
 import { useTranslation } from "react-i18next"
-import {
-  AccessibilityInfo,
-  findNodeHandle,
-  Modal,
-  Pressable,
-  StyleSheet,
-  type Text,
-  View,
-} from "react-native"
+import { StyleSheet, View } from "react-native"
 import { GestureDetector } from "react-native-gesture-handler"
 import { useReducedMotion } from "react-native-reanimated"
 
-import { ThemedText } from "@/components/themed-text"
 import {
   type AppLocale,
   type CalendarTimelineMode,
@@ -39,12 +23,17 @@ import {
 } from "@/features/calendar/data"
 import { useTheme } from "@/theme"
 
+import { OwnedCalendarCanvas } from "./owned-calendar-canvas"
+import { EventChooser } from "./owned-calendar-chooser"
+import { useOwnedCalendarCoordinator } from "./owned-calendar-coordinator"
 import {
-  OwnedCalendarCanvas,
+  type CalendarPageTitleTarget,
+  useCalendarFocusRestoration,
+} from "./owned-calendar-focus"
+import {
   PAGE_CONTENT_HEIGHT,
   useScrollLockProps,
-} from "./owned-calendar-canvas"
-import { useOwnedCalendarCoordinator } from "./owned-calendar-coordinator"
+} from "./owned-calendar-geometry"
 import { OwnedCalendarDateHeader } from "./owned-calendar-header"
 import { CalendarPage, type PageEventHandlers } from "./owned-calendar-page"
 import { pagerPageWidth, useOwnedCalendarPager } from "./owned-calendar-pager"
@@ -93,86 +82,7 @@ type OwnedCalendarShellProps = {
     | undefined
 }
 
-type FocusTarget = { node: View; dateKey: string; minute: number }
-type FocusMemory = { key: string; dateKey: string }
-export type CalendarPageTitleTarget = {
-  node: Text
-  visibleTitle: string
-  label: string
-  contextHeading: string
-  pageKey: string
-}
-type FocusContext = { pageKey: string; ready: boolean }
-
 const ignore = () => undefined
-
-function requestRestoredFocus({
-  targets,
-  headings,
-  pageTitleTarget,
-  heading,
-  pageKey,
-  currentColumns,
-  lastFocused,
-  lastRestore,
-  restoreKey,
-  pixelsPerHour,
-  scrollTo,
-  isCurrent,
-  onFocused,
-}: {
-  targets: Map<string, FocusTarget>
-  headings: Map<string, View>
-  pageTitleTarget: CalendarPageTitleTarget | null | undefined
-  heading: string
-  pageKey: string
-  currentColumns: readonly {
-    key: string
-    tiles: readonly { key: string }[]
-  }[]
-  lastFocused: { current: FocusMemory | null }
-  lastRestore: { current: string | null }
-  restoreKey: string
-  pixelsPerHour: number
-  scrollTo: (y: number) => void
-  isCurrent: () => boolean
-  onFocused?: (titleFocused: boolean) => void
-}): number | "waiting" | null {
-  if (lastRestore.current === restoreKey || lastFocused.current === null)
-    return null
-  const last = lastFocused.current
-  const target = targets.get(last.key)
-  const identityPresent = currentColumns.some((column) =>
-    column.tiles.some((tile) => tile.key === last.key),
-  )
-  const datePresent = currentColumns.some(
-    (column) => column.key === last.dateKey,
-  )
-  if (identityPresent && target === undefined) return "waiting"
-  const dateNode = datePresent ? headings.get(last.dateKey) : undefined
-  if (datePresent && target === undefined && !dateNode) return "waiting"
-  const title =
-    pageTitleTarget?.pageKey === pageKey &&
-    pageTitleTarget.contextHeading === heading &&
-    pageTitleTarget.label.includes(pageTitleTarget.visibleTitle) &&
-    pageTitleTarget.label.includes(heading)
-      ? pageTitleTarget
-      : null
-  const node = target?.node ?? dateNode ?? title?.node
-  if (node === null || node === undefined) return "waiting"
-  const titleFocused = node === title?.node
-  if (target !== undefined)
-    scrollTo(Math.max(0, (target.minute / 60) * pixelsPerHour - 96))
-  return requestAnimationFrame(() => {
-    if (!isCurrent() || lastRestore.current === restoreKey) return
-    const handle = findNodeHandle(node)
-    if (handle !== null) {
-      lastRestore.current = restoreKey
-      AccessibilityInfo.setAccessibilityFocus(handle)
-      onFocused?.(titleFocused)
-    }
-  })
-}
 
 // Props and the pager are destructured, never spread: the compiler treats a
 // rest object as mutable, which would rebuild every page's handlers each render.
@@ -241,10 +151,12 @@ export function OwnedCalendarShell({
       onDateCommitted(pageAnchor(space, index, displayZone)),
     onCenterChange: (center) => {
       onPageWindowChange?.(center)
-      // Builds the next pages to enter the window after this commit, so a
-      // crossing only mounts a page whose presentation is already cached.
-      presentPage(center - MOUNTED_PAGE_RADIUS - 1)
-      presentPage(center + MOUNTED_PAGE_RADIUS + 1)
+      // Builds the next pages to enter the window a frame after this crossing
+      // commits, so the next crossing mounts a page that is already presented.
+      requestAnimationFrame(() => {
+        presentPage(center - MOUNTED_PAGE_RADIUS - 1)
+        presentPage(center + MOUNTED_PAGE_RADIUS + 1)
+      })
     },
   })
   const pager = {
@@ -264,145 +176,19 @@ export function OwnedCalendarShell({
     !moving &&
     committedKey === pageKey(space, anchorIndex)
 
-  const [targets] = useState(() => new Map<string, FocusTarget>())
-  const [headings] = useState(() => new Map<string, View>())
   const [chooser, setChooser] = useState<readonly PageTileV1[] | null>(null)
-  const focusContext = useRef<FocusContext>({
-    pageKey: committedKey,
-    ready: false,
-  })
-  const titleContext = useRef(pageTitleTarget)
-  const returnFrame = useRef<number | null>(null)
-  useLayoutEffect(() => {
-    titleContext.current = pageTitleTarget
-    focusContext.current = {
-      pageKey: committedKey,
-      ready: contextReady && routeFocused !== false,
-    }
-    if (returnFrame.current !== null) {
-      cancelAnimationFrame(returnFrame.current)
-      returnFrame.current = null
-    }
-  }, [committedKey, contextReady, pageTitleTarget, routeFocused])
-  const lastFocused = useRef<FocusMemory | null>(null)
-  const lastRestore = useRef<string | null>(null)
-  const lastAutoContext = useRef<string | null>(null)
-  const returnEpoch = useRef(0)
-  const pendingReturn = useRef(false)
-  const currentColumns = committed.columns
-  const isFocusContextCurrent = (key: string) =>
-    focusContext.current.pageKey === key && focusContext.current.ready
-  const registerTarget = (
-    key: string,
-    dateKey: string,
-    minute: number,
-    node: View | null,
-  ) => {
-    if (node === null) targets.delete(key)
-    else if (!targets.has(key)) targets.set(key, { node, dateKey, minute })
-  }
-  const rememberTarget = (key: string, dateKey: string) => {
-    if (
-      !isFocusContextCurrent(focusContext.current.pageKey) ||
-      targets.get(key)?.dateKey !== dateKey ||
-      (lastFocused.current?.key === key &&
-        lastFocused.current.dateKey === dateKey)
-    )
-      return
-    lastFocused.current = { key, dateKey }
-  }
-  useEffect(() => {
-    if (routeFocused === false || !contextReady) return
-    if (lastAutoContext.current === committedKey) return
-    const frame = requestRestoredFocus({
-      targets,
-      headings,
+  const { registerTarget, rememberTarget, registerHeading, restoreFocus } =
+    useCalendarFocusRestoration({
+      committedKey,
+      currentColumns: committed.columns,
+      contextReady,
+      routeFocused,
       pageTitleTarget,
       heading,
-      pageKey: committedKey,
-      currentColumns,
-      lastFocused,
-      lastRestore,
-      restoreKey: `${committedKey}:${returnEpoch.current}`,
-      pixelsPerHour: coordinator.pixelsPerHour.get(),
-      scrollTo: (y) =>
-        coordinator.scrollRef.current?.scrollTo({ y, animated: false }),
-      isCurrent: () =>
-        focusContext.current.pageKey === committedKey &&
-        focusContext.current.ready &&
-        titleContext.current === pageTitleTarget,
-      onFocused: (titleFocused) => {
-        pendingReturn.current = false
-        lastAutoContext.current = committedKey
-        onContextSettled?.(committedKey, titleFocused)
-      },
+      onContextSettled,
+      pixelsPerHour: coordinator.pixelsPerHour,
+      scrollRef: coordinator.scrollRef,
     })
-    if (frame === null) {
-      lastAutoContext.current = committedKey
-      onContextSettled?.(committedKey, false)
-    }
-    if (typeof frame === "number") return () => cancelAnimationFrame(frame)
-  }, [
-    committedKey,
-    contextReady,
-    coordinator.pixelsPerHour,
-    coordinator.scrollRef,
-    currentColumns,
-    heading,
-    headings,
-    onContextSettled,
-    pageTitleTarget,
-    routeFocused,
-    targets,
-  ])
-  const restoreFocus = () => {
-    returnEpoch.current += 1
-    if (routeFocused === false || !contextReady) return
-    if (returnFrame.current !== null) cancelAnimationFrame(returnFrame.current)
-    const frame = requestRestoredFocus({
-      targets,
-      headings,
-      pageTitleTarget,
-      heading,
-      pageKey: committedKey,
-      currentColumns,
-      lastFocused,
-      lastRestore,
-      restoreKey: `${committedKey}:${returnEpoch.current}`,
-      pixelsPerHour: coordinator.pixelsPerHour.get(),
-      scrollTo: (y) =>
-        coordinator.scrollRef.current?.scrollTo({ y, animated: false }),
-      isCurrent: () =>
-        isFocusContextCurrent(committedKey) &&
-        titleContext.current === pageTitleTarget,
-      onFocused: () => {
-        pendingReturn.current = false
-      },
-    })
-    pendingReturn.current = frame !== null
-    returnFrame.current = typeof frame === "number" ? frame : null
-  }
-  const restoreFocusRef = useRef(restoreFocus)
-  useLayoutEffect(() => {
-    restoreFocusRef.current = restoreFocus
-  })
-  useEffect(() => {
-    if (
-      pendingReturn.current &&
-      routeFocused !== false &&
-      contextReady &&
-      pageTitleTarget !== null &&
-      pageTitleTarget !== undefined
-    )
-      restoreFocusRef.current()
-  }, [committedKey, contextReady, pageTitleTarget, routeFocused])
-  useEffect(
-    () => () => {
-      if (returnFrame.current !== null)
-        cancelAnimationFrame(returnFrame.current)
-    },
-    [],
-  )
 
   const { isVerticalMovementOwned } = coordinator
   const isEventActivationBlocked = () => isVerticalMovementOwned() || isMoving()
@@ -458,10 +244,7 @@ export function OwnedCalendarShell({
       style={[styles.shell, { backgroundColor: theme.background }]}
     >
       <OwnedCalendarDateHeader
-        registerHeading={(dateKey, node) => {
-          if (node === null) headings.delete(dateKey)
-          else headings.set(dateKey, node)
-        }}
+        registerHeading={registerHeading}
         pages={pages}
         pageWidth={pageWidth}
         contentWidth={contentWidth}
@@ -513,63 +296,18 @@ export function OwnedCalendarShell({
           ))}
         </OwnedCalendarCanvas>
       </GestureDetector>
-      <Modal
-        testID="owned-calendar-event-chooser-modal"
-        visible={chooser !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setChooser(null)}
-      >
-        <View style={styles.chooserBackdrop}>
-          <View
-            testID="owned-calendar-event-chooser"
-            accessibilityViewIsModal
-            accessibilityLabel={t("calendar.event.chooser.title")}
-            style={[
-              styles.chooser,
-              { backgroundColor: theme.backgroundElement },
-            ]}
-          >
-            <ThemedText type="subtitle">
-              {t("calendar.event.chooser.title")}
-            </ThemedText>
-            {chooser?.map((tile) => (
-              <Pressable
-                key={tile.key}
-                accessibilityRole="button"
-                accessibilityLabel={tile.accessibilityLabel}
-                onPress={() => {
-                  setChooser(null)
-                  onEventPress(tile.identity.uid)
-                }}
-                style={styles.chooserOption}
-              >
-                <ThemedText>{tile.accessibilityLabel}</ThemedText>
-              </Pressable>
-            ))}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t("calendar.event.chooser.cancel")}
-              onPress={() => setChooser(null)}
-              style={styles.chooserOption}
-            >
-              <ThemedText>{t("calendar.event.chooser.cancel")}</ThemedText>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
+      <EventChooser
+        tiles={chooser}
+        onChoose={(uid) => {
+          setChooser(null)
+          onEventPress(uid)
+        }}
+        onClose={() => setChooser(null)}
+      />
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   shell: { flex: 1 },
-  chooserBackdrop: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
-  },
-  chooser: { borderRadius: 12, padding: 16, gap: 8 },
-  chooserOption: { minHeight: 48, justifyContent: "center", padding: 8 },
 })

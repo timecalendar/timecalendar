@@ -1,4 +1,3 @@
-import { memo } from "react"
 import { StyleSheet, View } from "react-native"
 import Animated, {
   type SharedValue,
@@ -89,7 +88,7 @@ export function OwnedCalendarDateHeader({
   )
 }
 
-const HeaderSlot = memo(function HeaderSlot({
+function HeaderSlot({
   presentation,
   left,
   width,
@@ -171,7 +170,7 @@ const HeaderSlot = memo(function HeaderSlot({
       })}
     </View>
   )
-})
+}
 
 const styles = StyleSheet.create({
   dateHeader: {

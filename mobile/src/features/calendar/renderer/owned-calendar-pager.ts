@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useEffectEvent,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { PixelRatio, Platform } from "react-native"
 import { Gesture, type GestureType } from "react-native-gesture-handler"
 import Animated, {
@@ -28,7 +22,7 @@ import {
   planPageRebase,
 } from "@/features/calendar/data"
 
-import { useScrollLockProps } from "./owned-calendar-canvas"
+import { useScrollLockProps } from "./owned-calendar-geometry"
 import { pagingLog } from "./owned-calendar-paging-log"
 
 const PIXEL_RATIO = PixelRatio.get()
@@ -132,6 +126,7 @@ export function useOwnedCalendarPager({
     setState((current) =>
       current.center === index ? current : { ...current, center: index },
     )
+    onCenterChange(index)
   }
 
   const onSettle = (index: PageIndex) => {
@@ -155,6 +150,7 @@ export function useOwnedCalendarPager({
             }),
       }
     })
+    onCenterChange(index)
     onSettled(index)
   }
 
@@ -340,13 +336,6 @@ export function useOwnedCalendarPager({
     jump(anchorIndex, false)
   }, [anchorIndex, spaceKey])
 
-  const reportCenter = useEffectEvent((center: PageIndex) => {
-    onCenterChange(center)
-  })
-  useEffect(() => {
-    reportCenter(state.center)
-  }, [state.center])
-
   useLayoutEffect(() => {
     if (crossingStartedAt.current === 0) return
     pagingLog.commit(state.center, pagingLog.now() - crossingStartedAt.current)
@@ -407,7 +396,9 @@ export function useOwnedCalendarPager({
     moving: state.center !== state.settled || state.settled !== anchorIndex,
     isMoving: () => dragging.get() || momentum.get(),
     pageLeft: (index: PageIndex) => pageSlot(window, index) * pageWidth,
-    step: (direction: -1 | 1, animated: boolean) =>
-      jump(state.settled + direction, animated),
+    step: (direction: -1 | 1, animated: boolean) => {
+      onCenterChange(state.settled + direction)
+      jump(state.settled + direction, animated)
+    },
   }
 }

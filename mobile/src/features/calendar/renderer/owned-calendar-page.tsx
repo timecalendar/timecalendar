@@ -1,5 +1,5 @@
 import type { TFunction } from "i18next"
-import { memo, useEffect } from "react"
+import { useEffect } from "react"
 import {
   type LayoutChangeEvent,
   Platform,
@@ -14,8 +14,6 @@ import Animated, {
 
 import { ThemedText } from "@/components/themed-text"
 import {
-  FULL_DAY_START_MINUTE,
-  minuteToPixel,
   type PagePresentationV1,
   type PageTileV1,
   planTargetConflicts,
@@ -24,6 +22,10 @@ import { ChecklistProgressIndicator } from "@/features/event-checklists"
 import { useTheme } from "@/theme"
 
 import CalendarFocusObserverView from "./calendar-focus-observer"
+import {
+  horizontalRectangleStyle,
+  useMinutePositionStyle,
+} from "./owned-calendar-geometry"
 import { pagingLog } from "./owned-calendar-paging-log"
 import type { OwnedCalendarProbeDiagnostic } from "./owned-calendar-shell"
 
@@ -45,18 +47,6 @@ export type PageEventHandlers = {
   onProbeDiagnostic?:
     | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
     | undefined
-}
-
-export function useMinutePositionStyle(
-  minute: number,
-  pixelsPerHour: SharedValue<number>,
-) {
-  return useAnimatedStyle(() => ({
-    top: minuteToPixel(minute, {
-      startMinute: FULL_DAY_START_MINUTE,
-      pixelsPerHour: pixelsPerHour.get(),
-    }),
-  }))
 }
 
 function liveEventVisualGeometry(
@@ -86,23 +76,12 @@ function liveEventInteractionGeometry(
   }
 }
 
-export function horizontalRectangleStyle(rectangle: {
-  left: number
-  right: number
-}) {
-  return {
-    left: `${rectangle.left * 100}%` as const,
-    right:
-      rectangle.right === 1 ? 2 : (`${(1 - rectangle.right) * 100}%` as const),
-  }
-}
-
 /**
  * One timeline page. Its presentation is frozen per page key and its props are
  * stable while it stays in the window, so a page crossing renders only the page
  * that enters the window.
  */
-export const CalendarPage = memo(function CalendarPage({
+export function CalendarPage({
   presentation,
   left,
   width,
@@ -131,7 +110,6 @@ export const CalendarPage = memo(function CalendarPage({
 }) {
   const theme = useTheme()
   const { pageKey } = presentation
-  pagingLog.render("page")
   useEffect(() => {
     pagingLog.mount(pageKey)
   }, [pageKey])
@@ -188,7 +166,7 @@ export const CalendarPage = memo(function CalendarPage({
       </View>
     </View>
   )
-})
+}
 
 function TileColumn({
   dateKey,
@@ -207,6 +185,7 @@ function TileColumn({
   handlers: PageEventHandlers
   t: TFunction
 }) {
+  pagingLog.render("column")
   if (!committed)
     return (
       <View pointerEvents="none" style={styles.tileColumn}>

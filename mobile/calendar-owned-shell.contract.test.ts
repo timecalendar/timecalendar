@@ -119,7 +119,10 @@ describe("owned Calendar paging repository contract", () => {
       "calendar-focus-observer.types.ts",
       "index.ts",
       "owned-calendar-canvas.tsx",
+      "owned-calendar-chooser.tsx",
       "owned-calendar-coordinator.ts",
+      "owned-calendar-focus.ts",
+      "owned-calendar-geometry.ts",
       "owned-calendar-header.tsx",
       "owned-calendar-page.tsx",
       "owned-calendar-pager.test.tsx",
@@ -233,6 +236,7 @@ describe("owned Calendar paging repository contract", () => {
     const hook = readFileSync(join(dataRoot, "page-presenter.ts"), "utf8")
     const renderer = [
       "owned-calendar-canvas.tsx",
+      "owned-calendar-chooser.tsx",
       "owned-calendar-page.tsx",
       "owned-calendar-shell.tsx",
     ]
@@ -285,6 +289,14 @@ describe("owned Calendar paging repository contract", () => {
       join(rendererRoot, "owned-calendar-shell.tsx"),
       "utf8",
     )
+    const chooser = readFileSync(
+      join(rendererRoot, "owned-calendar-chooser.tsx"),
+      "utf8",
+    )
+    const focus = readFileSync(
+      join(rendererRoot, "owned-calendar-focus.ts"),
+      "utf8",
+    )
     const projection = readFileSync(
       join(root, "src/features/calendar/data/accessibility-projection.ts"),
       "utf8",
@@ -294,19 +306,22 @@ describe("owned Calendar paging repository contract", () => {
     expect(page).toContain("<StaticCalendarTile")
     expect(page).toContain("accessibilityElementsHidden={!committed}")
     expect(page).toContain('importantForAccessibility="no-hide-descendants"')
-    expect(page).toContain("memo(function CalendarPage")
+    expect(page).toContain("export function CalendarPage(")
     expect(canvas).toContain("removeClippedSubviews={false}")
     expect(page.match(/<Pressable\b/g)?.length).toBe(2)
-    expect(shell.match(/<Pressable\b/g)?.length).toBe(2)
-    expect(shell.match(/<Modal\b/g)?.length).toBe(1)
-    expect(shell).toContain(
+    expect(chooser.match(/<Pressable\b/g)?.length).toBe(2)
+    expect(chooser.match(/<Modal\b/g)?.length).toBe(1)
+    expect(shell).toContain("<EventChooser")
+    expect(focus).toContain(
       "type FocusTarget = { node: View; dateKey: string; minute: number }",
     )
-    expect(shell).toContain("new Map<string, FocusTarget>()")
-    expect(shell).toContain("coordinator.scrollRef.current?.scrollTo")
-    expect(shell).toContain("AccessibilityInfo.setAccessibilityFocus")
+    expect(focus).toContain("new Map<string, FocusTarget>()")
+    expect(focus).toContain("scrollRef.current?.scrollTo")
+    expect(focus).toContain("AccessibilityInfo.setAccessibilityFocus")
     expect(projection).toContain("entries.sort(compareEntries)")
-    expect([canvas, page, shell, projection].join("\n")).not.toMatch(
+    expect(
+      [canvas, page, shell, chooser, focus, projection].join("\n"),
+    ).not.toMatch(
       /experimental_accessibilityOrder|accessibilityOrder=|<FlatList\b|<SectionList\b/,
     )
   })
