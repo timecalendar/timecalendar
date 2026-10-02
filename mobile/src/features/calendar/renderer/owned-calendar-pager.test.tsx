@@ -1,10 +1,11 @@
-import { act, render, screen } from "@testing-library/react-native"
+import { act, fireEvent, render, screen } from "@testing-library/react-native"
 import { Platform } from "react-native"
 import * as Reanimated from "react-native-reanimated"
 
 import {
   buildPagePresentation,
   epochDayKey,
+  PAGE_WINDOW_RADIUS,
   type PageIndex,
   pageIndexOfInstant,
   type PagePresentationV1,
@@ -17,6 +18,7 @@ import {
   placeCalendarPager,
 } from "@/test-support/owned-calendar/pager-driver"
 
+import { pagerPageWidth } from "./owned-calendar-pager"
 import { OwnedCalendarShell } from "./owned-calendar-shell"
 
 jest.mock("@/hooks/use-color-scheme", () => ({
@@ -283,5 +285,61 @@ describe("owned Calendar windowed pager", () => {
     ])
     scrollTo.mockRestore()
     os.restore()
+  })
+
+  it("settles a fling grabbed and released without moving, which sends no end-drag", async () => {
+    const { onDateCommitted, pager } = await renderShell()
+
+    await act(async () => {
+      pager.swipeWithoutSettling(0, 0.6, 0.8)
+      pager.send(0.8, "onScrollBeginDrag")
+      pager.send(0.8, "onMomentumScrollBegin")
+      pager.send(1)
+      pager.send(1, "onMomentumScrollEnd")
+    })
+
+    expect(
+      onDateCommitted.mock.calls.map(([date]: [Date]) =>
+        date.toISOString().slice(0, 10),
+      ),
+    ).toEqual([weekStartKey(ANCHOR_INDEX + 1)])
+  })
+
+  it("ignores scrolls during a rotation and re-places the settled page at the new width", async () => {
+    const scrollTo = jest.spyOn(Reanimated, "scrollTo")
+    const { onDateCommitted, pager } = await renderShell()
+    await pager.swipe(0, 1)
+    scrollTo.mockClear()
+    const rotatedWidth = pagerPageWidth(800)
+    const rotatedContent = (2 * PAGE_WINDOW_RADIUS + 1) * rotatedWidth
+
+    await act(async () => {
+      fireEvent(screen.getByTestId("owned-calendar-canvas"), "layout", {
+        nativeEvent: { layout: { x: 0, y: 0, width: 800, height: 400 } },
+      })
+    })
+    await act(async () => {
+      screen.getByTestId("owned-calendar-pager").props.onScroll({
+        nativeEvent: {
+          contentOffset: { x: pager.origin + 84 * pager.pageWidth, y: 0 },
+          layoutMeasurement: { width: rotatedWidth, height: 1000 },
+          contentSize: { width: pager.contentWidth, height: 1000 },
+        },
+      })
+      fireEvent(
+        screen.getByTestId("owned-calendar-pager"),
+        "contentSizeChange",
+        rotatedContent,
+        1000,
+      )
+    })
+    await flushUiThread()
+
+    expect(onDateCommitted).toHaveBeenCalledTimes(1)
+    expect(screen.queryByTestId(pageId(ANCHOR_INDEX + 84), HIDDEN)).toBeNull()
+    expect(scrollTo.mock.calls.map((call) => call.slice(1))).toEqual([
+      [(PAGE_WINDOW_RADIUS + 1) * rotatedWidth, 0, false],
+    ])
+    scrollTo.mockRestore()
   })
 })

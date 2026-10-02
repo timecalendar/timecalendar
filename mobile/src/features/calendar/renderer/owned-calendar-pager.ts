@@ -246,7 +246,10 @@ export function useOwnedCalendarPager({
       }
       settleIfAligned(x)
     },
+    // iOS sends no end-drag for a grab released without moving mid-fling;
+    // the deceleration that resumes is the drag's end.
     onMomentumBegin: () => {
+      dragging.set(false)
       momentum.set(true)
     },
     onMomentumEnd: (event) => {

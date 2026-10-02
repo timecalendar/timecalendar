@@ -179,7 +179,6 @@ export function OwnedCalendarCanvas({
             pixelsPerHour={pixelsPerHour}
           />
           <HourLines
-            width={pager.pageWidth}
             pixelsPerHour={pixelsPerHour}
             background={theme.backgroundElement}
             color={theme.separator}
@@ -303,13 +302,13 @@ function HourLabel({
 }
 
 /** One hour-line layer shared by every page, behind the transparent pages. */
+// It spans the viewport rather than the measured page width, so the grid is
+// already drawn while the pager waits for its first layout and placement.
 function HourLines({
-  width,
   pixelsPerHour,
   background,
   color,
 }: {
-  width: number
   pixelsPerHour: SharedValue<number>
   background: string
   color: string
@@ -320,7 +319,7 @@ function HourLines({
       pointerEvents="none"
       accessible={false}
       importantForAccessibility="no-hide-descendants"
-      style={[styles.hourLines, { width, backgroundColor: background }]}
+      style={[styles.hourLines, { backgroundColor: background }]}
     >
       {MINOR_MINUTES.map((minute) => (
         <GridLine
@@ -399,6 +398,7 @@ const styles = StyleSheet.create({
   hourLines: {
     position: "absolute",
     top: 0,
+    right: 0,
     bottom: 0,
     left: HOURS_COLUMN_WIDTH,
   },
