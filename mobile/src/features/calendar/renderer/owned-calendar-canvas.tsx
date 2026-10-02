@@ -24,6 +24,7 @@ import {
   fullDayMinorMinutes,
   HOURS_COLUMN_WIDTH,
   minutePositionTop,
+  PAGE_WINDOW_RADIUS,
 } from "@/features/calendar/data"
 import { useTheme } from "@/theme"
 
@@ -69,6 +70,7 @@ export function OwnedCalendarCanvas({
   pixelsPerHour,
   settledPixelsPerHour,
   pagerRef,
+  pagerProbeRef,
   pager,
   children,
 }: {
@@ -87,6 +89,7 @@ export function OwnedCalendarCanvas({
   pixelsPerHour: SharedValue<number>
   settledPixelsPerHour: number
   pagerRef: AnimatedRef<Animated.ScrollView>
+  pagerProbeRef: AnimatedRef<Animated.View>
   pager: HorizontalPager
   children: ReactNode
 }) {
@@ -147,6 +150,7 @@ export function OwnedCalendarCanvas({
             <HorizontalPagerView
               key={pager.spaceKey}
               scrollRef={pagerRef}
+              probeRef={pagerProbeRef}
               pager={pager}
             >
               {children}
@@ -163,10 +167,12 @@ export function OwnedCalendarCanvas({
 // `scrollTo` once its content has laid out and stays hidden until it has moved.
 function HorizontalPagerView({
   scrollRef,
+  probeRef,
   pager,
   children,
 }: {
   scrollRef: AnimatedRef<Animated.ScrollView>
+  probeRef: AnimatedRef<Animated.View>
   pager: HorizontalPager
   children: ReactNode
 }) {
@@ -202,6 +208,21 @@ function HorizontalPagerView({
           height: PAGE_CONTENT_HEIGHT,
         }}
       >
+        <Animated.View
+          ref={probeRef}
+          collapsable={false}
+          pointerEvents="none"
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          style={{
+            position: "absolute",
+            left: PAGE_WINDOW_RADIUS * pager.pageWidth,
+            top: 0,
+            width: 1,
+            height: 1,
+            opacity: 0,
+          }}
+        />
         {children}
       </Animated.ScrollView>
     </GestureDetector>

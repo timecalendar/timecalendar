@@ -3,6 +3,7 @@ import { PixelRatio, Platform } from "react-native"
 import { Gesture, type GestureType } from "react-native-gesture-handler"
 import Animated, {
   type AnimatedRef,
+  measure,
   scrollTo,
   type SharedValue,
   useAnimatedReaction,
@@ -232,6 +233,7 @@ export function useOwnedCalendarPager({
   const contentWidth = CONTENT_SLOTS * pageWidth
 
   const scrollRef = useAnimatedRef<Animated.ScrollView>()
+  const probeRef = useAnimatedRef<Animated.View>()
   const scrollX = useSharedValue(0)
   const activeGeneration = useSharedValue(generation)
   const positioned = useSharedValue(false)
@@ -473,6 +475,28 @@ export function useOwnedCalendarPager({
       momentum.set(false)
     }
     scrollTo(scrollRef, (position - first) * width, 0, animated)
+    requestAnimationFrame(() => {
+      "worklet"
+      if (activeGeneration.get() !== generation) return
+      const viewport =
+        typeof scrollRef === "function" && Boolean(scrollRef())
+          ? measure(scrollRef)
+          : null
+      const marker =
+        typeof probeRef === "function" && Boolean(probeRef())
+          ? measure(probeRef)
+          : null
+      scheduleOnRN(pagingLog.placement, "native-position", {
+        generation,
+        viewportX: viewport?.pageX ?? null,
+        markerX: marker?.pageX ?? null,
+        observedOffset:
+          viewport && marker
+            ? PAGE_WINDOW_RADIUS * width - (marker.pageX - viewport.pageX)
+            : null,
+        requestedOffset: (position - first) * width,
+      })
+    })
   }
 
   const placeNavigation = (
@@ -740,6 +764,7 @@ export function useOwnedCalendarPager({
   return {
     spaceKey,
     scrollRef,
+    probeRef,
     scrollHandler,
     scrollProps,
     nativeGesture,
