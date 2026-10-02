@@ -23,6 +23,12 @@ The previous once-per-minute samples compare different Calendar pages and event 
 
 The candidate 30-minute stress sequence changes Day/Week through the existing native view menu every 60 gestures. It first checks that the visible source header matches the settled source page. It then requires a target-mode page mount and two matching reads of the complete visible date-header set at the expected converted page: Week maps to its first day, and Day maps to its containing week. Date nodes need usable on-screen bounds. The observed date keys establish a new page baseline without counting a crossing; native initial placement can produce no settle log. Both directions and gestures in both modes are required for mode coverage. An unavailable or ambiguous menu/UI observation stops the run with a recorded unknown rather than silently claiming coverage. The runner still cannot read Hermes JavaScript heap from `dumpsys meminfo`, and its mixed frame windows cannot satisfy the named P02 gesture gates.
 
+## Bounded UI witness smoke
+
+On 2026-10-02, the installed OnePlus 6 perf package's base APK SHA-256 was `0dddc92023a6c03fa38ed53f061e4b094e93585d4444908e0e35db056e0b4083`. It matched a local P01 diagnostic APK labelled `90a88268`; the APK's full source revision was not independently established in this probe, and it is **not** the `8bebf2df64eb6eef033d190a4864bc8f9fe984cc` harness candidate. The package was already foregrounded. No APK was installed and no app was restarted.
+
+The visible Week header identified page 2981, 2027-02-22 through 2027-02-28. The native menu's Day option produced two complete matching reads of Day page 20871, 2027-02-22. Switching back produced two complete matching reads of Week page 2981. Both transitions had target-mode `CALENDAR_PAGING mount` records and no `settle` record, matching the harness's UI-derived placement rule. The app PID was the same before and after; process start ticks were not sampled, so this smoke does not establish the soak's process-continuity gate. Raw UI XML and logcat are retained outside Git. This is a bounded tooling check, not an exact-revision 500-crossing or 30-minute P03 measurement.
+
 ## Next exact-revision device scenario
 
 1. After the P01 worker releases the OnePlus 6 and PC slot, build a private perf APK on PC WSL from the **full candidate SHA** and match its SHA-256 against the installed perf package; use `adb install -r` only if installation is needed.
