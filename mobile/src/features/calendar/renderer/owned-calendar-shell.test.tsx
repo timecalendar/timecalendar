@@ -670,7 +670,6 @@ describe("OwnedCalendarShell", () => {
       expect(focus).not.toHaveBeenCalled()
       const title = {
         node: titleRef.current!,
-        visibleTitle: "June 2026",
         label: "June 2026, Monday, June 22nd, 2026",
         contextHeading: destination.heading,
         pageKey: destinationPage,

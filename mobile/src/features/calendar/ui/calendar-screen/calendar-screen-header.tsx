@@ -5,7 +5,7 @@ import {
   useLayoutEffect,
   useRef,
 } from "react"
-import { Platform, StyleSheet, Text } from "react-native"
+import { Platform, StyleSheet, Text, useWindowDimensions } from "react-native"
 
 import type { CalendarPageTitleTarget } from "@/features/calendar/renderer"
 import { type CalendarView } from "@/features/settings/prefs"
@@ -20,6 +20,7 @@ import {
 
 export function CalendarScreenHeader({
   title,
+  compactTitle,
   contextHeading,
   pageKey,
   titleTargetActive,
@@ -31,6 +32,7 @@ export function CalendarScreenHeader({
   zoom,
 }: {
   title: string
+  compactTitle: string
   contextHeading: string
   pageKey: string
   titleTargetActive: boolean
@@ -51,6 +53,7 @@ export function CalendarScreenHeader({
             : () => (
                 <CalendarHeaderTitle
                   title={title}
+                  compactTitle={compactTitle}
                   contextHeading={contextHeading}
                   pageKey={pageKey}
                   active={titleTargetActive}
@@ -81,6 +84,7 @@ export function CalendarScreenHeader({
 
 function CalendarHeaderTitle({
   title,
+  compactTitle,
   contextHeading,
   pageKey,
   active,
@@ -88,6 +92,7 @@ function CalendarHeaderTitle({
   onTitleTargetChange,
 }: {
   title: string
+  compactTitle: string
   contextHeading: string
   pageKey: string
   active: boolean
@@ -95,13 +100,14 @@ function CalendarHeaderTitle({
   onTitleTargetChange: Dispatch<SetStateAction<CalendarPageTitleTarget | null>>
 }) {
   const titleRef = useRef<Text>(null)
+  const { fontScale } = useWindowDimensions()
+  const visibleTitle = fontScale >= 2.5 ? compactTitle : title
   const label = `${title}, ${contextHeading}`
   useLayoutEffect(() => {
     const node = titleRef.current
     if (!active || node === null) return
     const target: CalendarPageTitleTarget = {
       node,
-      visibleTitle: title,
       label,
       contextHeading,
       pageKey,
@@ -118,7 +124,7 @@ function CalendarHeaderTitle({
         current?.node === node ? null : current,
       )
     }
-  }, [active, contextHeading, label, onTitleTargetChange, pageKey, title])
+  }, [active, contextHeading, label, onTitleTargetChange, pageKey])
   return (
     <Text
       ref={titleRef}
@@ -126,9 +132,10 @@ function CalendarHeaderTitle({
       accessibilityRole="header"
       accessibilityLabel={active ? label : title}
       numberOfLines={1}
+      maxFontSizeMultiplier={1.75}
       style={[styles.title, { color }]}
     >
-      {title}
+      {visibleTitle}
     </Text>
   )
 }

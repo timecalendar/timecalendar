@@ -20,7 +20,6 @@ type FocusTarget = { node: View; dateKey: string; minute: number }
 type FocusMemory = { key: string; dateKey: string }
 export type CalendarPageTitleTarget = {
   node: Text
-  visibleTitle: string
   label: string
   contextHeading: string
   pageKey: string
@@ -74,7 +73,6 @@ function requestRestoredFocus({
   const title =
     pageTitleTarget?.pageKey === pageKey &&
     pageTitleTarget.contextHeading === heading &&
-    pageTitleTarget.label.includes(pageTitleTarget.visibleTitle) &&
     pageTitleTarget.label.includes(heading)
       ? pageTitleTarget
       : null

@@ -211,6 +211,14 @@ export function formatMonthYear(
   return formatInTimeZone(day, zone, "LLLL yyyy", { locale: LOCALES[locale] })
 }
 
+export function formatCompactMonthYear(
+  day: Date,
+  locale: AppLocale,
+  zone: string,
+): string {
+  return formatInTimeZone(day, zone, "LLL yyyy", { locale: LOCALES[locale] })
+}
+
 // A compact date + time ("15 juin 08:30" / "15 Jun 08:30") for dense rows — the
 // personal-events list and the Android date-time field echo (the two former
 // `toLocaleString` seam-bypass sites).

@@ -1,6 +1,6 @@
 import { useRef } from "react"
 import { useTranslation } from "react-i18next"
-import { Pressable, StyleSheet, View } from "react-native"
+import { Pressable, StyleSheet, useWindowDimensions, View } from "react-native"
 
 import { type MenuComponentRef, MenuView } from "@/components/chrome"
 import { ThemedText } from "@/components/themed-text"
@@ -31,6 +31,7 @@ function CalendarPlatformMenu({
 }: CalendarPlatformMenuProps) {
   const { t } = useTranslation()
   const theme = useTheme()
+  const { fontScale } = useWindowDimensions()
   const menuRef = useRef<MenuComponentRef>(null)
   const labels: Record<CalendarView, string> = {
     day: t("calendar.view.day"),
@@ -97,9 +98,21 @@ function CalendarPlatformMenu({
         style={[styles.target, { minHeight: minimumTarget }]}
       >
         <View
-          style={[styles.pill, { backgroundColor: theme.backgroundElement }]}
+          style={[
+            styles.pill,
+            fontScale >= 2.5 && styles.largeTextPill,
+            { backgroundColor: theme.backgroundElement },
+          ]}
         >
-          <ThemedText type="smallBold">{labels[view]}</ThemedText>
+          <ThemedText
+            type="smallBold"
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.3}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
+          >
+            {labels[view]}
+          </ThemedText>
           <View style={[styles.chevron, { borderColor: theme.primary }]} />
         </View>
       </Pressable>
@@ -131,6 +144,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: Spacing.one,
   },
+  largeTextPill: { paddingHorizontal: 6 },
   chevron: {
     width: 8,
     height: 8,

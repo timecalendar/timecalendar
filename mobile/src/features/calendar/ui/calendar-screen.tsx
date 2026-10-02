@@ -16,6 +16,7 @@ import { isDevVariant } from "@/config/variant"
 import {
   DEFAULT_PIXELS_PER_HOUR,
   eventRoute,
+  formatCompactMonthYear,
   formatFullDay,
   formatMonthYear,
   MAX_PIXELS_PER_HOUR,
@@ -143,6 +144,7 @@ export function CalendarScreen() {
     <ThemedView collapsable={false} style={styles.container}>
       <CalendarScreenHeader
         title={formatMonthYear(selectedDate, locale, displayZone)}
+        compactTitle={formatCompactMonthYear(selectedDate, locale, displayZone)}
         contextHeading={timelineHeading}
         pageKey={pageKey(space, selectedIndex)}
         titleTargetActive={titleTargetActive}
