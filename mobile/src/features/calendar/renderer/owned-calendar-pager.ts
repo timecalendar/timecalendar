@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
-import { PixelRatio } from "react-native"
+import { PixelRatio, Platform } from "react-native"
 import { Gesture, type GestureType } from "react-native-gesture-handler"
 import Animated, {
   scrollTo,
@@ -28,6 +28,8 @@ import { pagingLog } from "./owned-calendar-paging-log"
 const PIXEL_RATIO = PixelRatio.get()
 const ALIGNMENT_TOLERANCE = 1 / PIXEL_RATIO
 const CONTENT_SLOTS = 2 * PAGE_WINDOW_RADIUS + 1
+const REST_FRAMES = 8
+const REST_SNAP_ATTEMPTS = 3
 
 /** The horizontal pager's page width: the viewport beside the hour gutter, on device pixels. */
 export function pagerPageWidth(viewportWidth: number): number {
@@ -104,6 +106,12 @@ export function useOwnedCalendarPager({
   const settledIndex = useSharedValue(anchorIndex)
   const firstIndex = useSharedValue(window.firstIndex)
   const placedWidth = useSharedValue(0)
+  const touching = useSharedValue(false)
+  const mounted = useSharedValue(true)
+  const restWatching = useSharedValue(false)
+  const restX = useSharedValue(0)
+  const restFrames = useSharedValue(0)
+  const restSnaps = useSharedValue(0)
   const appliedPlacement = useRef(0)
   const placedFor = useRef<string | null>(null)
   const reported = useRef({ spaceKey, index: anchorIndex })
@@ -177,6 +185,56 @@ export function useOwnedCalendarPager({
     scheduleOnRN(onSettle, index)
   }
 
+  // Android can leave the pager at rest between pages, or aligned with its
+  // drag never ended: a lift that reaches the scroll view while its previous
+  // post-touch snap is still pending gets no snap, because the ACTION_DOWN that
+  // would cancel that snap goes to the page under the finger, and a cancelled
+  // drag never snaps. Once the pager has been still for REST_FRAMES with no finger
+  // on it and no pinch lock, it is snapped to the nearest page and settled.
+  const restCheck = Platform.OS === "android"
+
+  function checkRest() {
+    "worklet"
+    const width = placedWidth.get()
+    if (!mounted.get() || width <= 0) {
+      restWatching.set(false)
+      return
+    }
+    const x = scrollX.get()
+    if (touching.get() || scrollLocked.get() || x !== restX.get()) {
+      restX.set(x)
+      restFrames.set(0)
+    } else if (restFrames.get() < REST_FRAMES) {
+      restFrames.set(restFrames.get() + 1)
+    } else {
+      dragging.set(false)
+      momentum.set(false)
+      const slot = Math.round(x / width)
+      if (
+        Math.abs(x - slot * width) <= ALIGNMENT_TOLERANCE ||
+        restSnaps.get() >= REST_SNAP_ATTEMPTS
+      ) {
+        restWatching.set(false)
+        settleIfAligned(x)
+        return
+      }
+      restSnaps.set(restSnaps.get() + 1)
+      restFrames.set(0)
+      scheduleOnRN(pagingLog.restSnap, firstIndex.get() + slot)
+      scrollTo(scrollRef, slot * width, 0, true)
+    }
+    requestAnimationFrame(checkRest)
+  }
+
+  const watchRest = () => {
+    "worklet"
+    if (!restCheck || restWatching.get()) return
+    restWatching.set(true)
+    restX.set(Number.NaN)
+    restSnaps.set(0)
+    requestAnimationFrame(checkRest)
+  }
+
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       if (!describesPlacedContent(event)) return
@@ -189,6 +247,7 @@ export function useOwnedCalendarPager({
         scheduleOnRN(onCross, index)
       }
       settleIfAligned(x)
+      watchRest()
     },
     onBeginDrag: () => {
       dragging.set(true)
@@ -197,6 +256,7 @@ export function useOwnedCalendarPager({
     onEndDrag: (event) => {
       dragging.set(false)
       if (describesPlacedContent(event)) settleIfAligned(event.contentOffset.x)
+      watchRest()
     },
     // iOS sends no end-drag for a grab released without moving mid-fling;
     // the deceleration that resumes is the drag's end.
@@ -235,6 +295,11 @@ export function useOwnedCalendarPager({
     positioned.set(false)
     placedWidth.set(0)
   }, [spaceKey, positioned, placedWidth])
+
+  useEffect(() => {
+    mounted.set(true)
+    return () => mounted.set(false)
+  }, [mounted])
 
   useLayoutEffect(() => {
     const { placement } = state
@@ -328,10 +393,12 @@ export function useOwnedCalendarPager({
     .simultaneousWithExternalGesture(pinchGesture)
     .onBegin(() => {
       "worklet"
+      touching.set(true)
       trackNativeTouch("horizontal", true)
     })
     .onFinalize(() => {
       "worklet"
+      touching.set(false)
       trackNativeTouch("horizontal", false)
     })
 
