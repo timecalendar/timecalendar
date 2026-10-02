@@ -3,6 +3,7 @@ import { PixelRatio, Platform } from "react-native"
 import { Gesture, type GestureType } from "react-native-gesture-handler"
 import Animated, {
   type AnimatedRef,
+  measure,
   scrollTo,
   type SharedValue,
   useAnimatedReaction,
@@ -31,6 +32,9 @@ const ALIGNMENT_TOLERANCE = 1 / PIXEL_RATIO
 const CONTENT_SLOTS = 2 * PAGE_WINDOW_RADIUS + 1
 const REST_FRAMES = 45
 const REST_SNAP_ATTEMPTS = 3
+const INITIAL_PLACEMENT_WAIT_FRAMES = 6
+const INITIAL_PLACEMENT_RETRIES = 3
+const IS_IOS = Platform.OS === "ios"
 
 /** The horizontal pager's page width: the viewport beside the hour gutter, on device pixels. */
 export function pagerPageWidth(viewportWidth: number): number {
@@ -70,6 +74,22 @@ function initialPagerState(
     settled: index,
     placement: { id: 0, index, animated: false, approachFrom: null },
   }
+}
+
+export function initialPlacementDecision(
+  observedOffset: number | null,
+  targetOffset: number,
+  retries: number,
+): "reveal" | "retry" | "hide" {
+  "worklet"
+  if (!Number.isFinite(targetOffset)) return "hide"
+  if (
+    observedOffset !== null &&
+    Number.isFinite(observedOffset) &&
+    Math.abs(observedOffset - targetOffset) <= ALIGNMENT_TOLERANCE
+  )
+    return "reveal"
+  return retries < INITIAL_PLACEMENT_RETRIES ? "retry" : "hide"
 }
 
 function jumpPagerState(
@@ -190,6 +210,119 @@ function useRestWatcher({
   }
 }
 
+// A newly mounted iOS ScrollView can ignore its first command; its content
+// marker must reach the target before the pager becomes visible.
+function useInitialPlacementVerifier({
+  activeGeneration,
+  generation,
+  scrollRef,
+  probeRef,
+  scrollX,
+  positioned,
+  placedWidth,
+  pending,
+  targetOffset,
+  run,
+  touching,
+  scrollLocked,
+  mounted,
+}: {
+  activeGeneration: SharedValue<number>
+  generation: number
+  scrollRef: AnimatedRef<Animated.ScrollView>
+  probeRef: AnimatedRef<Animated.View>
+  scrollX: SharedValue<number>
+  positioned: SharedValue<boolean>
+  placedWidth: SharedValue<number>
+  pending: SharedValue<boolean>
+  targetOffset: SharedValue<number>
+  run: SharedValue<number>
+  touching: SharedValue<boolean>
+  scrollLocked: SharedValue<boolean>
+  mounted: SharedValue<boolean>
+}) {
+  function check(
+    owner: number,
+    expectedWidth: number,
+    requested: number,
+    frame: number,
+    retries: number,
+  ) {
+    "worklet"
+    if (
+      activeGeneration.get() !== generation ||
+      run.get() !== owner ||
+      !mounted.get() ||
+      !pending.get() ||
+      placedWidth.get() !== expectedWidth ||
+      targetOffset.get() !== requested ||
+      touching.get() ||
+      scrollLocked.get()
+    )
+      return
+    if (frame < INITIAL_PLACEMENT_WAIT_FRAMES) {
+      requestAnimationFrame(() =>
+        check(owner, expectedWidth, requested, frame + 1, retries),
+      )
+      return
+    }
+    let observed: number | null = null
+    const scrollReady = Boolean(scrollRef())
+    if (scrollReady && Boolean(probeRef())) {
+      const viewport = measure(scrollRef)
+      const marker = measure(probeRef)
+      if (
+        viewport &&
+        marker &&
+        Number.isFinite(viewport.pageX) &&
+        Number.isFinite(marker.pageX) &&
+        Math.abs(viewport.width - expectedWidth) <= 1 &&
+        marker.width > 0
+      )
+        observed =
+          PAGE_WINDOW_RADIUS * expectedWidth - (marker.pageX - viewport.pageX)
+    }
+    const decision = initialPlacementDecision(observed, requested, retries)
+    if (decision === "reveal" && observed !== null) {
+      scrollX.set(observed)
+      positioned.set(true)
+      pending.set(false)
+      return
+    }
+    if (decision === "retry") {
+      if (scrollReady && observed !== null)
+        scrollTo(scrollRef, requested, 0, false)
+      requestAnimationFrame(() =>
+        check(owner, expectedWidth, requested, 1, retries + 1),
+      )
+      return
+    }
+    scheduleOnRN(
+      pagingLog.initialPlacementMiss,
+      generation,
+      requested,
+      observed,
+    )
+  }
+
+  return (expectedWidth: number, requested: number) => {
+    "worklet"
+    if (
+      activeGeneration.get() !== generation ||
+      typeof probeRef !== "function" ||
+      !(expectedWidth > 0) ||
+      !Number.isFinite(expectedWidth) ||
+      !Number.isFinite(requested)
+    )
+      return
+    const owner = run.get() + 1
+    run.set(owner)
+    targetOffset.set(requested)
+    pending.set(true)
+    requestAnimationFrame(() => check(owner, expectedWidth, requested, 1, 0))
+  }
+}
+
 /**
  * The windowed horizontal pager. The UI thread owns motion and settlement: it
  * derives the rounded and settled page from the native offset and tells React
@@ -232,6 +365,7 @@ export function useOwnedCalendarPager({
   const contentWidth = CONTENT_SLOTS * pageWidth
 
   const scrollRef = useAnimatedRef<Animated.ScrollView>()
+  const probeRef = useAnimatedRef<Animated.View>()
   const scrollX = useSharedValue(0)
   const activeGeneration = useSharedValue(generation)
   const positioned = useSharedValue(false)
@@ -245,6 +379,9 @@ export function useOwnedCalendarPager({
   const touchReleaseVisit = useSharedValue(0)
   const firstIndex = useSharedValue(window.firstIndex)
   const placedWidth = useSharedValue(0)
+  const initialPlacementPending = useSharedValue(false)
+  const initialTargetOffset = useSharedValue(Number.NaN)
+  const initialPlacementRun = useSharedValue(0)
   const touching = useSharedValue(false)
   const nativeTouchGeneration = useSharedValue<number | null>(null)
   const mounted = useSharedValue(true)
@@ -329,6 +466,7 @@ export function useOwnedCalendarPager({
       activeGeneration.get() !== generation ||
       touching.get() ||
       scrollLocked.get() ||
+      initialPlacementPending.get() ||
       dragging.get() ||
       momentum.get()
     )
@@ -375,11 +513,37 @@ export function useOwnedCalendarPager({
     scrollRef,
     settleIfAligned,
   })
+  const verifyInitialPlacement = useInitialPlacementVerifier({
+    activeGeneration,
+    generation,
+    scrollRef,
+    probeRef,
+    scrollX,
+    positioned,
+    placedWidth,
+    pending: initialPlacementPending,
+    targetOffset: initialTargetOffset,
+    run: initialPlacementRun,
+    touching,
+    scrollLocked,
+    mounted,
+  })
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       if (!describesPlacedContent(event)) return
       const x = event.contentOffset.x
+      if (!Number.isFinite(x)) return
+      if (initialPlacementPending.get()) {
+        const targetOffset = initialTargetOffset.get()
+        if (
+          !Number.isFinite(x) ||
+          !Number.isFinite(targetOffset) ||
+          Math.abs(x - targetOffset) > ALIGNMENT_TOLERANCE
+        )
+          return
+        initialPlacementPending.set(false)
+      }
       scrollX.set(x)
       positioned.set(true)
       const index = firstIndex.get() + Math.round(x / placedWidth.get())
@@ -445,7 +609,14 @@ export function useOwnedCalendarPager({
       dragging.set(false)
       momentum.set(false)
     }
-    scrollTo(scrollRef, (position - first) * width, 0, animated)
+    const offset = (position - first) * width
+    if (
+      IS_IOS &&
+      target !== null &&
+      (previousWidth <= 0 || initialPlacementPending.get())
+    )
+      verifyInitialPlacement(width, offset)
+    scrollTo(scrollRef, offset, 0, animated)
   }
 
   const placeNavigation = (
@@ -478,6 +649,8 @@ export function useOwnedCalendarPager({
     scheduleOnUI(releasePreviousNativeTouch, generation)
     positioned.set(false)
     placedWidth.set(0)
+    initialPlacementPending.set(false)
+    initialTargetOffset.set(Number.NaN)
     dragging.set(false)
     momentum.set(false)
     touchDragged.set(false)
@@ -494,6 +667,9 @@ export function useOwnedCalendarPager({
     anchorIndex,
     positioned,
     placedWidth,
+    initialPlacementPending,
+    initialTargetOffset,
+    initialPlacementRun,
     dragging,
     momentum,
     touchDragged,
@@ -598,6 +774,11 @@ export function useOwnedCalendarPager({
       momentum.set(false)
       const width = placedWidth.get()
       if (width <= 0) return
+      if (initialPlacementPending.get()) {
+        if (!touching.get())
+          verifyInitialPlacement(width, initialTargetOffset.get())
+        return
+      }
       const x = scrollX.get()
       const slot = Math.round(x / width)
       if (Math.abs(x - slot * width) > ALIGNMENT_TOLERANCE) {
@@ -631,6 +812,8 @@ export function useOwnedCalendarPager({
       dragging.set(false)
       momentum.set(false)
     }
+    if (initialPlacementPending.get() && !scrollLocked.get())
+      verifyInitialPlacement(placedWidth.get(), initialTargetOffset.get())
     touchReleaseVisit.set(touchReleaseVisit.get() + 1)
   }
 
@@ -662,6 +845,7 @@ export function useOwnedCalendarPager({
   return {
     spaceKey,
     scrollRef,
+    probeRef,
     scrollHandler,
     scrollProps,
     nativeGesture,
