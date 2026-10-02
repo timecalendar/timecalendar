@@ -134,6 +134,9 @@ export const evaluate = ({
     ? Math.max(...samples.map((s) => s.views)) -
       Math.min(...samples.map((s) => s.views))
     : null
+  const maxViewDeviation = viewsKnown
+    ? Math.max(...samples.map((s) => Math.abs(s.views - samples[0].views)))
+    : null
   const alloc = nativeKnown
     ? samples.map((s) => s.memory.nativeHeapAllocKb * 1024)
     : null
@@ -179,7 +182,10 @@ export const evaluate = ({
             : "unknown"
           : "unknown",
     samples: enoughSamples ? true : "unknown",
-    viewRange: viewRange === null ? "unknown" : viewRange <= VIEW_TOLERANCE,
+    viewDeviation:
+      maxViewDeviation === null
+        ? "unknown"
+        : maxViewDeviation <= VIEW_TOLERANCE,
     nativeAllocationObserved: nativeKnown ? true : "unknown",
     jsHeapObserved: jsKnown ? true : "unknown",
     heapStability: "unknown",
@@ -199,6 +205,7 @@ export const evaluate = ({
         : "incomplete",
     checks,
     viewRange,
+    maxViewDeviation,
     nativeAllocationDiagnostic,
     frameDiagnostic,
   }

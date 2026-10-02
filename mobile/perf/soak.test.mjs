@@ -155,7 +155,7 @@ test("empty and insufficient samples remain unknown and nonpassing", () => {
     const value = result({ samples, frameWindows: [] })
     assert.equal(value.status, "incomplete")
     assert.equal(value.checks.samples, "unknown")
-    assert.equal(value.checks.viewRange, "unknown")
+    assert.equal(value.checks.viewDeviation, "unknown")
     assert.equal(value.checks.nativeAllocationObserved, "unknown")
     assert.equal(value.checks.frameMetricsObserved, "unknown")
   }
@@ -193,7 +193,19 @@ test("PSS alone cannot pass heap stability and poor frame data stays unknown", (
 test("view budget and failed session reject; sustained native growth is diagnostic", () => {
   assert.equal(result({ state: { page: 7, crossings: 499 } }).status, "fail")
   assert.equal(
-    result({ samples: [sample(), sample(420), sample(451)] }).checks.viewRange,
+    result({ samples: [sample(), sample(420), sample(451)] }).checks
+      .viewDeviation,
+    false,
+  )
+  const withinBaselineBudget = result({
+    samples: [sample(400), sample(350), sample(450)],
+  })
+  assert.equal(withinBaselineBudget.viewRange, 100)
+  assert.equal(withinBaselineBudget.maxViewDeviation, 50)
+  assert.equal(withinBaselineBudget.checks.viewDeviation, true)
+  assert.equal(
+    result({ samples: [sample(400), sample(349), sample(400)] }).checks
+      .viewDeviation,
     false,
   )
   assert.equal(
