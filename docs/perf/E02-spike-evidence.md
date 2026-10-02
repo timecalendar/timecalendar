@@ -26,7 +26,8 @@ recorded here; the verdict is the owner's.**
   previous lift, while the previous page is still settling. Diagonal swipes are 30° from horizontal
   and start from rest.
 - Summaries: `mobile/perf/samples/main-40eb2241*` and `mobile/perf/samples/spike-d5038fad-*`.
-- iOS: not run (see [iOS](#ios)).
+- iOS: iOS Simulator only, in [`E02-ios-simulator-evidence.md`](E02-ios-simulator-evidence.md); no
+  physical iPhone run (see [iOS](#ios)).
 
 ### Reproduce
 
@@ -153,7 +154,7 @@ JS-thread commits are the crossing renders and the horizontal ScrollView's scrol
 | Page mount (UI thread)                            | ≤12 ms  | –                       | 13.6–48.4 ms                                                                   | up to 4×       |
 | JS per page crossing                              | ≤8 ms   | –                       | crossing → commit 40–47 ms median                                              | about 5–6×     |
 | Views in the window                               | ≤700    | 692                     | 665–722                                                                        | 1.03× at worst |
-| iOS hitch ratio                                   | ≤5 ms/s | not measured            | not measured                                                                   | –              |
+| iOS hitch ratio                                   | ≤5 ms/s | not measured            | not measurable on the iOS Simulator                                            | –              |
 | Perfetto: no Fabric commits during pinch or fling | none    | –                       | commits in both (table above)                                                  | –              |
 
 ## Kill criteria
@@ -186,7 +187,7 @@ From R08 "Kill criteria for B":
 | 3   | First frame at the initial offset with no jump; Android pending-offset path                                | Android re-applies a `contentOffset` prop each time the view's props are re-sent, which a Reanimated `scrollEnabled` update does, throwing the pager back to its first page. The spike places the pager with `scrollTo` after layout and keeps it at opacity 0 until its first scroll event. **Owner:** first frame on Android and iOS. |
 | 4   | Re-base without a jump, synthetic scroll and momentum-end filtered                                         | `k=small` re-bases 2–4 times per run with exact landings; settle counts match landings. **Owner:** recording or hand check for a hop.                                                                                                                                                                                                   |
 | 5   | Momentum-end delivery on Android through Reanimated; double momentum-end                                   | Snap mode delivers a settle per landing in every run. In `pagingEnabled` mode the momentum end can be missing or fire unaligned (finding 3).                                                                                                                                                                                            |
-| 6   | Diagonal arbitration with `directionalLockEnabled` and the pinch simultaneous; lift-on-boundary on iOS     | Android: 20 of 20 at 30° with uninterruptible native handlers (`directionalLockEnabled` is iOS-only). iOS: not run.                                                                                                                                                                                                                     |
+| 6   | Diagonal arbitration with `directionalLockEnabled` and the pinch simultaneous; lift-on-boundary on iOS     | Android: 20 of 20 at 30° with uninterruptible native handlers (`directionalLockEnabled` is iOS-only). iOS Simulator: 20 of 20.                                                                                                                                                                                                          |
 | 7   | VoiceOver three-finger paging and TalkBack settling                                                        | Not run: needs the owner with VoiceOver and TalkBack. The horizontal ScrollView is `importantForAccessibility="no"`.                                                                                                                                                                                                                    |
 | 8   | Rotation and iPad split-view width change during a fling                                                   | Not run. The app allows all orientations and resizable iPad windows. The spike re-places the pager at the settled page on any width change. **Owner:** rotate and resize during a fling on the iPad.                                                                                                                                    |
 
@@ -208,7 +209,7 @@ From R08 "Kill criteria for B":
 
 | #   | Demonstration                                                                 | Status                                                                                          |
 | --- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| 1   | 20 rapid same-direction swipes both ways land 20 pages away                   | Android snap: +16 and −16; `pagingEnabled`: +13 or never settles; iOS not run                   |
+| 1   | 20 rapid same-direction swipes both ways land 20 pages away                   | Android snap: +16 and −16; `pagingEnabled`: +13 or never settles; iOS Simulator: +20 and −20    |
 | 2   | Reversal mid-deceleration, cancelled partial drag: no stale snap-back         | 10 reversal pairs return to the start in both modes. Cancelled partial drag: **owner** by hand  |
 | 3   | Window shift mid-deceleration: no hop, no remount                             | Page-mount counter shows no remounts; landings exact across re-bases. Hop: **owner**            |
 | 4   | Diagonal starts and vertical scrolls from a moving page: one axis per gesture | 20 of 20 diagonals page; vertical flings never page. A touch stays on the axis it claims first. |
@@ -223,7 +224,8 @@ From R08 "Kill criteria for B":
 `spike-noflags-probe`); the two `libreanimated.so` builds differ, so the flags reached native code.
 Pinch → page switch → pinch rendered the same with and without the flags: no stale transform,
 no tile left at an old scale and no layout snapping back after a React commit. The Reanimated issues
-#8810 and #10631 were not reproduced on Android. iOS is untested.
+#8810 and #10631 were not reproduced on Android, nor on the iOS Simulator
+([`E02-ios-simulator-evidence.md`](E02-ios-simulator-evidence.md)).
 
 ## Findings
 
@@ -252,16 +254,19 @@ no tile left at an old scale and no layout snapping back after a React commit. T
 
 ## iOS
 
-No iOS run was made: no EAS or other cloud build was started. An iOS run needs:
+The spike ran on the iOS Simulator (iPhone 17 Pro and iPad Pro 11-inch, iOS 26.5, local Debug build
+of `APP_VARIANT=development`). The results, findings and the iOS reading of the kill criteria are in
+[`E02-ios-simulator-evidence.md`](E02-ios-simulator-evidence.md). A physical iPhone run still needs:
 
-- A new native iOS binary. The synchronous UI-props flags are compiled into Reanimated, so they
+- A native iOS binary on the device. The synchronous UI-props flags are compiled into Reanimated, so they
   change the runtime fingerprint and cannot arrive by OTA. A development build (`APP_VARIANT=development`) carries the dev-only
   route: an EAS build the owner starts, or a local Xcode 26.6 build on a machine that can take a
   native build.
 - The physical iPhone with the dev calendar seeded, opening
   `timecalendar-dev://dev-paging-spike`.
-- Instruments (Animation Hitches) for the ≤5 ms/s hitch ratio, plus the R02 6–8 and R05 1, 4, 6
-  and 9 checks by hand. The `mobile/perf/` harness is Android-only.
+- Instruments (Animation Hitches, which the Simulator does not support) for the ≤5 ms/s hitch
+  ratio, plus the R02 7–8 and R05 1, 4 and 6 checks by hand. The `mobile/perf/` harness is
+  Android-only.
 
 ## Open owner checks
 
@@ -270,4 +275,4 @@ No iOS run was made: no EAS or other cloud build was started. An iOS run needs:
   partial drag.
 - Visual hop at re-base (`?k=small`, swipe past 5 weeks) and 1 px seams after 50+ pages.
 - R05 checks 1–2 on the current production build (VoiceOver, TalkBack) and 4–6, 9 on the spike.
-- The iOS run above, including iPad rotation and split view during a fling.
+- The physical iPhone run above, and iPad split view during a fling.
