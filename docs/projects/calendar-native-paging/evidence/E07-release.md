@@ -1,6 +1,6 @@
 # E07 release evidence
 
-Status: **release blocked**. The Android long-session measurements below are diagnostics for source `151ace57f7e2b1b9803d7d45ede1794718167d7f`; they do not certify the later PR #453 mode-switch source merged as `16b899a900bcc72f2187739f534ef119f6199678`. No preview, store or OTA artifact has been published, and the owner has not given an exact-revision go verdict.
+Status: **release blocked**. The Android long-session measurements below are diagnostics for source `151ace57f7e2b1b9803d7d45ede1794718167d7f`; they do not certify later Calendar revisions. The newer [Android native snap prototype](E07-P01-Android-native-prototype.md) also fails P01 and is confined to the perf app. No preview, store or OTA artifact has been published, and the owner has not given an exact-revision go verdict.
 
 ## Exact Android build
 
@@ -37,10 +37,10 @@ The original summaries, app logs, view hierarchies, memory and frame samples for
 
 | Gate | Current result |
 | --- | --- |
-| P01 rapid paging | **Fail.** [E04 Android chains](E04-android-chained-swipes.md) land 15–16 of 20 forward swipes and 16 of 20 backward swipes on the exact T08b candidate; one of five reversals misses its origin. The E07 soak also recorded six missed attempts. |
+| P01 rapid paging | **Fail.** [E04 Android chains](E04-android-chained-swipes.md) land 15–16 of 20 forward swipes and 16 of 20 backward swipes on the exact T08b candidate; one of five reversals misses its origin. The E07 soak recorded six missed attempts. A later [perf-only native prototype](E07-P01-Android-native-prototype.md) missed one of twenty forward pages in its first exact-source run, so it is not an accepted repair. |
 | P02 frame budget and E05 pinch | **Unknown for this source.** The mixed samples cannot establish the named release gesture thresholds. Physical iPhone and OnePlus 6 pinch feel, seams, text sharpness and focal stability remain open. |
 | P03 long-session views and heap | **View budget failed** on both long-session runs. Native allocation is diagnostic; Hermes JavaScript heap and product stability remain unknown. The automated mixed stress does not exercise mode switching from design §13. |
-| E06 accessibility and iOS | Physical VoiceOver/TalkBack, reduced-motion and large-text device verdicts remain open. Prior Simulator functional evidence belongs to native `ff5841b4` / JavaScript `9d246fbf`, not this Android APK. |
+| E06 accessibility and iOS | Physical VoiceOver/TalkBack, reduced-motion and large-text device verdicts remain open. The newer [iOS Simulator mode-placement check](E07-ios-mode-placement.md) passed 12 returns and two cold starts on JavaScript `2ece8fdf17e89648611234a2550fe72fe77b0005` with compatible native `ff5841b4`; this is functional Simulator evidence, not a physical iOS or Android result. |
 | P05 renderer checks | T14 cleanup, React Compiler, coverage, TypeScript and lint host checks passed for the diagnostic source. |
 | P06 publication | **Hold.** No owner go verdict, preview artifact, store submission or OTA publication. Any source change after `151ace57` requires affected exact-revision checks before release. |
 
