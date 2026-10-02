@@ -21,7 +21,8 @@ non-idiomatic React are cleaned up in the same pass.
 - Product: `approved` (go)
 - Technical design: `approved`, decisions D01–D08 `approved`
 - Roadmap: `approved`, epics E01–E07, tickets T01–T15
-- Readiness: `implementable`. E01 is done (#437, #436). E02 and E03 can start; E04 onward is gated on the E02 spike verdict.
+- Implementation: E01–E04 are merged. E05 and E06 source is merged, and E07 T14 cleanup is merged. E07 long-session diagnostics are recorded for the measured Android source revision.
+- Release readiness: blocked. Android P01 rapid chains land 15–16 of 20 swipes on the measured perf APK, and one of five reversals misses its origin. The E07 long-session view budget fails. E05 frame and pinch checks, E06 physical accessibility checks, JavaScript heap stability, and the owner's exact-revision verdict remain open. No preview, store, or OTA publication is approved.
 
 ## Research
 
@@ -41,5 +42,5 @@ non-idiomatic React are cleaned up in the same pass.
 
 ## Residual risks and caveats
 
-- Android nested-scroll arbitration, snap feel and accessibility behaviour are read from source; the device spike (kill criteria in `product.md`) retires them.
-- No measured baseline: the owner waived it. P02 thresholds are the only numeric target.
+- The E02 spike met diagonal and reversal checks but missed P02 frame criteria; the owner's continue instruction allowed implementation to proceed without converting those measurements into acceptance.
+- Android chained swipes still miss P01. Physical accessibility, pinch feel, frame thresholds, and long-session stability need device evidence for the exact release candidate.

@@ -8,6 +8,8 @@ depends-on: [E05, E06]
 
 # E07 — Cleanup, soak and release evidence
 
+Current state: T14 is merged and T15 diagnostics are recorded in [E07 evidence](../../evidence/E07-release.md). The release remains blocked by the failed Android rapid-chain and native-view gates, unknown heap and device checks, and the pending owner verdict. No preview, store, or OTA artifact is published.
+
 ## Outcome
 
 Remaining smells are gone, the soak passes, and a preview build carrying the new paging owner is published with release evidence.

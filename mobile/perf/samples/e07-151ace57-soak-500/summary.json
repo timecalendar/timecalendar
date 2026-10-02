@@ -1,0 +1,2238 @@
+{
+  "mode": "soak",
+  "status": "fail",
+  "revision": "151ace57f7e2b1b9803d7d45ede1794718167d7f",
+  "apkSha256": "7845f89a6fd0d67b7bc8c9e5a0722361671baceb066ed49565cce8d44baf3b43",
+  "installedSha256": "7845f89a6fd0d67b7bc8c9e5a0722361671baceb066ed49565cce8d44baf3b43",
+  "package": "fr.samuelprak.timecalendar.perf",
+  "packageVersion": "4.0.0",
+  "packageCode": "1",
+  "startedAt": "2026-10-02T10:30:26.186Z",
+  "finishedAt": "2026-10-02T11:08:34.621Z",
+  "initialPid": "9232",
+  "initialProcessStart": "6418045",
+  "baselinePage": 2962,
+  "crossings": 500,
+  "elapsedMs": 2266291,
+  "thresholds": {
+    "crossings": 500,
+    "stressDurationMs": 1800000,
+    "viewTolerance": 50,
+    "diagnosticHeapGrowthBytes": 33554432,
+    "diagnosticHeapGrowthRatio": 0.2
+  },
+  "failures": [
+    "attempt 1: no settled baseline observed",
+    "attempt 8: forward produced no observed crossing",
+    "attempt 28: forward produced no observed crossing",
+    "attempt 155: back produced no observed crossing",
+    "attempt 274: back produced no observed crossing",
+    "attempt 277: back produced no observed crossing"
+  ],
+  "metrics": {
+    "status": "fail",
+    "checks": {
+      "durationOrCrossings": true,
+      "samples": true,
+      "viewDeviation": false,
+      "nativeAllocationObserved": true,
+      "jsHeapObserved": "unknown",
+      "heapStability": "unknown",
+      "frameMetricsObserved": true,
+      "productFrameGates": "unknown",
+      "processAndSettlement": false
+    },
+    "viewRange": 458,
+    "maxViewDeviation": 406,
+    "nativeAllocationDiagnostic": {
+      "peakGrowthBytes": 93130752,
+      "endGrowthBytes": 90149888,
+      "diagnosticLimitBytes": 47596134.400000006,
+      "sustainedGrowthAboveDiagnosticBudget": false
+    },
+    "frameDiagnostic": {
+      "maxJankyPct": 8.9,
+      "maxP99Ms": 77
+    }
+  },
+  "device": {
+    "model": "ONEPLUS A6003",
+    "android": "15",
+    "build": "lineage_enchilada-userdebug 15 BP1A.250505.005 5a3c5bc8b4",
+    "refreshHz": 60
+  },
+  "attempts": {
+    "count": 507,
+    "forward": 254,
+    "back": 253,
+    "lastPage": 2962
+  },
+  "samples": [
+    {
+      "name": "0000",
+      "at": "2026-10-02T10:30:48.194Z",
+      "crossings": null,
+      "views": 803,
+      "memory": {
+        "totalPssKb": 433371,
+        "nativePssKb": 232454,
+        "dalvikPssKb": 36040,
+        "nativeHeapAllocKb": 232403,
+        "dalvikHeapAllocKb": 14057,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 93,
+          "jankyFrames": 9,
+          "jankyPct": 9.68,
+          "missedVsync": 4,
+          "slowUiThread": 7,
+          "slowIssueDrawCommands": 4,
+          "frameDeadlineMissed": 9
+        },
+        "histogram": {
+          "frames": 93,
+          "p50Ms": 15,
+          "p90Ms": 36,
+          "p95Ms": 125,
+          "p99Ms": 200,
+          "maxMs": 200,
+          "framesOver16Ms": 24,
+          "framesOver33Ms": 10,
+          "withinDeadlinePct": 74.2
+        },
+        "lastFrames": {
+          "count": 92,
+          "total": {
+            "p50Ms": 15.4,
+            "p90Ms": 39.6,
+            "p95Ms": 125,
+            "p99Ms": 227.1
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.3,
+            "p90Ms": 0.7,
+            "p95Ms": 0.8,
+            "p99Ms": 5.1
+          },
+          "renderThread": {
+            "p50Ms": 9.4,
+            "p90Ms": 18.8,
+            "p95Ms": 21.4,
+            "p99Ms": 42.9
+          }
+        }
+      }
+    },
+    {
+      "name": "0001",
+      "at": "2026-10-02T10:31:50.541Z",
+      "crossings": 11,
+      "views": 477,
+      "memory": {
+        "totalPssKb": 482620,
+        "nativePssKb": 272450,
+        "dalvikPssKb": 23702,
+        "nativeHeapAllocKb": 255706,
+        "dalvikHeapAllocKb": 12589,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 640,
+          "jankyFrames": 48,
+          "jankyPct": 7.5,
+          "missedVsync": 7,
+          "slowUiThread": 26,
+          "slowIssueDrawCommands": 2,
+          "frameDeadlineMissed": 48
+        },
+        "histogram": {
+          "frames": 640,
+          "p50Ms": 15,
+          "p90Ms": 20,
+          "p95Ms": 25,
+          "p99Ms": 73,
+          "maxMs": 105,
+          "framesOver16Ms": 203,
+          "framesOver33Ms": 17,
+          "withinDeadlinePct": 68.3
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 15.4,
+            "p90Ms": 19.1,
+            "p95Ms": 21.1,
+            "p99Ms": 47.1
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.5,
+            "p90Ms": 0.6,
+            "p95Ms": 0.6,
+            "p99Ms": 1.1
+          },
+          "renderThread": {
+            "p50Ms": 9.7,
+            "p90Ms": 12.5,
+            "p95Ms": 13.6,
+            "p99Ms": 16.6
+          }
+        }
+      }
+    },
+    {
+      "name": "0002",
+      "at": "2026-10-02T10:32:53.241Z",
+      "crossings": 24,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 499764,
+        "nativePssKb": 274502,
+        "dalvikPssKb": 37630,
+        "nativeHeapAllocKb": 270322,
+        "dalvikHeapAllocKb": 13243,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 652,
+          "jankyFrames": 33,
+          "jankyPct": 5.06,
+          "missedVsync": 0,
+          "slowUiThread": 25,
+          "slowIssueDrawCommands": 1,
+          "frameDeadlineMissed": 33
+        },
+        "histogram": {
+          "frames": 652,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 19,
+          "p99Ms": 24,
+          "maxMs": 61,
+          "framesOver16Ms": 82,
+          "framesOver33Ms": 4,
+          "withinDeadlinePct": 87.4
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.9,
+            "p90Ms": 18.2,
+            "p95Ms": 19.5,
+            "p99Ms": 23.7
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.5,
+            "p90Ms": 0.6,
+            "p95Ms": 0.6,
+            "p99Ms": 1
+          },
+          "renderThread": {
+            "p50Ms": 9.5,
+            "p90Ms": 12.3,
+            "p95Ms": 13.2,
+            "p99Ms": 14.4
+          }
+        }
+      }
+    },
+    {
+      "name": "0003",
+      "at": "2026-10-02T10:33:55.965Z",
+      "crossings": 38,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 496604,
+        "nativePssKb": 268598,
+        "dalvikPssKb": 39010,
+        "nativeHeapAllocKb": 254244,
+        "dalvikHeapAllocKb": 13242,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 630,
+          "jankyFrames": 38,
+          "jankyPct": 6.03,
+          "missedVsync": 0,
+          "slowUiThread": 24,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 38
+        },
+        "histogram": {
+          "frames": 630,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 19,
+          "p99Ms": 25,
+          "maxMs": 69,
+          "framesOver16Ms": 88,
+          "framesOver33Ms": 2,
+          "withinDeadlinePct": 86
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 15.1,
+            "p90Ms": 18.8,
+            "p95Ms": 20.6,
+            "p99Ms": 24.7
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.6,
+            "p95Ms": 0.7,
+            "p99Ms": 0.8
+          },
+          "renderThread": {
+            "p50Ms": 9.7,
+            "p90Ms": 12.1,
+            "p95Ms": 13.1,
+            "p99Ms": 14.3
+          }
+        }
+      }
+    },
+    {
+      "name": "0004",
+      "at": "2026-10-02T10:34:58.724Z",
+      "crossings": 52,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 498717,
+        "nativePssKb": 270078,
+        "dalvikPssKb": 38546,
+        "nativeHeapAllocKb": 262058,
+        "dalvikHeapAllocKb": 13260,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 646,
+          "jankyFrames": 38,
+          "jankyPct": 5.88,
+          "missedVsync": 0,
+          "slowUiThread": 26,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 38
+        },
+        "histogram": {
+          "frames": 646,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 19,
+          "p99Ms": 31,
+          "maxMs": 53,
+          "framesOver16Ms": 74,
+          "framesOver33Ms": 5,
+          "withinDeadlinePct": 88.5
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 15,
+            "p90Ms": 18.8,
+            "p95Ms": 19.8,
+            "p99Ms": 36.8
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.6,
+            "p95Ms": 0.7,
+            "p99Ms": 1.1
+          },
+          "renderThread": {
+            "p50Ms": 9.9,
+            "p90Ms": 12.2,
+            "p95Ms": 12.9,
+            "p99Ms": 14.2
+          }
+        }
+      }
+    },
+    {
+      "name": "0005",
+      "at": "2026-10-02T10:36:01.336Z",
+      "crossings": 66,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 500691,
+        "nativePssKb": 273866,
+        "dalvikPssKb": 35686,
+        "nativeHeapAllocKb": 270989,
+        "dalvikHeapAllocKb": 13310,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 640,
+          "jankyFrames": 36,
+          "jankyPct": 5.62,
+          "missedVsync": 0,
+          "slowUiThread": 23,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 36
+        },
+        "histogram": {
+          "frames": 640,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 19,
+          "p99Ms": 31,
+          "maxMs": 65,
+          "framesOver16Ms": 73,
+          "framesOver33Ms": 6,
+          "withinDeadlinePct": 88.6
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 15,
+            "p90Ms": 17.8,
+            "p95Ms": 19.4,
+            "p99Ms": 24.4
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.6,
+            "p99Ms": 1.1
+          },
+          "renderThread": {
+            "p50Ms": 9.6,
+            "p90Ms": 11.6,
+            "p95Ms": 12.4,
+            "p99Ms": 15.7
+          }
+        }
+      }
+    },
+    {
+      "name": "0006",
+      "at": "2026-10-02T10:37:04.000Z",
+      "crossings": 80,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 495731,
+        "nativePssKb": 270598,
+        "dalvikPssKb": 37022,
+        "nativeHeapAllocKb": 257783,
+        "dalvikHeapAllocKb": 13082,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 644,
+          "jankyFrames": 35,
+          "jankyPct": 5.43,
+          "missedVsync": 0,
+          "slowUiThread": 20,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 35
+        },
+        "histogram": {
+          "frames": 644,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 19,
+          "p99Ms": 25,
+          "maxMs": 57,
+          "framesOver16Ms": 72,
+          "framesOver33Ms": 4,
+          "withinDeadlinePct": 88.8
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.9,
+            "p90Ms": 18.5,
+            "p95Ms": 19.4,
+            "p99Ms": 29.1
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.6,
+            "p99Ms": 0.9
+          },
+          "renderThread": {
+            "p50Ms": 9.9,
+            "p90Ms": 12.1,
+            "p95Ms": 12.9,
+            "p99Ms": 14.1
+          }
+        }
+      }
+    },
+    {
+      "name": "0007",
+      "at": "2026-10-02T10:38:06.846Z",
+      "crossings": 94,
+      "views": 848,
+      "memory": {
+        "totalPssKb": 531583,
+        "nativePssKb": 287894,
+        "dalvikPssKb": 49978,
+        "nativeHeapAllocKb": 287595,
+        "dalvikHeapAllocKb": 14601,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 619,
+          "jankyFrames": 38,
+          "jankyPct": 6.14,
+          "missedVsync": 4,
+          "slowUiThread": 24,
+          "slowIssueDrawCommands": 3,
+          "frameDeadlineMissed": 38
+        },
+        "histogram": {
+          "frames": 619,
+          "p50Ms": 14,
+          "p90Ms": 22,
+          "p95Ms": 24,
+          "p99Ms": 48,
+          "maxMs": 93,
+          "framesOver16Ms": 125,
+          "framesOver33Ms": 11,
+          "withinDeadlinePct": 79.8
+        },
+        "lastFrames": {
+          "count": 119,
+          "total": {
+            "p50Ms": 16.5,
+            "p90Ms": 32.5,
+            "p95Ms": 41.9,
+            "p99Ms": 92.9
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.3,
+            "p90Ms": 0.4,
+            "p95Ms": 0.4,
+            "p99Ms": 0.5
+          },
+          "renderThread": {
+            "p50Ms": 12,
+            "p90Ms": 28.4,
+            "p95Ms": 28.8,
+            "p99Ms": 33.6
+          }
+        }
+      }
+    },
+    {
+      "name": "0008",
+      "at": "2026-10-02T10:39:09.395Z",
+      "crossings": 108,
+      "views": 804,
+      "memory": {
+        "totalPssKb": 582394,
+        "nativePssKb": 324482,
+        "dalvikPssKb": 54146,
+        "nativeHeapAllocKb": 323351,
+        "dalvikHeapAllocKb": 15930,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 630,
+          "jankyFrames": 47,
+          "jankyPct": 7.46,
+          "missedVsync": 8,
+          "slowUiThread": 26,
+          "slowIssueDrawCommands": 6,
+          "frameDeadlineMissed": 47
+        },
+        "histogram": {
+          "frames": 630,
+          "p50Ms": 15,
+          "p90Ms": 21,
+          "p95Ms": 26,
+          "p99Ms": 73,
+          "maxMs": 93,
+          "framesOver16Ms": 164,
+          "framesOver33Ms": 18,
+          "withinDeadlinePct": 74
+        },
+        "lastFrames": {
+          "count": 119,
+          "total": {
+            "p50Ms": 16.3,
+            "p90Ms": 23.7,
+            "p95Ms": 29.2,
+            "p99Ms": 85.6
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.3,
+            "p90Ms": 0.4,
+            "p95Ms": 0.4,
+            "p99Ms": 0.5
+          },
+          "renderThread": {
+            "p50Ms": 11.7,
+            "p90Ms": 17.1,
+            "p95Ms": 20.7,
+            "p99Ms": 24.7
+          }
+        }
+      }
+    },
+    {
+      "name": "0009",
+      "at": "2026-10-02T10:40:12.012Z",
+      "crossings": 122,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 549562,
+        "nativePssKb": 302334,
+        "dalvikPssKb": 43614,
+        "nativeHeapAllocKb": 280444,
+        "dalvikHeapAllocKb": 13459,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 639,
+          "jankyFrames": 40,
+          "jankyPct": 6.26,
+          "missedVsync": 1,
+          "slowUiThread": 21,
+          "slowIssueDrawCommands": 2,
+          "frameDeadlineMissed": 40
+        },
+        "histogram": {
+          "frames": 639,
+          "p50Ms": 14,
+          "p90Ms": 18,
+          "p95Ms": 21,
+          "p99Ms": 31,
+          "maxMs": 101,
+          "framesOver16Ms": 95,
+          "framesOver33Ms": 5,
+          "withinDeadlinePct": 85.1
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 15,
+            "p90Ms": 18.6,
+            "p95Ms": 21.6,
+            "p99Ms": 31.8
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.6,
+            "p99Ms": 0.8
+          },
+          "renderThread": {
+            "p50Ms": 10.1,
+            "p90Ms": 11.8,
+            "p95Ms": 12.7,
+            "p99Ms": 21.8
+          }
+        }
+      }
+    },
+    {
+      "name": "0010",
+      "at": "2026-10-02T10:41:14.603Z",
+      "crossings": 136,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 525486,
+        "nativePssKb": 284486,
+        "dalvikPssKb": 37398,
+        "nativeHeapAllocKb": 261631,
+        "dalvikHeapAllocKb": 12996,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 634,
+          "jankyFrames": 36,
+          "jankyPct": 5.68,
+          "missedVsync": 0,
+          "slowUiThread": 20,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 36
+        },
+        "histogram": {
+          "frames": 634,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 19,
+          "p99Ms": 29,
+          "maxMs": 53,
+          "framesOver16Ms": 76,
+          "framesOver33Ms": 4,
+          "withinDeadlinePct": 88
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.9,
+            "p90Ms": 18.1,
+            "p95Ms": 21.1,
+            "p99Ms": 33.3
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.6,
+            "p95Ms": 0.7,
+            "p99Ms": 0.8
+          },
+          "renderThread": {
+            "p50Ms": 9.8,
+            "p90Ms": 12.4,
+            "p95Ms": 12.9,
+            "p99Ms": 14.2
+          }
+        }
+      }
+    },
+    {
+      "name": "0011",
+      "at": "2026-10-02T10:42:17.027Z",
+      "crossings": 150,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 517724,
+        "nativePssKb": 277262,
+        "dalvikPssKb": 36714,
+        "nativeHeapAllocKb": 251194,
+        "dalvikHeapAllocKb": 12998,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 627,
+          "jankyFrames": 35,
+          "jankyPct": 5.58,
+          "missedVsync": 0,
+          "slowUiThread": 20,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 35
+        },
+        "histogram": {
+          "frames": 627,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 18,
+          "p99Ms": 22,
+          "maxMs": 61,
+          "framesOver16Ms": 67,
+          "framesOver33Ms": 2,
+          "withinDeadlinePct": 89.3
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.9,
+            "p90Ms": 16.9,
+            "p95Ms": 18,
+            "p99Ms": 24.8
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.6,
+            "p99Ms": 0.6
+          },
+          "renderThread": {
+            "p50Ms": 10.1,
+            "p90Ms": 11.6,
+            "p95Ms": 12.3,
+            "p99Ms": 13.3
+          }
+        }
+      }
+    },
+    {
+      "name": "0012",
+      "at": "2026-10-02T10:43:19.829Z",
+      "crossings": 163,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 515516,
+        "nativePssKb": 277746,
+        "dalvikPssKb": 34162,
+        "nativeHeapAllocKb": 261474,
+        "dalvikHeapAllocKb": 12945,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 643,
+          "jankyFrames": 37,
+          "jankyPct": 5.75,
+          "missedVsync": 0,
+          "slowUiThread": 24,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 37
+        },
+        "histogram": {
+          "frames": 643,
+          "p50Ms": 14,
+          "p90Ms": 18,
+          "p95Ms": 20,
+          "p99Ms": 26,
+          "maxMs": 53,
+          "framesOver16Ms": 89,
+          "framesOver33Ms": 4,
+          "withinDeadlinePct": 86.2
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.9,
+            "p90Ms": 18.3,
+            "p95Ms": 20.8,
+            "p99Ms": 22.9
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.6,
+            "p99Ms": 0.9
+          },
+          "renderThread": {
+            "p50Ms": 10,
+            "p90Ms": 12.1,
+            "p95Ms": 12.9,
+            "p99Ms": 15.1
+          }
+        }
+      }
+    },
+    {
+      "name": "0013",
+      "at": "2026-10-02T10:44:22.283Z",
+      "crossings": 177,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 517268,
+        "nativePssKb": 276622,
+        "dalvikPssKb": 36842,
+        "nativeHeapAllocKb": 252966,
+        "dalvikHeapAllocKb": 12998,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 630,
+          "jankyFrames": 34,
+          "jankyPct": 5.4,
+          "missedVsync": 0,
+          "slowUiThread": 21,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 34
+        },
+        "histogram": {
+          "frames": 630,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 19,
+          "p99Ms": 25,
+          "maxMs": 36,
+          "framesOver16Ms": 85,
+          "framesOver33Ms": 1,
+          "withinDeadlinePct": 86.5
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.9,
+            "p90Ms": 17.3,
+            "p95Ms": 19.8,
+            "p99Ms": 29
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.6,
+            "p95Ms": 0.7,
+            "p99Ms": 1
+          },
+          "renderThread": {
+            "p50Ms": 10.1,
+            "p90Ms": 11.6,
+            "p95Ms": 12.2,
+            "p99Ms": 14.2
+          }
+        }
+      }
+    },
+    {
+      "name": "0014",
+      "at": "2026-10-02T10:45:24.661Z",
+      "crossings": 191,
+      "views": 757,
+      "memory": {
+        "totalPssKb": 516100,
+        "nativePssKb": 283246,
+        "dalvikPssKb": 29002,
+        "nativeHeapAllocKb": 266965,
+        "dalvikHeapAllocKb": 13207,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 643,
+          "jankyFrames": 31,
+          "jankyPct": 4.82,
+          "missedVsync": 1,
+          "slowUiThread": 20,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 31
+        },
+        "histogram": {
+          "frames": 643,
+          "p50Ms": 14,
+          "p90Ms": 20,
+          "p95Ms": 25,
+          "p99Ms": 36,
+          "maxMs": 61,
+          "framesOver16Ms": 108,
+          "framesOver33Ms": 10,
+          "withinDeadlinePct": 83.2
+        },
+        "lastFrames": {
+          "count": 119,
+          "total": {
+            "p50Ms": 16.5,
+            "p90Ms": 34.8,
+            "p95Ms": 38.2,
+            "p99Ms": 57.1
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.3,
+            "p90Ms": 0.6,
+            "p95Ms": 0.7,
+            "p99Ms": 0.8
+          },
+          "renderThread": {
+            "p50Ms": 11.9,
+            "p90Ms": 29,
+            "p95Ms": 29.5,
+            "p99Ms": 34
+          }
+        }
+      }
+    },
+    {
+      "name": "0015",
+      "at": "2026-10-02T10:46:27.140Z",
+      "crossings": 205,
+      "views": 855,
+      "memory": {
+        "totalPssKb": 539276,
+        "nativePssKb": 304530,
+        "dalvikPssKb": 31986,
+        "nativeHeapAllocKb": 301415,
+        "dalvikHeapAllocKb": 14389,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 629,
+          "jankyFrames": 56,
+          "jankyPct": 8.9,
+          "missedVsync": 10,
+          "slowUiThread": 30,
+          "slowIssueDrawCommands": 6,
+          "frameDeadlineMissed": 56
+        },
+        "histogram": {
+          "frames": 629,
+          "p50Ms": 15,
+          "p90Ms": 24,
+          "p95Ms": 26,
+          "p99Ms": 69,
+          "maxMs": 93,
+          "framesOver16Ms": 192,
+          "framesOver33Ms": 17,
+          "withinDeadlinePct": 69.5
+        },
+        "lastFrames": {
+          "count": 119,
+          "total": {
+            "p50Ms": 18.5,
+            "p90Ms": 32.2,
+            "p95Ms": 33.2,
+            "p99Ms": 71.4
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.3,
+            "p90Ms": 0.4,
+            "p95Ms": 0.5,
+            "p99Ms": 0.6
+          },
+          "renderThread": {
+            "p50Ms": 12.7,
+            "p90Ms": 28,
+            "p95Ms": 28.5,
+            "p99Ms": 30.4
+          }
+        }
+      }
+    },
+    {
+      "name": "0016",
+      "at": "2026-10-02T10:47:28.867Z",
+      "crossings": 219,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 574276,
+        "nativePssKb": 319206,
+        "dalvikPssKb": 50690,
+        "nativeHeapAllocKb": 319153,
+        "dalvikHeapAllocKb": 14204,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 636,
+          "jankyFrames": 43,
+          "jankyPct": 6.76,
+          "missedVsync": 4,
+          "slowUiThread": 22,
+          "slowIssueDrawCommands": 5,
+          "frameDeadlineMissed": 43
+        },
+        "histogram": {
+          "frames": 636,
+          "p50Ms": 14,
+          "p90Ms": 19,
+          "p95Ms": 24,
+          "p99Ms": 38,
+          "maxMs": 97,
+          "framesOver16Ms": 123,
+          "framesOver33Ms": 8,
+          "withinDeadlinePct": 80.7
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.9,
+            "p90Ms": 17.5,
+            "p95Ms": 18.6,
+            "p99Ms": 22.9
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.6,
+            "p99Ms": 0.9
+          },
+          "renderThread": {
+            "p50Ms": 9.9,
+            "p90Ms": 11.8,
+            "p95Ms": 12.6,
+            "p99Ms": 13.7
+          }
+        }
+      }
+    },
+    {
+      "name": "0017",
+      "at": "2026-10-02T10:48:31.325Z",
+      "crossings": 233,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 537272,
+        "nativePssKb": 292890,
+        "dalvikPssKb": 38166,
+        "nativeHeapAllocKb": 269622,
+        "dalvikHeapAllocKb": 13002,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 646,
+          "jankyFrames": 33,
+          "jankyPct": 5.11,
+          "missedVsync": 0,
+          "slowUiThread": 16,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 33
+        },
+        "histogram": {
+          "frames": 646,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 19,
+          "p99Ms": 25,
+          "maxMs": 40,
+          "framesOver16Ms": 77,
+          "framesOver33Ms": 2,
+          "withinDeadlinePct": 88.1
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.8,
+            "p90Ms": 17.3,
+            "p95Ms": 18.9,
+            "p99Ms": 22.2
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.7,
+            "p99Ms": 1.1
+          },
+          "renderThread": {
+            "p50Ms": 9.2,
+            "p90Ms": 11.9,
+            "p95Ms": 12.5,
+            "p99Ms": 14.3
+          }
+        }
+      }
+    },
+    {
+      "name": "0018",
+      "at": "2026-10-02T10:49:33.240Z",
+      "crossings": 247,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 538656,
+        "nativePssKb": 295482,
+        "dalvikPssKb": 36814,
+        "nativeHeapAllocKb": 281063,
+        "dalvikHeapAllocKb": 13002,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 637,
+          "jankyFrames": 31,
+          "jankyPct": 4.87,
+          "missedVsync": 0,
+          "slowUiThread": 18,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 31
+        },
+        "histogram": {
+          "frames": 637,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 18,
+          "p99Ms": 25,
+          "maxMs": 31,
+          "framesOver16Ms": 66,
+          "framesOver33Ms": 0,
+          "withinDeadlinePct": 89.6
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.9,
+            "p90Ms": 16.8,
+            "p95Ms": 20.7,
+            "p99Ms": 27.6
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.6,
+            "p99Ms": 0.9
+          },
+          "renderThread": {
+            "p50Ms": 9.8,
+            "p90Ms": 11.3,
+            "p95Ms": 12.4,
+            "p99Ms": 14.9
+          }
+        }
+      }
+    },
+    {
+      "name": "0019",
+      "at": "2026-10-02T10:50:35.828Z",
+      "crossings": 261,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 528490,
+        "nativePssKb": 288686,
+        "dalvikPssKb": 35202,
+        "nativeHeapAllocKb": 266816,
+        "dalvikHeapAllocKb": 12995,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 636,
+          "jankyFrames": 32,
+          "jankyPct": 5.03,
+          "missedVsync": 0,
+          "slowUiThread": 16,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 32
+        },
+        "histogram": {
+          "frames": 636,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 19,
+          "p99Ms": 24,
+          "maxMs": 53,
+          "framesOver16Ms": 74,
+          "framesOver33Ms": 2,
+          "withinDeadlinePct": 88.4
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.9,
+            "p90Ms": 18.4,
+            "p95Ms": 19.4,
+            "p99Ms": 26
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.5,
+            "p99Ms": 0.8
+          },
+          "renderThread": {
+            "p50Ms": 9.9,
+            "p90Ms": 12.3,
+            "p95Ms": 13,
+            "p99Ms": 14.5
+          }
+        }
+      }
+    },
+    {
+      "name": "0020",
+      "at": "2026-10-02T10:51:38.640Z",
+      "crossings": 273,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 530790,
+        "nativePssKb": 290922,
+        "dalvikPssKb": 35098,
+        "nativeHeapAllocKb": 275919,
+        "dalvikHeapAllocKb": 12908,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 649,
+          "jankyFrames": 30,
+          "jankyPct": 4.62,
+          "missedVsync": 0,
+          "slowUiThread": 14,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 30
+        },
+        "histogram": {
+          "frames": 649,
+          "p50Ms": 14,
+          "p90Ms": 16,
+          "p95Ms": 18,
+          "p99Ms": 22,
+          "maxMs": 48,
+          "framesOver16Ms": 59,
+          "framesOver33Ms": 1,
+          "withinDeadlinePct": 90.9
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.8,
+            "p90Ms": 16.3,
+            "p95Ms": 18.9,
+            "p99Ms": 24.8
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.7,
+            "p99Ms": 1
+          },
+          "renderThread": {
+            "p50Ms": 9.7,
+            "p90Ms": 11.3,
+            "p95Ms": 12.7,
+            "p99Ms": 13.4
+          }
+        }
+      }
+    },
+    {
+      "name": "0021",
+      "at": "2026-10-02T10:52:41.152Z",
+      "crossings": 287,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 530478,
+        "nativePssKb": 292982,
+        "dalvikPssKb": 36958,
+        "nativeHeapAllocKb": 282937,
+        "dalvikHeapAllocKb": 13016,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 647,
+          "jankyFrames": 39,
+          "jankyPct": 6.03,
+          "missedVsync": 0,
+          "slowUiThread": 27,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 39
+        },
+        "histogram": {
+          "frames": 647,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 19,
+          "p99Ms": 26,
+          "maxMs": 34,
+          "framesOver16Ms": 73,
+          "framesOver33Ms": 1,
+          "withinDeadlinePct": 88.7
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.9,
+            "p90Ms": 17.5,
+            "p95Ms": 19.4,
+            "p99Ms": 22.8
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.6,
+            "p99Ms": 0.8
+          },
+          "renderThread": {
+            "p50Ms": 9.8,
+            "p90Ms": 11.5,
+            "p95Ms": 12.5,
+            "p99Ms": 14.5
+          }
+        }
+      }
+    },
+    {
+      "name": "0022",
+      "at": "2026-10-02T10:53:42.881Z",
+      "crossings": 301,
+      "views": 605,
+      "memory": {
+        "totalPssKb": 528775,
+        "nativePssKb": 306206,
+        "dalvikPssKb": 21374,
+        "nativeHeapAllocKb": 287286,
+        "dalvikHeapAllocKb": 12770,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 654,
+          "jankyFrames": 41,
+          "jankyPct": 6.27,
+          "missedVsync": 7,
+          "slowUiThread": 25,
+          "slowIssueDrawCommands": 5,
+          "frameDeadlineMissed": 41
+        },
+        "histogram": {
+          "frames": 654,
+          "p50Ms": 15,
+          "p90Ms": 19,
+          "p95Ms": 23,
+          "p99Ms": 69,
+          "maxMs": 150,
+          "framesOver16Ms": 138,
+          "framesOver33Ms": 12,
+          "withinDeadlinePct": 78.9
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 15,
+            "p90Ms": 22.6,
+            "p95Ms": 27.2,
+            "p99Ms": 37.6
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.3,
+            "p90Ms": 0.5,
+            "p95Ms": 0.6,
+            "p99Ms": 0.9
+          },
+          "renderThread": {
+            "p50Ms": 10.3,
+            "p90Ms": 15,
+            "p95Ms": 16.4,
+            "p99Ms": 21.1
+          }
+        }
+      }
+    },
+    {
+      "name": "0023",
+      "at": "2026-10-02T10:54:45.654Z",
+      "crossings": 315,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 558835,
+        "nativePssKb": 324986,
+        "dalvikPssKb": 23022,
+        "nativeHeapAllocKb": 300864,
+        "dalvikHeapAllocKb": 11912,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 653,
+          "jankyFrames": 41,
+          "jankyPct": 6.28,
+          "missedVsync": 6,
+          "slowUiThread": 19,
+          "slowIssueDrawCommands": 3,
+          "frameDeadlineMissed": 41
+        },
+        "histogram": {
+          "frames": 653,
+          "p50Ms": 15,
+          "p90Ms": 19,
+          "p95Ms": 23,
+          "p99Ms": 65,
+          "maxMs": 85,
+          "framesOver16Ms": 134,
+          "framesOver33Ms": 10,
+          "withinDeadlinePct": 79.5
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.8,
+            "p90Ms": 16.2,
+            "p95Ms": 17.6,
+            "p99Ms": 21.4
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.6,
+            "p99Ms": 0.8
+          },
+          "renderThread": {
+            "p50Ms": 9.5,
+            "p90Ms": 11.5,
+            "p95Ms": 12.3,
+            "p99Ms": 13.3
+          }
+        }
+      }
+    },
+    {
+      "name": "0024",
+      "at": "2026-10-02T10:55:48.271Z",
+      "crossings": 329,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 553579,
+        "nativePssKb": 306542,
+        "dalvikPssKb": 36098,
+        "nativeHeapAllocKb": 276761,
+        "dalvikHeapAllocKb": 13029,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 634,
+          "jankyFrames": 38,
+          "jankyPct": 5.99,
+          "missedVsync": 0,
+          "slowUiThread": 24,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 38
+        },
+        "histogram": {
+          "frames": 634,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 19,
+          "p99Ms": 24,
+          "maxMs": 29,
+          "framesOver16Ms": 72,
+          "framesOver33Ms": 0,
+          "withinDeadlinePct": 88.6
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.8,
+            "p90Ms": 15.9,
+            "p95Ms": 17.2,
+            "p99Ms": 21.2
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.6,
+            "p99Ms": 0.6
+          },
+          "renderThread": {
+            "p50Ms": 9.7,
+            "p90Ms": 11.3,
+            "p95Ms": 11.9,
+            "p99Ms": 13
+          }
+        }
+      }
+    },
+    {
+      "name": "0025",
+      "at": "2026-10-02T10:56:51.224Z",
+      "crossings": 343,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 556071,
+        "nativePssKb": 308194,
+        "dalvikPssKb": 36906,
+        "nativeHeapAllocKb": 288424,
+        "dalvikHeapAllocKb": 13024,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 640,
+          "jankyFrames": 35,
+          "jankyPct": 5.47,
+          "missedVsync": 0,
+          "slowUiThread": 18,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 35
+        },
+        "histogram": {
+          "frames": 640,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 19,
+          "p99Ms": 25,
+          "maxMs": 53,
+          "framesOver16Ms": 68,
+          "framesOver33Ms": 1,
+          "withinDeadlinePct": 89.4
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.9,
+            "p90Ms": 17,
+            "p95Ms": 18.6,
+            "p99Ms": 25.2
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.5,
+            "p99Ms": 0.6
+          },
+          "renderThread": {
+            "p50Ms": 9.6,
+            "p90Ms": 11.6,
+            "p95Ms": 12.3,
+            "p99Ms": 13.6
+          }
+        }
+      }
+    },
+    {
+      "name": "0026",
+      "at": "2026-10-02T10:57:53.865Z",
+      "crossings": 357,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 550359,
+        "nativePssKb": 303726,
+        "dalvikPssKb": 35486,
+        "nativeHeapAllocKb": 271430,
+        "dalvikHeapAllocKb": 12999,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 635,
+          "jankyFrames": 34,
+          "jankyPct": 5.35,
+          "missedVsync": 0,
+          "slowUiThread": 18,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 34
+        },
+        "histogram": {
+          "frames": 635,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 18,
+          "p99Ms": 23,
+          "maxMs": 30,
+          "framesOver16Ms": 67,
+          "framesOver33Ms": 0,
+          "withinDeadlinePct": 89.4
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.8,
+            "p90Ms": 17.7,
+            "p95Ms": 18.7,
+            "p99Ms": 20.3
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.6,
+            "p99Ms": 0.9
+          },
+          "renderThread": {
+            "p50Ms": 9.9,
+            "p90Ms": 11.9,
+            "p95Ms": 12.5,
+            "p99Ms": 13.3
+          }
+        }
+      }
+    },
+    {
+      "name": "0027",
+      "at": "2026-10-02T10:58:55.944Z",
+      "crossings": 371,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 553483,
+        "nativePssKb": 306074,
+        "dalvikPssKb": 36406,
+        "nativeHeapAllocKb": 282943,
+        "dalvikHeapAllocKb": 13000,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 631,
+          "jankyFrames": 30,
+          "jankyPct": 4.75,
+          "missedVsync": 0,
+          "slowUiThread": 18,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 30
+        },
+        "histogram": {
+          "frames": 631,
+          "p50Ms": 14,
+          "p90Ms": 16,
+          "p95Ms": 18,
+          "p99Ms": 23,
+          "maxMs": 36,
+          "framesOver16Ms": 55,
+          "framesOver33Ms": 1,
+          "withinDeadlinePct": 91.3
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.8,
+            "p90Ms": 17,
+            "p95Ms": 19.1,
+            "p99Ms": 21.5
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.5,
+            "p99Ms": 0.8
+          },
+          "renderThread": {
+            "p50Ms": 9.4,
+            "p90Ms": 11.3,
+            "p95Ms": 12.4,
+            "p99Ms": 13.4
+          }
+        }
+      }
+    },
+    {
+      "name": "0028",
+      "at": "2026-10-02T10:59:58.392Z",
+      "crossings": 385,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 558594,
+        "nativePssKb": 310042,
+        "dalvikPssKb": 37015,
+        "nativeHeapAllocKb": 294762,
+        "dalvikHeapAllocKb": 13014,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 648,
+          "jankyFrames": 35,
+          "jankyPct": 5.4,
+          "missedVsync": 0,
+          "slowUiThread": 22,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 35
+        },
+        "histogram": {
+          "frames": 648,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 19,
+          "p99Ms": 26,
+          "maxMs": 44,
+          "framesOver16Ms": 80,
+          "framesOver33Ms": 1,
+          "withinDeadlinePct": 87.7
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 15,
+            "p90Ms": 18.1,
+            "p95Ms": 19,
+            "p99Ms": 24.3
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.6,
+            "p99Ms": 0.7
+          },
+          "renderThread": {
+            "p50Ms": 10.1,
+            "p90Ms": 11.8,
+            "p95Ms": 12.2,
+            "p99Ms": 12.8
+          }
+        }
+      }
+    },
+    {
+      "name": "0029",
+      "at": "2026-10-02T11:01:00.985Z",
+      "crossings": 399,
+      "views": 605,
+      "memory": {
+        "totalPssKb": 587659,
+        "nativePssKb": 321106,
+        "dalvikPssKb": 50459,
+        "nativeHeapAllocKb": 301826,
+        "dalvikHeapAllocKb": 13791,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 656,
+          "jankyFrames": 39,
+          "jankyPct": 5.95,
+          "missedVsync": 7,
+          "slowUiThread": 24,
+          "slowIssueDrawCommands": 2,
+          "frameDeadlineMissed": 39
+        },
+        "histogram": {
+          "frames": 656,
+          "p50Ms": 15,
+          "p90Ms": 19,
+          "p95Ms": 23,
+          "p99Ms": 69,
+          "maxMs": 121,
+          "framesOver16Ms": 127,
+          "framesOver33Ms": 8,
+          "withinDeadlinePct": 80.6
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 15.1,
+            "p90Ms": 19.7,
+            "p95Ms": 24,
+            "p99Ms": 35.1
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.3,
+            "p90Ms": 0.5,
+            "p95Ms": 0.5,
+            "p99Ms": 0.9
+          },
+          "renderThread": {
+            "p50Ms": 10.8,
+            "p90Ms": 12.9,
+            "p95Ms": 15.2,
+            "p99Ms": 19
+          }
+        }
+      }
+    },
+    {
+      "name": "0030",
+      "at": "2026-10-02T11:02:03.488Z",
+      "crossings": 413,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 586625,
+        "nativePssKb": 335310,
+        "dalvikPssKb": 30887,
+        "nativeHeapAllocKb": 304825,
+        "dalvikHeapAllocKb": 12515,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 642,
+          "jankyFrames": 43,
+          "jankyPct": 6.7,
+          "missedVsync": 6,
+          "slowUiThread": 19,
+          "slowIssueDrawCommands": 8,
+          "frameDeadlineMissed": 43
+        },
+        "histogram": {
+          "frames": 642,
+          "p50Ms": 15,
+          "p90Ms": 20,
+          "p95Ms": 25,
+          "p99Ms": 77,
+          "maxMs": 129,
+          "framesOver16Ms": 152,
+          "framesOver33Ms": 12,
+          "withinDeadlinePct": 76.3
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.9,
+            "p90Ms": 19.1,
+            "p95Ms": 22.6,
+            "p99Ms": 32.4
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.6,
+            "p99Ms": 0.7
+          },
+          "renderThread": {
+            "p50Ms": 10.1,
+            "p90Ms": 12.6,
+            "p95Ms": 13.9,
+            "p99Ms": 16.6
+          }
+        }
+      }
+    },
+    {
+      "name": "0031",
+      "at": "2026-10-02T11:03:06.286Z",
+      "crossings": 427,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 586149,
+        "nativePssKb": 329546,
+        "dalvikPssKb": 36267,
+        "nativeHeapAllocKb": 311218,
+        "dalvikHeapAllocKb": 13002,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 642,
+          "jankyFrames": 35,
+          "jankyPct": 5.45,
+          "missedVsync": 0,
+          "slowUiThread": 22,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 35
+        },
+        "histogram": {
+          "frames": 642,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 19,
+          "p99Ms": 25,
+          "maxMs": 48,
+          "framesOver16Ms": 71,
+          "framesOver33Ms": 1,
+          "withinDeadlinePct": 88.9
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.9,
+            "p90Ms": 18.4,
+            "p95Ms": 19.5,
+            "p99Ms": 24.7
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.6,
+            "p99Ms": 0.7
+          },
+          "renderThread": {
+            "p50Ms": 10.1,
+            "p90Ms": 12.1,
+            "p95Ms": 12.8,
+            "p99Ms": 16.3
+          }
+        }
+      }
+    },
+    {
+      "name": "0032",
+      "at": "2026-10-02T11:04:09.155Z",
+      "crossings": 441,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 568563,
+        "nativePssKb": 311366,
+        "dalvikPssKb": 36951,
+        "nativeHeapAllocKb": 286671,
+        "dalvikHeapAllocKb": 13008,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 645,
+          "jankyFrames": 28,
+          "jankyPct": 4.34,
+          "missedVsync": 0,
+          "slowUiThread": 14,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 28
+        },
+        "histogram": {
+          "frames": 645,
+          "p50Ms": 14,
+          "p90Ms": 16,
+          "p95Ms": 19,
+          "p99Ms": 24,
+          "maxMs": 36,
+          "framesOver16Ms": 61,
+          "framesOver33Ms": 1,
+          "withinDeadlinePct": 90.5
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.8,
+            "p90Ms": 16.2,
+            "p95Ms": 18.4,
+            "p99Ms": 22
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.5,
+            "p99Ms": 1.1
+          },
+          "renderThread": {
+            "p50Ms": 9.8,
+            "p90Ms": 11.3,
+            "p95Ms": 12.2,
+            "p99Ms": 13.4
+          }
+        }
+      }
+    },
+    {
+      "name": "0033",
+      "at": "2026-10-02T11:05:12.077Z",
+      "crossings": 455,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 570151,
+        "nativePssKb": 314062,
+        "dalvikPssKb": 35839,
+        "nativeHeapAllocKb": 298255,
+        "dalvikHeapAllocKb": 13004,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 638,
+          "jankyFrames": 34,
+          "jankyPct": 5.33,
+          "missedVsync": 0,
+          "slowUiThread": 20,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 34
+        },
+        "histogram": {
+          "frames": 638,
+          "p50Ms": 14,
+          "p90Ms": 16,
+          "p95Ms": 19,
+          "p99Ms": 23,
+          "maxMs": 57,
+          "framesOver16Ms": 63,
+          "framesOver33Ms": 1,
+          "withinDeadlinePct": 90.1
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.8,
+            "p90Ms": 17.3,
+            "p95Ms": 19.8,
+            "p99Ms": 23.3
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.6,
+            "p95Ms": 0.6,
+            "p99Ms": 0.8
+          },
+          "renderThread": {
+            "p50Ms": 9.6,
+            "p90Ms": 11.4,
+            "p95Ms": 12.2,
+            "p99Ms": 13.5
+          }
+        }
+      }
+    },
+    {
+      "name": "0034",
+      "at": "2026-10-02T11:06:14.809Z",
+      "crossings": 469,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 575879,
+        "nativePssKb": 319218,
+        "dalvikPssKb": 36235,
+        "nativeHeapAllocKb": 309871,
+        "dalvikHeapAllocKb": 13022,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 640,
+          "jankyFrames": 33,
+          "jankyPct": 5.16,
+          "missedVsync": 0,
+          "slowUiThread": 19,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 33
+        },
+        "histogram": {
+          "frames": 640,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 19,
+          "p99Ms": 25,
+          "maxMs": 34,
+          "framesOver16Ms": 79,
+          "framesOver33Ms": 1,
+          "withinDeadlinePct": 87.7
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.8,
+            "p90Ms": 18.3,
+            "p95Ms": 20.3,
+            "p99Ms": 22.9
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.6,
+            "p99Ms": 0.7
+          },
+          "renderThread": {
+            "p50Ms": 9.9,
+            "p90Ms": 12.1,
+            "p95Ms": 13.4,
+            "p99Ms": 15.6
+          }
+        }
+      }
+    },
+    {
+      "name": "0035",
+      "at": "2026-10-02T11:07:17.708Z",
+      "crossings": 483,
+      "views": 397,
+      "memory": {
+        "totalPssKb": 569111,
+        "nativePssKb": 311974,
+        "dalvikPssKb": 36851,
+        "nativeHeapAllocKb": 290253,
+        "dalvikHeapAllocKb": 13019,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 631,
+          "jankyFrames": 33,
+          "jankyPct": 5.23,
+          "missedVsync": 0,
+          "slowUiThread": 18,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 33
+        },
+        "histogram": {
+          "frames": 631,
+          "p50Ms": 14,
+          "p90Ms": 17,
+          "p95Ms": 19,
+          "p99Ms": 25,
+          "maxMs": 48,
+          "framesOver16Ms": 67,
+          "framesOver33Ms": 1,
+          "withinDeadlinePct": 89.4
+        },
+        "lastFrames": {
+          "count": 120,
+          "total": {
+            "p50Ms": 14.9,
+            "p90Ms": 17.6,
+            "p95Ms": 18.3,
+            "p99Ms": 33.8
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.4,
+            "p90Ms": 0.5,
+            "p95Ms": 0.6,
+            "p99Ms": 0.6
+          },
+          "renderThread": {
+            "p50Ms": 10,
+            "p90Ms": 12.2,
+            "p95Ms": 12.6,
+            "p99Ms": 13.4
+          }
+        }
+      }
+    },
+    {
+      "name": "0036",
+      "at": "2026-10-02T11:08:20.280Z",
+      "crossings": 497,
+      "views": 708,
+      "memory": {
+        "totalPssKb": 592590,
+        "nativePssKb": 331214,
+        "dalvikPssKb": 40499,
+        "nativeHeapAllocKb": 322731,
+        "dalvikHeapAllocKb": 13705,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 663,
+          "jankyFrames": 39,
+          "jankyPct": 5.88,
+          "missedVsync": 6,
+          "slowUiThread": 24,
+          "slowIssueDrawCommands": 9,
+          "frameDeadlineMissed": 39
+        },
+        "histogram": {
+          "frames": 663,
+          "p50Ms": 14,
+          "p90Ms": 21,
+          "p95Ms": 25,
+          "p99Ms": 61,
+          "maxMs": 101,
+          "framesOver16Ms": 132,
+          "framesOver33Ms": 7,
+          "withinDeadlinePct": 80.1
+        },
+        "lastFrames": {
+          "count": 119,
+          "total": {
+            "p50Ms": 15.2,
+            "p90Ms": 32.2,
+            "p95Ms": 34.5,
+            "p99Ms": 83.1
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.3,
+            "p90Ms": 0.4,
+            "p95Ms": 0.5,
+            "p99Ms": 0.6
+          },
+          "renderThread": {
+            "p50Ms": 11.5,
+            "p90Ms": 27.8,
+            "p95Ms": 28.9,
+            "p99Ms": 30.7
+          }
+        }
+      }
+    },
+    {
+      "name": "final",
+      "at": "2026-10-02T11:08:34.491Z",
+      "crossings": 500,
+      "views": 728,
+      "memory": {
+        "totalPssKb": 587914,
+        "nativePssKb": 327222,
+        "dalvikPssKb": 40063,
+        "nativeHeapAllocKb": 320440,
+        "dalvikHeapAllocKb": 13530,
+        "jsHeapBytes": null
+      },
+      "frames": {
+        "reported": {
+          "totalFrames": 137,
+          "jankyFrames": 10,
+          "jankyPct": 7.3,
+          "missedVsync": 2,
+          "slowUiThread": 5,
+          "slowIssueDrawCommands": 0,
+          "frameDeadlineMissed": 10
+        },
+        "histogram": {
+          "frames": 137,
+          "p50Ms": 14,
+          "p90Ms": 20,
+          "p95Ms": 23,
+          "p99Ms": 61,
+          "maxMs": 117,
+          "framesOver16Ms": 32,
+          "framesOver33Ms": 2,
+          "withinDeadlinePct": 76.6
+        },
+        "lastFrames": {
+          "count": 119,
+          "total": {
+            "p50Ms": 15,
+            "p90Ms": 20.9,
+            "p95Ms": 23.4,
+            "p99Ms": 62.6
+          },
+          "uiThreadTraversal": {
+            "p50Ms": 0.3,
+            "p90Ms": 0.4,
+            "p95Ms": 0.5,
+            "p99Ms": 0.7
+          },
+          "renderThread": {
+            "p50Ms": 10.4,
+            "p90Ms": 14.4,
+            "p95Ms": 15.8,
+            "p99Ms": 17.5
+          }
+        }
+      }
+    }
+  ]
+}

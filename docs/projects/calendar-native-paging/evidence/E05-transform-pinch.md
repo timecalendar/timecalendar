@@ -19,4 +19,4 @@ status: pending-device-verdict
 
 ## Verdict and remaining evidence
 
-**Code implemented; E05 is not complete.** T08b pager integration has not merged. The P02 frame thresholds, zero per-frame JS/layout trace, fixed-cap seams, text sharpness, focal stability, VoiceOver behavior and owner hand-feel need exact-revision device evidence. OnePlus 6 and physical iPhone measurements must be recorded before an owner verdict or release/OTA publication.
+**Code implemented; E05 is not complete.** The T08b pager integration is merged. The P02 frame thresholds, zero per-frame JS/layout trace, fixed-cap seams, text sharpness, focal stability, VoiceOver behavior and owner hand-feel need exact-revision device evidence. OnePlus 6 and physical iPhone measurements must be recorded before an owner verdict or release/OTA publication.
