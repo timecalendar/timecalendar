@@ -1,4 +1,9 @@
 import { act, fireEvent, render, screen } from "@testing-library/react-native"
+import { State } from "react-native-gesture-handler"
+import {
+  fireGestureHandler,
+  getByGestureTestId,
+} from "react-native-gesture-handler/jest-utils"
 import * as Reanimated from "react-native-reanimated"
 
 import {
@@ -64,6 +69,40 @@ const pageId = (index: PageIndex) =>
   `owned-calendar-page-week:${pageStartDay(SPACE, index)}`
 const weekStartKey = (index: PageIndex) =>
   epochDayKey(pageStartDay(SPACE, index))
+
+function recordAnimatedReactions() {
+  const sites = new Map<
+    string,
+    {
+      prepare: () => unknown
+      react: (value: unknown, previous: unknown) => void
+      last: unknown
+    }
+  >()
+  const spy = jest
+    .spyOn(Reanimated, "useAnimatedReaction")
+    .mockImplementation((prepare, react) => {
+      const key = react.toString()
+      const previous = sites.get(key)
+      sites.set(key, {
+        prepare,
+        react: react as (value: unknown, previous: unknown) => void,
+        last: previous === undefined ? prepare() : previous.last,
+      })
+    })
+  return {
+    flush: () => {
+      for (const site of sites.values()) {
+        const value = site.prepare()
+        if (value === site.last) continue
+        const previous = site.last
+        site.last = value
+        site.react(value, previous)
+      }
+    },
+    restore: () => spy.mockRestore(),
+  }
+}
 
 async function renderShell() {
   const onDateCommitted = jest.fn()
@@ -274,6 +313,32 @@ describe("owned Calendar windowed pager", () => {
     expect(onDateCommitted.mock.calls[0]?.[0].toISOString().slice(0, 10)).toBe(
       weekStartKey(ANCHOR_INDEX + 1),
     )
+  })
+
+  it("recovers a stationary touch that interrupts a programmatic page", async () => {
+    const reactions = recordAnimatedReactions()
+    try {
+      const { onDateCommitted, pager, showAnchor } = await renderShell()
+      await showAnchor(new Date("2026-11-02T00:00:00.000Z"))
+      await pager.send(19)
+      expect(onDateCommitted).not.toHaveBeenCalled()
+
+      await act(async () => {
+        fireGestureHandler(getByGestureTestId("owned-calendar-native-pager"), [
+          { state: State.BEGAN, numberOfPointers: 1 },
+          { state: State.END, numberOfPointers: 1 },
+        ])
+        reactions.flush()
+      })
+      await flushUiThread()
+
+      expect(onDateCommitted).toHaveBeenCalledTimes(1)
+      expect(
+        onDateCommitted.mock.calls[0]?.[0].toISOString().slice(0, 10),
+      ).toBe(weekStartKey(ANCHOR_INDEX + 19))
+    } finally {
+      reactions.restore()
+    }
   })
 
   it("re-bases the content window near its edge without moving the page", async () => {

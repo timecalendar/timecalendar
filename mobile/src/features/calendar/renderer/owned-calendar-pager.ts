@@ -111,6 +111,8 @@ export function useOwnedCalendarPager({
   const settledIndex = useSharedValue(anchorIndex)
   const navigationTarget = useSharedValue<PageIndex | null>(null)
   const interruptedTarget = useSharedValue<PageIndex | null>(null)
+  const touchDragged = useSharedValue(false)
+  const stationaryTouchVisit = useSharedValue(0)
   const firstIndex = useSharedValue(window.firstIndex)
   const placedWidth = useSharedValue(0)
   const appliedPlacement = useRef(0)
@@ -209,6 +211,7 @@ export function useOwnedCalendarPager({
       settleIfAligned(x)
     },
     onBeginDrag: () => {
+      touchDragged.set(true)
       const target = navigationTarget.get()
       if (target !== null) {
         interruptedTarget.set(target)
@@ -357,22 +360,41 @@ export function useOwnedCalendarPager({
     },
   )
 
+  useAnimatedReaction(
+    () => stationaryTouchVisit.get(),
+    (visit, previous) => {
+      if (visit !== 0 && visit !== previous) settleIfAligned(scrollX.get())
+    },
+  )
+
   const scrollProps = useScrollLockProps(scrollLocked)
 
   // Both native handlers are uninterruptible: the vertical ScrollView
   // activating mid-swipe would otherwise cancel this one between pages.
+  const finishNativeTouch = () => {
+    "worklet"
+    trackNativeTouch("horizontal", false)
+    if (interruptedTarget.get() === null || touchDragged.get()) return
+    dragging.set(false)
+    momentum.set(false)
+    stationaryTouchVisit.set(stationaryTouchVisit.get() + 1)
+  }
+
   const nativeGesture = Gesture.Native()
     .withTestId("owned-calendar-native-pager")
     .disallowInterruption(true)
     .simultaneousWithExternalGesture(pinchGesture)
     .onBegin(() => {
       "worklet"
+      touchDragged.set(false)
+      const target = navigationTarget.get()
+      if (target !== null) {
+        interruptedTarget.set(target)
+        navigationTarget.set(null)
+      }
       trackNativeTouch("horizontal", true)
     })
-    .onFinalize(() => {
-      "worklet"
-      trackNativeTouch("horizontal", false)
-    })
+    .onFinalize(finishNativeTouch)
 
   return {
     scrollRef,

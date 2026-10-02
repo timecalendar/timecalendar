@@ -34,6 +34,8 @@ describe("useReducedMotion", () => {
 
     await unmount()
     expect(remove).toHaveBeenCalledTimes(1)
+    await act(async () => changeListener?.(false))
+    expect(result.current).toBe(true)
   })
 
   it("ignores a late initial read after cleanup", async () => {
