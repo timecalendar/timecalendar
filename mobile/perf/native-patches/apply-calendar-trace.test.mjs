@@ -57,6 +57,26 @@ test("applies the version-checked patch exactly once and blocks non-perf builds"
     patched.indexOf("interceptDown eventTime=") <
       patched.indexOf("super.onInterceptTouchEvent(ev)"),
   )
+  assert.match(patched, /mScroller\.getFinalX\(\) == mCalendarTraceTarget/)
+  assert.match(patched, /Math\.abs\(candidate - getScrollX\(\)\) <= interval/)
+  assert.match(patched, /inputVelocityX == 0/)
+  assert.match(patched, /mScroller\.startScroll\(/)
+  assert.match(patched, /Math\.min\(96, Math\.round\(96f \* distance/)
+  assert.match(patched, /ev\.getPointerCount\(\) > 1/)
+  assert.match(
+    patched,
+    /mCalendarDownContentRange != computeHorizontalScrollRange\(\)/,
+  )
+  assert.match(patched, /mCalendarDownWidth != getWidth\(\)/)
+  assert.match(patched, /reversed = direction != Integer\.signum/)
+  assert.match(
+    patched,
+    /!mCalendarInNativeTouch[\s\S]*?!mCalendarInNativeScroll/,
+  )
+  assert.match(
+    patched,
+    /protected void onDetachedFromWindow\(\) \{[\s\S]*?mCalendarCarryTarget = NO_SCROLL_POSITION;/,
+  )
   assert.equal(applyCalendarTrace(projectRoot, "perf"), TRACED_SHA256)
   assert.equal(readFileSync(source, "utf8"), patched)
   assert.throws(() => assertCalendarTraceAbsent(projectRoot), /pristine/)

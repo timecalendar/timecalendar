@@ -16,25 +16,108 @@
  
    private static @Nullable Field sScrollerField;
    private static boolean sTriedToGetScrollerField = false;
-@@ -137,6 +139,13 @@
+@@ -137,7 +139,34 @@
    private int mFadingEdgeLengthEnd = 0;
    private boolean mEmittedOverScrollSinceScrollBegin = false;
    private boolean mScrollsChildToFocus = true;
 +  private int mCalendarTraceTarget = NO_SCROLL_POSITION;
 +  private int mCalendarTraceReleaseVelocity;
++  private int mCalendarTargetInterval;
++  private int mCalendarCarryTarget = NO_SCROLL_POSITION;
++  private int mCalendarDragStart = NO_SCROLL_POSITION;
++  private int mCalendarDragDelta;
++  private long mCalendarDownEventTime = -1;
++  private int mCalendarDownOffset;
++  private int mCalendarDownContentRange;
++  private int mCalendarDownWidth;
++  private boolean mCalendarMultiPointer;
++  private boolean mCalendarInNativeTouch;
++  private boolean mCalendarInNativeScroll;
 +
++  private void resetCalendarPagingState() {
++    mCalendarTraceTarget = NO_SCROLL_POSITION;
++    mCalendarCarryTarget = NO_SCROLL_POSITION;
++    mCalendarDragStart = NO_SCROLL_POSITION;
++    mCalendarDragDelta = 0;
++    mCalendarDownEventTime = -1;
++    mCalendarMultiPointer = false;
++  }
+ 
 +  private boolean isCalendarPerfPager() {
 +    return "fr.samuelprak.timecalendar.perf".equals(getContext().getPackageName())
 +        && "owned-calendar-pager".equals(getTag(R.id.react_test_id));
 +  }
- 
++
    public ReactHorizontalScrollView(Context context) {
      this(context, null);
-@@ -722,6 +731,23 @@
-       return false;
-     }
+   }
+@@ -161,6 +190,7 @@
+    * ReactTextView is recycled.
+    */
+   private void initView() {
++    resetCalendarPagingState();
+     mOverflowInset = new Rect();
+     mVirtualViewContainerState = null;
+     mActivelyScrolling = false;
+@@ -319,6 +349,9 @@
+   }
  
+   public void setScrollEnabled(boolean scrollEnabled) {
++    if (!scrollEnabled) {
++      resetCalendarPagingState();
++    }
+     mScrollEnabled = scrollEnabled;
+   }
+ 
+@@ -345,6 +378,9 @@
+   }
+ 
+   public void setSnapInterval(int snapInterval) {
++    if (mSnapInterval != snapInterval) {
++      resetCalendarPagingState();
++    }
+     mSnapInterval = snapInterval;
+   }
+ 
+@@ -720,6 +756,55 @@
+   public boolean onInterceptTouchEvent(MotionEvent ev) {
+     if (!mScrollEnabled) {
+       return false;
++    }
++
++    if (isCalendarPerfPager()
++        && (ev.getPointerCount() > 1
++            || ev.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN
++            || ev.getActionMasked() == MotionEvent.ACTION_POINTER_UP
++            || ev.getActionMasked() == MotionEvent.ACTION_CANCEL)) {
++      mCalendarMultiPointer = true;
++      mCalendarCarryTarget = NO_SCROLL_POSITION;
++      mCalendarDragDelta = 0;
++    }
++
 +    if (ev.getActionMasked() == MotionEvent.ACTION_DOWN && isCalendarPerfPager()) {
++      if (mCalendarDownEventTime != ev.getEventTime()) {
++        mCalendarDownEventTime = ev.getEventTime();
++        mCalendarDragStart = NO_SCROLL_POSITION;
++        mCalendarDragDelta = 0;
++        mCalendarMultiPointer = false;
++        int interval = getSnapInterval();
++        int offset = getScrollX();
++        mCalendarDownOffset = offset;
++        mCalendarDownContentRange = computeHorizontalScrollRange();
++        mCalendarDownWidth = getWidth();
++        mCalendarCarryTarget =
++            mSnapInterval > 0
++                    && mScroller != null
++                    && !mScroller.isFinished()
++                    && mCalendarTraceTarget != NO_SCROLL_POSITION
++                    && mCalendarTraceTarget != offset
++                    && mScroller.getFinalX() == mCalendarTraceTarget
++                    && interval == mCalendarTargetInterval
++                    && Math.abs(mCalendarTraceTarget - offset) <= interval
++                ? mCalendarTraceTarget
++                : NO_SCROLL_POSITION;
++      }
 +      Log.i(
 +          CALENDAR_PAGING_TRACE,
 +          "interceptDown eventTime="
@@ -49,17 +132,47 @@
 +              + (mScroller == null ? "none" : mScroller.getFinalX())
 +              + " scrollerFinished="
 +              + (mScroller == null ? "none" : mScroller.isFinished()));
-+    }
-+
+     }
+ 
      if ((ev.getAction() == MotionEvent.ACTION_DOWN)
-         && findDeepestScrollViewForMotionEvent(this, ev) != null) {
-       return false;
-@@ -832,6 +858,17 @@
+@@ -748,6 +833,9 @@
+   }
+ 
+   protected void handleInterceptedTouchEvent(MotionEvent ev) {
++    if (isCalendarPerfPager()) {
++      mCalendarDragStart = getScrollX();
++    }
+     if (!ReactNativeFeatureFlags.shouldTriggerResponderTransferOnScrollAndroid()) {
+       NativeGestureUtil.notifyNativeGestureStarted(this, ev);
+     }
+@@ -827,11 +915,43 @@
+ 
+     mVelocityHelper.calculateVelocity(ev);
+     int action = ev.getActionMasked();
++    if (isCalendarPerfPager()
++        && (ev.getPointerCount() > 1
++            || action == MotionEvent.ACTION_POINTER_DOWN
++            || action == MotionEvent.ACTION_POINTER_UP
++            || action == MotionEvent.ACTION_CANCEL)) {
++      mCalendarMultiPointer = true;
++      mCalendarCarryTarget = NO_SCROLL_POSITION;
++      mCalendarDragDelta = 0;
++    }
+     if (action == MotionEvent.ACTION_UP && mDragging) {
+       ReactScrollViewHelper.updateFabricScrollState(this);
  
        float velocityX = mVelocityHelper.getXVelocity();
        float velocityY = mVelocityHelper.getYVelocity();
 +      if (isCalendarPerfPager()) {
 +        mCalendarTraceReleaseVelocity = Math.round(velocityX);
++        mCalendarDragDelta =
++            mCalendarDragStart == NO_SCROLL_POSITION ? 0 : getScrollX() - mCalendarDragStart;
++        if (mCalendarMultiPointer
++            || mCalendarDownContentRange != computeHorizontalScrollRange()
++            || mCalendarDownWidth != getWidth()
++            || Math.abs(getScrollX() - mCalendarDownOffset) > 2 * getSnapInterval()) {
++          mCalendarCarryTarget = NO_SCROLL_POSITION;
++        }
 +        Log.i(
 +            CALENDAR_PAGING_TRACE,
 +            "release eventTime="
@@ -67,12 +180,16 @@
 +                + " offset="
 +                + getScrollX()
 +                + " velocity="
-+                + mCalendarTraceReleaseVelocity);
++                + mCalendarTraceReleaseVelocity
++                + " dragDelta="
++                + mCalendarDragDelta
++                + " carryTarget="
++                + mCalendarCarryTarget);
 +      }
        ReactScrollViewHelper.emitScrollEndDragEvent(this, velocityX, velocityY);
        if (!ReactNativeFeatureFlags.shouldTriggerResponderTransferOnScrollAndroid()) {
          NativeGestureUtil.notifyNativeGestureEnded(this, ev);
-@@ -843,6 +880,22 @@
+@@ -843,10 +963,31 @@
      }
  
      if (action == MotionEvent.ACTION_DOWN) {
@@ -95,7 +212,35 @@
        cancelPostTouchScrolling();
      }
  
-@@ -1213,6 +1266,20 @@
+-    return super.onTouchEvent(ev);
++    mCalendarInNativeTouch = true;
++    try {
++      return super.onTouchEvent(ev);
++    } finally {
++      mCalendarInNativeTouch = false;
++    }
+   }
+ 
+   @Override
+@@ -970,6 +1111,9 @@
+   @Override
+   protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+     super.onSizeChanged(w, h, oldw, oldh);
++    if (w != oldw) {
++      resetCalendarPagingState();
++    }
+     if (mRemoveClippedSubviews) {
+       updateClippingRect();
+     }
+@@ -992,6 +1136,7 @@
+   @Override
+   protected void onDetachedFromWindow() {
+     super.onDetachedFromWindow();
++    resetCalendarPagingState();
+     if (mMaintainVisibleContentPositionHelper != null) {
+       mMaintainVisibleContentPositionHelper.stop();
+     }
+@@ -1213,6 +1358,20 @@
                mStableFrames++;
  
                if (mStableFrames >= 3) {
@@ -116,27 +261,59 @@
                  mPostTouchRunnable = null;
                  if (mSendMomentumEvents) {
                    ReactScrollViewHelper.emitScrollMomentumEndEvent(ReactHorizontalScrollView.this);
-@@ -1327,6 +1394,8 @@
-     if (getChildCount() <= 0) {
+@@ -1328,6 +1487,8 @@
        return;
      }
-+
-+    int inputVelocityX = velocityX;
  
++    int inputVelocityX = velocityX;
++
      // pagingEnabled only allows snapping one interval at a time
      if (mSnapInterval == 0 && mSnapOffsets == null && mSnapToAlignment == SNAP_ALIGNMENT_DISABLED) {
-@@ -1483,6 +1552,24 @@
+       smoothScrollAndSnap(velocityX);
+@@ -1481,6 +1642,54 @@
+     if (getLayoutDirection() == LAYOUT_DIRECTION_RTL) {
+       targetOffset = maximumOffset - targetOffset;
        velocityX = -velocityX;
-     }
- 
++    }
++
 +    if (isCalendarPerfPager()) {
++      int originalTarget = targetOffset;
++      int interval = getSnapInterval();
++      boolean carried = false;
++      boolean reversed = false;
++      if (inputVelocityX == 0
++          && !hasCustomizedFlingAnimator
++          && mScroller != null
++          && mSnapInterval > 0
++          && mCalendarCarryTarget != NO_SCROLL_POSITION
++          && Math.abs(mCalendarDragDelta) >= interval / 2) {
++        int direction = Integer.signum(mCalendarDragDelta);
++        int candidate = mCalendarCarryTarget + direction * interval;
++        if (candidate >= 0
++            && candidate <= maximumOffset
++            && direction * (candidate - getScrollX()) >= 0
++            && Math.abs(candidate - getScrollX()) <= interval) {
++          targetOffset = candidate;
++          carried = true;
++          reversed = direction != Integer.signum(mCalendarCarryTarget - mCalendarDownOffset);
++        }
++      }
++      mCalendarCarryTarget = NO_SCROLL_POSITION;
++      mCalendarDragDelta = 0;
 +      mCalendarTraceTarget = targetOffset;
++      mCalendarTargetInterval = interval;
 +      Log.i(
 +          CALENDAR_PAGING_TRACE,
 +          "snap start="
 +              + getScrollX()
 +              + " target="
 +              + targetOffset
++              + " originalTarget="
++              + originalTarget
++              + " carried="
++              + carried
++              + " reversed="
++              + reversed
 +              + " inputVelocity="
 +              + inputVelocityX
 +              + " appliedVelocity="
@@ -145,8 +322,104 @@
 +              + mCalendarTraceReleaseVelocity
 +              + " interval="
 +              + getSnapInterval());
-+    }
-+
+     }
+ 
      if (hasCustomizedFlingAnimator || mScroller == null) {
-       reactSmoothScrollTo(targetOffset, getScrollY());
-     } else {
+@@ -1492,23 +1701,43 @@
+       // if velocity is 0 however, fling() won't work, so we want to use smoothScrollTo
+       mActivelyScrolling = true;
+ 
+-      mScroller.fling(
+-          getScrollX(), // startX
+-          getScrollY(), // startY
+-          // velocity = 0 doesn't work with fling() so we pretend there's a reasonable
+-          // initial velocity going on when a touch is released without any movement
+-          velocityX != 0 ? velocityX : targetOffset - getScrollX(), // velocityX
+-          0, // velocityY
+-          // setting both minX and maxX to the same value will guarantee that we scroll to it
+-          // but using the standard fling-style easing rather than smoothScrollTo's 250ms animation
+-          targetOffset, // minX
+-          targetOffset, // maxX
+-          0, // minY
+-          0, // maxY
+-          // we only want to allow overscrolling if the final offset is at the very edge of the view
+-          (targetOffset == 0 || targetOffset == maximumOffset) ? width / 2 : 0, // overX
+-          0 // overY
+-          );
++      if (isCalendarPerfPager()
++          && inputVelocityX == 0
++          && mSnapInterval > 0
++          && !mCalendarMultiPointer) {
++        int distance = Math.abs(targetOffset - getScrollX());
++        // The observed rapid-chain gap was at least 102ms; a constrained zero-velocity fling
++        // covered only 27px in 113ms. Scale the native animation to its remaining page distance.
++        int duration = Math.max(16, Math.min(96, Math.round(96f * distance / getSnapInterval())));
++        mScroller.startScroll(
++            getScrollX(), getScrollY(), targetOffset - getScrollX(), 0, duration);
++        Log.i(
++            CALENDAR_PAGING_TRACE,
++            "animation start="
++                + getScrollX()
++                + " target="
++                + targetOffset
++                + " duration="
++                + duration);
++      } else {
++        mScroller.fling(
++            getScrollX(), // startX
++            getScrollY(), // startY
++            // velocity = 0 doesn't work with fling() so we pretend there's a reasonable
++            // initial velocity going on when a touch is released without any movement
++            velocityX != 0 ? velocityX : targetOffset - getScrollX(), // velocityX
++            0, // velocityY
++            // setting both minX and maxX to the same value will guarantee that we scroll to it
++            // but using the standard fling-style easing rather than smoothScrollTo's 250ms animation
++            targetOffset, // minX
++            targetOffset, // maxX
++            0, // minY
++            0, // maxY
++            // we only want to allow overscrolling if the final offset is at the very edge of the view
++            (targetOffset == 0 || targetOffset == maximumOffset) ? width / 2 : 0, // overX
++            0 // overY
++            );
++      }
+ 
+       postInvalidateOnAnimation();
+     }
+@@ -1600,10 +1829,23 @@
+    * scroll view and state. Calling raw `smoothScrollTo` doesn't update state.
+    */
+   public void reactSmoothScrollTo(int x, int y) {
++    if (isCalendarPerfPager()) {
++      resetCalendarPagingState();
++    }
+     ReactScrollViewHelper.smoothScrollTo(this, x, y);
+     setPendingContentOffsets(x, y);
+   }
+ 
++  @Override
++  public void computeScroll() {
++    mCalendarInNativeScroll = true;
++    try {
++      super.computeScroll();
++    } finally {
++      mCalendarInNativeScroll = false;
++    }
++  }
++
+   /**
+    * Calls `super.scrollTo` and updates state.
+    *
+@@ -1619,6 +1861,12 @@
+       FLog.i(TAG, "scrollTo[%d] x %d y %d", getId(), x, y);
+     }
+ 
++    if (isCalendarPerfPager()
++        && x != getScrollX()
++        && !mCalendarInNativeTouch
++        && !mCalendarInNativeScroll) {
++      resetCalendarPagingState();
++    }
+     super.scrollTo(x, y);
+     ReactScrollViewHelper.updateFabricScrollState(this);
+     setPendingContentOffsets(x, y);
