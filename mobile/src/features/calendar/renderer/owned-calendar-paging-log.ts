@@ -43,6 +43,9 @@ export const pagingLog = {
   settle(index: number): void {
     if (enabled) console.log(`CALENDAR_PAGING settle page=${index}`)
   },
+  restSnap(index: number): void {
+    if (enabled) console.log(`CALENDAR_PAGING rest-snap page=${index}`)
+  },
   mount(pageKey: string): void {
     if (enabled)
       console.log(
