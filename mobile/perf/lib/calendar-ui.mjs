@@ -55,14 +55,14 @@ export const selectedCalendarView = (xml, labelsByLocale, screen) => {
 
 const visibleDateKeys = (xml, screen) =>
   parseUiNodes(xml)
-    .filter(
-      (node) =>
-        node["visible-to-user"] !== "false" &&
-        boundsCenter(node.bounds, screen) !== null,
-    )
-    .map(resourceName)
-    .filter((name) => /^owned-calendar-date-\d{4}-\d{2}-\d{2}$/.test(name))
-    .map((name) => name.slice("owned-calendar-date-".length))
+    .flatMap((node) => {
+      const name = resourceName(node)
+      return node["visible-to-user"] !== "false" &&
+        boundsCenter(node.bounds, screen) !== null &&
+        /^owned-calendar-date-\d{4}-\d{2}-\d{2}$/.test(name)
+        ? [name.slice("owned-calendar-date-".length)]
+        : []
+    })
     .sort()
 
 const epochDayOfKey = (key) => {
@@ -199,8 +199,9 @@ export const menuItemPoint = (xml, label, screen) => {
       resourceName(node) !== "calendar-view" &&
       (node.text === label || node["content-desc"] === label),
   )
-  const points = nodes
-    .map((node) => boundsCenter(node.bounds, screen))
-    .filter(Boolean)
+  const points = nodes.flatMap((node) => {
+    const point = boundsCenter(node.bounds, screen)
+    return point ? [point] : []
+  })
   return points.length === 1 ? points[0] : null
 }
