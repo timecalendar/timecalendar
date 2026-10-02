@@ -8,6 +8,7 @@ import {
   normalizeTimelineAnchor,
   useCalendarClock,
 } from "@/features/calendar/data"
+import { applyPagerExperiment } from "@/features/calendar/renderer/pager-experiment"
 import {
   type CalendarView,
   useCalendarViewPreference,
@@ -39,7 +40,11 @@ function parseFocusDate(value: string, zone: string): Date | undefined {
 }
 
 export function useCalendarScreenController() {
-  const { focusDate } = useLocalSearchParams<{ focusDate?: string }>()
+  const { focusDate, px } = useLocalSearchParams<{
+    focusDate?: string
+    px?: string
+  }>()
+  if (px !== undefined) applyPagerExperiment(px)
   const displayZone = useDisplayZone()
   const { view: persistedView, setView: persistView } =
     useCalendarViewPreference()

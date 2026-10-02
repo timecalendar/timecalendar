@@ -33,6 +33,7 @@ import {
   type ScrollLockProps,
   useMinutePositionStyle,
 } from "./owned-calendar-geometry"
+import { pagerExperiment } from "./pager-experiment"
 
 const MAJOR_MINUTES = fullDayMajorMinutes()
 const MINOR_MINUTES = fullDayMinorMinutes()
@@ -170,7 +171,11 @@ export function OwnedCalendarCanvas({
             color={theme.separator}
           />
           {pager.pageWidth > 0 && (
-            <HorizontalPagerView key={mode} scrollRef={pagerRef} pager={pager}>
+            <HorizontalPagerView
+              key={`${mode}:${pagerExperiment.spec}`}
+              scrollRef={pagerRef}
+              pager={pager}
+            >
               {children}
             </HorizontalPagerView>
           )}
@@ -195,38 +200,39 @@ function HorizontalPagerView({
   const visibility = useAnimatedStyle(() => ({
     opacity: pager.positioned.get() ? 1 : 0,
   }))
-  return (
-    <GestureDetector gesture={pager.nativeGesture}>
-      <Animated.ScrollView
-        ref={scrollRef}
-        animatedProps={pager.scrollProps}
-        testID="owned-calendar-pager"
-        horizontal
-        pagingEnabled={Platform.OS === "ios"}
-        snapToInterval={
-          Platform.OS === "android" ? pager.pageWidth + 1e-3 : undefined
-        }
-        disableIntervalMomentum
-        decelerationRate="fast"
-        directionalLockEnabled
-        bounces={false}
-        overScrollMode="never"
-        showsHorizontalScrollIndicator={false}
-        scrollEventThrottle={16}
-        accessible={false}
-        importantForAccessibility="no"
-        onScroll={pager.scrollHandler}
-        onContentSizeChange={pager.onContentSizeChange}
-        style={[styles.pager, { width: pager.pageWidth }, visibility]}
-        contentContainerStyle={{
-          width: pager.contentWidth,
-          height: PAGE_CONTENT_HEIGHT,
-        }}
-      >
-        {children}
-      </Animated.ScrollView>
-    </GestureDetector>
+  const view = (
+    <Animated.ScrollView
+      ref={scrollRef}
+      animatedProps={pager.scrollProps}
+      testID="owned-calendar-pager"
+      horizontal
+      pagingEnabled={Platform.OS === "ios"}
+      snapToInterval={
+        Platform.OS === "android" ? pager.pageWidth + 1e-3 : undefined
+      }
+      disableIntervalMomentum
+      decelerationRate="fast"
+      directionalLockEnabled
+      bounces={false}
+      overScrollMode="never"
+      showsHorizontalScrollIndicator={false}
+      scrollEventThrottle={16}
+      accessible={false}
+      importantForAccessibility="no"
+      onScroll={pager.scrollHandler}
+      onContentSizeChange={pager.onContentSizeChange}
+      style={[styles.pager, { width: pager.pageWidth }, visibility]}
+      contentContainerStyle={{
+        width: pager.contentWidth,
+        height: PAGE_CONTENT_HEIGHT,
+        pointerEvents: pagerExperiment.box ? "box-none" : "auto",
+      }}
+    >
+      {children}
+    </Animated.ScrollView>
   )
+  if (pagerExperiment.nogd) return view
+  return <GestureDetector gesture={pager.nativeGesture}>{view}</GestureDetector>
 }
 
 function HourGutter({

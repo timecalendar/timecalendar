@@ -28,6 +28,7 @@ import {
 } from "./owned-calendar-geometry"
 import { pagingLog } from "./owned-calendar-paging-log"
 import type { OwnedCalendarProbeDiagnostic } from "./owned-calendar-shell"
+import { pagerExperiment } from "./pager-experiment"
 
 /** Diameter of the indicator's leading cap — its non-color shape cue. */
 const NOW_CAP_SIZE = 8
@@ -121,6 +122,7 @@ export function CalendarPage({
       accessibilityElementsHidden={!committed}
       accessibilityState={{ busy: presentation.status === "loading" }}
       importantForAccessibility={committed ? "yes" : "no-hide-descendants"}
+      pointerEvents={pagerExperiment.box ? "box-none" : "auto"}
       style={[styles.page, { left, width, height }]}
     >
       <View style={styles.dayColumns} pointerEvents="none">

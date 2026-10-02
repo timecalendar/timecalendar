@@ -24,6 +24,7 @@ import {
 
 import { useScrollLockProps } from "./owned-calendar-geometry"
 import { pagingLog } from "./owned-calendar-paging-log"
+import { pagerDiag, pagerExperiment } from "./pager-experiment"
 
 const PIXEL_RATIO = PixelRatio.get()
 const ALIGNMENT_TOLERANCE = 1 / PIXEL_RATIO
@@ -191,7 +192,7 @@ export function useOwnedCalendarPager({
   // would cancel that snap goes to the page under the finger, and a cancelled
   // drag never snaps. Once the pager has been still for REST_FRAMES with no finger
   // on it and no pinch lock, it is snapped to the nearest page and settled.
-  const restCheck = Platform.OS === "android"
+  const restCheck = Platform.OS === "android" && pagerExperiment.rest
 
   function checkRest() {
     "worklet"
@@ -215,6 +216,11 @@ export function useOwnedCalendarPager({
         restSnaps.get() >= REST_SNAP_ATTEMPTS
       ) {
         restWatching.set(false)
+        if (firstIndex.get() + slot !== settledIndex.get())
+          scheduleOnRN(
+            pagerDiag,
+            `rest-settle page=${firstIndex.get() + slot} x=${(x / width).toFixed(3)}`,
+          )
         settleIfAligned(x)
         return
       }
@@ -249,11 +255,21 @@ export function useOwnedCalendarPager({
       settleIfAligned(x)
       watchRest()
     },
-    onBeginDrag: () => {
+    onBeginDrag: (event) => {
       dragging.set(true)
       momentum.set(false)
+      const w = placedWidth.get()
+      scheduleOnRN(
+        pagerDiag,
+        `begin-drag x=${w > 0 ? (firstIndex.get() + event.contentOffset.x / w).toFixed(3) : "?"}`,
+      )
     },
     onEndDrag: (event) => {
+      const w = placedWidth.get()
+      scheduleOnRN(
+        pagerDiag,
+        `end-drag x=${w > 0 ? (firstIndex.get() + event.contentOffset.x / w).toFixed(3) : "?"} vx=${event.velocity?.x ?? "?"} wasDragging=${dragging.get()}`,
+      )
       dragging.set(false)
       if (describesPlacedContent(event)) settleIfAligned(event.contentOffset.x)
       watchRest()
@@ -376,6 +392,7 @@ export function useOwnedCalendarPager({
       const x = scrollX.get()
       const slot = Math.round(x / width)
       if (Math.abs(x - slot * width) > ALIGNMENT_TOLERANCE) {
+        scheduleOnRN(pagerDiag, `unlock-snap slot=${slot}`)
         scrollTo(scrollRef, slot * width, 0, true)
       } else {
         settleIfAligned(x)
@@ -390,16 +407,27 @@ export function useOwnedCalendarPager({
   const nativeGesture = Gesture.Native()
     .withTestId("owned-calendar-native-pager")
     .disallowInterruption(true)
+    .shouldActivateOnStart(pagerExperiment.aos)
     .simultaneousWithExternalGesture(pinchGesture)
     .onBegin(() => {
       "worklet"
       touching.set(true)
       trackNativeTouch("horizontal", true)
+      const w = placedWidth.get()
+      scheduleOnRN(
+        pagerDiag,
+        `touch-down x=${w > 0 ? (firstIndex.get() + scrollX.get() / w).toFixed(3) : "?"}`,
+      )
     })
     .onFinalize(() => {
       "worklet"
       touching.set(false)
       trackNativeTouch("horizontal", false)
+      const w = placedWidth.get()
+      scheduleOnRN(
+        pagerDiag,
+        `touch-up x=${w > 0 ? (firstIndex.get() + scrollX.get() / w).toFixed(3) : "?"}`,
+      )
     })
 
   return {
