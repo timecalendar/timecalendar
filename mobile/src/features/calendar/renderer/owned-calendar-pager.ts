@@ -175,7 +175,13 @@ export function useOwnedCalendarPager({
 
   const settleIfAligned = (x: number) => {
     "worklet"
-    if (dragging.get() || momentum.get()) return
+    if (
+      touching.get() ||
+      scrollLocked.get() ||
+      dragging.get() ||
+      momentum.get()
+    )
+      return
     const width = placedWidth.get()
     const slot = Math.round(x / width)
     if (Math.abs(x - slot * width) > ALIGNMENT_TOLERANCE) return
@@ -225,7 +231,6 @@ export function useOwnedCalendarPager({
       scrollTo(scrollRef, slot * width, 0, attempt < REST_SNAP_ATTEMPTS)
       if (attempt === REST_SNAP_ATTEMPTS) {
         restWatching.set(false)
-        settleIfAligned(slot * width)
         return
       }
     }
@@ -294,8 +299,8 @@ export function useOwnedCalendarPager({
     firstIndex.set(first)
     placedWidth.set(width)
     roundedIndex.set(Math.round(position))
-    // A non-animated placement can abort a native fling without a momentum-end event.
-    if (target !== null && !animated) {
+    // A placement can abort a native fling without a momentum-end event.
+    if (target !== null) {
       dragging.set(false)
       momentum.set(false)
     }
@@ -412,6 +417,14 @@ export function useOwnedCalendarPager({
       touching.set(false)
       trackNativeTouch("horizontal", false)
     })
+
+  if (Platform.OS === "android") {
+    nativeGesture.onTouchesDown(() => {
+      "worklet"
+      touching.set(true)
+      trackNativeTouch("horizontal", true)
+    })
+  }
 
   return {
     scrollRef,
