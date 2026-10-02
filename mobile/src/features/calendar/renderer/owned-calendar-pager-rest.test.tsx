@@ -25,7 +25,7 @@ const ZONE = "UTC"
 const SPACE: PageSpace = { mode: "week", firstWeekday: 1 }
 const ANCHOR = new Date("2026-06-15T00:00:00.000Z")
 const ANCHOR_INDEX = pageIndexOfInstant(SPACE, ANCHOR, ZONE)
-const REST_FRAMES = 8
+const REST_FRAMES = 45
 
 function presenter() {
   const pages = new Map<PageIndex, PagePresentationV1>()
@@ -175,7 +175,7 @@ describe("owned Calendar pager rest check", () => {
     ])
   })
 
-  it("gives up after three snaps that do not move the pager", async () => {
+  it("places and settles after three snaps that do not move the pager", async () => {
     const { pager, scrollTo } = await renderShell("android")
 
     await act(async () => {
@@ -185,6 +185,11 @@ describe("owned Calendar pager rest check", () => {
       await elapseFrames(REST_FRAMES + 2)
 
     expect(scrollTo).toHaveBeenCalledTimes(3)
+    expect(scrollTo.mock.calls.at(-1)?.slice(1)).toEqual([
+      pager.origin + pager.pageWidth,
+      0,
+      false,
+    ])
   })
 
   it("stops checking once the pager unmounts", async () => {

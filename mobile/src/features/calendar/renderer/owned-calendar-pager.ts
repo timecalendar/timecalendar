@@ -28,7 +28,7 @@ import { pagingLog } from "./owned-calendar-paging-log"
 const PIXEL_RATIO = PixelRatio.get()
 const ALIGNMENT_TOLERANCE = 1 / PIXEL_RATIO
 const CONTENT_SLOTS = 2 * PAGE_WINDOW_RADIUS + 1
-const REST_FRAMES = 8
+const REST_FRAMES = 45
 const REST_SNAP_ATTEMPTS = 3
 
 /** The horizontal pager's page width: the viewport beside the hour gutter, on device pixels. */
@@ -218,10 +218,16 @@ export function useOwnedCalendarPager({
         settleIfAligned(x)
         return
       }
-      restSnaps.set(restSnaps.get() + 1)
+      const attempt = restSnaps.get() + 1
+      restSnaps.set(attempt)
       restFrames.set(0)
       scheduleOnRN(pagingLog.restSnap, firstIndex.get() + slot)
-      scrollTo(scrollRef, slot * width, 0, true)
+      scrollTo(scrollRef, slot * width, 0, attempt < REST_SNAP_ATTEMPTS)
+      if (attempt === REST_SNAP_ATTEMPTS) {
+        restWatching.set(false)
+        settleIfAligned(slot * width)
+        return
+      }
     }
     requestAnimationFrame(checkRest)
   }
@@ -288,6 +294,11 @@ export function useOwnedCalendarPager({
     firstIndex.set(first)
     placedWidth.set(width)
     roundedIndex.set(Math.round(position))
+    // A non-animated placement can abort a native fling without a momentum-end event.
+    if (target !== null && !animated) {
+      dragging.set(false)
+      momentum.set(false)
+    }
     scrollTo(scrollRef, (position - first) * width, 0, animated)
   }
 
