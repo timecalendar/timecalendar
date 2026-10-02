@@ -21,11 +21,10 @@ status: approved
 2. E02 — Prove native ScrollView paging on device (done: #441, #442; verdict continue, see evidence/E02-spike.md). Depends on E01, so the harness measures a
    compiled shell.
 3. E03 — Page identity and windowed data in `calendar/data` (done: #438, #439, #440).
-4. E04 — The Calendar pages on the native ScrollView. Depends on E02 (go verdict) and E03 (index,
-   store, presentation).
-5. E05 — Pinch and paging within the frame budget. Depends on E04.
-6. E06 — Accessible paging and focus. Depends on E04.
-7. E07 — Cleanup, soak and release evidence. Depends on E05 and E06.
+4. E04 — The Calendar pages on the native ScrollView (source merged; Android P01 chain gate failed). Depends on E02's owner continue verdict and E03's index, store, and presentation.
+5. E05 — Pinch and paging within the frame budget (source merged; exact-revision device evidence pending). Depends on E04.
+6. E06 — Accessible paging and focus (source merged; physical assistive-technology verdict pending). Depends on E04.
+7. E07 — Cleanup, soak and release evidence (T14 merged; T15 Android diagnostics recorded, release blocked). Depends on E05 and E06 acceptance.
 
 ## Parallel work
 
@@ -38,9 +37,9 @@ status: approved
 
 | Gate | Condition | On failure |
 | --- | --- | --- |
-| Spike verdict (end of E02) | The owner records go or kill in `evidence/E02-spike.md`, against the kill criteria in `product.md` | Mark D01 `needs-revision` and re-plan E04 onward toward the owned slot pager |
+| Spike verdict (end of E02) | `evidence/E02-spike.md` records the P02 miss and the owner's instruction to continue implementation | The continue instruction does not satisfy P01 or P02 release acceptance |
 | Frame budget (end of E05) | The P02 table is met on the OnePlus 6 and the iPhone | If missed by more than 2×, re-open D04 |
-| Release (E07) | No preview or production build carrying the new owner is published without an evidence file for its revision | — |
+| Release (E07) | No preview, production, or OTA release carrying the new owner reaches users without exact-revision evidence and the owner's go verdict | Hold distribution while a gate fails or remains unknown |
 
 ## Replanning notes
 

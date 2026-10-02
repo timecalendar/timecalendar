@@ -1,0 +1,23 @@
+{
+  "mode": "soak",
+  "status": "invalid_environment",
+  "revision": "151ace57f7e2b1b9803d7d45ede1794718167d7f",
+  "apkSha256": "7845f89a6fd0d67b7bc8c9e5a0722361671baceb066ed49565cce8d44baf3b43",
+  "installedSha256": "7845f89a6fd0d67b7bc8c9e5a0722361671baceb066ed49565cce8d44baf3b43",
+  "packageVersion": "4.0.0",
+  "packageCode": "1",
+  "device": {
+    "model": "ONEPLUS A6003",
+    "android": "15",
+    "refreshHz": 60
+  },
+  "startedAt": "2026-10-02T10:23:51.354Z",
+  "initialPid": "7965",
+  "initialProcessStart": "6378559",
+  "capturedAttempts": 28,
+  "observedCrossings": 0,
+  "baselinePage": null,
+  "sampledViews": [8, 8, 8],
+  "sampledFrames": [0, 0, 0],
+  "reason": "The keyguard covered the Calendar; the app received no observed settlement. The run was interrupted and retained as invalid evidence."
+}
