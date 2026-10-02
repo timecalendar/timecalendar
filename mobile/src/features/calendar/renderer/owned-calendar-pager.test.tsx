@@ -466,6 +466,11 @@ describe("owned Calendar windowed pager", () => {
         rotatedContent,
         1000,
       )
+      fireEvent(screen.getByTestId("owned-calendar-pager"), "layout", {
+        nativeEvent: {
+          layout: { x: 0, y: 0, width: rotatedWidth, height: 400 },
+        },
+      })
     })
     await flushUiThread()
 

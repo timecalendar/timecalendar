@@ -130,11 +130,13 @@ export function OwnedCalendarShell({
     onZoomSettled,
   })
   const {
+    spaceKey,
     scrollRef: pagerRef,
     scrollHandler,
     scrollProps,
     nativeGesture,
     onContentSizeChange,
+    onPagerLayout,
     scrollX,
     positioned,
     pageWidth,
@@ -166,10 +168,12 @@ export function OwnedCalendarShell({
     },
   })
   const pager = {
+    spaceKey,
     scrollHandler,
     scrollProps,
     nativeGesture,
     onContentSizeChange,
+    onPagerLayout,
     positioned,
     pageWidth,
     contentWidth,
@@ -285,7 +289,6 @@ export function OwnedCalendarShell({
       />
       <GestureDetector gesture={coordinator.pinchGesture}>
         <OwnedCalendarCanvas
-          mode={mode}
           locale={locale}
           uses24HourClock={uses24HourClock}
           initialVerticalOffset={initialVerticalOffset}
