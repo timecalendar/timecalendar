@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { execFileSync } from "node:child_process"
+import { execFileSync, spawn } from "node:child_process"
 import { createHash } from "node:crypto"
 import fs from "node:fs"
 import path from "node:path"
@@ -15,19 +15,16 @@ import {
 } from "./lib/gestures.mjs"
 import {
   accountSettles,
-  bootstrapFirstCrossing,
+  createLogCursor,
   evaluate,
-  parseInitialPage,
   parseMemory,
   parseProcessStart,
   parseSettles,
   SOAK_TARGET,
   STRESS_DURATION_MS,
   VIEW_TOLERANCE,
-  MAX_HEAP_GROWTH_BYTES,
-  MAX_HEAP_GROWTH_RATIO,
-  MAX_JANKY_PCT,
-  MAX_P99_MS,
+  DIAGNOSTIC_HEAP_GROWTH_BYTES,
+  DIAGNOSTIC_HEAP_GROWTH_RATIO,
 } from "./lib/soak.mjs"
 
 const { values: options } = parseArgs({
@@ -145,11 +142,6 @@ if (installedSha256 !== apkSha256)
   )
 const pid = () => shell("pidof", pkg).trim().split(/\s+/)[0] || null
 const processStart = (id) => parseProcessStart(shell("cat", `/proc/${id}/stat`))
-const logLines = () =>
-  adb("logcat", "-d", "-v", "time", "-s", "ReactNativeJS:*", "AndroidRuntime:E")
-    .trimEnd()
-    .split("\n")
-    .filter(Boolean)
 const checkProcess = (originalPid, originalStart) => {
   const current = pid()
   if (
@@ -213,10 +205,8 @@ const summary = {
     crossings: SOAK_TARGET,
     stressDurationMs: STRESS_DURATION_MS,
     viewTolerance: VIEW_TOLERANCE,
-    maxHeapGrowthBytes: MAX_HEAP_GROWTH_BYTES,
-    maxHeapGrowthRatio: MAX_HEAP_GROWTH_RATIO,
-    maxJankyPct: MAX_JANKY_PCT,
-    maxP99Ms: MAX_P99_MS,
+    diagnosticHeapGrowthBytes: DIAGNOSTIC_HEAP_GROWTH_BYTES,
+    diagnosticHeapGrowthRatio: DIAGNOSTIC_HEAP_GROWTH_RATIO,
   },
   startedAt: new Date().toISOString(),
   initialPid: null,
@@ -225,6 +215,7 @@ const summary = {
   samples: [],
   failures: [],
   metrics: null,
+  baselinePage: null,
 }
 const write = () =>
   fs.writeFileSync(
@@ -232,6 +223,8 @@ const write = () =>
     JSON.stringify(summary, null, 2) + "\n",
   )
 let exitCode = 1
+let logProcess = null
+let stoppingCapture = false
 try {
   shell("input", "keyevent", "KEYCODE_WAKEUP")
   adb("logcat", "-c")
@@ -254,46 +247,56 @@ try {
   if (!originalStart) throw new Error("cannot identify process start")
   summary.initialPid = originalPid
   summary.initialProcessStart = originalStart
-  const startupLogs = logLines().filter((line) =>
-    line.includes("CALENDAR_PAGING"),
+  adb("logcat", "-c")
+  const logCursor = createLogCursor()
+  logProcess = spawn(
+    "adb",
+    [
+      ...(options.serial ? ["-s", options.serial] : []),
+      "logcat",
+      `--pid=${originalPid}`,
+      "-v",
+      "time",
+      "-s",
+      "ReactNativeJS:*",
+      "AndroidRuntime:E",
+      "libc:F",
+    ],
+    { stdio: ["ignore", "pipe", "pipe"] },
   )
-  save("startup-logcat.txt", startupLogs.join("\n") + "\n")
-  const initialPage = parseInitialPage(startupLogs)
-  let state = { page: initialPage, crossings: 0 }
-  let consumedLines = initialLogs.length
-  let lastLine = initialLogs.at(-1) ?? null
+  const logErrors = []
+  logProcess.stdout.on("data", (chunk) => {
+    try {
+      fs.appendFileSync(path.join(rawDir, "app-logcat.txt"), chunk)
+      logCursor.feed(chunk.toString("utf8"))
+    } catch (error) {
+      logCursor.fail(String(error))
+    }
+  })
+  logProcess.stderr.on("data", (chunk) =>
+    logErrors.push(chunk.toString("utf8")),
+  )
+  logProcess.on("error", (error) => logCursor.fail(String(error)))
+  logProcess.on("exit", (code, signal) => {
+    if (!stoppingCapture)
+      logCursor.fail(
+        `app PID capture exited ${code ?? signal}: ${logErrors.join("")}`,
+      )
+  })
+  await sleep(300)
+  let state = { page: null, crossings: 0 }
   const readNewLogs = (direction = null) => {
-    const all = logLines()
-    if (
-      all.length < consumedLines ||
-      (lastLine !== null && all[consumedLines - 1] !== lastLine)
-    )
-      throw new Error("logcat rolled over; crossing evidence lost")
-    const fresh = all.slice(consumedLines)
-    consumedLines = all.length
-    lastLine = all.at(-1) ?? null
-    const calendar = fresh.filter((line) => line.includes("CALENDAR_PAGING"))
-    fs.appendFileSync(
-      path.join(rawDir, "calendar-logcat.txt"),
-      calendar.join("\n") + "\n",
-    )
+    const fresh = logCursor.take()
     const fatal = fresh.filter((line) =>
       /FATAL EXCEPTION|Fatal signal|am_crash|ReactNativeJS.*(?:Error:|Unhandled|Exception:)/.test(
         line,
       ),
     )
-    if (fatal.length) {
-      fs.appendFileSync(
-        path.join(rawDir, "errors-logcat.txt"),
-        fatal.join("\n") + "\n",
-      )
-      throw new Error(`crash/error in logcat: ${fatal[0]}`)
-    }
-    state =
-      state.page === null
-        ? bootstrapFirstCrossing(state, calendar)
-        : accountSettles(state, parseSettles(calendar), direction)
+    if (fatal.length) throw new Error(`crash/error in app logcat: ${fatal[0]}`)
+    state = accountSettles(state, parseSettles(fresh), direction)
   }
+  readNewLogs()
+  summary.baselinePage = state.page
   summary.samples.push(sample("0000", originalPid, originalStart))
   const started = performance.now()
   let lastSample = started
@@ -311,13 +314,23 @@ try {
             attempt % 6
           ]
     const before = state.crossings
+    const neededBaseline = state.page === null
     const achievedMs = play(gesture(kind))
     await sleep(settleMs)
     checkProcess(originalPid, originalStart)
     readNewLogs(kind === "forward" ? 1 : kind === "back" ? -1 : null)
+    if (neededBaseline && state.page !== null) summary.baselinePage = state.page
+    if (neededBaseline && state.page === null)
+      summary.failures.push(
+        `attempt ${attempt + 1}: no settled baseline observed`,
+      )
     if ((kind === "vertical" || kind === "pinch") && state.crossings !== before)
       summary.failures.push(`attempt ${attempt + 1}: ${kind} changed page`)
-    if ((kind === "forward" || kind === "back") && state.crossings === before)
+    if (
+      !neededBaseline &&
+      (kind === "forward" || kind === "back") &&
+      state.crossings === before
+    )
       summary.failures.push(
         `attempt ${attempt + 1}: ${kind} produced no observed crossing`,
       )
@@ -363,6 +376,8 @@ try {
   summary.failures.push(String(error))
   summary.status = "fail"
 } finally {
+  stoppingCapture = true
+  logProcess?.kill()
   summary.finishedAt = new Date().toISOString()
   write()
   process.stdout.write(
