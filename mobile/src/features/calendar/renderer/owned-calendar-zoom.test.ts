@@ -19,7 +19,6 @@ const pinchEvent = (scale = 1, focalY = 250, numberOfPointers = 2) => ({
 describe("calendar zoom settlement", () => {
   const scrollTo = jest.fn()
   const props = {
-    generation: 0,
     initialPixelsPerHour: 60,
     initialRawOffset: 300,
     onZoomSettled: jest.fn(),
@@ -74,7 +73,7 @@ describe("calendar zoom settlement", () => {
     await act(async () => handlers.onBegin?.(pinchEvent(1, 250, 1)))
 
     expect(result.current.verticalCallbacksBlocked.get()).toBe(false)
-    expect(result.current.horizontalCallbacksBlocked.get()).toBe(false)
+    expect(result.current.scrollLocked.get()).toBe(false)
     await act(async () => {
       result.current.rawOffset.set(720)
       handlers.onFinalize?.(pinchEvent(1, 250, 0), false)
@@ -190,20 +189,7 @@ describe("calendar zoom settlement", () => {
     expect(scrollTo).not.toHaveBeenCalled()
   })
 
-  it("preserves the live offset when a replacement generation carries an older settlement", async () => {
-    const { result, rerender } = await renderHook(useOwnedCalendarZoom, {
-      initialProps: props,
-    })
-    await act(async () => result.current.rawOffset.set(1020))
-    scrollTo.mockClear()
-
-    await rerender({ ...props, generation: 1, initialRawOffset: 600 })
-
-    expect(result.current.rawOffset.get()).toBe(1020)
-    expect(scrollTo).not.toHaveBeenCalled()
-  })
-
-  it("preserves automatic current-time positioning across week changes", async () => {
+  it("preserves automatic current-time positioning when unchanged settled props return", async () => {
     const initialProps = { ...props, initialRawOffset: 0 }
     const { result, rerender } = await renderHook(useOwnedCalendarZoom, {
       initialProps,
@@ -211,36 +197,9 @@ describe("calendar zoom settlement", () => {
     await act(async () => result.current.invalidateForGeometry(1, 570, false))
     scrollTo.mockClear()
 
-    await rerender({ ...initialProps, generation: 1 })
+    await rerender({ ...initialProps })
 
     expect(result.current.rawOffset.get()).toBe(570)
-    expect(scrollTo).not.toHaveBeenCalled()
-  })
-
-  it("cancels an active pinch at its baseline when the week changes", async () => {
-    const { result, rerender } = await renderHook(useOwnedCalendarZoom, {
-      initialProps: props,
-    })
-    const { handlers } = result.current.pinchGesture
-    await act(async () => {
-      result.current.rawOffset.set(570)
-      handlers.onStart?.(pinchEvent())
-      handlers.onUpdate?.(pinchEvent(1.5))
-    })
-    scrollTo.mockClear()
-
-    await rerender({ ...props, generation: 1 })
-    await act(async () => {
-      handlers.onEnd?.(pinchEvent(), true)
-      handlers.onFinalize?.(pinchEvent(), false)
-    })
-
-    expect(result.current.rawOffset.get()).toBe(570)
-    expect(result.current.pixelsPerHour.get()).toBe(60)
-    expect(result.current.pinchActive.get()).toBe(false)
-    expect(result.current.verticalCallbacksBlocked.get()).toBe(false)
-    expect(result.current.horizontalCallbacksBlocked.get()).toBe(false)
-    expect(props.onZoomSettled).not.toHaveBeenCalled()
     expect(scrollTo).not.toHaveBeenCalled()
   })
 

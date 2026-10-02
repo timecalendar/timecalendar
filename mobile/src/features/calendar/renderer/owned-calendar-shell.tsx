@@ -28,6 +28,7 @@ import {
   formatClockTime,
   FULL_DAY_END_MINUTE,
   FULL_DAY_START_MINUTE,
+  MOUNTED_PAGE_RADIUS,
   nowIndicatorPosition,
   pageAnchor,
   type PageIndex,
@@ -173,25 +174,63 @@ function requestRestoredFocus({
   })
 }
 
-export function OwnedCalendarShell({ ref, ...props }: OwnedCalendarShellProps) {
+// Props and the pager are destructured, never spread: the compiler treats a
+// rest object as mutable, which would rebuild every page's handlers each render.
+export function OwnedCalendarShell({
+  ref,
+  heading,
+  pageTitleTarget,
+  onContextSettled,
+  mode,
+  anchor,
+  displayZone,
+  locale,
+  firstWeekday,
+  currentDate,
+  uses24HourClock,
+  initialVerticalOffset,
+  initialPixelsPerHour,
+  presentPage,
+  routeFocused,
+  onDateCommitted,
+  onPageWindowChange,
+  onVerticalOffsetSettled,
+  onZoomSettled,
+  onEventPress: onEventActivated,
+  onProbeDiagnostic,
+}: OwnedCalendarShellProps) {
   const { t } = useTranslation()
   const theme = useTheme()
   const reduceMotion = useReducedMotion()
-  const {
-    heading,
-    mode,
-    anchor,
-    displayZone,
-    firstWeekday,
-    onContextSettled,
-    pageTitleTarget,
-    presentPage,
-    routeFocused,
-  } = props
   const space = { mode, firstWeekday }
   const anchorIndex = pageIndexOfInstant(space, anchor, displayZone)
-  const coordinator = useOwnedCalendarCoordinator(props)
-  const { scrollRef: pagerRef, ...pager } = useOwnedCalendarPager({
+  const coordinator = useOwnedCalendarCoordinator({
+    anchor,
+    mode,
+    displayZone,
+    currentDate,
+    initialVerticalOffset,
+    initialPixelsPerHour,
+    onVerticalOffsetSettled,
+    onZoomSettled,
+  })
+  const {
+    scrollRef: pagerRef,
+    scrollHandler,
+    scrollProps,
+    nativeGesture,
+    onContentSizeChange,
+    scrollX,
+    positioned,
+    pageWidth,
+    contentWidth,
+    mountedIndexes,
+    settled,
+    moving,
+    isMoving,
+    pageLeft,
+    step,
+  } = useOwnedCalendarPager({
     space,
     anchorIndex,
     pageWidth: pagerPageWidth(coordinator.viewportWidth),
@@ -199,15 +238,30 @@ export function OwnedCalendarShell({ ref, ...props }: OwnedCalendarShellProps) {
     pinchGesture: coordinator.pinchGesture,
     trackNativeTouch: coordinator.trackNativeTouch,
     onSettled: (index) =>
-      props.onDateCommitted(pageAnchor(space, index, displayZone)),
-    onCenterChange: (center) => props.onPageWindowChange?.(center),
+      onDateCommitted(pageAnchor(space, index, displayZone)),
+    onCenterChange: (center) => {
+      onPageWindowChange?.(center)
+      // Builds the next pages to enter the window after this commit, so a
+      // crossing only mounts a page whose presentation is already cached.
+      presentPage(center - MOUNTED_PAGE_RADIUS - 1)
+      presentPage(center + MOUNTED_PAGE_RADIUS + 1)
+    },
   })
+  const pager = {
+    scrollHandler,
+    scrollProps,
+    nativeGesture,
+    onContentSizeChange,
+    positioned,
+    pageWidth,
+    contentWidth,
+  }
   const verticalScrollProps = useScrollLockProps(coordinator.scrollLocked)
-  const committed = presentPage(pager.settled)
+  const committed = presentPage(settled)
   const committedKey = committed.pageKey
   const contextReady =
     committed.status === "ready" &&
-    !pager.moving &&
+    !moving &&
     committedKey === pageKey(space, anchorIndex)
 
   const [targets] = useState(() => new Map<string, FocusTarget>())
@@ -303,13 +357,13 @@ export function OwnedCalendarShell({ ref, ...props }: OwnedCalendarShellProps) {
   ])
   const restoreFocus = () => {
     returnEpoch.current += 1
-    if (props.routeFocused === false || !contextReady) return
+    if (routeFocused === false || !contextReady) return
     if (returnFrame.current !== null) cancelAnimationFrame(returnFrame.current)
     const frame = requestRestoredFocus({
       targets,
       headings,
-      pageTitleTarget: props.pageTitleTarget,
-      heading: props.heading,
+      pageTitleTarget,
+      heading,
       pageKey: committedKey,
       currentColumns,
       lastFocused,
@@ -320,7 +374,7 @@ export function OwnedCalendarShell({ ref, ...props }: OwnedCalendarShellProps) {
         coordinator.scrollRef.current?.scrollTo({ y, animated: false }),
       isCurrent: () =>
         isFocusContextCurrent(committedKey) &&
-        titleContext.current === props.pageTitleTarget,
+        titleContext.current === pageTitleTarget,
       onFocused: () => {
         pendingReturn.current = false
       },
@@ -350,11 +404,11 @@ export function OwnedCalendarShell({ ref, ...props }: OwnedCalendarShellProps) {
     [],
   )
 
-  const isEventActivationBlocked = () =>
-    coordinator.isVerticalMovementOwned() || pager.isMoving()
+  const { isVerticalMovementOwned } = coordinator
+  const isEventActivationBlocked = () => isVerticalMovementOwned() || isMoving()
   const onEventPress = (uid: string) => {
     if (isEventActivationBlocked()) return
-    const eventPress = props.onEventPress ?? ignore
+    const eventPress = onEventActivated ?? ignore
     eventPress(uid)
   }
   const handlers: PageEventHandlers = {
@@ -363,39 +417,34 @@ export function OwnedCalendarShell({ ref, ...props }: OwnedCalendarShellProps) {
     onChooseConflict: setChooser,
     registerTarget,
     isEventActivationBlocked,
-    onProbeDiagnostic: props.onProbeDiagnostic,
+    onProbeDiagnostic,
   }
   useImperativeHandle(ref, () => ({
     requestZoom: coordinator.requestZoom,
     restoreFocus,
   }))
 
-  const todayKey = dayKey(props.currentDate, displayZone)
+  const todayKey = dayKey(currentDate, displayZone)
   // Explicit full-day bounds and the settled scale — the helper's 07:00–21:00
   // defaults stay as they are for Home's mini timeline and the agenda.
-  const nowIndicator = nowIndicatorPosition(props.currentDate, displayZone, {
-    pixelsPerHour: props.initialPixelsPerHour,
+  const nowIndicator = nowIndicatorPosition(currentDate, displayZone, {
+    pixelsPerHour: initialPixelsPerHour,
     startMinute: FULL_DAY_START_MINUTE,
     endMinute: FULL_DAY_END_MINUTE,
   })
   const nowLabel = t("calendar.nowLabel", {
-    time: formatClockTime(
-      props.currentDate,
-      props.locale,
-      displayZone,
-      props.uses24HourClock,
-    ),
+    time: formatClockTime(currentDate, locale, displayZone, uses24HourClock),
   })
   const presentStartedAt = pagingLog.now()
-  const pages = pager.mountedIndexes.map((index) => {
+  const pages = mountedIndexes.map((index) => {
     const presentation = presentPage(index)
-    const isCommitted = index === pager.settled
+    const isCommitted = index === settled
     const hasToday =
       nowIndicator.visible &&
       presentation.columns.some((column) => column.key === todayKey)
     return {
       presentation,
-      left: pager.pageLeft(index),
+      left: pageLeft(index),
       committed: isCommitted,
       hasToday,
     }
@@ -414,10 +463,10 @@ export function OwnedCalendarShell({ ref, ...props }: OwnedCalendarShellProps) {
           else headings.set(dateKey, node)
         }}
         pages={pages}
-        pageWidth={pager.pageWidth}
-        contentWidth={pager.contentWidth}
-        scrollX={pager.scrollX}
-        positioned={pager.positioned}
+        pageWidth={pageWidth}
+        contentWidth={contentWidth}
+        scrollX={scrollX}
+        positioned={positioned}
         todayKey={todayKey}
         todayLabel={t("calendar.today")}
       />
@@ -425,9 +474,9 @@ export function OwnedCalendarShell({ ref, ...props }: OwnedCalendarShellProps) {
         <OwnedCalendarCanvas
           heading={heading}
           mode={mode}
-          locale={props.locale}
-          uses24HourClock={props.uses24HourClock}
-          initialVerticalOffset={props.initialVerticalOffset}
+          locale={locale}
+          uses24HourClock={uses24HourClock}
+          initialVerticalOffset={initialVerticalOffset}
           scrollRef={coordinator.scrollRef}
           verticalScrollProps={verticalScrollProps}
           nativeScrollGesture={coordinator.nativeScrollGesture}
@@ -438,8 +487,7 @@ export function OwnedCalendarShell({ ref, ...props }: OwnedCalendarShellProps) {
           onMomentumScrollBegin={coordinator.onMomentumScrollBegin}
           onMomentumScrollEnd={coordinator.settleVertical}
           onAccessiblePageRequest={(direction) => {
-            if (!coordinator.scrollLocked.get())
-              pager.step(direction, !reduceMotion)
+            if (!coordinator.scrollLocked.get()) step(direction, !reduceMotion)
           }}
           pixelsPerHour={coordinator.pixelsPerHour}
           pagerRef={pagerRef}
@@ -451,14 +499,14 @@ export function OwnedCalendarShell({ ref, ...props }: OwnedCalendarShellProps) {
               key={page.presentation.pageKey}
               presentation={page.presentation}
               left={page.left}
-              width={pager.pageWidth}
+              width={pageWidth}
               height={PAGE_CONTENT_HEIGHT}
               committed={page.committed}
               nowDateKey={page.hasToday ? todayKey : null}
               nowMinuteOfDay={page.hasToday ? coordinator.nowMinuteOfDay : 0}
               nowLabel={page.hasToday && page.committed ? nowLabel : undefined}
               pixelsPerHour={coordinator.pixelsPerHour}
-              settledPixelsPerHour={props.initialPixelsPerHour}
+              settledPixelsPerHour={initialPixelsPerHour}
               handlers={handlers}
               t={t}
             />

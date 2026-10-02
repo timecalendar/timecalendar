@@ -3,12 +3,12 @@ import * as Reanimated from "react-native-reanimated"
 
 import {
   buildPagePresentation,
+  epochDayKey,
   type PageIndex,
   pageIndexOfInstant,
   type PagePresentationV1,
-  pageStartDay,
   type PageSpace,
-  epochDayKey,
+  pageStartDay,
 } from "@/features/calendar/data"
 import i18n from "@/i18n"
 import {

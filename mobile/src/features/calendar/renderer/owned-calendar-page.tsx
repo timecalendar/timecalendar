@@ -207,6 +207,18 @@ function TileColumn({
   handlers: PageEventHandlers
   t: TFunction
 }) {
+  if (!committed)
+    return (
+      <View pointerEvents="none" style={styles.tileColumn}>
+        {tiles.map((tile) => (
+          <StaticCalendarTile
+            key={tile.key}
+            tile={tile}
+            settledPixelsPerHour={settledPixelsPerHour}
+          />
+        ))}
+      </View>
+    )
   const conflicts = planTargetConflicts({
     items: tiles,
     pixelsPerHour: settledPixelsPerHour,
@@ -221,7 +233,6 @@ function TileColumn({
           dateKey={dateKey}
           pixelsPerHour={pixelsPerHour}
           settledPixelsPerHour={settledPixelsPerHour}
-          accessible={committed}
           handlers={handlers}
           t={t}
         />
@@ -268,12 +279,103 @@ function probeTargetFrame(
     })
 }
 
+const MINIMUM_TARGET = Platform.OS === "ios" ? 44 : 48
+
+function tileSurfaceStyle(tile: PageTileV1) {
+  return {
+    backgroundColor: tile.appearance.surface,
+    borderLeftColor: tile.appearance.accent,
+    borderColor: tile.appearance.outline,
+    borderWidth: tile.appearance.increasedContrast ? 2 : 0,
+    borderLeftWidth: 3,
+  }
+}
+
+function TileContent({
+  tile,
+  settledPixelsPerHour,
+}: {
+  tile: PageTileV1
+  settledPixelsPerHour: number
+}) {
+  if (tile.shape !== "interval") return null
+  const settledHeight =
+    ((tile.endMinute - tile.startMinute) / 60) * settledPixelsPerHour
+  return (
+    <>
+      <ThemedText
+        accessible={false}
+        type="captionSmall"
+        style={[styles.tileTitle, { color: tile.appearance.foreground }]}
+      >
+        {tile.title}
+      </ThemedText>
+      {tile.location !== undefined && settledHeight >= 40 && (
+        <ThemedText
+          accessible={false}
+          type="captionSmall"
+          style={{ color: tile.appearance.foreground }}
+        >
+          {tile.location}
+        </ThemedText>
+      )}
+      {settledHeight >= 60 && (
+        <ChecklistProgressIndicator
+          progress={tile.checklist}
+          variant="compact"
+        />
+      )}
+    </>
+  )
+}
+
+// A page other than the committed one never pinches and is never touched at
+// rest, so a window shift mounts plain views: no animated styles, no targets.
+function StaticCalendarTile({
+  tile,
+  settledPixelsPerHour,
+}: {
+  tile: PageTileV1
+  settledPixelsPerHour: number
+}) {
+  const visual = liveEventVisualGeometry(
+    tile.shape,
+    tile.startMinute,
+    tile.endMinute,
+    settledPixelsPerHour,
+  )
+  const interaction = liveEventInteractionGeometry(
+    visual,
+    24 * settledPixelsPerHour,
+    MINIMUM_TARGET,
+  )
+  return (
+    <View
+      testID={`owned-calendar-event-${tile.identity.uid}`}
+      style={[
+        styles.tileAnchor,
+        horizontalRectangleStyle({ left: tile.startX, right: tile.endX }),
+        interaction,
+      ]}
+    >
+      <View
+        style={[
+          styles.tile,
+          tileSurfaceStyle(tile),
+          { top: visual.top - interaction.top, height: visual.height },
+        ]}
+      >
+        <TileContent tile={tile} settledPixelsPerHour={settledPixelsPerHour} />
+      </View>
+    </View>
+  )
+}
+
 function TimedCalendarTile({
   tile,
   dateKey,
   pixelsPerHour,
   settledPixelsPerHour,
-  accessible,
   handlers,
   t,
 }: {
@@ -281,11 +383,10 @@ function TimedCalendarTile({
   dateKey: string
   pixelsPerHour: SharedValue<number>
   settledPixelsPerHour: number
-  accessible: boolean
   handlers: PageEventHandlers
   t: TFunction
 }) {
-  const minimumTarget = Platform.OS === "ios" ? 44 : 48
+  const minimumTarget = MINIMUM_TARGET
   const interactionStyle = useAnimatedStyle(() => {
     const livePixelsPerHour = pixelsPerHour.get()
     const visual = liveEventVisualGeometry(
@@ -315,61 +416,22 @@ function TimedCalendarTile({
     )
     return { top: visual.top - interaction.top, height: visual.height }
   })
-  const settledHeight =
-    ((tile.endMinute - tile.startMinute) / 60) * settledPixelsPerHour
   const visual = (
     <Animated.View
       accessible={false}
       pointerEvents="none"
-      style={[
-        styles.tile,
-        {
-          backgroundColor: tile.appearance.surface,
-          borderLeftColor: tile.appearance.accent,
-          borderColor: tile.appearance.outline,
-          borderWidth: tile.appearance.increasedContrast ? 2 : 0,
-          borderLeftWidth: 3,
-        },
-        visualStyle,
-      ]}
+      style={[styles.tile, tileSurfaceStyle(tile), visualStyle]}
     >
-      {tile.shape === "interval" && (
-        <ThemedText
-          accessible={false}
-          type="captionSmall"
-          style={[styles.tileTitle, { color: tile.appearance.foreground }]}
-        >
-          {tile.title}
-        </ThemedText>
-      )}
-      {tile.shape === "interval" &&
-        tile.location !== undefined &&
-        settledHeight >= 40 && (
-          <ThemedText
-            accessible={false}
-            type="captionSmall"
-            style={{ color: tile.appearance.foreground }}
-          >
-            {tile.location}
-          </ThemedText>
-        )}
-      {tile.shape === "interval" && settledHeight >= 60 && (
-        <ChecklistProgressIndicator
-          progress={tile.checklist}
-          variant="compact"
-        />
-      )}
+      <TileContent tile={tile} settledPixelsPerHour={settledPixelsPerHour} />
     </Animated.View>
   )
   const button = (
     <Pressable
-      ref={(node) => {
-        if (accessible)
-          handlers.registerTarget(tile.key, dateKey, tile.startMinute, node)
-      }}
-      accessible={accessible}
-      accessibilityElementsHidden={!accessible}
-      importantForAccessibility={accessible ? "yes" : "no-hide-descendants"}
+      ref={(node) =>
+        handlers.registerTarget(tile.key, dateKey, tile.startMinute, node)
+      }
+      accessible
+      importantForAccessibility="yes"
       accessibilityRole="button"
       accessibilityLabel={tile.accessibilityLabel}
       accessibilityHint={t("calendar.event.hint")}
@@ -383,36 +445,28 @@ function TimedCalendarTile({
     <Animated.View
       testID={`owned-calendar-event-${tile.identity.uid}`}
       pointerEvents="box-none"
-      onLayout={
-        accessible
-          ? probeTargetFrame(
-              handlers.onProbeDiagnostic,
-              tile.key,
-              tile.accessibilityOrder,
-            )
-          : undefined
-      }
+      onLayout={probeTargetFrame(
+        handlers.onProbeDiagnostic,
+        tile.key,
+        tile.accessibilityOrder,
+      )}
       style={[
         styles.tileAnchor,
         horizontalRectangleStyle({ left: tile.startX, right: tile.endX }),
         interactionStyle,
       ]}
     >
-      {accessible ? (
-        <CalendarFocusObserverView
-          testID={`owned-calendar-focus-observer-${tile.identity.uid}`}
-          identity={tile.key}
-          dateKey={dateKey}
-          onAccessibilityFocused={({ nativeEvent }) =>
-            handlers.onEventFocused(nativeEvent.identity, nativeEvent.dateKey)
-          }
-          style={styles.tileTarget}
-        >
-          {button}
-        </CalendarFocusObserverView>
-      ) : (
-        button
-      )}
+      <CalendarFocusObserverView
+        testID={`owned-calendar-focus-observer-${tile.identity.uid}`}
+        identity={tile.key}
+        dateKey={dateKey}
+        onAccessibilityFocused={({ nativeEvent }) =>
+          handlers.onEventFocused(nativeEvent.identity, nativeEvent.dateKey)
+        }
+        style={styles.tileTarget}
+      >
+        {button}
+      </CalendarFocusObserverView>
     </Animated.View>
   )
 }

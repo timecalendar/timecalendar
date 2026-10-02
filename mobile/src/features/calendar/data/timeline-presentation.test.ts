@@ -1,8 +1,7 @@
-import { planCalendarThreePageRange } from "./range-plan"
 import {
-  buildCalendarTimelinePresentation,
-  timelinePresentationUids,
-  timelineRangeUids,
+  bucketTimedTiles,
+  timelineColumnTiles,
+  type TimelineTileOptions,
 } from "./timeline-presentation"
 import type { CalendarEvent, TimedCalendarEventV1 } from "./types"
 
@@ -32,45 +31,49 @@ function event(
   }
 }
 
-const range = planCalendarThreePageRange({
-  anchor: new Date("2026-09-14T12:00:00.000Z"),
-  mode: "day",
-  displayZone: "Europe/Paris",
-  firstWeekday: 1,
-  showWeekends: true,
-})
+const ZONE = "Europe/Paris"
+const MONDAY = "2026-09-14"
 
-describe("buildCalendarTimelinePresentation", () => {
-  it("builds exactly three immutable pages and assigns complete tiles by date", () => {
+function dayTiles(
+  events: readonly CalendarEvent[],
+  options: Omit<TimelineTileOptions, "displayZone"> = {},
+  day = MONDAY,
+) {
+  return timelineColumnTiles(
+    bucketTimedTiles(events, { displayZone: ZONE, ...options }),
+    day,
+  )
+}
+
+function allTiles(events: readonly CalendarEvent[]) {
+  const tilesByDay = bucketTimedTiles(events, { displayZone: ZONE })
+  return [...tilesByDay.keys()]
+    .sort()
+    .flatMap((day) => timelineColumnTiles(tilesByDay, day))
+}
+
+describe("timed tiles", () => {
+  it("assigns complete tiles to their display-zone day without sharing the source dates", () => {
     const source = event(
       "maths",
       "2026-09-14T08:00:00.000Z",
       "2026-09-14T09:00:00.000Z",
       { title: "Maths", location: "B12" },
     )
-    const presentation = buildCalendarTimelinePresentation({
-      range,
-      generation: 7,
-      events: [source],
+    const tilesByDay = bucketTimedTiles([source], {
+      displayZone: ZONE,
       checklistProgress: new Map([
         ["maths", { completed: 1, total: 2, isComplete: false }],
       ]),
     })
 
-    expect(presentation).toMatchObject({
-      version: 1,
-      generation: 7,
-      rangeKey: range.key,
-    })
-    expect(presentation.pages).toHaveLength(3)
-    expect(
-      presentation.pages.flatMap((page) =>
-        page.columns.flatMap((column) => column.tiles),
-      ),
-    ).toEqual([
+    expect([...tilesByDay.keys()]).toEqual([MONDAY])
+    const tiles = timelineColumnTiles(tilesByDay, MONDAY)
+    expect(tiles).toEqual([
       expect.objectContaining({
         version: 1,
         identity: { source: "synced", uid: "maths" },
+        key: "synced:maths",
         title: "Maths",
         location: "B12",
         shape: "interval",
@@ -87,13 +90,10 @@ describe("buildCalendarTimelinePresentation", () => {
         checklist: { completed: 1, total: 2, isComplete: false },
       }),
     ])
-    expect(Object.isFrozen(presentation)).toBe(true)
-    expect(Object.isFrozen(presentation.pages[1].columns)).toBe(true)
-    expect(Object.isFrozen(presentation.pages[1].columns[0]?.tiles)).toBe(true)
-    expect(presentation.pages[1].columns[0]?.date).not.toBe(
-      range.pages[1].columns[0]?.date,
-    )
+    expect(tiles[0]?.startsAt).not.toBe(source.startsAt)
+    expect(tiles[0]?.identity).not.toBe(source.identity)
     expect(source.startsAt.toISOString()).toBe("2026-09-14T08:00:00.000Z")
+    expect(timelineColumnTiles(tilesByDay, "2026-09-15")).toEqual([])
   })
 
   it("sorts with start/end/source/UID tie-breaks independent of input order", () => {
@@ -108,11 +108,7 @@ describe("buildCalendarTimelinePresentation", () => {
       event("early", "2026-09-14T07:00:00Z", "2026-09-14T07:30:00Z"),
     ]
     const build = (input: CalendarEvent[]) =>
-      buildCalendarTimelinePresentation({
-        range,
-        generation: 1,
-        events: input,
-      }).pages[1].columns[0]!.tiles.map(
+      dayTiles(input).map(
         ({ identity }) => `${identity.source}:${identity.uid}`,
       )
     expect(build(events)).toEqual([
@@ -132,19 +128,13 @@ describe("buildCalendarTimelinePresentation", () => {
       event("visible", "2026-09-14T09:00:00Z", "2026-09-14T11:00:00Z"),
     ]
     const build = (ordered: CalendarEvent[]) =>
-      buildCalendarTimelinePresentation({
-        range,
-        generation: 1,
-        events: ordered,
-      }).pages[1].columns[0]!.tiles.map(
-        ({ identity, column, columns, startX, endX }) => ({
-          uid: identity.uid,
-          column,
-          columns,
-          startX,
-          endX,
-        }),
-      )
+      dayTiles(ordered).map(({ identity, column, columns, startX, endX }) => ({
+        uid: identity.uid,
+        column,
+        columns,
+        startX,
+        endX,
+      }))
 
     expect(build(events)).toEqual([
       { uid: "offscreen", column: 0, columns: 2, startX: 0, endX: 0.5 },
@@ -155,15 +145,11 @@ describe("buildCalendarTimelinePresentation", () => {
   })
 
   it("leaves point events on the full-width point path", () => {
-    const presentation = buildCalendarTimelinePresentation({
-      range,
-      generation: 1,
-      events: [
-        event("point", "2026-09-14T08:00:00Z", "2026-09-14T08:00:00Z"),
-        event("interval", "2026-09-14T08:00:00Z", "2026-09-14T09:00:00Z"),
-      ],
-    })
-    expect(presentation.pages[1].columns[0]!.tiles).toEqual(
+    const tiles = dayTiles([
+      event("point", "2026-09-14T08:00:00Z", "2026-09-14T08:00:00Z"),
+      event("interval", "2026-09-14T08:00:00Z", "2026-09-14T09:00:00Z"),
+    ])
+    expect(tiles).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           identity: { source: "synced", uid: "point" },
@@ -179,14 +165,10 @@ describe("buildCalendarTimelinePresentation", () => {
 
   it("rejects duplicate stable identities within one civil day", () => {
     expect(() =>
-      buildCalendarTimelinePresentation({
-        range,
-        generation: 1,
-        events: [
-          event("same", "2026-09-14T08:00:00Z", "2026-09-14T09:00:00Z"),
-          event("same", "2026-09-14T10:00:00Z", "2026-09-14T11:00:00Z"),
-        ],
-      }),
+      dayTiles([
+        event("same", "2026-09-14T08:00:00Z", "2026-09-14T09:00:00Z"),
+        event("same", "2026-09-14T10:00:00Z", "2026-09-14T11:00:00Z"),
+      ]),
     ).toThrow("identities must be unique")
   })
 
@@ -198,65 +180,41 @@ describe("buildCalendarTimelinePresentation", () => {
       startDay: "2026-09-14",
       endDay: "2026-09-15",
     }
-    const presentation = buildCalendarTimelinePresentation({
-      range,
-      generation: 1,
-      events: [
-        dateOnly,
-        event("spanning", "2026-09-13T21:00:00Z", "2026-09-14T01:00:00Z"),
-        event("midnight", "2026-09-13T22:00:00Z", "2026-09-14T22:00:00Z"),
-      ],
-    })
-    const tiles = presentation.pages.flatMap((page) =>
-      page.columns.flatMap((column) => column.tiles),
-    )
+    const tiles = allTiles([
+      dateOnly,
+      event("spanning", "2026-09-13T21:00:00Z", "2026-09-14T01:00:00Z"),
+      event("midnight", "2026-09-13T22:00:00Z", "2026-09-14T22:00:00Z"),
+    ])
     expect(tiles.map(({ identity }) => identity.uid)).toEqual(["midnight"])
     expect(tiles[0]?.endMinute).toBe(1440)
   })
 
-  it("returns normalized scoped UIDs and omits zero progress", () => {
-    const presentation = buildCalendarTimelinePresentation({
-      range,
-      generation: 1,
-      events: [
-        event("b", "2026-09-14T08:00:00Z", "2026-09-14T09:00:00Z"),
-        event("a", "2026-09-14T10:00:00Z", "2026-09-14T11:00:00Z"),
-        event("a", "2026-09-15T12:00:00Z", "2026-09-15T13:00:00Z"),
-      ],
-    })
-    expect(timelinePresentationUids(presentation)).toEqual(["a", "b"])
-    expect(
-      timelineRangeUids(range, [
-        event("b", "2026-09-14T08:00:00Z", "2026-09-14T09:00:00Z"),
-        event("a", "2026-09-14T10:00:00Z", "2026-09-14T11:00:00Z"),
-        event("a", "2026-09-15T12:00:00Z", "2026-09-15T13:00:00Z"),
-      ]),
-    ).toEqual(["a", "b"])
-    expect(
-      presentation.pages.flatMap((page) =>
-        page.columns.flatMap((column) =>
-          column.tiles.map(({ checklist }) => checklist),
-        ),
-      ),
-    ).toEqual([undefined, undefined, undefined])
+  it("keeps one identity on several days and omits absent progress", () => {
+    const tiles = allTiles([
+      event("b", "2026-09-14T08:00:00Z", "2026-09-14T09:00:00Z"),
+      event("a", "2026-09-14T10:00:00Z", "2026-09-14T11:00:00Z"),
+      event("a", "2026-09-15T12:00:00Z", "2026-09-15T13:00:00Z"),
+    ])
+    expect(tiles.map(({ identity }) => identity.uid)).toEqual(["b", "a", "a"])
+    expect(tiles.map(({ checklist }) => checklist)).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ])
   })
 
-  it("projects a localized immutable point without changing its endpoints", () => {
+  it("projects a localized point without changing its endpoints", () => {
     const point = event(
       "noon-point",
       "2026-09-14T10:00:00Z",
       "2026-09-14T10:00:00Z",
       { title: undefined },
     )
-    const presentation = buildCalendarTimelinePresentation({
-      range,
-      generation: 2,
-      events: [point],
+    const [tile] = dayTiles([point], {
       localizedNoTitle: "(Sans titre)",
       scheme: "dark",
       increasedContrast: true,
     })
-    const tile = presentation.pages[1].columns[0]!.tiles[0]!
     expect(tile).toMatchObject({
       shape: "point",
       title: "(Sans titre)",
@@ -264,42 +222,16 @@ describe("buildCalendarTimelinePresentation", () => {
       endMinute: 720,
       appearance: { increasedContrast: true },
     })
-    expect(tile.startsAt.getTime()).toBe(tile.endsAt.getTime())
-    expect(Object.isFrozen(tile.appearance)).toBe(true)
+    expect(tile!.startsAt.getTime()).toBe(tile!.endsAt.getTime())
+    expect(Object.isFrozen(tile!.appearance)).toBe(true)
   })
-})
 
-describe("timelineRangeUids", () => {
-  it("equals the UIDs of the built presentation without building it", () => {
-    const range = planCalendarThreePageRange({
-      anchor: new Date("2026-09-16T12:00:00Z"),
-      mode: "week",
-      displayZone: "Europe/Paris",
-      firstWeekday: 1,
-      showWeekends: false,
-    })
-    const events: CalendarEvent[] = [
-      event("weekday", "2026-09-16T08:00:00Z", "2026-09-16T09:00:00Z"),
-      event("saturday", "2026-09-19T08:00:00Z", "2026-09-19T09:00:00Z"),
-      event("previous-week", "2026-09-08T08:00:00Z", "2026-09-08T09:00:00Z"),
-      event("next-week", "2026-09-22T08:00:00Z", "2026-09-22T09:00:00Z"),
-      event("out-of-range", "2026-10-22T08:00:00Z", "2026-10-22T09:00:00Z"),
-      event("overnight", "2026-09-16T21:00:00Z", "2026-09-17T01:00:00Z"),
-      event("point", "2026-09-17T10:00:00Z", "2026-09-17T10:00:00Z"),
-    ]
-    const presentation = buildCalendarTimelinePresentation({
-      range,
-      generation: 0,
-      events,
-    })
-    expect(timelineRangeUids(range, events)).toEqual(
-      timelinePresentationUids(presentation),
-    )
-    expect(timelineRangeUids(range, events)).toEqual([
-      "next-week",
-      "point",
-      "previous-week",
-      "weekday",
+  it("falls back to the default untitled label", () => {
+    const [tile] = dayTiles([
+      event("untitled", "2026-09-14T08:00:00Z", "2026-09-14T09:00:00Z", {
+        title: undefined,
+      }),
     ])
+    expect(tile?.title).toBe("(No title)")
   })
 })

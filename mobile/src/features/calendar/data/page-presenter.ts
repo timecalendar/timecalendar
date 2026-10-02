@@ -48,7 +48,8 @@ export function presentPage(
   const key = pagePresentationCacheKey({
     pageKey: pageKey(space, index),
     status,
-    rowsRevision: status === "loading" ? 0 : (entry?.revision ?? 0),
+    rowsRevision:
+      entry === undefined || entry.status === "loading" ? 0 : entry.revision,
     filterRevision: source.filterRevision,
     environment,
   })

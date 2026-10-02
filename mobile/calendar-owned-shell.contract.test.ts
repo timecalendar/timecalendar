@@ -263,7 +263,7 @@ describe("owned Calendar paging repository contract", () => {
     expect(renderer).toContain("component.items.length > 1")
     expect(renderer).toContain("accessibilityElementsHidden")
     expect(renderer).toContain("isEventActivationBlocked")
-    expect(renderer).toContain('tile.shape === "interval"')
+    expect(renderer).toContain('tile.shape !== "interval"')
     expect(renderer).toContain("minimumTarget")
     expect(renderer).not.toMatch(/onEventPress\([^)]*(?:index|direction|key)/)
     expect(navigationBoundary).not.toMatch(
@@ -290,8 +290,8 @@ describe("owned Calendar paging repository contract", () => {
       "utf8",
     )
 
-    expect(page).toContain("accessible={committed}")
-    expect(page).toContain("if (accessible)")
+    expect(page).toContain("if (!committed)")
+    expect(page).toContain("<StaticCalendarTile")
     expect(page).toContain("accessibilityElementsHidden={!committed}")
     expect(page).toContain('importantForAccessibility="no-hide-descendants"')
     expect(page).toContain("memo(function CalendarPage")
