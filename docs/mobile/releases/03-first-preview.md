@@ -58,11 +58,7 @@ Complete these in order:
 6. **Create tester groups.** TestFlight internal testers must be App Store Connect users; Apple
    supports up to 100 internal testers. Create **The team** and enable the desired distribution
    behavior. Create the Play internal tester list/group with the same human-facing name.
-7. **Build both platforms from one recorded, green SHA**, locally on the macOS host:
-   `eas build --profile preview --platform ios --local` and the same for `android`. Record the
-   SHA, profile, version/build numbers, runtime fingerprint, artifact paths **and the host's
-   Xcode/Node/JDK/CocoaPods versions** — a local build ignores the toolchain fields in
-   `eas.json`, so the host's versions are the only record of what produced the binary.
+7. **Build both platforms from one recorded, green SHA with a passing [Calendar paging release gate](./06-calendar-paging-gate.md)** when the new paging owner is present. Build iOS locally on the macOS host and Android on the Windows PC through `ssh pc`/WSL. Record the SHA, profile, version/build numbers, runtime fingerprint, artifact paths and toolchain versions on each build host. A local build ignores the toolchain fields in `eas.json`, so record Xcode/CocoaPods for iOS and JDK/Android SDK for Android along with Node and EAS CLI where used.
 8. **Submit those exact artifacts** with `eas submit --profile preview --path <artifact>`. Do not
    run a second build during submission.
 9. **Install and verify on physical devices.** Confirm launch, API environment, authentication,
@@ -87,8 +83,7 @@ exact commands are in [`mobile/EAS.md`](../../../mobile/EAS.md).
 
 Expo does **not** need the owner's Apple password stored in git or CI. It does not need the Android
 app-signing private key when Google already holds it under Play App Signing. It does not need
-production infrastructure, a CI pipeline, or a paid plan — the build runs on the owner's own
-macOS host and consumes no EAS build quota.
+production infrastructure, a CI pipeline, or a paid plan — local builds use the macOS host for iOS and the Windows PC/WSL host for Android.
 
 ## 3.5 Preview acceptance evidence
 
@@ -108,17 +103,17 @@ The first preview is complete only when:
 
 The iOS half of the first preview shipped. Android has not.
 
-| Field               | Value                                                                                              |
-| ------------------- | -------------------------------------------------------------------------------------------------- |
-| Source SHA          | `20cadefff9b328accf5ce2420b1858894b3fe469` on `main`                                               |
-| Version / build     | `4.0.0` / `142`                                                                                    |
-| Runtime fingerprint | `7db7c8dbe3b26b05c50d92899e5ee586968cfff7`                                                         |
-| Artifact SHA-256    | `b71bb9476721440705e9fda970f7b215cf199c3e2692f2b88c15f14e14e452d0` (26,733,857 bytes)              |
-| Bundle ID           | `fr.samuelprak.timecalendar`, `UIDeviceFamily` `[1, 2]`, `MinimumOSVersion` `16.4`                 |
-| OTA channel         | `expo-channel-name = preview`, `EXUpdatesRuntimeVersion = file:fingerprint`                        |
-| Signing             | `iPhone Distribution: <owner> (9629G25NH7)`, App Store profile, `aps-environment` `production`     |
-| Host toolchain      | macOS 26.5.1, Xcode 26.6 (17F113), Node 24.13.0, eas-cli 22.5.0, CocoaPods 1.17.0                  |
-| Destination         | App Store Connect app `1479613630`, internal group **The Team**                                    |
+| Field               | Value                                                                                          |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| Source SHA          | `20cadefff9b328accf5ce2420b1858894b3fe469` on `main`                                           |
+| Version / build     | `4.0.0` / `142`                                                                                |
+| Runtime fingerprint | `7db7c8dbe3b26b05c50d92899e5ee586968cfff7`                                                     |
+| Artifact SHA-256    | `b71bb9476721440705e9fda970f7b215cf199c3e2692f2b88c15f14e14e452d0` (26,733,857 bytes)          |
+| Bundle ID           | `fr.samuelprak.timecalendar`, `UIDeviceFamily` `[1, 2]`, `MinimumOSVersion` `16.4`             |
+| OTA channel         | `expo-channel-name = preview`, `EXUpdatesRuntimeVersion = file:fingerprint`                    |
+| Signing             | `iPhone Distribution: <owner> (9629G25NH7)`, App Store profile, `aps-environment` `production` |
+| Host toolchain      | macOS 26.5.1, Xcode 26.6 (17F113), Node 24.13.0, eas-cli 22.5.0, CocoaPods 1.17.0              |
+| Destination         | App Store Connect app `1479613630`, internal group **The Team**                                |
 
 Apple-side state, read back from the App Store Connect API rather than from the submit log:
 `processingState = VALID`, `internalBuildState = IN_BETA_TESTING`, and build 142 is attached to
@@ -141,11 +136,11 @@ The Android half was attempted and stopped before building. §3.3 step 2–5 was
 building on top of the state that was there would have produced an upload Play rejects. What the
 three Android prerequisites actually looked like, read back from the Expo API rather than assumed:
 
-| Prerequisite                        | State found                                                                     | State now                                     |
-| ----------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------- |
-| Upload key in EAS credentials       | An unrelated EAS-generated keystore, alias `aa6e0585…`, SHA-1 `135a8d77…`       | **Fixed** — the held upload key is imported   |
-| EAS remote `versionCode`            | `1`                                                                             | Still `1` — needs the live Play value         |
-| Play service account for EAS Submit | `googleServiceAccountKeyForSubmissions = null`                                   | Still absent — Play Console act, see the inbox |
+| Prerequisite                        | State found                                                               | State now                                      |
+| ----------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------- |
+| Upload key in EAS credentials       | An unrelated EAS-generated keystore, alias `aa6e0585…`, SHA-1 `135a8d77…` | **Fixed** — the held upload key is imported    |
+| EAS remote `versionCode`            | `1`                                                                       | Still `1` — needs the live Play value          |
+| Play service account for EAS Submit | `googleServiceAccountKeyForSubmissions = null`                            | Still absent — Play Console act, see the inbox |
 
 ### The keystore that was there was not the upload key
 
@@ -156,7 +151,7 @@ EAS Android submission history is empty, so nothing had ever proved otherwise. A
 it would have been rejected by Play as signed with the wrong upload key.
 
 Do **not** use `mobile/firebase/google-services.json` as the test here. That file registers four
-SHA-1 hashes for `fr.samuelprak.timecalendar`, and the *accepted* upload certificate `99f82ae8…` is
+SHA-1 hashes for `fr.samuelprak.timecalendar`, and the _accepted_ upload certificate `99f82ae8…` is
 absent from them too — under Play App Signing those hashes track the app-signing and debug
 certificates, not the upload certificate, so the check rejects the correct key as readily as the
 wrong one. The decisive evidence is the two facts above.
@@ -168,13 +163,13 @@ imported into EAS-managed credentials and attached as the default build credenti
 [document 2](./02-signing-and-credentials.md) §2.3 step 2. **No upload-key reset was requested;
 nothing was lost.** Read back from the Expo API after the import:
 
-| Field                | Value                                                                                             |
-| -------------------- | ------------------------------------------------------------------------------------------------- |
-| Keystore             | `af4cc224-cc07-40ac-9907-3e8571f8eb73`, type `JKS`, alias `upload`                                 |
-| Upload cert SHA-1    | `99f82ae836448f35ed388a0f305bbea409839a9e`                                                        |
-| Upload cert SHA-256  | `1a04470a148208644775d1f09692fa75de7baddd20b5fbe32afbcca5a4e1491c`                                 |
-| Subject / validity   | `CN=<owner>, O=<owner>, L=Paris, C=FR`, 2023-09-01 → 2051-01-16                                    |
-| Attached to          | app credentials `b275bfa0` (`fr.samuelprak.timecalendar`), build credentials `6c76a474`, default   |
+| Field               | Value                                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------------------ |
+| Keystore            | `af4cc224-cc07-40ac-9907-3e8571f8eb73`, type `JKS`, alias `upload`                               |
+| Upload cert SHA-1   | `99f82ae836448f35ed388a0f305bbea409839a9e`                                                       |
+| Upload cert SHA-256 | `1a04470a148208644775d1f09692fa75de7baddd20b5fbe32afbcca5a4e1491c`                               |
+| Subject / validity  | `CN=<owner>, O=<owner>, L=Paris, C=FR`, 2023-09-01 → 2051-01-16                                  |
+| Attached to         | app credentials `b275bfa0` (`fr.samuelprak.timecalendar`), build credentials `6c76a474`, default |
 
 Only public certificate metadata appears here. The keystore, its passwords and the owner's
 `key.properties` stayed on the owner's host; nothing private was copied into this repository, a log
@@ -206,16 +201,16 @@ together with the physical-device verification §3.5 requires on both platforms.
 
 ### §3.5 scoreboard after this pass
 
-| §3.5 line                                        | iOS                       | Android                          |
-| ------------------------------------------------ | ------------------------- | -------------------------------- |
-| Store accepted a build for the existing identity | ✅ build 142               | ❌ not built                      |
-| Named physical device installed it               | ❌ operator item           | ❌ operator item                  |
-| Build numbers exceed previous uploads            | ✅ 142                     | ❌ remote counter is `1`          |
-| Host toolchain recorded                          | ✅ §3.6                    | ➖ no build                       |
-| Play-delivered signing fingerprint matches       | n/a                       | ❌ needs the Play API             |
-| Build identifies the approved SHA/profile/channel | ✅                        | ➖ no build                       |
-| OTA compatible + incompatible cases              | ⏸ waits on the OTA service | ⏸ waits on the OTA service        |
-| No secret or private key in git/logs/comments    | ✅                         | ✅                                |
+| §3.5 line                                         | iOS                        | Android                    |
+| ------------------------------------------------- | -------------------------- | -------------------------- |
+| Store accepted a build for the existing identity  | ✅ build 142               | ❌ not built               |
+| Named physical device installed it                | ❌ operator item           | ❌ operator item           |
+| Build numbers exceed previous uploads             | ✅ 142                     | ❌ remote counter is `1`   |
+| Host toolchain recorded                           | ✅ §3.6                    | ➖ no build                |
+| Play-delivered signing fingerprint matches        | n/a                        | ❌ needs the Play API      |
+| Build identifies the approved SHA/profile/channel | ✅                         | ➖ no build                |
+| OTA compatible + incompatible cases               | ⏸ waits on the OTA service | ⏸ waits on the OTA service |
+| No secret or private key in git/logs/comments     | ✅                         | ✅                         |
 
 ## Official references
 

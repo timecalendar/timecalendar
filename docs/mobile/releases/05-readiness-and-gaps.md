@@ -14,19 +14,19 @@
 | Apple access             | **Owner confirmed**                     | Apple Developer + App Store Connect access available                                                                                                                                                  |
 | Legacy iOS custody       | **Located**                             | private Fastlane Match repository exists and is accessible; keep for rollback, do not bridge into EAS                                                                                                 |
 | Android Play App Signing | **Owner confirmed enabled**             | Play signs releases; the app-signing key is in use and an upload-key certificate exists                                                                                                               |
-| Android upload key       | **Imported into EAS**                   | held key (alias `upload`, SHA-1 `99f82ae8…`) imported and set as default build credentials, 2026-08-28; **no upload-key reset requested** — see [document 3](./03-first-preview.md) §3.7               |
-| EAS-managed credentials  | **iOS + Android signing live**          | iOS proved by shipped build 142 (§3.6); Android upload keystore imported and read back (§3.7). **No Play service account** — `eas submit --platform android` cannot authenticate                        |
-| EAS remote versions      | **iOS initialized, Android not**        | iOS `buildNumber` is `142`; Android `versionCode` is still `1` against a live Play counter far above it — must be set from the live console before any Android build                                    |
-| Store tester groups      | **iOS confirmed, Play unverified**      | TestFlight internal group **The Team** carries build 142 (§3.6); the Play internal tester list still needs creating/confirming                                                                         |
+| Android upload key       | **Imported into EAS**                   | held key (alias `upload`, SHA-1 `99f82ae8…`) imported and set as default build credentials, 2026-08-28; **no upload-key reset requested** — see [document 3](./03-first-preview.md) §3.7              |
+| EAS-managed credentials  | **iOS + Android signing live**          | iOS proved by shipped build 142 (§3.6); Android upload keystore imported and read back (§3.7). **No Play service account** — `eas submit --platform android` cannot authenticate                      |
+| EAS remote versions      | **iOS initialized, Android not**        | iOS `buildNumber` is `142`; Android `versionCode` is still `1` against a live Play counter far above it — must be set from the live console before any Android build                                  |
+| Store tester groups      | **iOS confirmed, Play unverified**      | TestFlight internal group **The Team** carries build 142 (§3.6); the Play internal tester list still needs creating/confirming                                                                        |
 | Signed build/install     | **Not done in this task**               | first store-internal preview remains a controlled rollout action                                                                                                                                      |
-| Build host               | **Ready**                               | store binaries build with `eas build --local` on the owner's macOS host; no EAS build quota, free plan sufficient (ADR 040)                                                                           |
+| Build host               | **Ready**                               | iOS builds use macOS; Android builds use the Windows PC through `ssh pc`/WSL. Native Calendar paging releases also need the exact-revision device gate.                                               |
 | OTA infrastructure       | **Separate programme**                  | first native preview can proceed before publishing automation; OTA verification follows when its runtime is ready                                                                                     |
 
 ## 5.2 Gates to the first preview
 
 ~~Engineering — implement the store-distributed `preview` profile.~~ **Done**: `preview` is
 `distribution: "store"` with `app-bundle`/store `.ipa`, `autoIncrement` and a `submit.preview`
-profile (ADR 040). No repository implementation now blocks the first preview.
+profile (ADR 040). The native Calendar paging owner adds an exact-revision [device evidence gate](./06-calendar-paging-gate.md) before any preview carrying it.
 
 The iOS preview profile deterministically targets existing App Store Connect app `1479613630`.
 That public destination metadata is not a credential: Apple account/team authentication, signing,
@@ -34,7 +34,7 @@ and submission access remain operator-managed outside git. This source correctio
 sign, upload, or submit anything; the exact-artifact and explicit-authorization gates below still
 apply.
 
-Everything remaining is an operator act, in order:
+The remaining operator and device-evidence work follows:
 
 1. **Owner — record the public Play app-signing fingerprint.** The upload-certificate fingerprint is
    already recorded in [document 3](./03-first-preview.md) §3.7.
@@ -49,7 +49,7 @@ Everything remaining is an operator act, in order:
    account recovery owner.
 6. **Owner — create/confirm the Play internal tester list.** The TestFlight side is done: internal
    group **The Team** received build 142 (§3.6).
-7. **Release operator — build both platforms locally, submit and physically install.**
+7. **Release operator — record the Calendar paging evidence and owner verdict for the exact SHA, then build iOS on macOS and Android on the Windows PC/WSL, submit and physically install.**
 
 Account login, credential creation, build, submission and tester distribution are explicit
 operator/deploy acts.
@@ -73,9 +73,8 @@ operator/deploy acts.
 - Android signing is fully accounted for: Google holds the app-signing key under Play App
   Signing, and the owner holds the upload key with three backups. Nothing is lost and nothing
   needs resetting, so Google's activation queue is not on the critical path.
-- Store binaries build on hardware we already own with `eas build --local`, consuming no EAS
-  build quota — the free Expo plan carries the whole release process.
-- Store-internal previews do not require a CI release pipeline or completed OTA automation. The
+- iOS and Android build on the designated macOS and Windows PC/WSL hosts, respectively.
+- Store-internal previews do not require completed OTA automation. The
   owner can bootstrap them by hand, then automate the proven path.
 - No secret needs to be committed to finish this plan.
 

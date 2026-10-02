@@ -10,13 +10,13 @@ per-thread CPU time, Android view counts and an optional Perfetto trace.
 the dev-import deep link, cleartext HTTP, OTA disabled) under its own identity, so it installs
 beside the `.dev` and store apps:
 
-| | Value |
-| --- | --- |
-| Application id | `fr.samuelprak.timecalendar.perf` |
-| Scheme | `timecalendar-perf` |
-| Build type | Gradle `release` (Hermes bytecode, no dev menu, debug-keystore signed) |
-| Manifest | `<profileable android:shell="true"/>` |
-| Reanimated | `enableReanimatedProfiling` (systrace sections in the C++ core) |
+|                | Value                                                                  |
+| -------------- | ---------------------------------------------------------------------- |
+| Application id | `fr.samuelprak.timecalendar.perf`                                      |
+| Scheme         | `timecalendar-perf`                                                    |
+| Build type     | Gradle `release` (Hermes bytecode, no dev menu, debug-keystore signed) |
+| Manifest       | `<profileable android:shell="true"/>`                                  |
+| Reanimated     | `enableReanimatedProfiling` (systrace sections in the C++ core)        |
 
 `with-perf-build.js` adds these at prebuild, only when `APP_VARIANT=perf`. No EAS profile sets
 that variant, so no store profile can produce this build; `app.config.test.ts` pins every
@@ -66,8 +66,8 @@ node perf/run.mjs --serial 86fa07cc --apk /tmp/timecalendar-perf-<sha>.apk \
 - `--logcat <regex>` clears logcat before each scenario and saves the matching `ReactNativeJS`
   lines to `raw/<scenario>-logcat.txt`.
 - In development and perf builds the Calendar logs `CALENDAR_PAGING` lines (`--logcat
-  CALENDAR_PAGING`): `commit center=<page> ms=<crossing to React commit>
-  columnRenders=<tile columns rendered> slotRenders=<header slots rendered> presentMs=<presentation lookups>`
+CALENDAR_PAGING`): `commit center=<page> ms=<crossing to React commit>
+columnRenders=<tile columns rendered> slotRenders=<header slots rendered> presentMs=<presentation lookups>`
   per page crossing, `mount page=<key> total=<count>` per page mount, and `settle page=<page>`.
 - `--scenarios a,b` runs a subset; `--trace` records a Perfetto trace per scenario with
   `perfetto.pbtx` into `raw/<scenario>.pftrace` (open it in ui.perfetto.dev).
@@ -75,6 +75,22 @@ node perf/run.mjs --serial 86fa07cc --apk /tmp/timecalendar-perf-<sha>.apk \
 The phone must be unlocked. Each run force-stops the app, starts its launcher activity cold
 (`Cold launch TotalTime`) and then opens `--url`. A cold start directly into a deep link crashes
 current main with "Attempted to navigate before mounting the Root Layout component".
+
+## E07 long-session runs
+
+Build the perf release APK on the Windows PC through `ssh pc`/WSL from the **exact full SHA** to test. Install and seed it using the existing harness before reserving the device for E07. The long-session runner does not install, uninstall, seed, reset data, or build. It verifies the supplied APK SHA-256 against the installed base APK, checks the local checkout SHA, then starts the app once for each run. Do not run it while another worker owns the OnePlus 6 or PC.
+
+```sh
+cd mobile
+node perf/soak.mjs --help
+node perf/soak.mjs --mode soak --revision <full-sha> --apk /tmp/timecalendar-perf-<sha>.apk --serial <serial> --label e07-500
+node perf/soak.mjs --mode stress --revision <full-sha> --apk /tmp/timecalendar-perf-<sha>.apk --serial <serial> --label e07-30m
+npm run test:perf
+```
+
+`--dry-run` prints the plan without contacting a device or reading files. A 500-crossing run counts only adjacent `CALENDAR_PAGING settle page=` changes, with an initial page from startup diagnostics or a matching commit and settle for the first swipe. Duplicate settlements and attempted swipes do not increase the count. It alternates 50 forward and 50 backward crossings, gives up after 1000 attempts, and records a failed attempt even if a later swipe succeeds. The 30-minute run mixes forward/back paging, vertical scroll and pinch. Each run keeps one app process after startup; PID and process start time are checked after every gesture and sample. Crashes, JS errors, missing/incorrect settlements and process restarts fail the run.
+
+Raw logs and `summary.json` live under `<out>/<label>/`. Samples are taken at the start, after at most 25 crossings or 60 seconds, and at the end. Each sample saves `meminfo`, the activity view hierarchy and `gfxinfo`; the summary records native/Java heap and total PSS where Android exposes them. The current E07 tooling thresholds are **500 observed crossings** or **30 elapsed minutes**, **at most 50 views from the observed range**, **native heap growth at most the larger of 32 MiB or 20% of its start value**, and **every frame window at most 5% janky frames with p99 at most 33 ms**. Those heap and frame limits are conservative runner thresholds pending owner review, not measured claims. Missing views, heap or frame data is `unknown` and cannot pass. The result still needs the iOS and Android device checks and the owner's verdict in [E07 evidence](../../docs/projects/calendar-native-paging/evidence/E07-release.md); no script publishes a build.
 
 ## Scenarios
 
@@ -88,15 +104,15 @@ start-up.
 Swipes are 150 ms. A 90 ms flick does not page the current PagerView calendar at all, which would
 measure the injector rather than the pager.
 
-| Scenario | Gesture |
-| --- | --- |
-| `swipe-forward-20` | 20 right-to-left swipes, 150 ms each, the next touch 150 ms after lift-off |
-| `swipe-back-20` | the same, left to right |
-| `fling-5` | 5 forward swipes, 900 ms between them, each settling |
-| `vertical-scroll` | 6 alternating vertical flings |
-| `reversal-10` | 10 forward-then-back pairs, each touch 120 ms after the previous lift-off; lands where it started (opt-in) |
-| `diagonal-20` | 20 forward swipes at 30° from horizontal, 1.2 s apart; the pages travelled count the swipes the pager won over the vertical scroll (opt-in) |
-| `pinch-3s` | one two-finger pinch: spread over 1.5 s, close over 1.5 s |
+| Scenario           | Gesture                                                                                                                                     |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `swipe-forward-20` | 20 right-to-left swipes, 150 ms each, the next touch 150 ms after lift-off                                                                  |
+| `swipe-back-20`    | the same, left to right                                                                                                                     |
+| `fling-5`          | 5 forward swipes, 900 ms between them, each settling                                                                                        |
+| `vertical-scroll`  | 6 alternating vertical flings                                                                                                               |
+| `reversal-10`      | 10 forward-then-back pairs, each touch 120 ms after the previous lift-off; lands where it started (opt-in)                                  |
+| `diagonal-20`      | 20 forward swipes at 30° from horizontal, 1.2 s apart; the pages travelled count the swipes the pager won over the vertical scroll (opt-in) |
+| `pinch-3s`         | one two-finger pinch: spread over 1.5 s, close over 1.5 s                                                                                   |
 
 ## Output
 
