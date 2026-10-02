@@ -247,6 +247,7 @@ export function useOwnedCalendarPager({
   const placedWidth = useSharedValue(0)
   const touching = useSharedValue(false)
   const nativeTouchGeneration = useSharedValue<number | null>(null)
+  const tracedScrollMask = useSharedValue(0)
   const mounted = useSharedValue(true)
   const restWatching = useSharedValue(false)
   const restX = useSharedValue(0)
@@ -378,7 +379,22 @@ export function useOwnedCalendarPager({
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
-      if (!describesPlacedContent(event)) return
+      const accepted = describesPlacedContent(event)
+      const traceBit = accepted ? 2 : 1
+      if (!(tracedScrollMask.get() & traceBit)) {
+        tracedScrollMask.set(tracedScrollMask.get() | traceBit)
+        scheduleOnRN(pagingLog.placement, "scroll", {
+          generation,
+          activeGeneration: activeGeneration.get(),
+          accepted,
+          x: event.contentOffset.x,
+          viewportWidth: event.layoutMeasurement.width,
+          contentWidth: event.contentSize.width,
+          placedWidth: placedWidth.get(),
+          positioned: positioned.get(),
+        })
+      }
+      if (!accepted) return
       const x = event.contentOffset.x
       scrollX.set(x)
       positioned.set(true)
@@ -430,6 +446,16 @@ export function useOwnedCalendarPager({
     animated: boolean,
   ) => {
     "worklet"
+    scheduleOnRN(pagingLog.placement, "place", {
+      generation,
+      activeGeneration: activeGeneration.get(),
+      first,
+      width,
+      target,
+      animated,
+      placedWidth: placedWidth.get(),
+      observedX: scrollX.get(),
+    })
     if (activeGeneration.get() !== generation) return
     const previousWidth = placedWidth.get()
     const position =
@@ -471,6 +497,13 @@ export function useOwnedCalendarPager({
       touching.set(false)
     }
     resetGeneration.current = generation
+    pagingLog.placement("reset", {
+      generation,
+      spaceKey,
+      anchorIndex,
+      pageWidth,
+      placementId: state.placement.id,
+    })
     placedFor.current = null
     laidOutFor.current = null
     contentLaidOutFor.current = null
@@ -484,12 +517,16 @@ export function useOwnedCalendarPager({
     restWatching.set(false)
     restFrames.set(0)
     restSnaps.set(0)
+    tracedScrollMask.set(0)
     settledIndex.set(anchorIndex)
     navigationTarget.set(null)
     interruptedTarget.set(null)
     crossingStartedAt.current = 0
   }, [
     generation,
+    spaceKey,
+    pageWidth,
+    state.placement.id,
     activeGeneration,
     anchorIndex,
     positioned,
@@ -500,6 +537,7 @@ export function useOwnedCalendarPager({
     restWatching,
     restFrames,
     restSnaps,
+    tracedScrollMask,
     settledIndex,
     navigationTarget,
     interruptedTarget,
@@ -517,6 +555,13 @@ export function useOwnedCalendarPager({
     const { placement } = state
     if (pageWidth <= 0 || appliedPlacement.current === placement.id) return
     if (placedFor.current !== `${generation}:${pageWidth}`) return
+    pagingLog.placement("schedule-navigation", {
+      generation,
+      placementId: placement.id,
+      firstIndex: window.firstIndex,
+      pageWidth,
+      target: placement.index,
+    })
     appliedPlacement.current = placement.id
     scheduleOnUI(placeNavigation, window.firstIndex, pageWidth, placement)
   })
@@ -525,6 +570,15 @@ export function useOwnedCalendarPager({
   // scrollTo issued then may clamp to zero and produce no confirming scroll.
   const placeAfterLayout = () => {
     const key = `${generation}:${pageWidth}`
+    pagingLog.placement("readiness", {
+      generation,
+      key,
+      activeGeneration: resetGeneration.current,
+      placedFor: placedFor.current,
+      laidOutFor: laidOutFor.current,
+      contentLaidOutFor: contentLaidOutFor.current,
+      placementId: state.placement.id,
+    })
     if (
       resetGeneration.current !== generation ||
       placedFor.current === key ||
@@ -536,12 +590,26 @@ export function useOwnedCalendarPager({
     const { placement } = state
     const pending = appliedPlacement.current !== placement.id
     appliedPlacement.current = placement.id
+    pagingLog.placement("schedule-initial", {
+      generation,
+      pending,
+      placementId: placement.id,
+      firstIndex: window.firstIndex,
+      pageWidth,
+      target: pending ? placement.index : state.settled,
+    })
     if (pending)
       scheduleOnUI(placeNavigation, window.firstIndex, pageWidth, placement)
     else scheduleOnUI(place, window.firstIndex, pageWidth, state.settled, false)
   }
 
   const onPagerLayout = (width: number) => {
+    pagingLog.placement("layout", {
+      generation,
+      activeGeneration: resetGeneration.current,
+      width,
+      pageWidth,
+    })
     if (resetGeneration.current !== generation) return
     if (pageWidth <= 0 || Math.abs(width - pageWidth) > 1) return
     laidOutFor.current = `${generation}:${pageWidth}`
@@ -549,6 +617,12 @@ export function useOwnedCalendarPager({
   }
 
   const onContentSizeChange = (width: number) => {
+    pagingLog.placement("content", {
+      generation,
+      activeGeneration: resetGeneration.current,
+      width,
+      contentWidth,
+    })
     if (resetGeneration.current !== generation) return
     if (pageWidth <= 0 || Math.abs(width - contentWidth) > 1) return
     contentLaidOutFor.current = `${generation}:${pageWidth}`
