@@ -54,6 +54,27 @@ export function minuteToPixel(
   return ((minute - startMinute) / 60) * pixelsPerHour
 }
 
+export function roundToDevicePixel(value: number, pixelRatio: number): number {
+  "worklet"
+  return Math.round(value * pixelRatio) / pixelRatio
+}
+
+export function minutePositionTop(
+  minute: number,
+  pixelsPerHour: number,
+  pixelRatio: number,
+  offset = 0,
+): number {
+  "worklet"
+  return roundToDevicePixel(
+    minuteToPixel(minute, {
+      startMinute: FULL_DAY_START_MINUTE,
+      pixelsPerHour,
+    }) + offset,
+    pixelRatio,
+  )
+}
+
 /** Pixel height of an event from its duration in minutes. */
 export function eventHeight(
   durationMinutes: number,

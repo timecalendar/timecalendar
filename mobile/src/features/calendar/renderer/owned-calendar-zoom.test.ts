@@ -105,6 +105,46 @@ describe("calendar zoom settlement", () => {
     expect(props.onInteractionFinished).toHaveBeenCalledTimes(1)
   })
 
+  it("keeps a completed pinch when iOS finalizes after the last finger lifts", async () => {
+    const { result } = await renderHook(useOwnedCalendarZoom, {
+      initialProps: { ...props, initialRawOffset: 480 },
+    })
+    const { handlers } = result.current.pinchGesture
+    await act(async () => {
+      handlers.onStart?.(pinchEvent())
+      handlers.onUpdate?.(pinchEvent(1.5))
+      handlers.onEnd?.(pinchEvent(1.5, 520, 0), true)
+      handlers.onFinalize?.(pinchEvent(1.5, 520, 0), false)
+    })
+
+    expect(result.current.pixelsPerHour.get()).toBe(90)
+    expect(result.current.rawOffset.get()).toBe(845)
+    expect(props.onZoomSettled).toHaveBeenCalledTimes(1)
+  })
+
+  it("accepts the last two-pointer iOS update after a one-pointer release update", async () => {
+    const { result } = await renderHook(useOwnedCalendarZoom, {
+      initialProps: { ...props, initialRawOffset: 480 },
+    })
+    const { handlers } = result.current.pinchGesture
+    await act(async () => {
+      handlers.onStart?.(pinchEvent())
+      handlers.onUpdate?.(pinchEvent(1.4))
+      handlers.onUpdate?.(pinchEvent(1.8, 520, 1))
+    })
+    expect(result.current.pixelsPerHour.get()).toBe(84)
+
+    await act(async () => {
+      handlers.onUpdate?.(pinchEvent(1.5, 250, 2))
+      handlers.onEnd?.(pinchEvent(1.5, 250, 0), true)
+      handlers.onFinalize?.(pinchEvent(1.5, 250, 0), true)
+    })
+    expect(result.current.pixelsPerHour.get()).toBe(90)
+    expect(props.onZoomSettled).toHaveBeenCalledWith(
+      expect.objectContaining({ pixelsPerHour: 90, rawOffset: 845 }),
+    )
+  })
+
   it.each([0, 2])(
     "tracks a moving focal point for an active pinch starting with %i pointers",
     async (pointers) => {

@@ -79,10 +79,12 @@ function presenter({
   mode = "week",
   events = [],
   showWeekends = true,
+  increasedContrast = false,
 }: {
   mode?: CalendarTimelineMode
   events?: readonly TimedCalendarEventV1[]
   showWeekends?: boolean
+  increasedContrast?: boolean
 } = {}): PagePresenter {
   const space = { mode, firstWeekday: 1 } as const
   const pages = new Map<PageIndex, PagePresentationV1>()
@@ -100,7 +102,7 @@ function presenter({
         displayZone: ZONE,
         showWeekends,
         scheme: "light",
-        increasedContrast: false,
+        increasedContrast,
         localizedNoTitle: "(No title)",
         t: i18n.t,
       },
@@ -404,12 +406,29 @@ describe("OwnedCalendarShell", () => {
     const tile = screen.getByRole("button", {
       name: `${title}, 10:00 – 11:00 ${location}`,
     })
+    const visual = styledTestNode(tile.children[0])
+    expect(visual.children).toHaveLength(4)
     expect(
-      StyleSheet.flatten(styledTestNode(tile.children[0]).props.style),
+      StyleSheet.flatten(styledTestNode(visual.children[0]).props.style),
     ).toMatchObject({
-      borderRadius: 2,
+      borderTopLeftRadius: 2,
+      borderTopRightRadius: 2,
+    })
+    expect(
+      StyleSheet.flatten(styledTestNode(visual.children[2]).props.style),
+    ).toMatchObject({
+      borderBottomLeftRadius: 2,
+      borderBottomRightRadius: 2,
+    })
+    expect(
+      StyleSheet.flatten(styledTestNode(visual.children[3]).props.style),
+    ).toMatchObject({
       overflow: "hidden",
     })
+    const textWindow = styledTestNode(visual.children[3])
+    expect(
+      StyleSheet.flatten(styledTestNode(textWindow.children[0]).props.style),
+    ).toMatchObject({ paddingVertical: 2, transformOrigin: "top" })
 
     const titleText = screen.getByText(title)
     const locationText = screen.getByText(location)
@@ -429,6 +448,72 @@ describe("OwnedCalendarShell", () => {
       lineHeight: 13,
       fontWeight: 400,
     })
+  })
+
+  it("keeps tiny interval caps inside the minimum zoom height", async () => {
+    await renderPlaced(
+      shell({
+        presentPage: presenter({
+          events: [
+            timedEvent(
+              "tiny",
+              "2026-06-15T10:00:00.000Z",
+              "2026-06-15T10:01:00.000Z",
+            ),
+          ],
+        }),
+        initialPixelsPerHour: 120,
+      }),
+    )
+
+    const visual = styledTestNode(
+      screen.getByRole("button", { name: /tiny/ }).children[0],
+    )
+    const cap = StyleSheet.flatten(
+      styledTestNode(visual.children[0]).props.style,
+    ) as { height: number }
+    const bottom = StyleSheet.flatten(
+      styledTestNode(visual.children[2]).props.style,
+    ) as { top: number; height: number }
+    const clip = StyleSheet.flatten(
+      styledTestNode(visual.children[3]).props.style,
+    ) as { transform: unknown }
+    expect(cap.height).toBeLessThanOrEqual(40 / 60 / 2)
+    expect(bottom.top + bottom.height).toBe(2)
+    expect(clip.transform).toEqual([{ scaleY: 1 }])
+  })
+
+  it("keeps inner slice borders absent in increased contrast", async () => {
+    await renderPlaced(
+      shell({
+        presentPage: presenter({
+          events: [
+            timedEvent(
+              "contrast",
+              "2026-06-15T10:00:00.000Z",
+              "2026-06-15T11:00:00.000Z",
+            ),
+          ],
+          increasedContrast: true,
+        }),
+      }),
+    )
+
+    const visual = styledTestNode(
+      screen.getByRole("button", { name: /contrast/ }).children[0],
+    )
+    const top = StyleSheet.flatten(
+      styledTestNode(visual.children[0]).props.style,
+    )
+    const middle = StyleSheet.flatten(
+      styledTestNode(visual.children[1]).props.style,
+    )
+    const bottom = StyleSheet.flatten(
+      styledTestNode(visual.children[2]).props.style,
+    )
+    expect(top).toMatchObject({ borderWidth: 2, borderBottomWidth: 0 })
+    expect(middle).toMatchObject({ borderTopWidth: 0, borderBottomWidth: 0 })
+    expect(bottom).toMatchObject({ borderTopWidth: 0, borderWidth: 2 })
   })
 
   it.each([1, 2, 3, 5])(
@@ -921,7 +1006,7 @@ describe("OwnedCalendarShell", () => {
       "owned-calendar-now-2026-06-17",
       HIDDEN,
     )
-    expect(StyleSheet.flatten(indicator.props.style).top).toBe(720)
+    expect(StyleSheet.flatten(indicator.props.style).top).toBe(716)
     expect(indicator.children).toHaveLength(2)
     expect(indicator).toHaveProp("accessible", true)
     expect(indicator).toHaveProp("accessibilityRole", "text")
@@ -939,11 +1024,11 @@ describe("OwnedCalendarShell", () => {
       StyleSheet.flatten(
         screen.getByTestId("owned-calendar-now-2026-06-17", HIDDEN).props.style,
       ).top
-    expect(nowTop()).toBe(720)
+    expect(nowTop()).toBe(716)
 
     await view.rerender(shell({ presentPage, initialPixelsPerHour: 120 }))
     await view.rerender(shell({ presentPage, initialPixelsPerHour: 120 }))
-    expect(nowTop()).toBe(1440)
+    expect(nowTop()).toBe(1436)
   })
 
   it("renders no now presentation on a non-today page or a hidden weekend", async () => {
@@ -1028,7 +1113,7 @@ describe("OwnedCalendarShell", () => {
       StyleSheet.flatten(
         screen.getByTestId("owned-calendar-now-2026-06-17", HIDDEN).props.style,
       ).top,
-    ).toBe(720)
+    ).toBe(716)
     expect(onDateCommitted).not.toHaveBeenCalled()
     expect(onVerticalOffsetSettled).not.toHaveBeenCalled()
     expect(onZoomSettled).not.toHaveBeenCalled()
@@ -1286,7 +1371,7 @@ describe("OwnedCalendarShell", () => {
         screen.getByTestId("owned-calendar-hour-label-12", HIDDEN).parent?.props
           .style,
       ).top,
-    ).toBe(1080)
+    ).toBe(1073.5)
     expect(
       StyleSheet.flatten(
         screen.getByTestId("owned-calendar-day", HIDDEN).props.style,
