@@ -25,7 +25,7 @@ The candidate 30-minute stress sequence changes Day/Week through the existing na
 
 ## Bounded UI witness smoke
 
-On 2026-10-02, the installed OnePlus 6 perf package's base APK SHA-256 was `0dddc92023a6c03fa38ed53f061e4b094e93585d4444908e0e35db056e0b4083`. It matched a local P01 diagnostic APK labelled `90a88268`; the APK's full source revision was not independently established in this probe, and it is **not** the `8bebf2df64eb6eef033d190a4864bc8f9fe984cc` harness candidate. The package was already foregrounded. No APK was installed and no app was restarted.
+On 2026-10-02, the installed OnePlus 6 perf package's base APK SHA-256 was `0dddc92023a6c03fa38ed53f061e4b094e93585d4444908e0e35db056e0b4083`. It matched a local P01 diagnostic APK labelled `90a88268`; the APK's full source revision was not independently established in this probe, and it is **not** an exact build of this harness branch. The package was already foregrounded. No APK was installed and no app was restarted.
 
 The visible Week header identified page 2981, 2027-02-22 through 2027-02-28. The native menu's Day option produced two complete matching reads of Day page 20871, 2027-02-22. Switching back produced two complete matching reads of Week page 2981. Both transitions had target-mode `CALENDAR_PAGING mount` records and no `settle` record, matching the harness's UI-derived placement rule. The app PID was the same before and after; process start ticks were not sampled, so this smoke does not establish the soak's process-continuity gate. Raw UI XML and logcat are retained outside Git. This is a bounded tooling check, not an exact-revision 500-crossing or 30-minute P03 measurement.
 
