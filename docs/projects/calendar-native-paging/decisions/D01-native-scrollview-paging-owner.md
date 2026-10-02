@@ -67,7 +67,7 @@ if the spike prefers its feel (see D03).
 
 ## Approval
 
-Owner (Samuel Prak) approved explicitly in the Claude Code planning session, 2026-10-01 (round-1 answers).
+Owner approved explicitly in the Claude Code planning session, 2026-10-01 (round-1 answers).
 
 On 2026-10-02 around 16:17 UTC, after the Android rate-0.5 trial still missed rapid
 chain landings, the owner authorized a **bounded native paging prototype** for the

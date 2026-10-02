@@ -68,7 +68,7 @@ acceptable during the rebuild (owner, 2026-10-01). Device evidence gates release
 
 ## Approval
 
-Owner (Samuel Prak) approved explicitly in the Claude Code planning session, 2026-10-01 (round-1 answers). Revised on approval: the merge gate became a release gate (answer 11).
+Owner approved explicitly in the Claude Code planning session, 2026-10-01 (round-1 answers). Revised on approval: the merge gate became a release gate (answer 11).
 
 The owner authorized a bounded **perf-app-only** Android React Native ScrollView
 native paging prototype on 2026-10-02 around 16:17 UTC after the rate-0.5 prop
