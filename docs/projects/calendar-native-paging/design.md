@@ -119,7 +119,8 @@ production per-frame logging.
 
 1. **Quick wins and housekeeping (E01).** Compile the shell and gate the per-tile `onLayout`. Also
    archive T06 and T09, reconcile the owned-renderer tickets and fix the rule pointers.
-2. **Device spike (E02).** A throwaway branch, never merged. Kill or continue per `product.md`.
+2. **Device spike (E02).** A development-only route may land on `main`. Its evidence and the
+   owner's verdict determine whether to continue per `product.md` and D08.
 3. **Rebuild epics.** Straight cutover, no runtime flag (D08). Turning on the Reanimated static
    flags changes the native fingerprint, so the cutover ships in a new binary through the
    preview channel.
@@ -151,7 +152,7 @@ production per-frame logging.
 - D05 — Screen chunk store, explicit page status, presentation cache (`decisions/D05-window-data-store-and-presentation-cache.md`)
 - D06 — Adjustable paging control outside the scroll views (`decisions/D06-accessible-paging-control.md`)
 - D07 — Thin boundary, pure data math, compiler-checked renderer (`decisions/D07-renderer-boundary-and-react-idioms.md`)
-- D08 — Spike first, device evidence blocks merge, straight cutover (`decisions/D08-delivery-gate-and-rollout.md`)
+- D08 — Spike first, device evidence gates releases, straight cutover (`decisions/D08-delivery-gate-and-rollout.md`)
 
 ## Open risks
 

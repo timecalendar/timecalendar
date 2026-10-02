@@ -18,11 +18,13 @@ chains. Making page content `pointerEvents="box-none"` retains diagonals but doe
 chained landing. RNGH's own ScrollView wraps the same React Native ScrollView with a native
 gesture handler, so it offers no separate cancellation path.
 
-The release decision is to keep P01 blocked and run a bounded native pager prototype on the PC,
-or use the owned-pager fallback from R08. A native intervention would revise D08's no-native
-module boundary and needs a new perf APK. Only a measured win should enter main: at least
-19/20 chained landing, 25/25 chain settlements, 20/20 diagonals, exact reversals, and a smoke
-pass on the iOS Simulator. Exact 20/20 chained landing remains P01's release target.
+P01 remains a release blocker. The recommended next decision is a bounded native pager prototype
+on the PC or the owned-pager fallback from R08. A native intervention would revise D08's
+no-native-module boundary and needs owner scope approval and a new perf APK. Proposed prototype
+evaluation criteria are at least 19/20 chained landing, 25/25 chain settlements, 20/20 diagonals,
+exact reversals, and an iOS Simulator smoke pass. These are investigation criteria, not approval
+to publish: exact 20/20 chained landing remains P01's release target. D08 continues to permit
+unfinished work on `main`.
 
 Evidence and five committed summary pairs:
 `docs/projects/calendar-native-paging/evidence/E04-android-chained-swipes.md` and

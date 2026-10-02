@@ -34,6 +34,14 @@ in the [captured screen](images/E06-ios-sim-largest-9d246fbf.png). This is a vis
 check, not a VoiceOver, physical-device, or timing verdict. Direct `simctl` does not inject touch
 gestures, so native chained swipes, reversal, Today, and focus return remain unverified here.
 
+The coordinator also exercised the simulator's native accessibility actions through Orca's
+visible Simulator window on the same native binary and JavaScript source. One `AXIncrement`
+changed the committed header from Monday, September 28 to Monday, October 5; one `AXDecrement`
+returned to September 28. Settled accessibility trees and screenshots confirmed both results.
+This checks the adjustable control's native action path, not VoiceOver speech or focus. Pointer
+gesture results remain inconclusive because the visible screen changed between test actions;
+they do not establish chained-swipe, reversal, or Today acceptance.
+
 ## Owner device verdict
 
 **Pending.** No VoiceOver or TalkBack physical-device run has been recorded for the E06 revision.
