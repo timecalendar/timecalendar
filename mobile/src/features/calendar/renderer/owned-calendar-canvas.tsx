@@ -278,6 +278,8 @@ function HourLabel({
         type="captionSmall"
         themeColor="textSecondary"
         testID={`owned-calendar-hour-label-${hour}`}
+        numberOfLines={1}
+        maxFontSizeMultiplier={1.2}
       >
         {label}
       </ThemedText>

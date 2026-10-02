@@ -1186,7 +1186,7 @@ describe("OwnedCalendarShell", () => {
       includeFontPadding: false,
     })
     expect(monday.getByText("15").props.adjustsFontSizeToFit).toBeUndefined()
-    expect(monday.getByText("15")).toHaveProp("maxFontSizeMultiplier", 1.25)
+    expect(monday.getByText("15")).toHaveProp("maxFontSizeMultiplier", 1)
     expect(screen.getByTestId("owned-calendar-page-control")).toHaveProp(
       "accessible",
       true,
@@ -1229,10 +1229,10 @@ describe("OwnedCalendarShell", () => {
     expect(StyleSheet.flatten(control.props.style).minHeight).toBe(56)
     expect(within(control).getByText("‹ ›")).toHaveProp(
       "maxFontSizeMultiplier",
-      1.5,
+      1,
     )
     const date = within(screen.getByTestId("owned-calendar-date-2026-06-15"))
-    expect(date.getByText("15")).toHaveProp("maxFontSizeMultiplier", 1.25)
+    expect(date.getByText("15")).toHaveProp("maxFontSizeMultiplier", 1)
     expect(
       StyleSheet.flatten(date.getByText("15").parent?.props.style).width,
     ).toBeLessThanOrEqual(32)

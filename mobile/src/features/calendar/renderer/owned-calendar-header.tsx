@@ -85,7 +85,7 @@ export function OwnedCalendarDateHeader({
       >
         <ThemedText
           accessible={false}
-          maxFontSizeMultiplier={1.5}
+          maxFontSizeMultiplier={1}
           style={styles.pageControlIcon}
         >
           {controlSymbol}
@@ -176,10 +176,7 @@ function HeaderSlot({
             <ThemedText
               accessible={false}
               numberOfLines={1}
-              maxFontSizeMultiplier={Math.max(
-                1,
-                (width / presentation.columns.length - 8) / weekdayFontSize,
-              )}
+              maxFontSizeMultiplier={1.2}
               style={[
                 styles.weekdayLabel,
                 {
@@ -206,7 +203,7 @@ function HeaderSlot({
               <ThemedText
                 accessible={false}
                 numberOfLines={1}
-                maxFontSizeMultiplier={Math.min(1.25, (badgeSize - 4) / 20)}
+                maxFontSizeMultiplier={1}
                 style={[
                   styles.dayNumber,
                   { color: isToday ? theme.background : dateColor },

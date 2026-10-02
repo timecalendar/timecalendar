@@ -341,6 +341,42 @@ describe("owned Calendar windowed pager", () => {
     }
   })
 
+  it("settles iOS after end-drag arrives before the native touch finalizes", async () => {
+    const reactions = recordAnimatedReactions()
+    try {
+      const { onDateCommitted, pager } = await renderShell()
+      const nativePager = getByGestureTestId(
+        "owned-calendar-native-pager",
+      ) as unknown as {
+        handlers: {
+          onBegin: (event: Record<string, unknown>) => void
+          onFinalize: (event: Record<string, unknown>, success: boolean) => void
+        }
+      }
+
+      await act(async () =>
+        nativePager.handlers.onBegin({ numberOfPointers: 1 }),
+      )
+      await pager.send(0, "onScrollBeginDrag")
+      await pager.send(1)
+      await pager.send(1, "onScrollEndDrag")
+      expect(onDateCommitted).not.toHaveBeenCalled()
+
+      await act(async () => {
+        nativePager.handlers.onFinalize({ numberOfPointers: 0 }, true)
+        reactions.flush()
+      })
+      await flushUiThread()
+
+      expect(onDateCommitted).toHaveBeenCalledTimes(1)
+      expect(
+        onDateCommitted.mock.calls[0]?.[0].toISOString().slice(0, 10),
+      ).toBe(weekStartKey(ANCHOR_INDEX + 1))
+    } finally {
+      reactions.restore()
+    }
+  })
+
   it("lets a pinch cancel a pending navigation and settle its observed page", async () => {
     const reactions = recordAnimatedReactions()
     try {
@@ -363,9 +399,9 @@ describe("owned Calendar windowed pager", () => {
       await flushUiThread()
 
       expect(onDateCommitted).toHaveBeenCalledTimes(1)
-      expect(onDateCommitted.mock.calls[0]?.[0].toISOString().slice(0, 10)).toBe(
-        weekStartKey(ANCHOR_INDEX + 19),
-      )
+      expect(
+        onDateCommitted.mock.calls[0]?.[0].toISOString().slice(0, 10),
+      ).toBe(weekStartKey(ANCHOR_INDEX + 19))
     } finally {
       reactions.restore()
     }
