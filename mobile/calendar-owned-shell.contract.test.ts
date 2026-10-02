@@ -165,6 +165,7 @@ describe("owned Calendar paging repository contract", () => {
       "owned-calendar-geometry.ts",
       "owned-calendar-header.tsx",
       "owned-calendar-page.tsx",
+      "owned-calendar-pager-generation.test.tsx",
       "owned-calendar-pager-rest.test.tsx",
       "owned-calendar-pager.test.tsx",
       "owned-calendar-pager.ts",
@@ -247,19 +248,21 @@ describe("owned Calendar paging repository contract", () => {
     ).toEqual(new Set(["onCross", "onSettle", "pagingLog"]))
     expect(
       new Set([...pager.matchAll(/scheduleOnUI\(\s*(\w+)/g)].map(([, f]) => f)),
-    ).toEqual(new Set(["place", "placeNavigation"]))
+    ).toEqual(
+      new Set(["place", "placeNavigation", "releasePreviousNativeTouch"]),
+    )
     expect(pager).toMatch(/scrollTo\(scrollRef, /)
 
     const pagingOwners = [
       "owned-calendar-canvas.tsx",
       "owned-calendar-header.tsx",
       "owned-calendar-page.tsx",
-      "owned-calendar-pager.ts",
       "owned-calendar-shell.tsx",
     ]
       .map(rendererSource)
       .join("\n")
     expect(pagingOwners).not.toMatch(/generation|revision|epoch/i)
+    expect(pager).toContain("activeGeneration")
     expect(pagingOwners).not.toContain("react-native-pager-view")
     expect(
       productionCalendarFiles().filter((file) =>

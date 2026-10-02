@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { PixelRatio, Platform } from "react-native"
 import { Gesture, type GestureType } from "react-native-gesture-handler"
 import Animated, {
@@ -75,6 +69,31 @@ function initialPagerState(
     center: index,
     settled: index,
     placement: { id: 0, index, animated: false, approachFrom: null },
+  }
+}
+
+function jumpPagerState(
+  current: PagerState,
+  index: PageIndex,
+  animated: boolean,
+  generation: number,
+): PagerState {
+  if (current.generation !== generation) return current
+  const rebase = planPageRebase(createPageWindow(current.baseIndex), index)
+  const distance = index - current.settled
+  return {
+    ...current,
+    baseIndex: rebase?.baseIndex ?? current.baseIndex,
+    center: index,
+    placement: {
+      id: current.placement.id + 1,
+      index,
+      animated,
+      approachFrom:
+        animated && (Math.abs(distance) > 1 || rebase !== null)
+          ? index - Math.sign(distance)
+          : null,
+    },
   }
 }
 
@@ -536,45 +555,19 @@ export function useOwnedCalendarPager({
     placeAfterLayout()
   }
 
-  const jump = useCallback(
-    (index: PageIndex, animated: boolean) => {
-      setState((current) => {
-        if (current.generation !== generation) return current
-        const rebase = planPageRebase(
-          createPageWindow(current.baseIndex),
-          index,
-        )
-        const distance = index - current.settled
-        return {
-          ...current,
-          baseIndex: rebase?.baseIndex ?? current.baseIndex,
-          center: index,
-          placement: {
-            id: current.placement.id + 1,
-            index,
-            animated,
-            approachFrom:
-              animated && (Math.abs(distance) > 1 || rebase !== null)
-                ? index - Math.sign(distance)
-                : null,
-          },
-        }
-      })
-    },
-    [generation],
-  )
-
   useEffect(() => {
     const last = reported.current
     reported.current = { spaceKey, index: anchorIndex }
     if (last.spaceKey !== spaceKey || last.index === anchorIndex) return
     interruptedTarget.set(null)
     navigationTarget.set(anchorIndex)
-    jump(anchorIndex, !reduceMotion)
+    setState((current) =>
+      jumpPagerState(current, anchorIndex, !reduceMotion, generation),
+    )
   }, [
     anchorIndex,
     interruptedTarget,
-    jump,
+    generation,
     navigationTarget,
     reduceMotion,
     spaceKey,
@@ -685,10 +678,18 @@ export function useOwnedCalendarPager({
     isMoving: () => dragging.get() || momentum.get(),
     pageLeft: (index: PageIndex) => pageSlot(window, index) * pageWidth,
     step: (direction: -1 | 1, animated: boolean) => {
+      if (resetGeneration.current !== generation) return
       navigationTarget.set(null)
       interruptedTarget.set(null)
       onCenterChange(state.settled + direction)
-      jump(state.settled + direction, animated)
+      setState((current) =>
+        jumpPagerState(
+          current,
+          state.settled + direction,
+          animated,
+          generation,
+        ),
+      )
     },
   }
 }

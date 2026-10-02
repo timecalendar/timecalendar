@@ -1,4 +1,5 @@
 import { act, render } from "@testing-library/react-native"
+import { useLayoutEffect } from "react"
 import { View } from "react-native"
 import { Gesture, GestureDetector } from "react-native-gesture-handler"
 import { getByGestureTestId } from "react-native-gesture-handler/jest-utils"
@@ -22,10 +23,14 @@ function PagerProbe({
   mode,
   trackNativeTouch,
   onSettled = jest.fn(),
+  onCenterChange = jest.fn(),
+  recordStep,
 }: {
   mode: "day" | "week"
   trackNativeTouch: jest.Mock
   onSettled?: jest.Mock
+  onCenterChange?: jest.Mock
+  recordStep?: (step: (direction: -1 | 1, animated: boolean) => void) => void
 }) {
   const scrollLocked = Reanimated.useSharedValue(false)
   const pager = useOwnedCalendarPager({
@@ -37,7 +42,10 @@ function PagerProbe({
     pinchGesture: Gesture.Pinch(),
     trackNativeTouch,
     onSettled,
-    onCenterChange: jest.fn(),
+    onCenterChange,
+  })
+  useLayoutEffect(() => {
+    recordStep?.(pager.step)
   })
   return (
     <GestureDetector gesture={pager.nativeGesture}>
@@ -45,6 +53,27 @@ function PagerProbe({
     </GestureDetector>
   )
 }
+
+test("an abandoned advance callback cannot move the new mode", async () => {
+  const onCenterChange = jest.fn()
+  const steps: ((direction: -1 | 1, animated: boolean) => void)[] = []
+  const props = {
+    trackNativeTouch: jest.fn(),
+    onCenterChange,
+    recordStep: (step: (direction: -1 | 1, animated: boolean) => void) => {
+      steps.push(step)
+    },
+  }
+  const view = await render(<PagerProbe mode="week" {...props} />)
+  const abandonedStep = steps.at(-1)
+  await view.rerender(<PagerProbe mode="day" {...props} />)
+  await act(async () => abandonedStep?.(1, false))
+  expect(onCenterChange).not.toHaveBeenCalled()
+
+  const currentStep = steps.at(-1)
+  await act(async () => currentStep?.(1, false))
+  expect(onCenterChange).toHaveBeenCalledWith(20701)
+})
 
 test("a mode switch releases the old native touch without clearing a new one", async () => {
   const trackNativeTouch = jest.fn()
