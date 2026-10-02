@@ -1,5 +1,16 @@
 import { setUpTests } from "react-native-reanimated"
 
+type MockScrollHandlerKey =
+  | "onScroll"
+  | "onBeginDrag"
+  | "onEndDrag"
+  | "onMomentumBegin"
+  | "onMomentumEnd"
+type MockScrollHandler = (
+  event: Record<string, unknown>,
+  context: Record<string, unknown>,
+) => void
+
 jest.mock("react-native-worklets", () =>
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   require("react-native-worklets/src/mock"),
@@ -12,6 +23,14 @@ jest.mock("react-native-reanimated", () => {
   const implementation = reanimated.default ?? reanimated
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { useRef } = require("react") as typeof import("react")
+  // Native event name suffix → `useAnimatedScrollHandler` key.
+  const SCROLL_HANDLER_KEYS: Record<string, MockScrollHandlerKey> = {
+    onScrollBeginDrag: "onBeginDrag",
+    onScrollEndDrag: "onEndDrag",
+    onMomentumScrollBegin: "onMomentumBegin",
+    onMomentumScrollEnd: "onMomentumEnd",
+    onScroll: "onScroll",
+  }
   return {
     ...reanimated,
     ...implementation,
@@ -23,38 +42,28 @@ jest.mock("react-native-reanimated", () => {
       updater(),
     ),
     // Like the native handler, one processed handler serves every scroll
-    // event; a payload's `eventName` routes it to its handler key.
+    // event: a payload's `eventName` (the native name ends with it) routes it
+    // to its handler key with one context per handler. A payload without a
+    // name is RNTL's `fireEvent.scroll`; an unknown name is a test bug that
+    // would otherwise reach no handler and pass silently.
     useAnimatedScrollHandler: jest.fn(
       (
         handlers:
-          | ((event: Record<string, unknown>) => void)
-          | Partial<
-              Record<
-                | "onScroll"
-                | "onBeginDrag"
-                | "onEndDrag"
-                | "onMomentumBegin"
-                | "onMomentumEnd",
-                (event: Record<string, unknown>) => void
-              >
-            >,
+          | MockScrollHandler
+          | Partial<Record<MockScrollHandlerKey, MockScrollHandler>>,
       ) => {
         const byKey =
           typeof handlers === "function" ? { onScroll: handlers } : handlers
-        const keys = {
-          onScrollBeginDrag: "onBeginDrag",
-          onScrollEndDrag: "onEndDrag",
-          onMomentumScrollBegin: "onMomentumBegin",
-          onMomentumScrollEnd: "onMomentumEnd",
-        } as const
+        const context: Record<string, unknown> = {}
         return (event: { nativeEvent?: Record<string, unknown> }) => {
           const payload: Record<string, unknown> = event.nativeEvent ?? event
-          const name = payload.eventName
-          const key =
-            typeof name === "string" && name in keys
-              ? keys[name as keyof typeof keys]
-              : "onScroll"
-          byKey[key]?.(payload)
+          const name = payload.eventName ?? "onScroll"
+          const route = Object.entries(SCROLL_HANDLER_KEYS).find(
+            ([suffix]) => typeof name === "string" && name.endsWith(suffix),
+          )
+          if (route === undefined)
+            throw new Error(`Unknown scroll event name: ${String(name)}`)
+          byKey[route[1]]?.(payload, context)
         }
       },
     ),

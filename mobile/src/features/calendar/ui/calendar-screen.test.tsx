@@ -888,6 +888,288 @@ describe("CalendarScreen owned shell", () => {
       focus.mockRestore()
     }
   })
+
+  it.each([
+    { direction: -1, destination: "2026-06-08" },
+    { direction: 1, destination: "2026-06-22" },
+  ])(
+    "commits $destination while its window read is pending, then fills the same page",
+    async ({ direction, destination }) => {
+      setCalendarView("week")
+      mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-15" })
+      mockWindowEvents = [
+        calendarEvent({
+          title: "Destination class",
+          startsAt: new Date(`${destination}T10:00:00Z`),
+          endsAt: new Date(`${destination}T11:00:00Z`),
+        }),
+      ]
+      const read = mockReadWindow.getMockImplementation()
+      let releaseReads: () => void = () => undefined
+      const reads = new Promise<void>((resolve) => {
+        releaseReads = resolve
+      })
+      mockReadWindow.mockImplementation(async (request) => {
+        await reads
+        return read!(request)
+      })
+      try {
+        await render(<CalendarScreen />)
+        const pager = await settleCalendarPager()
+        const scrollOwner = screen.getByTestId("owned-calendar-pager")
+
+        await pager.swipe(direction)
+
+        const destinationDate = new Date(`${destination}T00:00:00`)
+        expect(
+          screen.getByRole("adjustable", {
+            name: formatFullDay(destinationDate, "en", ZONE),
+          }),
+        ).toBeOnTheScreen()
+        const page = screen.getByTestId(weekPageId(destinationDate))
+        expect(page).toHaveProp("accessibilityState", { busy: true })
+        expect(
+          screen.getByTestId(`owned-calendar-column-${destination}`, HIDDEN),
+        ).toBeOnTheScreen()
+        expect(
+          screen.queryByRole("button", { name: /^Destination class,/ }),
+        ).toBeNull()
+        expect(mockAnnounce).not.toHaveBeenCalled()
+
+        await act(async () => releaseReads())
+
+        expect(
+          await screen.findByRole("button", { name: /^Destination class,/ }),
+        ).toBeOnTheScreen()
+        expect(screen.getByTestId(weekPageId(destinationDate))).toBe(page)
+        expect(page).toHaveProp("accessibilityState", { busy: false })
+        expect(screen.getByTestId("owned-calendar-pager")).toBe(scrollOwner)
+        await waitFor(() => expect(mockAnnounce).toHaveBeenCalledTimes(1))
+        expect(mockAnnounce).toHaveBeenCalledWith(
+          formatFullDay(destinationDate, "en", ZONE),
+        )
+        expect(mockSync).not.toHaveBeenCalled()
+      } finally {
+        mockReadWindow.mockImplementation(read)
+      }
+    },
+  )
+
+  it("pages beyond the mounted window in both directions, one committed week per swipe", async () => {
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-07" })
+    await render(<CalendarScreen />)
+    const pager = await settleCalendarPager()
+    await waitFor(() =>
+      expect(mockAnnounce).toHaveBeenCalledWith(
+        formatFullDay(new Date(2026, 8, 7), "en", ZONE),
+      ),
+    )
+    mockAnnounce.mockClear()
+    const scrollOwner = screen.getByTestId("owned-calendar-pager")
+    let day = 7
+
+    for (const direction of [1, 1, 1, 1, -1, -1, -1, -1, -1]) {
+      await pager.swipe(direction)
+      day += direction * 7
+      const destination = new Date(2026, 8, day)
+      expect(
+        screen.getByRole("adjustable", {
+          name: formatFullDay(destination, "en", ZONE),
+        }),
+      ).toBeOnTheScreen()
+      expect(screen.getByTestId(weekPageId(destination))).toBeOnTheScreen()
+      expect(
+        screen.getAllByTestId(/^owned-calendar-page-week:/, HIDDEN),
+      ).toHaveLength(5)
+      await waitFor(() =>
+        expect(screen.getByTestId(weekPageId(destination))).toHaveProp(
+          "accessibilityState",
+          { busy: false },
+        ),
+      )
+    }
+
+    expect(day).toBe(0)
+    expect(screen.getByTestId("owned-calendar-pager")).toBe(scrollOwner)
+    await waitFor(() => expect(mockAnnounce).toHaveBeenCalledTimes(9))
+  })
+
+  it("drops a partial Week drag when switching to Day", async () => {
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-16" })
+    await render(<CalendarScreen />)
+    const pager = await settleCalendarPager()
+    const staleScroll = screen.getByTestId("owned-calendar-pager").props
+      .onScroll as (event: unknown) => void
+    await pager.send(pager.position.current, "onScrollBeginDrag")
+    await pager.send(pager.position.current + 0.45)
+    await waitFor(() =>
+      expect(mockAnnounce).toHaveBeenCalledWith(
+        formatFullDay(new Date(2026, 8, 14), "en", ZONE),
+      ),
+    )
+    mockAnnounce.mockClear()
+
+    await chooseCalendarView("day")
+    await act(async () => {
+      staleScroll({
+        nativeEvent: {
+          eventName: "onMomentumScrollEnd",
+          contentOffset: {
+            x: pager.origin + (pager.position.current + 1) * pager.pageWidth,
+            y: 0,
+          },
+          layoutMeasurement: { width: pager.pageWidth, height: 1000 },
+          contentSize: { width: pager.contentWidth, height: 1000 },
+        },
+      })
+    })
+    await settleCalendarPager()
+
+    expect(screen.getAllByTestId(WEEK_DATE_ID)).toHaveLength(1)
+    expect(
+      screen.getByRole("adjustable", {
+        name: formatFullDay(new Date(2026, 8, 14), "en", ZONE),
+      }),
+    ).toBeOnTheScreen()
+    expect(
+      screen.getByTestId("owned-calendar-date-2026-09-14"),
+    ).toBeOnTheScreen()
+    expect(mockAnnounce).not.toHaveBeenCalled()
+  })
+
+  it("commits an accessibility step only once the pager lands, after the screen rerenders", async () => {
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-07" })
+    await render(<CalendarScreen />)
+    const pager = await settleCalendarPager()
+
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "accessibilityAction",
+      { nativeEvent: { actionName: "increment" } },
+    )
+    await flushUiThread()
+    expect(
+      screen.getByRole("adjustable", {
+        name: formatFullDay(new Date(2026, 8, 7), "en", ZONE),
+      }),
+    ).toBeOnTheScreen()
+
+    await landWherePlaced(pager, pager.position)
+
+    expect(
+      screen.getByRole("adjustable", {
+        name: formatFullDay(new Date(2026, 8, 14), "en", ZONE),
+      }),
+    ).toBeOnTheScreen()
+  })
+
+  it("commits the week a swipe lands on after iOS inactivity interrupts it", async () => {
+    const addListener = jest.mocked(AppState.addEventListener)
+    try {
+      mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-07" })
+      await render(<CalendarScreen />)
+      const pager = await settleCalendarPager()
+      await waitFor(() =>
+        expect(mockAnnounce).toHaveBeenCalledWith(
+          formatFullDay(new Date(2026, 8, 7), "en", ZONE),
+        ),
+      )
+      mockAnnounce.mockClear()
+      const from = pager.position.current
+      await pager.send(from, "onScrollBeginDrag")
+      await pager.send(from + 0.6)
+      await pager.send(from + 0.6, "onScrollEndDrag")
+      await pager.send(from + 0.6, "onMomentumScrollBegin")
+      await pager.send(from + 1)
+      const onAppState = addListener.mock.calls.findLast(
+        ([type]) => type === "change",
+      )?.[1]
+      expect(onAppState).toBeDefined()
+
+      await act(async () => {
+        onAppState?.("inactive")
+        onAppState?.("background")
+      })
+      await act(async () => onAppState?.("active"))
+      expect(
+        screen.getByRole("adjustable", {
+          name: formatFullDay(new Date(2026, 8, 7), "en", ZONE),
+        }),
+      ).toBeOnTheScreen()
+      await pager.send(from + 1, "onMomentumScrollEnd")
+
+      const destination = new Date(2026, 8, 14)
+      expect(
+        screen.getByRole("adjustable", {
+          name: formatFullDay(destination, "en", ZONE),
+        }),
+      ).toBeOnTheScreen()
+      await waitFor(() => expect(mockAnnounce).toHaveBeenCalledTimes(1))
+      expect(mockAnnounce).toHaveBeenCalledWith(
+        formatFullDay(destination, "en", ZONE),
+      )
+    } finally {
+      addListener.mockClear()
+    }
+  })
+
+  /** Flings toward the next week, then presses Today before it lands. */
+  async function pressTodayDuringFling() {
+    mockUseCalendarClock.mockReturnValue(new Date("2026-06-17T12:00:00"))
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-08-31" })
+    await render(<CalendarScreen />)
+    const pager = await settleCalendarPager()
+    const from = pager.position.current
+    await pager.send(from, "onScrollBeginDrag")
+    await pager.send(from + 0.6)
+    await pager.send(from + 0.6, "onScrollEndDrag")
+    await pager.send(from + 0.6, "onMomentumScrollBegin")
+    await pager.send(from + 0.9)
+    await fireEvent.press(screen.getByTestId("calendar-today"))
+    await flushUiThread()
+    const placed = mockScrollTo.mock.calls.at(-1)?.[1] ?? pager.origin
+    pager.position.current = (placed - pager.origin) / pager.pageWidth
+    return pager
+  }
+
+  function expectTodayCommitted() {
+    const todayWeek = new Date(2026, 5, 15)
+    expect(
+      screen.getByRole("adjustable", {
+        name: formatFullDay(todayWeek, "en", ZONE),
+      }),
+    ).toBeOnTheScreen()
+    expect(screen.getByTestId(weekPageId(todayWeek))).toHaveProp(
+      "importantForAccessibility",
+      "yes",
+    )
+    expect(mockAnnounce).not.toHaveBeenCalledWith(
+      formatFullDay(new Date(2026, 8, 7), "en", ZONE),
+    )
+  }
+
+  it("lets Today supersede a fling whose momentum ends at the placed week", async () => {
+    const pager = await pressTodayDuringFling()
+
+    await pager.send(pager.position.current)
+    await pager.send(pager.position.current, "onMomentumScrollEnd")
+
+    expectTodayCommitted()
+  })
+
+  // Skipped: the pager keeps its momentum flag through a programmatic placement,
+  // so if the native view stops the fling for `scrollTo` without sending a
+  // momentum end, Today's page never settles: the previous week stays the
+  // committed (accessible, live-tile) page until the next touch. Whether iOS
+  // and Android send that event is unverified; see
+  // docs/react-native-migration/inbox/2026-10-02-calendar-paging-t09-placement-during-momentum.md.
+  it.skip("lets Today supersede a fling stopped by the placement without a momentum end", async () => {
+    const pager = await pressTodayDuringFling()
+
+    await pager.send(pager.position.current)
+
+    expectTodayCommitted()
+  })
 })
 
 describe("CalendarScreen retained Agenda", () => {

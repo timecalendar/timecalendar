@@ -4,6 +4,11 @@ import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 
 import jestConfig from "./jest.config"
+import {
+  MOUNTED_PAGE_RADIUS,
+  PAGE_REBASE_MARGIN,
+  PAGE_WINDOW_RADIUS,
+} from "./src/features/calendar/data/page-window"
 
 const root = __dirname
 const packageJson = JSON.parse(
@@ -40,6 +45,39 @@ function compileForNativeRuntime(path: string): string {
     ],
     { cwd: root, encoding: "utf8" },
   )
+}
+
+const rendererRoot = join(root, "src", "features", "calendar", "renderer")
+
+function rendererSource(file: string): string {
+  return readFileSync(join(rendererRoot, file), "utf8")
+}
+
+function rendererSources(): string {
+  return readdirSync(rendererRoot)
+    .filter((file) => /\.tsx?$/.test(file) && !file.includes(".test."))
+    .map(rendererSource)
+    .join("\n")
+}
+
+function topLevelFunction(source: string, name: string): string {
+  const start = source.indexOf(`\nfunction ${name}(`)
+  expect(start).toBeGreaterThanOrEqual(0)
+  const end = source.indexOf("\n}\n", start)
+  return source.slice(start, end + 2)
+}
+
+/** The source between `name(` and its matching closing parenthesis. */
+function callArguments(source: string, name: string): string {
+  const open = source.indexOf(`${name}(`) + name.length
+  expect(open).toBeGreaterThan(name.length - 1)
+  let depth = 0
+  for (let index = open; index < source.length; index += 1) {
+    if (source[index] === "(") depth += 1
+    if (source[index] === ")") depth -= 1
+    if (depth === 0) return source.slice(open + 1, index)
+  }
+  throw new Error(`Unclosed call to ${name}`)
 }
 
 describe("owned Calendar paging repository contract", () => {
@@ -113,7 +151,6 @@ describe("owned Calendar paging repository contract", () => {
   })
 
   it("keeps one owned renderer with no vendor, fallback, or compatibility path", () => {
-    const rendererRoot = join(root, "src", "features", "calendar", "renderer")
     expect(readdirSync(rendererRoot).sort()).toEqual([
       "calendar-focus-observer.tsx",
       "calendar-focus-observer.types.ts",
@@ -154,56 +191,93 @@ describe("owned Calendar paging repository contract", () => {
     ).toBe(true)
   })
 
-  it("keeps one native vertical owner and one windowed native pager with a passive header projection", () => {
-    const rendererRoot = join(root, "src/features/calendar/renderer")
-    const renderer = readdirSync(rendererRoot)
-      .filter((file) => /\.tsx?$/.test(file) && !file.includes(".test."))
-      .map((file) => readFileSync(join(rendererRoot, file), "utf8"))
-      .join("\n")
-    const pager = readFileSync(
-      join(rendererRoot, "owned-calendar-pager.ts"),
-      "utf8",
-    )
-    const header = readFileSync(
-      join(rendererRoot, "owned-calendar-header.tsx"),
-      "utf8",
-    )
-    expect(renderer).not.toContain("react-native-pager-view")
-    expect(renderer).toMatch(/contentInsetAdjustmentBehavior="automatic"/)
+  it("keeps one native vertical owner and one windowed native horizontal pager", () => {
+    const canvas = rendererSource("owned-calendar-canvas.tsx")
+    const pagerView = topLevelFunction(canvas, "HorizontalPagerView")
+    const renderer = rendererSources()
+
     expect(renderer.match(/<Animated\.ScrollView\s+ref=/g)).toHaveLength(2)
-    expect(renderer).toMatch(/\bhorizontal\b/)
-    expect(renderer).toContain("disableIntervalMomentum")
-    expect(renderer).toContain("snapToInterval")
+    expect(renderer.match(/^\s+horizontal$/gm)).toHaveLength(1)
+    expect(pagerView).toMatch(/^\s+horizontal$/m)
+    expect(canvas).toContain("<HorizontalPagerView key={mode}")
+    expect(renderer).toMatch(/contentInsetAdjustmentBehavior="automatic"/)
+    expect(pagerView).toContain('pagingEnabled={Platform.OS === "ios"}')
+    expect(pagerView).toMatch(/snapToInterval=\{\s*Platform\.OS === "android"/)
+    expect(pagerView).toContain("disableIntervalMomentum")
+    expect(pagerView).toContain("onScroll={pager.scrollHandler}")
+    expect(pagerView).toContain(
+      "onContentSizeChange={pager.onContentSizeChange}",
+    )
+    expect(pagerView).not.toMatch(/\bcontentOffset=/)
+    expect(renderer.match(/Gesture\.Native\(\)/g)).toHaveLength(2)
     expect(renderer.match(/\.disallowInterruption\(true\)/g)).toHaveLength(2)
-    expect(pager).toContain("useAnimatedScrollHandler")
-    expect(pager).toContain("onMomentumEnd")
-    expect(pager).toContain("scheduleOnRN(onSettle")
-    expect(pager).toContain("mountedPageIndexes")
+
+    expect(MOUNTED_PAGE_RADIUS).toBe(2)
+    expect(PAGE_WINDOW_RADIUS).toBeGreaterThan(MOUNTED_PAGE_RADIUS)
+    expect(PAGE_REBASE_MARGIN).toBeLessThan(PAGE_WINDOW_RADIUS)
+    const pager = rendererSource("owned-calendar-pager.ts")
+    expect(pager).toContain("mountedPageIndexes(window, state.center)")
     expect(pager).toContain("planPageRebase")
-    expect(pager).not.toMatch(/generation|revision|epoch/i)
+  })
+
+  it("settles pages on the UI thread and tells React only about crossings and settles", () => {
+    const pager = rendererSource("owned-calendar-pager.ts")
+    const scrollHandler = callArguments(pager, "useAnimatedScrollHandler")
+
+    for (const key of [
+      "onScroll",
+      "onBeginDrag",
+      "onEndDrag",
+      "onMomentumBegin",
+      "onMomentumEnd",
+    ]) {
+      expect(scrollHandler).toMatch(new RegExp(`\\b${key}: \\(`))
+    }
+    expect(scrollHandler).not.toMatch(
+      /\bset[A-Z]\w*\(|\.current\b|onDateCommitted/,
+    )
+    expect(
+      new Set([...pager.matchAll(/scheduleOnRN\((\w+)/g)].map(([, f]) => f)),
+    ).toEqual(new Set(["onCross", "onSettle"]))
+    expect(
+      new Set([...pager.matchAll(/scheduleOnUI\(\s*(\w+)/g)].map(([, f]) => f)),
+    ).toEqual(new Set(["place"]))
+    expect(pager).toMatch(/scrollTo\(scrollRef, /)
+
+    const pagingOwners = [
+      "owned-calendar-canvas.tsx",
+      "owned-calendar-header.tsx",
+      "owned-calendar-page.tsx",
+      "owned-calendar-pager.ts",
+      "owned-calendar-shell.tsx",
+    ]
+      .map(rendererSource)
+      .join("\n")
+    expect(pagingOwners).not.toMatch(/generation|revision|epoch/i)
+    expect(pagingOwners).not.toContain("react-native-pager-view")
+    expect(
+      productionCalendarFiles().filter((file) =>
+        readFileSync(file, "utf8").includes("react-native-pager-view"),
+      ),
+    ).toEqual([])
+
+    const header = rendererSource("owned-calendar-header.tsx")
     expect(header).toContain("translateX: -scrollX.get()")
     expect(header).toContain('testID="owned-calendar-date-header-strip"')
     expect(header).toContain('overflow: "hidden"')
     expect(header).toContain('committed ? "auto" : "no-hide-descendants"')
+  })
+
+  it("bans timers, JS-thread animation, and manual memoization in the renderer", () => {
+    const renderer = rendererSources()
     expect(renderer).not.toMatch(
       /PanGestureHandler|Animated\.timing|setInterval|setTimeout|runOnJS|import\s*\{[^}]*\bAnimated\b[^}]*\}\s*from "react-native"/,
     )
-    expect(renderer).not.toMatch(/\buseCallback\b/)
-    const motionSources = [
-      "owned-calendar-canvas.tsx",
-      "owned-calendar-coordinator.ts",
-      "owned-calendar-page.tsx",
-      "owned-calendar-pager.ts",
-      "owned-calendar-zoom.ts",
-    ]
-      .map((file) => readFileSync(join(rendererRoot, file), "utf8"))
-      .join("\n")
-    expect(motionSources).not.toMatch(/\buseMemo\b/)
-
-    const zoom = readFileSync(
-      join(rendererRoot, "owned-calendar-zoom.ts"),
-      "utf8",
+    expect(renderer).not.toMatch(
+      /\buseCallback\b|\buseMemo\b|\bforwardRef\b|\bmemo\(/,
     )
+
+    const zoom = rendererSource("owned-calendar-zoom.ts")
     expect(zoom).toContain("Gesture.Pinch()")
     expect(zoom).toContain("useAnimatedScrollHandler")
     expect(zoom).toContain("useAnimatedReaction")
@@ -276,7 +350,6 @@ describe("owned Calendar paging repository contract", () => {
   })
 
   it("keeps one committed-page event tree and bounded identity focus refs", () => {
-    const rendererRoot = join(root, "src/features/calendar/renderer")
     const canvas = readFileSync(
       join(rendererRoot, "owned-calendar-canvas.tsx"),
       "utf8",
