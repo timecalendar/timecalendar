@@ -11,6 +11,10 @@ confidence: high
 
 # T05 — Switch between day and week without losing position
 
+> **Superseded note.** This ticket's pager, three-page and generation requirements are
+> superseded by [calendar-native-paging D01 and D02](../../../calendar-native-paging/design.md)
+> and [ADR 062](../../../../mobile/architecture-book/decisions/062-calendar-windowed-native-scrollview-paging.md).
+
 ## Outcome
 
 Day and week switch predictably, retain the visible clock position, and remember the chosen mode after restart.

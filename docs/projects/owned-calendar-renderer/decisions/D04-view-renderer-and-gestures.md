@@ -4,9 +4,15 @@ id: D04
 status: approved
 traces-to: [P01, P04, P05, P07, P08]
 supersedes: []
+superseded-in-part-by: [calendar-native-paging/D01]
 ---
 
 # D04 — Use owned native views with UI-thread gestures
+
+> **Superseded in part.** The horizontal-motion clause (native PagerView paging) is superseded by
+> [calendar-native-paging D01](../../calendar-native-paging/decisions/D01-native-scrollview-paging-owner.md)
+> and [ADR 062](../../../mobile/architecture-book/decisions/062-calendar-windowed-native-scrollview-paging.md).
+> Owned RN views, the UI-thread header projection and the Gesture Handler pinch remain in force.
 
 ## Context and evidence
 

@@ -30,13 +30,15 @@
   Total synced/personal decoders accept valid timed and date-only facts, reject malformed rows
   independently, and expose only allowlisted aggregate rejection counts; diagnostics never contain
   row values or query inputs.
-- One pure planner defines exactly three retained Day/Week pages and their combined instant and
-  floating civil envelopes. Range repositories use those envelopes directly, then the shared seam
-  applies visibility, hidden, and cancellation filters before Home, Agenda, renderer semantics, or
-  checklist consumers see an event.
-- The renderer receives a complete immutable V1 presentation. Page navigation replaces local live
-  queries and presentation generations only; generated API hooks, the fetch mutator, and calendar
-  sync are outside that boundary.
+- The Calendar timeline reads through the screen-level `CalendarWindowStore`: pure planners map a
+  page index to its 28-day chunk, and one batched read fills the chunks around the mounted pages
+  ([storage.md](./storage.md)). Home and Agenda use range live queries over their own instant and
+  floating civil envelopes. Each path applies visibility, hidden, and cancellation filters before
+  Home, Agenda, renderer semantics, or checklist consumers see an event.
+- The renderer receives one frozen `PagePresentationV1` per page, with an explicit
+  `loading | ready | error` status. Page navigation reads only local chunks and cached
+  presentations; generated API hooks, the fetch mutator, and calendar sync are outside that
+  boundary.
 
 ## Calendar import checkpoints
 

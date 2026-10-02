@@ -21,7 +21,8 @@ identity, in committed-page chronological order, with its complete localized lab
 Assistive activation opens that identity directly. The semantic target stays tied
 to the visible tile and its meaningful activation geometry. Boundary-touching
 targets remain direct for pointer and assistive input. Keep one bounded native event
-tree and the existing vertical scroll and pager owners.
+tree and the existing vertical and horizontal scroll owners
+([ADR 062](./062-calendar-windowed-native-scrollview-paging.md)).
 
 ## Consequences
 

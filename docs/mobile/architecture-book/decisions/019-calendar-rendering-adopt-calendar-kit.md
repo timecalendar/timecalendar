@@ -5,7 +5,8 @@
 Superseded for Calendar timeline rendering by
 [owned renderer D04](../../../projects/owned-calendar-renderer/decisions/D04-view-renderer-and-gestures.md)
 and [D07](../../../projects/owned-calendar-renderer/decisions/D07-clean-native-cutover.md).
-The E01 native ScrollView/PagerView implementation is on main; calendar-kit is absent.
+The owned native ScrollView renderer is on main
+([ADR 062](./062-calendar-windowed-native-scrollview-paging.md)); calendar-kit is absent.
 The rationale below is historical.
 
 ## Context

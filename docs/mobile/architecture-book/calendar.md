@@ -2,33 +2,36 @@
 
 ## Rendering
 
-The T06 day/week surface is a feature-owned React Native shell under
+The Day/Week surface is a feature-owned React Native shell under
 `features/calendar/renderer`. It fills the Calendar content owner and presents the
-native month/year title above a stable themed canvas, with no secondary date toolbar or arrow buttons. The
-shell keeps exactly the previous, current, and next pages mounted in the installed
-native `PagerView`. Day pages draw one dated column and advance by one display-zone civil date,
-including Saturday and Sunday when Show weekends is off. Week pages draw five or seven
-equal-width dated columns and advance by one complete Monday-first civil week over the complete
-00:00–24:00 major-hour and half-hour grid beside one horizontally pinned hour
-gutter. The gutter labels and pager share one full-day row inside a native vertical
-`ScrollView`, so UIKit and Android provide drag recognition, deceleration, bounce, and
-settlement while the screen-owned native heading stays outside the scroll content. A horizontal
-page or labelled screen-reader increment/decrement action requests one day or week according to
-the committed mode; one revisioned idle-settle path commits the date, native title,
-Agenda range, page generation, and accessibility announcement together.
+native month/year title above a stable themed canvas, with no secondary date toolbar or arrow
+buttons. One windowed native horizontal `ScrollView` owns paging
+([ADR 062](./decisions/062-calendar-windowed-native-scrollview-paging.md)). Day pages draw one
+dated column and advance by one display-zone civil date, including Saturday and Sunday when Show
+weekends is off. Week pages draw five or seven equal-width dated columns and advance by one
+complete Monday-first civil week over the complete 00:00–24:00 major-hour and half-hour grid
+beside one horizontally pinned hour gutter. The gutter labels, one shared hour-line layer behind
+the transparent pages, and the horizontal pager share one full-day row inside a native vertical
+`ScrollView`, so UIKit and Android provide drag recognition, deceleration, bounce, and settlement
+on both axes while the screen-owned native heading stays outside the scroll content. A horizontal
+fling or a labelled screen-reader increment/decrement action moves one day or week according to
+the committed mode; one settle commits the date, native title, accessibility context, and
+announcement together.
 
 The vertical ScrollView remains on the first native descendant chain and uses automatic
 content-inset adjustment, allowing iOS NativeTabs to account for the Liquid Glass tab bar.
 One complete timed-viewport width/height/inset measurement feeds a feature-private pure resize
 snapshot and monotonic geometry revision. Header lane, pager, canvas, and vertical bounds replace
 atomically. Replacement preserves selected date, explicit mode, scale, and the inset-aware clock
-coordinate at the usable center, clamping only at 00:00/24:00. It cancels old pager, header,
-queued scroll, native-owner, and pinch work before restoring without animation. Live raw offset
-and automatic top/bottom insets also feed the Reanimated zoom coordinator. A two-finger pinch updates one bounded 40–120
-pixels-per-hour scale and a focal-preserving raw offset on the UI thread; React receives only the
-settled scale/offset. After pinch takes ownership, callbacks from the interrupted scroll and pager
-epochs stay gated through settlement; each native owner reopens only when a new drag begins, so
-queued offset, selection, and idle events cannot replace the focal result or dated header.
+coordinate at the usable center, clamping only at 00:00/24:00. It cancels queued vertical scroll
+and pinch work before restoring without animation; the pager re-places the committed page at
+`index × newPageWidth` without animation once its new content width has laid out. Live raw offset
+and automatic top/bottom insets also feed the Reanimated zoom coordinator. A two-finger pinch
+updates one bounded 40–120 pixels-per-hour scale and a focal-preserving raw offset on the UI
+thread; React receives only the settled scale/offset. A second finger locks both scroll views
+on the UI thread. Vertical callbacks stay gated through settlement, so queued offset events
+cannot replace the focal result; when the lock lifts, the pager snaps to the nearest page or
+settles where it rests.
 Settled offset and zoom props acknowledge the live renderer state without issuing another
 scroll command. React Native's iOS `scrollTo` bounds exclude UIKit's automatically adjusted
 tab-bar inset, so replaying a native settlement would hide the final hours behind the glass bar.
@@ -38,20 +41,18 @@ pinch baseline.
 Calendar tab reselect-to-top is disabled. The ScrollView
 exposes the committed localized day or week date context as an adjustable accessibility label
 with mode-specific translated previous/next actions.
-One clipped three-slot weekday/date strip remains pinned above vertical motion beneath the native
-month title. Its fixed spacer matches the hour gutter, and its previous/current/next slots reuse the
-same ordered column records as the three clock pages. Each visual cell uses the locale's narrow
-one-letter weekday glyph above a larger date number; its accessible label retains the localized short
-weekday and date so repeated letters remain unambiguous. Ordinary dates use secondary gray text in
-dark appearance. A feature-private page-scroll hook wraps the
-installed pager with Reanimated `createAnimatedComponent` and attaches its callable `useHandler` /
-`useEvent` seam. Native `position` and `offset` write shared values whose `useAnimatedStyle`
-projection drives the strip across the measured content lane on the UI thread, so there is no
-React Native `Animated`, per-frame React state, second pager, responder, timer, or animation owner.
-Only the centered committed slot is accessible; moving
-neighbours stay hidden until accepted idle settlement rebuilds the centered generation. Snap-back,
-AppState inactivity, generation replacement, and preference or geometry-revision replacement recenter
-both surfaces without committing a destination. Monday is an explicit launch input; the pure
+One clipped weekday/date strip remains pinned above vertical motion beneath the native month
+title. Its fixed spacer matches the hour gutter, and it holds one header slot per mounted page,
+keyed and positioned like that page and built from the same frozen page presentation. Each visual
+cell uses the locale's narrow one-letter weekday glyph above a larger date number; its accessible
+label retains the localized short weekday and date so repeated letters remain unambiguous.
+Ordinary dates use secondary gray text in dark appearance. The pager's scroll handler writes the
+native horizontal offset to a shared value whose `useAnimatedStyle` projection
+(`translateX = −scrollX`) moves the strip with the pages on the UI thread, so there is no React
+Native `Animated`, per-frame React state, second pager, responder, timer, or animation owner.
+Only the committed slot is accessible; neighbour slots stay hidden until their page settles.
+Snap-back, a weekend-preference change, and a geometry change leave the committed date in place
+and commit nothing. Monday is an explicit launch input; the pure
 display-zone transition model advances Day by one civil date and Week by one Monday-first civil
 week. Week presentation removes Saturday/Sunday by weekday identity when the persisted Show
 weekends preference is off, while Day still advances through them. Agenda retains its seven-day
@@ -78,29 +79,43 @@ for Home and other consumers. Neither clock ticks nor midnight rollover announce
 idle animation.
 
 The renderer keeps a bounded composition boundary in `owned-calendar-shell`, one
-`owned-calendar-coordinator` hook for pager/scroll refs and cancellation/settlement lifecycle, one
-`owned-calendar-zoom` hook for live scale/offset/inset geometry, and passive
-`owned-calendar-header` plus `owned-calendar-canvas` presentation units. The clock grid
-remains inside the canvas unit. These feature-private views receive complete page models and
-handlers; they do not import screen orchestration, storage, navigation, or event data. Ordinary
-models and closures rely on the enabled React Compiler rather than manual memoization.
+`owned-calendar-coordinator` hook for the vertical owner, pinch and their settlement lifecycle,
+one `owned-calendar-pager` hook for the horizontal owner, one `owned-calendar-zoom` hook for live
+scale/offset/inset geometry, `owned-calendar-focus` for accessibility focus memory, and passive
+`owned-calendar-header`, `owned-calendar-canvas`, `owned-calendar-page` and
+`owned-calendar-chooser` presentation units. The clock grid remains inside the canvas unit. These
+feature-private views receive frozen page presentations and handlers; they do not import screen
+orchestration, storage, navigation, or event data. Ordinary models and closures rely on the
+enabled React Compiler rather than manual memoization.
 
-Pager selection is recorded independently from pager state and commits only when the native
-pager reports idle at an edge. The accepted generation remounts the same three direct,
-non-collapsible children around the new anchor, centered again at page 1. Development builds
-give each day or week page a stable date label and contrasting tint so movement and the
-edge-to-center handoff remain inspectable; production omits those diagnostics. AppState inactivity
-cancels pending work and recenters on the committed timeline anchor. The grid uses filled physical-hairline
-views in static scroll content, with one extra hairline of render height so the exact 24:00
-closing boundary is not clipped.
+A page is an absolute index: the civil `EpochDay` in Day mode and the week ordinal aligned to the
+first weekday in Week mode (`data/page-index.ts`). Pages are keyed by their content address
+`mode:epochDay` and absolutely positioned at `index × pageWidth`, with a pixel-aligned
+`pageWidth` equal to the horizontal view's own width. The content spans `baseIndex ± 260` pages
+(`data/page-window.ts`). A settle within 30 pages of either edge re-bases the window with a
+non-animated `scrollTo` that keeps the absolute position, so far dates stay navigable with no
+visible limit. Only the centre page ± 2 are mounted. The pager's scroll handler worklet derives
+the rounded and settled page from the native offset and calls React only when the rounded page
+crosses a boundary (the mounted window shifts) and when a page settles: page-aligned, with no
+finger down and no momentum. iOS uses `pagingEnabled`; Android uses `snapToInterval` with
+`disableIntervalMomentum`. One fling lands one page, and a touch mid-deceleration takes the
+scroll over natively. Scroll events whose layout or content width differs from the last placement
+are ignored, which filters stale geometry and the previous mode's content. A page that stays in
+the window never remounts, so a crossing renders only the page that enters it; the shell
+presents the next pages to enter one frame after each crossing. Day/Week switches remount the
+horizontal view (`key=mode`). The controller stores only the committed date: the shell reports
+`onDateCommitted` once per settle, and Today, `focusDate` and mode switches move the pager to the
+matching index without animation. Going to the background keeps the committed date and the
+horizontal offset. The grid uses filled physical-hairline views in static scroll content, with one
+extra hairline of render height so the exact 24:00 closing boundary is not clipped.
 
 `CalendarScreen` passes `useCalendars()[0].uses24hourClock` into pure gutter formatting.
 `true` produces 24-hour labels, `false` produces 12-hour day periods, and `null` retains
 the deterministic 24-hour convention. Full-day geometry still begins at midnight, but the clipped
 00:00 text is omitted; compact secondary labels run from 01:00 through 23:00. The controller retains only settled, clamped clock
-offsets, so accepted day/week revisions and Day/Week/Agenda switches preserve the visible time
+offsets, so settled day/week pages and Day/Week/Agenda switches preserve the visible time
 without reporting frame-frequency values to React. Gutter labels, minor and major lines, the
-24:00 closing boundary, columns, all three pages and scroll extent derive from the same scale.
+24:00 closing boundary, columns, every mounted page and scroll extent derive from the same scale.
 Vertical column separators and major horizontal hour lines share the separator token; half-hour
 lines use the same token at reduced opacity.
 Day and Week share the validated environment-independent zoom preference; Agenda neither changes
@@ -121,8 +136,9 @@ exact minute-derived height. The one event button uses separate geometry clamped
 and reaches 44pt on iOS or 48dp on Android without stretching either visual. Constrained tiles keep the
 title first and omit lower-priority location/checklist lines unless their complete line fits. The single
 committed-page button still announces the full localized title, time, optional location and checklist
-meaning and routes by original UID; neighbour visuals and child text add no semantic nodes. Native
-ScrollView, PagerView and pinch owners continue to cancel a pending press when movement takes ownership.
+meaning and routes by original UID; neighbour visuals and child text add no semantic nodes. The
+native vertical and horizontal ScrollViews and the pinch cancel a pending press when movement takes
+ownership.
 If actual platform-minimum target rectangles intersect with positive area, every tile remains visible.
 One localized, non-semantic chooser overlay covers the union for pointer taps; its accessible modal
 lists each complete event label exactly once in stable start/end/identity order and routes only the
@@ -139,14 +155,13 @@ supported high-text-contrast signal strengthens the wash/outline; unsupported pl
 use the normal policy. Host tests prove values, geometry, semantics and routing. Physical target feel,
 increased-contrast rendering, VoiceOver and TalkBack remain T28 device evidence.
 Shared time-grid helpers still default to 07:00–21:00; only the owned shell opts into
-explicit full-day bounds. Paging remains bounded to one adjacent day or week according to
-the committed mode; there is no far-date pager.
+explicit full-day bounds. One fling or accessibility action moves one adjacent day or week
+according to the committed mode; there is no multi-page fling or date-picker pager.
 
 The app owns pure calendar primitives for grouping, time-grid math, overlap layout,
 day keys, and formatting. Home and Agenda use the applicable primitives without
 depending on the timeline renderer. The shell consumes a committed timeline mode, civil anchor,
-and display zone for its three page identities; retained time-grid and overlap primitives do
-not imply that the shell renders a grid or events.
+display zone, and a page presenter, and derives every page identity from them.
 
 Every displayed timed-event value and day boundary is computed in the effective display
 zone ([ADR 035](./decisions/035-display-timezone-preference.md)). Consumers obtain the
@@ -154,8 +169,9 @@ zone from `useDisplayZone()` and pass it explicitly to formatters, day-key and b
 helpers, and time-grid math; helpers never read the zone implicitly. `CalendarScreen`
 uses the same explicit zone for its selected-date heading and Agenda range. Launch weeks
 start on Monday through an explicit first-weekday input, and whole-week shifts compose
-civil day-key helpers rather than fixed-duration milliseconds. The three-page planner publishes
-one instant envelope and one floating civil-date envelope for the complete retained range.
+civil day-key helpers rather than fixed-duration milliseconds. Page indexes are pure integer
+`EpochDay` arithmetic with no timezone formatting; a page's dates become instants only through
+the display zone.
 Deriving a displayed time or day from device-local `Date` fields
 or `toLocaleString` is a defect. All-day events are
 the exception: they stay on the floating UTC-day-key path and never shift with the
@@ -166,9 +182,10 @@ heading in the effective display zone. Day→Week selects the containing Monday-
 Week→Day selects its first date. The validated Day/Week/Agenda choice persists per installation,
 survives backend reset, and defaults to Week when missing or corrupt; selected date and clock
 offset remain fresh-process state. A valid one-shot `focusDate` and the retained Today action
-normalize to the target day or containing launch week and replace pending motion. Swipe and accessibility-action
-requests carry monotonic revisions; duplicate, cancelled, and stale completions cannot
-relabel the settled screen. Agenda reads the unchanged bounded seven-day event range and
+normalize to the target day or containing launch week and move the pager to that page. A
+settle reports a page only once, and a stale or replaced scroll event cannot relabel the
+settled screen. Agenda reads its own bounded seven-day event range, mounted only while
+Agenda is shown, and
 keeps checklist progress, refresh/retry, synced and personal event activation, and unified
 event-details navigation. Agenda retains the settled timeline anchor without claiming active-section
 transfer before T18. Complete Today/direct-date intent remains T17.
@@ -189,36 +206,33 @@ worklet calls must itself be a worklet.
 
 `CalendarEvent` is a schema-versioned tagged UI domain: `TimedCalendarEventV1` carries validated
 instant bounds, while `DateOnlyCalendarEventV1` carries exclusive floating civil-day bounds without
-rewriting stored or wire facts. The single event-source seam:
+rewriting stored or wire facts. The Calendar timeline reads through one screen-level
+`CalendarWindowStore` (`data/calendar-window-store.ts`, bound by `useCalendarWindow`):
 
-1. plans exactly the previous/current/next page range and performs half-open, range-scoped live
-   reads for synced timed/date-only rows and personal timed rows;
-2. totally validates rows, isolates malformed siblings, and reports only static rejection reasons
-   plus aggregate counts once per completed snapshot revision;
-3. removes cancelled events, invisible/deleted sources, and hidden UID/name matches before any
-   visual, semantic, checklist, Home, or Agenda projection;
-4. publishes recursively immutable V1 pages whose sorted timed tiles retain original synced or
-   personal UID, minute geometry, safe color, title/location, and checklist summary.
+1. it keeps the 28-day chunks, aligned to the first weekday, that hold the mounted pages plus one
+   chunk either side, and reads missing chunks in one batched, half-open, range-scoped read of
+   synced and personal timed rows ([storage.md](./storage.md));
+2. it totally validates rows, isolates malformed siblings, and reports only static rejection
+   reasons plus aggregate counts once per read revision;
+3. each page selects its rows from its chunk and removes cancelled events, invisible/deleted
+   sources, and hidden UID/name matches before any visual, semantic, or checklist projection;
+4. `presentPage` (`data/page-presenter.ts`) returns one recursively immutable `PagePresentationV1`
+   per page: sorted, placed timed tiles that retain original synced or personal UID, minute
+   geometry, safe color, title/location, checklist summary, time and accessibility labels, the
+   chronological accessibility order, and the date-header label parts.
 
 Do not duplicate these filters in screens. Synced rows remain verbatim cache data;
-formatting and all-day conversion are rendering projections.
+formatting and all-day conversion are rendering projections. Agenda and Home keep their own
+range live queries through `useCalendarEvents`, which applies the same filters.
 
-Page dates and generation always match the committed anchor, including while a local read is
-pending or fails. The presentation hook retains the last complete event snapshot and projects
-it onto the current three-page range. An already-loaded adjacent week therefore keeps its events
-when it becomes the centre page. Dates outside the retained snapshot have empty tiles until the
-replacement read completes; event completion does not reorder the native pager's pages.
-
-The hook builds the presentation once: checklist progress is read for `timelineRangeUids`, the
-UIDs that become tiles on the range's pages, derived without placing or styling them.
-`buildPagePresentation` is the per-page form for the windowed pager. For one page key it builds
-a frozen `PagePresentationV1` in one pass: placed tiles with time and accessibility labels and
-their chronological accessibility order, plus date-header label parts. It reuses the
-three-page builder's tile and overlap code, `format.ts` and `projectCalendarAccessibilityEntries`,
-so its output equals what the owned shell renders today. A `loading` or `error` page has headers
-and no tiles. Entries live in a 16-page LRU keyed by `pagePresentationCacheKey` (page key, status,
-row and filter revisions, every label input); formatter results are memoized per locale and zone.
-The zoom-dependent conflict plan is not part of it. No screen reads it yet.
+Every page has an explicit status: a chunk never read is `loading`, a failed read is `error`,
+and only a completed read is `ready`. A `loading` or `error` page draws its date headers and the
+shared grid with no tiles; a loading page is marked busy and never presented or announced as an
+empty day. A re-read keeps the previous rows until it lands, and pages are content-addressed, so
+a late result can fill only its own page. Presentations live in a 16-page LRU keyed by
+`pagePresentationCacheKey` (page key, status, row and filter revisions, every label input), so a
+page that re-enters the window is not rebuilt; formatter results are memoized per locale and
+zone. The zoom-dependent conflict plan stays in the page component.
 
 ## Sync and offline behavior
 
@@ -234,9 +248,9 @@ revoke readiness. A fetch failure keeps the last good local rows and produces a 
 state. A local transaction failure is unexpected and is recorded through `@/firebase` (ADR
 [059](./decisions/059-calendar-import-finalization.md)).
 
-SQLite live reads are coalesced per macrotask. Calendar timeline reads use SQL half-open
-intersection predicates over the retained three-page instant/civil envelopes with no row limit;
-page navigation changes only these local subscriptions and never starts sync or network work. Repositories must
+SQLite live reads are coalesced per macrotask. Calendar timeline chunk reads use SQL half-open
+intersection predicates with no row limit; page navigation reads only local chunks and never
+starts sync or network work. Repositories must
 use synchronous Drizzle transaction callbacks with `.run()` executors because the Expo
 SQLite synchronous driver does not await async callbacks.
 
@@ -310,9 +324,9 @@ separate. The binding contract and regression scenarios live in the
 ## Surfaces
 
 - Calendar offers the owned Day/Week shell and Agenda, with platform-specific native chrome.
-  Day and Week share one full-day native vertical scroll surface, a horizontally pinned gutter, native
-  pager arbitration, a three-page working set, reduced-motion settlement, hidden neighbour/grid
-  semantics, accessible previous/next alternatives, and one pinned localized five/seven-date
+  Day and Week share one full-day native vertical scroll surface, a horizontally pinned gutter, one
+  windowed native horizontal pager with about five mounted pages, reduced-motion settlement, hidden
+  neighbour/grid semantics, accessible previous/next alternatives, and one pinned localized five/seven-date
   header aligned with every clock page. Day has one column; Week has five or seven, and both use
   bounded shared zoom with accessible native menu commands. A fresh mount opens around the current
   display-zone minute and shows the shaped column rule; the committed rule carries current-time
@@ -347,10 +361,12 @@ separate. The binding contract and regression scenarios live in the
 ## Verification
 
 Unit/component tests cover display-zone day/week civil arithmetic, mode persistence and corrupt
-recovery, revision/cancellation semantics, one/five/seven-column geometry, three-page native pager
-and control behavior, native scroll settlement/restoration, atomic settled screen context,
+recovery, page index/window/re-base arithmetic, UI-thread settlement and stale-event filtering,
+one/five/seven-column geometry, page identity that survives crossings, several swipes before React
+commits, native scroll settlement/restoration, atomic settled screen context,
 Calendar remount and selection, Agenda grouping/routing, filtering, sync orchestration, failure
-states, bounded query predicates, total row validation, malformed-sibling isolation, immutable page
+states, bounded query predicates, chunk sequencing and out-of-order completion, page status,
+presentation-cache bounds, total row validation, malformed-sibling isolation, immutable page
 models, original-UID activation, the lifecycle-scoped minute clock, fresh-open full-day clamps,
 indicator visibility, identity-stable overlap permutations, complete transitive clusters, equal fractional
 columns, geometry-derived conflict components, chooser cancellation/routing, and the repository cutover contract. `calendar-owned-shell.contract.test.ts` pins the clock as the calendar's

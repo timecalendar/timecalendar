@@ -1,7 +1,7 @@
 # mobile-event-checklists Specification
 
 ## Purpose
-TBD - created by archiving change add-mobile-event-checklists. Update Purpose after archive.
+Per-event checklists stored locally, edited from event details, and summarized as completed/total progress on Home, Agenda and Calendar tiles.
 
 ## Requirements
 
@@ -313,7 +313,7 @@ The visual indicator SHALL not duplicate announcements. Each owning event summar
 
 ### Requirement: T09 timed tiles show summary checklist progress once
 
-The Calendar timeline SHALL request checklist progress only for the original UIDs present in the complete filtered three-page presentation, using one normalized scoped live read. A supported tile with non-zero progress SHALL show the existing explicit completed/total visual. Its composed event accessibility label SHALL include the localized checklist phrase exactly once; the visual progress primitive SHALL remain excluded from the accessibility tree. Filtered, unsupported, stale-generation, and zero-item events SHALL contribute no progress node.
+The Calendar timeline SHALL read checklist progress only for the original UIDs of the timed events in its resident chunks, using one normalized scoped read per batched chunk read and re-reading after checklist changes. A supported tile with non-zero progress SHALL show the existing explicit completed/total visual. Its composed event accessibility label SHALL include the localized checklist phrase exactly once; the visual progress primitive SHALL remain excluded from the accessibility tree. Filtered, unsupported, stale-read, and zero-item events SHALL contribute no progress node.
 
 #### Scenario: Populated tile shows current progress
 
@@ -329,6 +329,6 @@ The Calendar timeline SHALL request checklist progress only for the original UID
 
 #### Scenario: Progress query follows complete filtered identity set
 
-- **WHEN** a hidden, cancelled, invisible-source, unsupported, or stale-generation event leaves the presentation
-- **THEN** its UID is absent from the normalized progress query set and the next tile model
+- **WHEN** a hidden, cancelled, invisible-source, or unsupported event is filtered out of a page
+- **THEN** no tile or progress node is produced for it
 - **AND** an event with zero checklist rows renders no progress indicator

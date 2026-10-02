@@ -5,6 +5,11 @@ status: approved
 
 # Target technical design
 
+> **Superseded in part.** Horizontal paging, the three-page working set, page generations and the
+> per-range data hook are superseded by the
+> [calendar-native-paging design](../calendar-native-paging/design.md) and
+> [ADR 062](../../mobile/architecture-book/decisions/062-calendar-windowed-native-scrollview-paging.md).
+
 ## Approval and evidence boundary
 
 Product P01–P08 and D01–D08 are approved on 2026-09-12. The owner approved all decisions,

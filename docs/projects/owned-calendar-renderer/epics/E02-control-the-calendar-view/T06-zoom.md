@@ -11,6 +11,10 @@ confidence: medium
 
 # T06 — Zoom the grid with pinch and accessible controls
 
+> **Superseded note.** This ticket's pager, three-page and generation requirements are
+> superseded by [calendar-native-paging D01 and D02](../../../calendar-native-paging/design.md)
+> and [ADR 062](../../../../mobile/architecture-book/decisions/062-calendar-windowed-native-scrollview-paging.md).
+
 ## Outcome
 
 Pinch and menu zoom change hour spacing without moving the clock time under the chosen focus point.
