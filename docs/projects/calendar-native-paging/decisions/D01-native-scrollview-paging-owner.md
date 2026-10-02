@@ -67,4 +67,17 @@ if the spike prefers its feel (see D03).
 
 ## Approval
 
-Owner (Samuel Prak) approved explicitly in the Claude Code planning session, 2026-10-01 (round-1 answers).
+Owner approved explicitly in the Claude Code planning session, 2026-10-01 (round-1 answers).
+
+On 2026-10-02 around 16:17 UTC, after the Android rate-0.5 trial still missed rapid
+chain landings, the owner authorized a **bounded native paging prototype** for the
+Calendar pager in the Android perf app. The prototype may instrument and test
+React Native 0.85.3 horizontal ScrollView snap policy. It does not authorize a
+different pager architecture, native module, production dependency patch or
+release acceptance. Any candidate must keep visual offset continuous, at most
+one unresolved page, immediate reversal, native gesture arbitration and
+one-page-per-fling behavior, then pass the exact-device P01 gates.
+
+The [bounded Android prototype evidence](../evidence/E07-P01-Android-native-prototype.md)
+records a failed first-run 20-swipe chain. Its patch remains confined to
+experimental perf-app branches; D01's production ScrollView owner is unchanged.

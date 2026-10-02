@@ -1,6 +1,6 @@
 # E07 P01 Android rapid-snap diagnosis
 
-Status: **P01 fails on the OnePlus 6; no renderer or native repair is approved or shipped.** The measured JavaScript revisions include the merged Week/Day placement fix from `5201ef6d3ebacdbabf61207120cb0e2eb570e818`. The source restored for review is that clean main revision. Temporary probes are retained only on `calendar-paging-p01-diagnostics` and are absent from the release candidate.
+Status: **P01 fails on the OnePlus 6.** This file records the earlier 0.9/0.95 diagnosis and its proposal. The owner subsequently authorized a bounded perf-only native prototype; its measured failure and current scope are in [E07 P01 Android native prototype](E07-P01-Android-native-prototype.md). No native repair is accepted for production or release. The measured JavaScript revisions here include the merged Week/Day placement fix from `5201ef6d3ebacdbabf61207120cb0e2eb570e818`. Temporary probes remain on `calendar-paging-p01-diagnostics` and are absent from the release candidate.
 
 ## Exact diagnostic identities
 
