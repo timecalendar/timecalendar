@@ -69,3 +69,10 @@ acceptable during the rebuild (owner, 2026-10-01). Device evidence gates release
 ## Approval
 
 Owner (Samuel Prak) approved explicitly in the Claude Code planning session, 2026-10-01 (round-1 answers). Revised on approval: the merge gate became a release gate (answer 11).
+
+The owner authorized a bounded **perf-app-only** Android React Native ScrollView
+native paging prototype on 2026-10-02 around 16:17 UTC after the rate-0.5 prop
+trial failed. This is an investigation exception to the straight-cutover/no-native-code
+delivery choice above; it does not place a native patch in the production app. A
+prototype may merge with honest evidence, but preview, store, and OTA publication
+remain blocked until exact-revision device evidence and an owner release verdict.

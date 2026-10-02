@@ -1,0 +1,121 @@
+--- a/ReactAndroid/src/main/java/com/facebook/react/views/scroll/ReactHorizontalScrollView.java
++++ b/ReactAndroid/src/main/java/com/facebook/react/views/scroll/ReactHorizontalScrollView.java
+@@ -23,6 +23,7 @@
+ import android.graphics.drawable.ColorDrawable;
+ import android.graphics.drawable.Drawable;
+ import android.os.Build;
++import android.util.Log;
+ import android.view.FocusFinder;
+ import android.view.KeyEvent;
+ import android.view.MotionEvent;
+@@ -88,6 +89,7 @@
+   private static final String TAG = ReactHorizontalScrollView.class.getSimpleName();
+ 
+   private static final int NO_SCROLL_POSITION = Integer.MIN_VALUE;
++  private static final String CALENDAR_PAGING_TRACE = "CALENDAR_NATIVE_PAGING";
+ 
+   private static @Nullable Field sScrollerField;
+   private static boolean sTriedToGetScrollerField = false;
+@@ -137,6 +139,13 @@
+   private int mFadingEdgeLengthEnd = 0;
+   private boolean mEmittedOverScrollSinceScrollBegin = false;
+   private boolean mScrollsChildToFocus = true;
++  private int mCalendarTraceTarget = NO_SCROLL_POSITION;
++  private int mCalendarTraceReleaseVelocity;
++
++  private boolean isCalendarPerfPager() {
++    return "fr.samuelprak.timecalendar.perf".equals(getContext().getPackageName())
++        && "owned-calendar-pager".equals(getTag(R.id.react_test_id));
++  }
+ 
+   public ReactHorizontalScrollView(Context context) {
+     this(context, null);
+@@ -832,6 +841,12 @@
+ 
+       float velocityX = mVelocityHelper.getXVelocity();
+       float velocityY = mVelocityHelper.getYVelocity();
++      if (isCalendarPerfPager()) {
++        mCalendarTraceReleaseVelocity = Math.round(velocityX);
++        Log.i(
++            CALENDAR_PAGING_TRACE,
++            "release offset=" + getScrollX() + " velocity=" + mCalendarTraceReleaseVelocity);
++      }
+       ReactScrollViewHelper.emitScrollEndDragEvent(this, velocityX, velocityY);
+       if (!ReactNativeFeatureFlags.shouldTriggerResponderTransferOnScrollAndroid()) {
+         NativeGestureUtil.notifyNativeGestureEnded(this, ev);
+@@ -843,6 +858,20 @@
+     }
+ 
+     if (action == MotionEvent.ACTION_DOWN) {
++      if (isCalendarPerfPager()) {
++        Log.i(
++            CALENDAR_PAGING_TRACE,
++            "down offset="
++                + getScrollX()
++                + " pendingTarget="
++                + mCalendarTraceTarget
++                + " scrollerCurrent="
++                + (mScroller == null ? "none" : mScroller.getCurrX())
++                + " scrollerFinal="
++                + (mScroller == null ? "none" : mScroller.getFinalX())
++                + " scrollerFinished="
++                + (mScroller == null ? "none" : mScroller.isFinished()));
++      }
+       cancelPostTouchScrolling();
+     }
+ 
+@@ -1213,6 +1242,20 @@
+               mStableFrames++;
+ 
+               if (mStableFrames >= 3) {
++                if (isCalendarPerfPager()) {
++                  Log.i(
++                      CALENDAR_PAGING_TRACE,
++                      "end offset="
++                          + getScrollX()
++                          + " pendingTarget="
++                          + mCalendarTraceTarget
++                          + " targetReached="
++                          + (mCalendarTraceTarget != NO_SCROLL_POSITION
++                              && Math.abs(getScrollX() - mCalendarTraceTarget) <= 1)
++                          + " scrollerFinished="
++                          + (mScroller == null ? "none" : mScroller.isFinished()));
++                  mCalendarTraceTarget = NO_SCROLL_POSITION;
++                }
+                 mPostTouchRunnable = null;
+                 if (mSendMomentumEvents) {
+                   ReactScrollViewHelper.emitScrollMomentumEndEvent(ReactHorizontalScrollView.this);
+@@ -1327,6 +1370,8 @@
+     if (getChildCount() <= 0) {
+       return;
+     }
++
++    int inputVelocityX = velocityX;
+ 
+     // pagingEnabled only allows snapping one interval at a time
+     if (mSnapInterval == 0 && mSnapOffsets == null && mSnapToAlignment == SNAP_ALIGNMENT_DISABLED) {
+@@ -1483,6 +1528,24 @@
+       velocityX = -velocityX;
+     }
+ 
++    if (isCalendarPerfPager()) {
++      mCalendarTraceTarget = targetOffset;
++      Log.i(
++          CALENDAR_PAGING_TRACE,
++          "snap start="
++              + getScrollX()
++              + " target="
++              + targetOffset
++              + " inputVelocity="
++              + inputVelocityX
++              + " appliedVelocity="
++              + velocityX
++              + " releaseVelocity="
++              + mCalendarTraceReleaseVelocity
++              + " interval="
++              + getSnapInterval());
++    }
++
+     if (hasCustomizedFlingAnimator || mScroller == null) {
+       reactSmoothScrollTo(targetOffset, getScrollY());
+     } else {
