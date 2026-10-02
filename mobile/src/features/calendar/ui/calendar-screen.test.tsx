@@ -1157,13 +1157,7 @@ describe("CalendarScreen owned shell", () => {
     expectTodayCommitted()
   })
 
-  // Skipped: the pager keeps its momentum flag through a programmatic placement,
-  // so if the native view stops the fling for `scrollTo` without sending a
-  // momentum end, Today's page never settles: the previous week stays the
-  // committed (accessible, live-tile) page until the next touch. Whether iOS
-  // and Android send that event is unverified; see
-  // docs/react-native-migration/inbox/2026-10-02-calendar-paging-t09-placement-during-momentum.md.
-  it.skip("lets Today supersede a fling stopped by the placement without a momentum end", async () => {
+  it("lets Today supersede a fling stopped by the placement without a momentum end", async () => {
     const pager = await pressTodayDuringFling()
 
     await pager.send(pager.position.current)

@@ -162,6 +162,7 @@ describe("owned Calendar paging repository contract", () => {
       "owned-calendar-geometry.ts",
       "owned-calendar-header.tsx",
       "owned-calendar-page.tsx",
+      "owned-calendar-pager-rest.test.tsx",
       "owned-calendar-pager.test.tsx",
       "owned-calendar-pager.ts",
       "owned-calendar-paging-log.ts",
@@ -238,7 +239,7 @@ describe("owned Calendar paging repository contract", () => {
     )
     expect(
       new Set([...pager.matchAll(/scheduleOnRN\((\w+)/g)].map(([, f]) => f)),
-    ).toEqual(new Set(["onCross", "onSettle"]))
+    ).toEqual(new Set(["onCross", "onSettle", "pagingLog"]))
     expect(
       new Set([...pager.matchAll(/scheduleOnUI\(\s*(\w+)/g)].map(([, f]) => f)),
     ).toEqual(new Set(["place"]))
@@ -422,8 +423,15 @@ describe("owned Calendar paging repository contract", () => {
     for (const file of productionFiles) {
       const source = readFileSync(file, "utf8")
       expect(source).not.toContain("withRepeat")
-      expect(source).not.toMatch(
-        /requestAnimationFrame\(\s*([A-Za-z_$][\w$]*)\s*\)/,
+      const frameCallbacks = [
+        ...source.matchAll(
+          /requestAnimationFrame\(\s*([A-Za-z_$][\w$]*)\s*\)/g,
+        ),
+      ].map(([, callback]) => callback)
+      expect(frameCallbacks).toEqual(
+        file.endsWith("owned-calendar-pager.ts")
+          ? ["checkRest", "checkRest"]
+          : [],
       )
       expect(source).not.toMatch(/withTiming\([^)]*\)[\s\S]{0,120}withTiming\(/)
     }
