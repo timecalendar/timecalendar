@@ -258,4 +258,30 @@ describe("owned Calendar windowed pager", () => {
     scrollTo.mockRestore()
     os.restore()
   })
+
+  it("leaves an Android reversal during a snap to the native snap", async () => {
+    const os = jest.replaceProperty(Platform, "OS", "android")
+    const scrollTo = jest.spyOn(Reanimated, "scrollTo")
+    const { pager } = await renderShell()
+    await act(async () => {
+      pager.send(0, "onScrollBeginDrag")
+      pager.send(0.6)
+      pager.send(0.6, "onScrollEndDrag")
+      pager.send(0.7)
+    })
+    scrollTo.mockClear()
+
+    await act(async () => {
+      pager.send(0.7, "onScrollBeginDrag")
+      pager.send(0.5)
+      pager.send(0.3, "onScrollEndDrag")
+    })
+    await flushUiThread()
+
+    expect(scrollTo.mock.calls.map((call) => call.slice(1))).toEqual([
+      [pager.origin + 0.7 * pager.pageWidth, 0, false],
+    ])
+    scrollTo.mockRestore()
+    os.restore()
+  })
 })

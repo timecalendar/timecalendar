@@ -34,7 +34,7 @@ import { pagingLog } from "./owned-calendar-paging-log"
 const PIXEL_RATIO = PixelRatio.get()
 const ALIGNMENT_TOLERANCE = 1 / PIXEL_RATIO
 const CONTENT_SLOTS = 2 * PAGE_WINDOW_RADIUS + 1
-/** A chained swipe shorter than this share of a page finishes the interrupted page. */
+/** A chained swipe shorter than this share of a page is left to the native snap. */
 const CHAINED_SWIPE_INTENT = 0.05
 
 /** The horizontal pager's page width: the viewport beside the hour gutter, on device pixels. */
@@ -115,10 +115,12 @@ export function useOwnedCalendarPager({
   const travel = useSharedValue(0)
   const dragStartX = useSharedValue(0)
   const chainedFromSlot = useSharedValue(Number.NaN)
+  const chainedTravel = useSharedValue(0)
   const aimedSlot = useSharedValue(Number.NaN)
   // Android snaps a lifted drag to the next page boundary from the lift
-  // position. A swipe that starts while the previous snap is still running
-  // would then only finish that page, so it is re-aimed one page further.
+  // position. A swipe that starts while the previous snap is still running in
+  // the same direction would then only finish that page, so it is re-aimed one
+  // page further. A reversal already lands right from where the finger lifts.
   const aimsChainedSwipes = Platform.OS === "android"
   const appliedPlacement = useRef(0)
   const placedFor = useRef<string | null>(null)
@@ -216,6 +218,7 @@ export function useOwnedCalendarPager({
         Math.abs(x - Math.round(slot) * width) <= ALIGNMENT_TOLERANCE
       )
         return
+      chainedTravel.set(travel.get() < 0 ? -1 : 1)
       chainedFromSlot.set(travel.get() < 0 ? Math.floor(slot) : Math.ceil(slot))
       // The scroll command aborts the running snap, so the finger owns the offset.
       scrollTo(scrollRef, x, 0, false)
@@ -229,16 +232,17 @@ export function useOwnedCalendarPager({
         chainedFromSlot.set(Number.NaN)
         const width = placedWidth.get()
         const displacement = x - dragStartX.get()
-        const direction =
-          Math.abs(displacement) < CHAINED_SWIPE_INTENT * width
-            ? 0
-            : Math.sign(displacement)
-        aimedSlot.set(fromSlot + direction)
-        const target = (fromSlot + direction) * width
-        // The native snap starts after this event; the next frame replaces it.
-        requestAnimationFrame(() => {
-          scrollTo(scrollRef, target, 0, true)
-        })
+        if (
+          Math.abs(displacement) >= CHAINED_SWIPE_INTENT * width &&
+          Math.sign(displacement) === chainedTravel.get()
+        ) {
+          const target = fromSlot + chainedTravel.get()
+          aimedSlot.set(target)
+          // The native snap starts after this event; the next frame replaces it.
+          requestAnimationFrame(() => {
+            scrollTo(scrollRef, target * width, 0, true)
+          })
+        }
       }
       settleIfAligned(x)
     },
