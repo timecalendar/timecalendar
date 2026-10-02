@@ -65,6 +65,10 @@ node perf/run.mjs --serial 86fa07cc --apk /tmp/timecalendar-perf-<sha>.apk \
   before and after each scenario, to check where a swipe chain landed.
 - `--logcat <regex>` clears logcat before each scenario and saves the matching `ReactNativeJS`
   lines to `raw/<scenario>-logcat.txt`.
+- In development and perf builds the Calendar logs `CALENDAR_PAGING` lines (`--logcat
+  CALENDAR_PAGING`): `commit center=<page> ms=<crossing to React commit>
+  pageRenders=<pages rendered> slotRenders=<header slots rendered> presentMs=<presentation lookups>`
+  per page crossing, `mount page=<key> total=<count>` per page mount, and `settle page=<page>`.
 - `--scenarios a,b` runs a subset; `--trace` records a Perfetto trace per scenario with
   `perfetto.pbtx` into `raw/<scenario>.pftrace` (open it in ui.perfetto.dev).
 
@@ -126,3 +130,6 @@ and package paths that the disclosure scan rejects.
   spike (`/dev-paging-spike`, fixture weeks) with Android `snapToInterval`, with `pagingEnabled`,
   and with ±8 pages of content so swipe chains re-base. Read with
   `docs/perf/E02-spike-evidence.md`.
+- `t08-2cc9ff0b`: the production Calendar on the windowed native ScrollView (E04 T08), same
+  device and dev calendar, week mode, `--logcat CALENDAR_PAGING`. The pinch ran first, on the
+  `focusDate` week with its events.

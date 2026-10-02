@@ -96,6 +96,9 @@ export function CalendarScreen() {
     showWeekends,
   })
   const selectedIndex = pageIndexOfInstant(space, selectedDate, displayZone)
+  useEffect(() => {
+    store.ensure({ mode: timelineMode, firstWeekday }, selectedIndex)
+  }, [store, timelineMode, firstWeekday, selectedIndex])
   const {
     pageTitleTarget,
     setPageTitleTarget,
