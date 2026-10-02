@@ -341,6 +341,36 @@ describe("owned Calendar windowed pager", () => {
     }
   })
 
+  it("lets a pinch cancel a pending navigation and settle its observed page", async () => {
+    const reactions = recordAnimatedReactions()
+    try {
+      const { onDateCommitted, pager, showAnchor } = await renderShell()
+      await showAnchor(new Date("2026-11-02T00:00:00.000Z"))
+      await pager.send(19)
+      const pinch = getByGestureTestId("owned-calendar-pinch") as unknown as {
+        handlers: {
+          onStart: (event: Record<string, unknown>) => void
+          onFinalize: (event: Record<string, unknown>, success: boolean) => void
+        }
+      }
+
+      await act(async () => {
+        pinch.handlers.onStart({ focalY: 200, numberOfPointers: 2 })
+        reactions.flush()
+        pinch.handlers.onFinalize({ numberOfPointers: 0 }, false)
+        reactions.flush()
+      })
+      await flushUiThread()
+
+      expect(onDateCommitted).toHaveBeenCalledTimes(1)
+      expect(onDateCommitted.mock.calls[0]?.[0].toISOString().slice(0, 10)).toBe(
+        weekStartKey(ANCHOR_INDEX + 19),
+      )
+    } finally {
+      reactions.restore()
+    }
+  })
+
   it("re-bases the content window near its edge without moving the page", async () => {
     const scrollTo = jest.spyOn(Reanimated, "scrollTo")
     const { pager } = await renderShell()

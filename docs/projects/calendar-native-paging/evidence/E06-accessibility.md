@@ -22,8 +22,9 @@ behavior or physical large-text layout.
 ## Owner device verdict
 
 **Pending.** No VoiceOver or TalkBack physical-device run has been recorded for the E06 revision.
-The iOS Simulator is on hold after SpringBoard crashes during the E05 run. The Android phone and
-PC remain reserved for T08b until the coordinator releases them.
+The iOS Simulator was recovered after SpringBoard crashes during the E05 run and is available
+for a rebuilt native functional smoke. The Android phone and PC remain reserved for T08b until
+the coordinator releases them.
 
 The native focus observer now emits `pageKey` on both platforms. Device checks require a rebuilt
 binary containing that native module revision; loading new JavaScript into an older binary is
