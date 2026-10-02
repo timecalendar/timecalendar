@@ -1,6 +1,10 @@
 import type { ConfigContext, ExpoConfig } from "expo/config"
 
-import { PERF_APPLICATION_ID, withPerfBuild } from "./perf/with-perf-build"
+import {
+  assertCalendarTraceAbsent,
+  PERF_APPLICATION_ID,
+  withPerfBuild,
+} from "./perf/with-perf-build"
 
 type BackendEnvironmentCapability = "development" | "preview" | "production"
 
@@ -30,6 +34,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   // `perf` is the development identity's runtime in a profileable release APK
   // with its own id, so it installs beside `.dev` (mobile/perf/README.md).
   const isPerf = process.env.APP_VARIANT === "perf"
+  if (!isPerf) assertCalendarTraceAbsent(__dirname)
   const isDev = process.env.APP_VARIANT === "development" || isPerf
   const otaChannel = getOtaChannel(isDev)
   const backendEnvironmentCapability = parseBackendEnvironmentCapability(

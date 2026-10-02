@@ -5,10 +5,26 @@ const {
   withAndroidManifest,
   withAppBuildGradle,
   withDangerousMod,
+  withSettingsGradle,
 } = require("expo/config-plugins")
 
 const PERF_APPLICATION_ID = "fr.samuelprak.timecalendar.perf"
 const REANIMATED_PROFILING_LINE = "ext.enableReanimatedProfiling = true"
+const REACT_NATIVE_SOURCE_BUILD = `
+// Calendar perf native trace: compile patched RN 0.85.3 source, not the prebuilt AAR.
+includeBuild(new File(rootDir, "../node_modules/react-native")) {
+  dependencySubstitution {
+    substitute(module("com.facebook.react:react-android")).using(project(":packages:react-native:ReactAndroid"))
+    substitute(module("com.facebook.react:react-native")).using(project(":packages:react-native:ReactAndroid"))
+    substitute(module("com.facebook.react:hermes-android")).using(project(":packages:react-native:ReactAndroid:hermes-engine"))
+    substitute(module("com.facebook.react:hermes-engine")).using(project(":packages:react-native:ReactAndroid:hermes-engine"))
+  }
+}
+`
+const {
+  applyCalendarTrace,
+  assertCalendarTraceAbsent,
+} = require("./native-patches/apply-calendar-trace")
 
 const addPerfClient = (googleServices) => {
   const [template] = googleServices.client
@@ -64,7 +80,46 @@ const withPerfGoogleServices = (config) =>
     },
   ])
 
-const withPerfBuild = (config) =>
-  withPerfGoogleServices(withReanimatedProfiling(withProfileable(config)))
+const withPerfCalendarTrace = (config) =>
+  withDangerousMod(config, [
+    "android",
+    (modConfig) => {
+      applyCalendarTrace(
+        modConfig.modRequest.projectRoot,
+        process.env.APP_VARIANT,
+      )
+      return Promise.resolve(modConfig)
+    },
+  ])
 
-module.exports = { PERF_APPLICATION_ID, addPerfClient, withPerfBuild }
+const withPerfReactNativeSourceBuild = (config) =>
+  withSettingsGradle(config, (modConfig) => {
+    const contents = modConfig.modResults.contents
+    if (
+      !contents.includes(
+        "includeBuild(expoAutolinking.reactNativeGradlePlugin)",
+      )
+    ) {
+      throw new Error(
+        "Unexpected Android settings.gradle template for native source build",
+      )
+    }
+    if (!contents.includes(REACT_NATIVE_SOURCE_BUILD)) {
+      modConfig.modResults.contents += REACT_NATIVE_SOURCE_BUILD
+    }
+    return modConfig
+  })
+
+const withPerfBuild = (config) =>
+  withPerfCalendarTrace(
+    withPerfReactNativeSourceBuild(
+      withPerfGoogleServices(withReanimatedProfiling(withProfileable(config))),
+    ),
+  )
+
+module.exports = {
+  PERF_APPLICATION_ID,
+  addPerfClient,
+  assertCalendarTraceAbsent,
+  withPerfBuild,
+}
