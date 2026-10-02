@@ -11,7 +11,7 @@ Status: **pending**. No E07 soak, preview publication, or owner go verdict is re
 | Heap/native memory trend, view range (±50), frame windows, process continuity | Unknown        |
 | iOS release-mode rapid swipes, accessibility, dense week, hitch observations  | Unknown        |
 | E05/E06 device checks and full Calendar regression                            | Unknown        |
-| T14 cleanup and compiler/lint/tsc/coverage checks                             | Pending        |
+| T14 cleanup and compiler/lint/tsc/coverage checks                             | Host cleanup complete on `025a1d5a` plus T14; 229 suites / 2,274 tests, TypeScript, lint, 24 compiled renderer functions pass |
 | Owner verdict for this exact revision                                         | Pending        |
 | Preview artifact identity and installation                                    | Not published  |
 
