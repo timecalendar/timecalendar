@@ -21,8 +21,7 @@ import {
 export function CalendarScreenHeader({
   title,
   contextHeading,
-  generation,
-  acceptedRevision,
+  pageKey,
   titleTargetActive,
   onTitleTargetChange,
   view,
@@ -33,8 +32,7 @@ export function CalendarScreenHeader({
 }: {
   title: string
   contextHeading: string
-  generation: number
-  acceptedRevision: number
+  pageKey: string
   titleTargetActive: boolean
   onTitleTargetChange: Dispatch<SetStateAction<CalendarPageTitleTarget | null>>
   view: CalendarView
@@ -54,8 +52,7 @@ export function CalendarScreenHeader({
                 <CalendarHeaderTitle
                   title={title}
                   contextHeading={contextHeading}
-                  generation={generation}
-                  acceptedRevision={acceptedRevision}
+                  pageKey={pageKey}
                   active={titleTargetActive}
                   color={theme.text}
                   onTitleTargetChange={onTitleTargetChange}
@@ -85,16 +82,14 @@ export function CalendarScreenHeader({
 function CalendarHeaderTitle({
   title,
   contextHeading,
-  generation,
-  acceptedRevision,
+  pageKey,
   active,
   color,
   onTitleTargetChange,
 }: {
   title: string
   contextHeading: string
-  generation: number
-  acceptedRevision: number
+  pageKey: string
   active: boolean
   color: string
   onTitleTargetChange: Dispatch<SetStateAction<CalendarPageTitleTarget | null>>
@@ -109,14 +104,12 @@ function CalendarHeaderTitle({
       visibleTitle: title,
       label,
       contextHeading,
-      generation,
-      revision: acceptedRevision,
+      pageKey,
     }
     onTitleTargetChange((current) =>
       current?.node === node &&
       current.label === label &&
-      current.generation === generation &&
-      current.revision === acceptedRevision
+      current.pageKey === pageKey
         ? current
         : target,
     )
@@ -125,15 +118,7 @@ function CalendarHeaderTitle({
         current?.node === node ? null : current,
       )
     }
-  }, [
-    acceptedRevision,
-    active,
-    contextHeading,
-    generation,
-    label,
-    onTitleTargetChange,
-    title,
-  ])
+  }, [active, contextHeading, label, onTitleTargetChange, pageKey, title])
   return (
     <Text
       ref={titleRef}

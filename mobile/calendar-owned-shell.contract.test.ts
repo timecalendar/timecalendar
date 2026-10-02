@@ -57,7 +57,7 @@ describe("owned Calendar paging repository contract", () => {
       "utf8",
     )
     const canvas = readFileSync(
-      join(root, "src/features/calendar/renderer/owned-calendar-canvas.tsx"),
+      join(root, "src/features/calendar/renderer/owned-calendar-page.tsx"),
       "utf8",
     )
     expect(ios).toContain("UIAccessibility.elementFocusedNotification")
@@ -80,16 +80,15 @@ describe("owned Calendar paging repository contract", () => {
     const compiled = [
       "src/features/calendar/renderer/owned-calendar-shell.tsx",
       "src/features/calendar/renderer/owned-calendar-canvas.tsx",
+      "src/features/calendar/renderer/owned-calendar-pager.ts",
       "src/features/calendar/renderer/owned-calendar-zoom.ts",
-      "src/features/calendar/renderer/pager-page-scroll.ts",
     ]
       .map(compileForNativeRuntime)
       .join("\n")
-    expect(compiled).toContain("react-native-pager-view")
+    expect(compiled).not.toContain("react-native-pager-view")
     expect(compiled).toContain("contentInsetAdjustmentBehavior")
-    expect(compiled).toContain("createAnimatedComponent")
-    expect(compiled).toContain("useEvent")
     expect(compiled).toContain("useAnimatedScrollHandler")
+    expect(compiled).toContain("scheduleOnUI")
     expect(compiled).toContain("Gesture.Pinch")
   })
 
@@ -120,15 +119,21 @@ describe("owned Calendar paging repository contract", () => {
       "calendar-focus-observer.types.ts",
       "index.ts",
       "owned-calendar-canvas.tsx",
+      "owned-calendar-chooser.tsx",
       "owned-calendar-coordinator.ts",
+      "owned-calendar-focus.ts",
+      "owned-calendar-geometry.ts",
       "owned-calendar-header.tsx",
+      "owned-calendar-page.tsx",
+      "owned-calendar-pager.test.tsx",
+      "owned-calendar-pager.ts",
+      "owned-calendar-paging-log.ts",
       "owned-calendar-resize.test.ts",
       "owned-calendar-resize.ts",
       "owned-calendar-shell.test.tsx",
       "owned-calendar-shell.tsx",
       "owned-calendar-zoom.test.ts",
       "owned-calendar-zoom.ts",
-      "pager-page-scroll.ts",
     ])
 
     const sources = productionCalendarFiles()
@@ -149,41 +154,37 @@ describe("owned Calendar paging repository contract", () => {
     ).toBe(true)
   })
 
-  it("keeps one native vertical owner and one pager with a passive header projection", () => {
+  it("keeps one native vertical owner and one windowed native pager with a passive header projection", () => {
     const rendererRoot = join(root, "src/features/calendar/renderer")
     const renderer = readdirSync(rendererRoot)
       .filter((file) => /\.tsx?$/.test(file) && !file.includes(".test."))
       .map((file) => readFileSync(join(rendererRoot, file), "utf8"))
       .join("\n")
-    const progress = readFileSync(
-      join(rendererRoot, "pager-page-scroll.ts"),
+    const pager = readFileSync(
+      join(rendererRoot, "owned-calendar-pager.ts"),
       "utf8",
     )
-    expect(renderer).toMatch(/<Animated\.ScrollView\b/)
+    const header = readFileSync(
+      join(rendererRoot, "owned-calendar-header.tsx"),
+      "utf8",
+    )
+    expect(renderer).not.toContain("react-native-pager-view")
     expect(renderer).toMatch(/contentInsetAdjustmentBehavior="automatic"/)
-    expect(progress).toContain("createAnimatedComponent(PagerView)")
-    expect(progress).toContain("useHandler")
-    expect(progress).toContain("useEvent")
-    expect(progress).toContain("useSharedValue")
-    expect(progress).toContain("useAnimatedStyle")
-    expect(renderer).toMatch(/<AnimatedPagerView\b/)
-    expect(renderer.match(/<Animated\.ScrollView\s+ref=/g)).toHaveLength(1)
-    expect(renderer.match(/<AnimatedPagerView\s+ref=/g)).toHaveLength(1)
-    expect(progress).toContain("export const CENTER_PAGE = 1")
-    expect(renderer).toMatch(/initialPage=\{CENTER_PAGE\}/)
-    expect(renderer).not.toContain("timelineColumns")
-    expect(renderer).not.toContain("shiftTimelineAnchor")
-    expect(renderer).toContain("pages={coordinator.pages}")
-    expect(renderer).toContain('testID="owned-calendar-date-header"')
-    expect(renderer).toContain('testID="owned-calendar-date-header-viewport"')
-    expect(renderer).toContain('testID="owned-calendar-date-header-strip"')
-    expect(renderer).toContain("pages={coordinator.pages}")
-    expect(renderer).toContain("onPageScroll={coordinator.onPageScroll}")
-    expect(renderer).toContain('overflow: "hidden"')
-    expect(renderer).toContain('left: "-100%"')
-    expect(renderer).toContain('width: "300%"')
-    expect(renderer).toContain('page.direction === 0 ? "auto"')
-    expect(renderer).toContain('"no-hide-descendants"')
+    expect(renderer.match(/<Animated\.ScrollView\s+ref=/g)).toHaveLength(2)
+    expect(renderer).toMatch(/\bhorizontal\b/)
+    expect(renderer).toContain("disableIntervalMomentum")
+    expect(renderer).toContain("snapToInterval")
+    expect(renderer.match(/\.disallowInterruption\(true\)/g)).toHaveLength(2)
+    expect(pager).toContain("useAnimatedScrollHandler")
+    expect(pager).toContain("onMomentumEnd")
+    expect(pager).toContain("scheduleOnRN(onSettle")
+    expect(pager).toContain("mountedPageIndexes")
+    expect(pager).toContain("planPageRebase")
+    expect(pager).not.toMatch(/generation|revision|epoch/i)
+    expect(header).toContain("translateX: -scrollX.get()")
+    expect(header).toContain('testID="owned-calendar-date-header-strip"')
+    expect(header).toContain('overflow: "hidden"')
+    expect(header).toContain('committed ? "auto" : "no-hide-descendants"')
     expect(renderer).not.toMatch(
       /PanGestureHandler|Animated\.timing|setInterval|setTimeout|runOnJS|import\s*\{[^}]*\bAnimated\b[^}]*\}\s*from "react-native"/,
     )
@@ -191,8 +192,9 @@ describe("owned Calendar paging repository contract", () => {
     const motionSources = [
       "owned-calendar-canvas.tsx",
       "owned-calendar-coordinator.ts",
+      "owned-calendar-page.tsx",
+      "owned-calendar-pager.ts",
       "owned-calendar-zoom.ts",
-      "pager-page-scroll.ts",
     ]
       .map((file) => readFileSync(join(rendererRoot, file), "utf8"))
       .join("\n")
@@ -207,7 +209,7 @@ describe("owned Calendar paging repository contract", () => {
     expect(zoom).toContain("useAnimatedReaction")
     expect(zoom).toContain("useSharedValue")
     expect(zoom).toContain("scheduleOnRN")
-    expect(zoom).not.toMatch(/\buseState\b|\brunOnJS\b/)
+    expect(zoom).not.toMatch(/\buseState\b|\brunOnJS\b|generation/)
   })
 
   it("pins bounded local presentation and original-identity activation", () => {
@@ -217,37 +219,37 @@ describe("owned Calendar paging repository contract", () => {
       "event-color.ts",
       "event-title.ts",
       "overlap-layout.ts",
-      "range-plan.ts",
+      "page-presentation.ts",
+      "page-presenter.ts",
       "timed-support.ts",
       "timeline-geometry.ts",
       "timeline-presentation.ts",
-      "timeline-presentation-hook.ts",
     ]
     for (const file of required) {
       expect(existsSync(join(dataRoot, file))).toBe(true)
     }
 
-    const range = readFileSync(join(dataRoot, "range-plan.ts"), "utf8")
     const presentation = readFileSync(
       join(dataRoot, "timeline-presentation.ts"),
       "utf8",
     )
-    const hook = readFileSync(
-      join(dataRoot, "timeline-presentation-hook.ts"),
-      "utf8",
-    )
-    const renderer = readFileSync(
-      join(root, "src/features/calendar/renderer/owned-calendar-canvas.tsx"),
-      "utf8",
-    )
-    const navigationBoundary = [range, presentation, hook, renderer].join("\n")
+    const hook = readFileSync(join(dataRoot, "page-presenter.ts"), "utf8")
+    const renderer = [
+      "owned-calendar-canvas.tsx",
+      "owned-calendar-chooser.tsx",
+      "owned-calendar-page.tsx",
+      "owned-calendar-shell.tsx",
+    ]
+      .map((file) =>
+        readFileSync(
+          join(root, "src/features/calendar/renderer", file),
+          "utf8",
+        ),
+      )
+      .join("\n")
+    const navigationBoundary = [presentation, hook, renderer].join("\n")
     const overlap = readFileSync(join(dataRoot, "overlap-layout.ts"), "utf8")
 
-    expect(range).toContain("const DIRECTIONS = [-1, 0, 1] as const")
-    expect(range).toContain("instant: { from, to }")
-    expect(range).toContain("civil: { fromDay, toDay }")
-    expect(presentation).toContain("CalendarTimelinePresentationV1")
-    expect(presentation).toContain("Object.freeze")
     expect(presentation).toContain("shape: support.shape")
     expect(presentation).toContain("resolveEventAppearance")
     expect(presentation).toContain("placeDayTiles")
@@ -262,11 +264,10 @@ describe("owned Calendar paging repository contract", () => {
     expect(renderer).toContain("onEventPress(tile.identity.uid)")
     expect(renderer).toContain("planTargetConflicts")
     expect(renderer).toContain("accessibilityViewIsModal")
-    expect(renderer).toContain("accessibilityTilesByDate.get(column.key)")
     expect(renderer).toContain("component.items.length > 1")
     expect(renderer).toContain("accessibilityElementsHidden")
     expect(renderer).toContain("isEventActivationBlocked")
-    expect(renderer).toContain('tile.shape === "interval"')
+    expect(renderer).toContain('tile.shape !== "interval"')
     expect(renderer).toContain("minimumTarget")
     expect(renderer).not.toMatch(/onEventPress\([^)]*(?:index|direction|key)/)
     expect(navigationBoundary).not.toMatch(
@@ -280,8 +281,20 @@ describe("owned Calendar paging repository contract", () => {
       join(rendererRoot, "owned-calendar-canvas.tsx"),
       "utf8",
     )
+    const page = readFileSync(
+      join(rendererRoot, "owned-calendar-page.tsx"),
+      "utf8",
+    )
     const shell = readFileSync(
       join(rendererRoot, "owned-calendar-shell.tsx"),
+      "utf8",
+    )
+    const chooser = readFileSync(
+      join(rendererRoot, "owned-calendar-chooser.tsx"),
+      "utf8",
+    )
+    const focus = readFileSync(
+      join(rendererRoot, "owned-calendar-focus.ts"),
       "utf8",
     )
     const projection = readFileSync(
@@ -289,24 +302,26 @@ describe("owned Calendar paging repository contract", () => {
       "utf8",
     )
 
-    expect(canvas).toContain("projectCalendarAccessibilityEntries(page)")
-    expect(canvas).toMatch(
-      /page\.direction === 0\s*\? registerTarget : undefined/,
-    )
+    expect(page).toContain("if (!committed)")
+    expect(page).toContain("<StaticCalendarTile")
+    expect(page).toContain("accessibilityElementsHidden={!committed}")
+    expect(page).toContain('importantForAccessibility="no-hide-descendants"')
+    expect(page).toContain("export function CalendarPage(")
     expect(canvas).toContain("removeClippedSubviews={false}")
-    expect(canvas).toContain(
-      "accessibilityElementsHidden={page.direction !== 0}",
-    )
-    expect(canvas).toContain('importantForAccessibility="no-hide-descendants"')
-    expect(canvas.match(/<Pressable\b/g)?.length).toBe(4)
-    expect(shell).toContain(
+    expect(page.match(/<Pressable\b/g)?.length).toBe(2)
+    expect(chooser.match(/<Pressable\b/g)?.length).toBe(2)
+    expect(chooser.match(/<Modal\b/g)?.length).toBe(1)
+    expect(shell).toContain("<EventChooser")
+    expect(focus).toContain(
       "type FocusTarget = { node: View; dateKey: string; minute: number }",
     )
-    expect(shell).toContain("new Map<string, FocusTarget>()")
-    expect(shell).toContain("coordinator.scrollRef.current?.scrollTo")
-    expect(shell).toContain("AccessibilityInfo.setAccessibilityFocus")
+    expect(focus).toContain("new Map<string, FocusTarget>()")
+    expect(focus).toContain("scrollRef.current?.scrollTo")
+    expect(focus).toContain("AccessibilityInfo.setAccessibilityFocus")
     expect(projection).toContain("entries.sort(compareEntries)")
-    expect([canvas, shell, projection].join("\n")).not.toMatch(
+    expect(
+      [canvas, page, shell, chooser, focus, projection].join("\n"),
+    ).not.toMatch(
       /experimental_accessibilityOrder|accessibilityOrder=|<FlatList\b|<SectionList\b/,
     )
   })
@@ -390,7 +405,6 @@ describe("owned Calendar paging repository contract", () => {
       '[STORAGE_KEYS.calendarZoomPixelsPerHour]: "environment-independent"',
     )
     expect(transition).toContain('mode === "day"')
-    expect(transition).toContain("addDaysInZone")
     expect(transition).not.toMatch(/86_?400_?000|24\s*\*\s*60\s*\*\s*60/)
 
     for (const source of productionCalendarFiles().map((file) =>

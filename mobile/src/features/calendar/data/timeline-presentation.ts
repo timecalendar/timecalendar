@@ -8,7 +8,6 @@ import {
 } from "./event-color"
 import { displayEventTitle } from "./event-title"
 import { layoutOverlaps, overlapIdentityKey } from "./overlap-layout"
-import type { CalendarThreePageRangeV1 } from "./range-plan"
 import { classifyTimedEventSupport } from "./timed-support"
 import type { CalendarEvent, CalendarEventIdentityV1 } from "./types"
 
@@ -47,17 +46,6 @@ export interface CalendarTimelinePageV1 {
   direction: -1 | 0 | 1
   key: string
   columns: readonly CalendarTimelineColumnV1[]
-}
-
-export interface CalendarTimelinePresentationV1 {
-  version: 1
-  generation: number
-  rangeKey: string
-  pages: readonly [
-    CalendarTimelinePageV1,
-    CalendarTimelinePageV1,
-    CalendarTimelinePageV1,
-  ]
 }
 
 function endMinute(
@@ -106,27 +94,6 @@ function placeDayTiles(tiles: readonly TimedTileV1[]): TimedTileV1[] {
       endX: placement?.endX ?? 1,
     }
   })
-}
-
-function freezePresentation(
-  presentation: CalendarTimelinePresentationV1,
-): CalendarTimelinePresentationV1 {
-  for (const page of presentation.pages) {
-    for (const column of page.columns) {
-      for (const tile of column.tiles) {
-        Object.freeze(tile.identity)
-        Object.freeze(tile.appearance)
-        if (tile.checklist !== undefined) Object.freeze(tile.checklist)
-        Object.freeze(tile)
-      }
-      Object.freeze(column.tiles)
-      Object.freeze(column)
-    }
-    Object.freeze(page.columns)
-    Object.freeze(page)
-  }
-  Object.freeze(presentation.pages)
-  return Object.freeze(presentation)
 }
 
 export interface TimelineTileOptions {
@@ -187,81 +154,4 @@ export function timelineColumnTiles(
   dayKey: string,
 ): TimedTileV1[] {
   return placeDayTiles(tilesByDay.get(dayKey) ?? []).sort(compareTiles)
-}
-
-/**
- * UIDs of the events that become tiles on the range's pages, without placing
- * or styling them: the same set as `timelinePresentationUids` of the built
- * presentation.
- */
-export function timelineRangeUids(
-  range: CalendarThreePageRangeV1,
-  events: readonly CalendarEvent[],
-): readonly string[] {
-  const columnKeys = new Set(
-    range.pages.flatMap((page) => page.columns.map((column) => column.key)),
-  )
-  const uids = new Set<string>()
-  for (const event of events) {
-    const support = classifyTimedEventSupport(event, range.displayZone)
-    if (!support.supported) continue
-    if (columnKeys.has(dayKey(support.event.startsAt, range.displayZone))) {
-      uids.add(support.event.identity.uid)
-    }
-  }
-  return [...uids].sort()
-}
-
-export function buildCalendarTimelinePresentation(input: {
-  range: CalendarThreePageRangeV1
-  generation: number
-  events: readonly CalendarEvent[]
-  checklistProgress?: ReadonlyMap<string, TimelineChecklistProgressV1>
-  localizedNoTitle?: string
-  scheme?: EventAppearanceScheme
-  increasedContrast?: boolean
-}): CalendarTimelinePresentationV1 {
-  const tilesByDay = bucketTimedTiles(input.events, {
-    ...input,
-    displayZone: input.range.displayZone,
-  })
-
-  const pages = input.range.pages.map(
-    (page): CalendarTimelinePageV1 => ({
-      version: 1,
-      direction: page.direction,
-      key: page.key,
-      columns: page.columns.map(
-        (column): CalendarTimelineColumnV1 => ({
-          version: 1,
-          key: column.key,
-          date: new Date(column.date),
-          weekday: column.weekday,
-          isWeekend: column.isWeekend,
-          tiles: timelineColumnTiles(tilesByDay, column.key),
-        }),
-      ),
-    }),
-  ) as unknown as CalendarTimelinePresentationV1["pages"]
-
-  return freezePresentation({
-    version: 1,
-    generation: input.generation,
-    rangeKey: input.range.key,
-    pages,
-  })
-}
-
-export function timelinePresentationUids(
-  presentation: CalendarTimelinePresentationV1,
-): readonly string[] {
-  return [
-    ...new Set(
-      presentation.pages.flatMap((page) =>
-        page.columns.flatMap((column) =>
-          column.tiles.map((tile) => tile.identity.uid),
-        ),
-      ),
-    ),
-  ].sort()
 }

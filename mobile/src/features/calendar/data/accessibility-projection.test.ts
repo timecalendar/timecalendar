@@ -4,27 +4,40 @@ import {
   compareCalendarAccessibilityOrdinal,
   projectCalendarAccessibilityEntries,
 } from "./accessibility-projection"
+import { pageColumns, pageIndexOfInstant, type PageSpace } from "./page-index"
 import {
+  bucketTimedTiles,
   type CalendarTimelinePageV1,
-  planCalendarThreePageRange,
-} from "./index"
-import { buildCalendarTimelinePresentation } from "./timeline-presentation"
+  timelineColumnTiles,
+} from "./timeline-presentation"
+import type { CalendarEvent } from "./types"
 
-const range = planCalendarThreePageRange({
-  anchor: new Date("2026-06-15T12:00:00.000Z"),
-  mode: "week",
-  displayZone: "UTC",
-  firstWeekday: 1,
-  showWeekends: true,
-})
+const SPACE: PageSpace = { mode: "week", firstWeekday: 1 }
+const INDEX = pageIndexOfInstant(
+  SPACE,
+  new Date("2026-06-15T12:00:00.000Z"),
+  "UTC",
+)
+
+function weekPage(
+  events: readonly CalendarEvent[],
+  direction: CalendarTimelinePageV1["direction"] = 0,
+): CalendarTimelinePageV1 {
+  const tilesByDay = bucketTimedTiles(events, { displayZone: "UTC" })
+  return {
+    version: 1,
+    direction,
+    key: "2026-06-15",
+    columns: pageColumns(SPACE, INDEX, "UTC", true).map((column) => ({
+      version: 1,
+      ...column,
+      tiles: timelineColumnTiles(tilesByDay, column.key),
+    })),
+  }
+}
 
 function projection(events = accessibilityProbeFixture()) {
-  const presentation = buildCalendarTimelinePresentation({
-    range,
-    generation: 1,
-    events,
-  })
-  return projectCalendarAccessibilityEntries(presentation.pages[1])
+  return projectCalendarAccessibilityEntries(weekPage(events))
 }
 
 describe("projectCalendarAccessibilityEntries", () => {
@@ -76,22 +89,20 @@ describe("projectCalendarAccessibilityEntries", () => {
   })
 
   it("rejects neighbour pages and duplicate identities across dates", () => {
-    const presentation = buildCalendarTimelinePresentation({
-      range,
-      generation: 1,
-      events: accessibilityProbeFixture(),
-    })
     expect(() =>
-      projectCalendarAccessibilityEntries(presentation.pages[0]),
+      projectCalendarAccessibilityEntries(
+        weekPage(accessibilityProbeFixture(), -1),
+      ),
     ).toThrow("committed page")
 
-    const first = presentation.pages[1].columns[0]!.tiles[0]!
+    const committed = weekPage(accessibilityProbeFixture())
+    const first = committed.columns[0]!.tiles[0]!
     const duplicatePage = {
-      ...presentation.pages[1],
+      ...committed,
       columns: [
-        presentation.pages[1].columns[0]!,
+        committed.columns[0]!,
         {
-          ...presentation.pages[1].columns[1]!,
+          ...committed.columns[1]!,
           tiles: [first],
         },
       ],

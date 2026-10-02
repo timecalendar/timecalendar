@@ -22,16 +22,40 @@ jest.mock("react-native-reanimated", () => {
     useAnimatedStyle: jest.fn((updater: () => Record<string, unknown>) =>
       updater(),
     ),
+    // Like the native handler, one processed handler serves every scroll
+    // event; a payload's `eventName` routes it to its handler key.
     useAnimatedScrollHandler: jest.fn(
       (
         handlers:
           | ((event: Record<string, unknown>) => void)
-          | { onScroll?: (event: Record<string, unknown>) => void },
+          | Partial<
+              Record<
+                | "onScroll"
+                | "onBeginDrag"
+                | "onEndDrag"
+                | "onMomentumBegin"
+                | "onMomentumEnd",
+                (event: Record<string, unknown>) => void
+              >
+            >,
       ) => {
-        const handler =
-          typeof handlers === "function" ? handlers : handlers.onScroll
-        return (event: { nativeEvent?: Record<string, unknown> }) =>
-          handler?.(event.nativeEvent ?? event)
+        const byKey =
+          typeof handlers === "function" ? { onScroll: handlers } : handlers
+        const keys = {
+          onScrollBeginDrag: "onBeginDrag",
+          onScrollEndDrag: "onEndDrag",
+          onMomentumScrollBegin: "onMomentumBegin",
+          onMomentumScrollEnd: "onMomentumEnd",
+        } as const
+        return (event: { nativeEvent?: Record<string, unknown> }) => {
+          const payload: Record<string, unknown> = event.nativeEvent ?? event
+          const name = payload.eventName
+          const key =
+            typeof name === "string" && name in keys
+              ? keys[name as keyof typeof keys]
+              : "onScroll"
+          byKey[key]?.(payload)
+        }
       },
     ),
     // The supported mock leaves useEvent inert. Preserve its handler shape so

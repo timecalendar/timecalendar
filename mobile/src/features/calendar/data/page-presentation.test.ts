@@ -10,7 +10,12 @@ import {
   formatNarrowWeekday,
   formatTimeRange,
 } from "./format"
-import { pageIndexOfInstant, pageKey, type PageSpace } from "./page-index"
+import {
+  pageColumns,
+  pageIndexOfInstant,
+  pageKey,
+  type PageSpace,
+} from "./page-index"
 import {
   buildPagePresentation,
   createPagePresentationCache,
@@ -19,8 +24,11 @@ import {
   type PagePresentationEnvironment,
   type PageTileV1,
 } from "./page-presentation"
-import { planCalendarThreePageRange } from "./range-plan"
-import { buildCalendarTimelinePresentation } from "./timeline-presentation"
+import {
+  bucketTimedTiles,
+  type CalendarTimelinePageV1,
+  timelineColumnTiles,
+} from "./timeline-presentation"
 import type { CalendarEvent, TimedCalendarEventV1 } from "./types"
 import type { FirstWeekday } from "./week"
 
@@ -112,14 +120,47 @@ function canvasEventLabel(
   )
 }
 
-describe("buildPagePresentation matches the three-page builder", () => {
+function placedPage(
+  space: PageSpace,
+  index: number,
+  env: PagePresentationEnvironment,
+): CalendarTimelinePageV1 {
+  const tilesByDay = bucketTimedTiles(EVENTS, {
+    displayZone: env.displayZone,
+    checklistProgress: CHECKLIST,
+    localizedNoTitle: env.localizedNoTitle,
+    scheme: env.scheme,
+    increasedContrast: env.increasedContrast,
+  })
+  return {
+    version: 1,
+    direction: 0,
+    key: pageKey(space, index),
+    columns: pageColumns(space, index, env.displayZone, env.showWeekends).map(
+      (column) => ({
+        version: 1,
+        ...column,
+        tiles: timelineColumnTiles(tilesByDay, column.key),
+      }),
+    ),
+  }
+}
+
+describe("buildPagePresentation matches the placed timeline tiles", () => {
   const cases: {
     name: string
     mode: "day" | "week"
     firstWeekday: FirstWeekday
     env: Partial<PagePresentationEnvironment>
+    pages: readonly (readonly string[])[]
   }[] = [
-    { name: "week, Paris, EN", mode: "week", firstWeekday: 1, env: {} },
+    {
+      name: "week, Paris, EN",
+      mode: "week",
+      firstWeekday: 1,
+      env: {},
+      pages: [["g"], ["a", "b", "d", "c", "overnight", "e", "h", "f"], []],
+    },
     {
       name: "week, Sunday start, New York, FR, dark, high contrast, no weekends",
       mode: "week",
@@ -133,39 +174,26 @@ describe("buildPagePresentation matches the three-page builder", () => {
         localizedNoTitle: "(Sans titre)",
         t: i18n.getFixedT("fr"),
       },
+      pages: [["g"], ["a", "b", "d", "c", "overnight", "e", "h"], []],
     },
     {
       name: "day, UTC",
       mode: "day",
       firstWeekday: 1,
       env: { displayZone: "UTC" },
+      pages: [[], ["a", "b", "d", "c"], []],
     },
   ]
 
-  it.each(cases)("$name", ({ mode, firstWeekday, env: overrides }) => {
+  it.each(cases)("$name", ({ mode, firstWeekday, env: overrides, pages }) => {
     const env = environment(overrides)
     const space: PageSpace = { mode, firstWeekday }
     const anchor = new Date("2026-10-05T10:00:00.000Z")
-    const range = planCalendarThreePageRange({
-      anchor,
-      mode,
-      displayZone: env.displayZone,
-      firstWeekday,
-      showWeekends: env.showWeekends,
-    })
-    const current = buildCalendarTimelinePresentation({
-      range,
-      generation: 0,
-      events: EVENTS,
-      checklistProgress: CHECKLIST,
-      localizedNoTitle: env.localizedNoTitle,
-      scheme: env.scheme,
-      increasedContrast: env.increasedContrast,
-    })
     const center = pageIndexOfInstant(space, anchor, env.displayZone)
 
-    current.pages.forEach((page, position) => {
+    pages.forEach((expectedUids, position) => {
       const index = center + position - 1
+      const page = placedPage(space, index, env)
       const presentation = buildPagePresentation({
         space,
         index,
@@ -215,10 +243,12 @@ describe("buildPagePresentation matches the three-page builder", () => {
         }
       })
 
-      const expectedOrder = projectCalendarAccessibilityEntries({
-        ...page,
-        direction: 0,
-      }).map((entry) => entry.key)
+      expect(
+        presentation.accessibilityOrder.map((tile) => tile.identity.uid),
+      ).toEqual(expectedUids)
+      const expectedOrder = projectCalendarAccessibilityEntries(page).map(
+        (entry) => entry.key,
+      )
       expect(presentation.accessibilityOrder.map((tile) => tile.key)).toEqual(
         expectedOrder,
       )

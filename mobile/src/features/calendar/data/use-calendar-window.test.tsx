@@ -87,4 +87,43 @@ describe("useCalendarWindow", () => {
     await unmount()
     expect(mockUnsubscribe).toHaveBeenCalledTimes(1)
   })
+
+  it("reads through a provided reader instead of the database reader", async () => {
+    const reader = jest.fn().mockResolvedValue(emptyRead())
+    const { result, unmount } = await renderHook(() =>
+      useCalendarWindow({ displayZone: "UTC", firstWeekday: 1, reader }),
+    )
+
+    await act(async () => {
+      result.current.store.ensure(WEEKS, CENTER)
+    })
+    expect(reader).toHaveBeenCalledTimes(1)
+    expect(reader.mock.calls[0]?.[0]).toMatchObject({ displayZone: "UTC" })
+    expect(mockRead).not.toHaveBeenCalled()
+    await unmount()
+  })
+
+  it("starts a new store when the reader changes", async () => {
+    const reader = jest.fn().mockResolvedValue(emptyRead())
+    const { result, rerender, unmount } = await renderHook(
+      (props: { reader?: typeof reader }) =>
+        useCalendarWindow({
+          displayZone: "UTC",
+          firstWeekday: 1,
+          reader: props.reader,
+        }),
+      { initialProps: {} },
+    )
+    const first = result.current.store
+
+    await rerender({ reader })
+    await act(async () => {
+      result.current.store.ensure(WEEKS, CENTER)
+    })
+
+    expect(result.current.store).not.toBe(first)
+    expect(reader).toHaveBeenCalledTimes(1)
+    expect(mockRead).not.toHaveBeenCalled()
+    await unmount()
+  })
 })

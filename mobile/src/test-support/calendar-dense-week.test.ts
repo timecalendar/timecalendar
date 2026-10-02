@@ -1,31 +1,34 @@
 import {
-  buildCalendarTimelinePresentation,
-  planCalendarThreePageRange,
+  pageColumns,
+  pageIndexOfInstant,
+  type PageSpace,
 } from "@/features/calendar/data"
+import {
+  bucketTimedTiles,
+  timelineColumnTiles,
+} from "@/features/calendar/data/timeline-presentation"
 
 import { DENSE_WEEK_ANCHOR, denseWeekFixture } from "./calendar-dense-week"
 
-const range = planCalendarThreePageRange({
-  anchor: DENSE_WEEK_ANCHOR,
-  mode: "week",
-  displayZone: "UTC",
-  firstWeekday: 1,
-  showWeekends: true,
-})
+const SPACE: PageSpace = { mode: "week", firstWeekday: 1 }
 
 function placement(events: ReturnType<typeof denseWeekFixture>) {
-  return buildCalendarTimelinePresentation({
-    range,
-    generation: 1,
-    events,
-  }).pages[1].columns.flatMap((column) =>
-    column.tiles.map(({ identity, column, columns, startX, endX }) => ({
-      uid: identity.uid,
-      column,
-      columns,
-      startX,
-      endX,
-    })),
+  const tilesByDay = bucketTimedTiles(events, { displayZone: "UTC" })
+  return pageColumns(
+    SPACE,
+    pageIndexOfInstant(SPACE, DENSE_WEEK_ANCHOR, "UTC"),
+    "UTC",
+    true,
+  ).flatMap((column) =>
+    timelineColumnTiles(tilesByDay, column.key).map(
+      ({ identity, column, columns, startX, endX }) => ({
+        uid: identity.uid,
+        column,
+        columns,
+        startX,
+        endX,
+      }),
+    ),
   )
 }
 

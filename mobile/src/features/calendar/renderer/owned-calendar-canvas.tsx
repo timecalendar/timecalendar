@@ -1,22 +1,14 @@
 import type { TFunction } from "i18next"
-import { type RefObject, useState } from "react"
+import type { ComponentProps, ReactNode } from "react"
 import {
   type LayoutChangeEvent,
-  Modal,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   Platform,
-  Pressable,
-  ScrollView,
   StyleSheet,
   View,
 } from "react-native"
 import { GestureDetector, type GestureType } from "react-native-gesture-handler"
-import PagerView, {
-  type PagerViewOnPageScrollEvent,
-  type PagerViewOnPageSelectedEvent,
-  type PageScrollStateChangedNativeEvent,
-} from "react-native-pager-view"
 import Animated, {
   type AnimatedRef,
   type ScrollHandlerProcessed,
@@ -28,111 +20,44 @@ import { ThemedText } from "@/components/themed-text"
 import {
   type AppLocale,
   type CalendarTimelineMode,
-  type CalendarTransitionSource,
   formatHourStartLabel,
-  formatTimeRange,
-  FULL_DAY_END_MINUTE,
-  FULL_DAY_START_MINUTE,
   fullDayMajorMinutes,
   fullDayMinorMinutes,
-  gridContentHeight,
   HOURS_COLUMN_WIDTH,
-  minuteToPixel,
-  planTargetConflicts,
-  projectCalendarAccessibilityEntries,
-  type TimedTileV1,
-  type WeekColumn,
-  type WeekDirection,
 } from "@/features/calendar/data"
-import {
-  ChecklistProgressIndicator,
-  checklistProgressLabel,
-} from "@/features/event-checklists"
 import { useTheme } from "@/theme"
 
-import CalendarFocusObserverView from "./calendar-focus-observer"
-import type { CalendarPage } from "./owned-calendar-coordinator"
-import type { OwnedCalendarProbeDiagnostic } from "./owned-calendar-shell"
 import {
-  AnimatedPagerView,
-  CENTER_PAGE,
-  type usePagerPageScroll,
-} from "./pager-page-scroll"
+  dayRowHeight,
+  PAGE_CONTENT_HEIGHT,
+  type ScrollLockProps,
+  useMinutePositionStyle,
+} from "./owned-calendar-geometry"
 
 const MAJOR_MINUTES = fullDayMajorMinutes()
 const MINOR_MINUTES = fullDayMinorMinutes()
-/** Diameter of the indicator's leading cap — its non-color shape cue. */
-const NOW_CAP_SIZE = 8
-const POINT_MARKER_SIZE = 4
+const HOURS = Array.from({ length: 23 }, (_, index) => index + 1)
 
-function liveEventVisualGeometry(
-  shape: "point" | "interval",
-  startMinute: number,
-  endMinute: number,
-  pixelsPerHour: number,
-) {
-  "worklet"
-  const top = (startMinute / 60) * pixelsPerHour
-  return shape === "point"
-    ? { top: top - POINT_MARKER_SIZE / 2, height: POINT_MARKER_SIZE }
-    : { top, height: ((endMinute - startMinute) / 60) * pixelsPerHour }
-}
-
-function liveEventInteractionGeometry(
-  visual: { top: number; height: number },
-  dayHeight: number,
-  minimum: number,
-) {
-  "worklet"
-  const height = Math.min(dayHeight, Math.max(visual.height, minimum))
-  const center = visual.top + visual.height / 2
-  return {
-    top: Math.max(0, Math.min(center - height / 2, dayHeight - height)),
-    height,
-  }
-}
-
-function renderHeight(pixelsPerHour: number) {
-  "worklet"
-  return (
-    gridContentHeight(
-      FULL_DAY_START_MINUTE,
-      FULL_DAY_END_MINUTE,
-      pixelsPerHour,
-    ) + StyleSheet.hairlineWidth
-  )
-}
-
-function useMinutePositionStyle(
-  minute: number,
-  pixelsPerHour: SharedValue<number>,
-) {
-  return useAnimatedStyle(() => ({
-    top: minuteToPixel(minute, {
-      startMinute: FULL_DAY_START_MINUTE,
-      pixelsPerHour: pixelsPerHour.get(),
-    }),
-  }))
+export type HorizontalPager = {
+  scrollHandler: ComponentProps<typeof Animated.ScrollView>["onScroll"]
+  scrollProps: ScrollLockProps
+  nativeGesture: GestureType
+  onContentSizeChange: (width: number) => void
+  positioned: SharedValue<boolean>
+  pageWidth: number
+  contentWidth: number
 }
 
 export function OwnedCalendarCanvas({
   heading,
   mode,
   locale,
-  displayZone,
   uses24HourClock,
   initialVerticalOffset,
-  generation,
-  geometryRevision,
-  pages,
-  pagerRef,
   scrollRef,
+  verticalScrollProps,
   nativeScrollGesture,
-  nativePagerGesture,
   onScroll,
-  onPageScroll,
-  onPageSelected,
-  onPageScrollStateChanged,
   onScrollBeginDrag,
   onScrollEndDrag,
   onViewportLayout,
@@ -140,87 +65,53 @@ export function OwnedCalendarCanvas({
   onMomentumScrollEnd,
   onAccessiblePageRequest,
   pixelsPerHour,
-  settledPixelsPerHour,
-  todayKey,
-  nowMinuteOfDay,
-  nowVisible,
-  nowOnCommittedPage,
-  nowLabel,
+  pagerRef,
+  pager,
   t,
-  onEventPress,
-  onEventFocused,
-  registerTarget,
-  onProbeDiagnostic,
-  isEventActivationBlocked,
+  children,
 }: {
   heading: string
   mode: CalendarTimelineMode
   locale: AppLocale
-  displayZone: string
   uses24HourClock: boolean | null
   initialVerticalOffset: number
-  generation: number
-  geometryRevision: number
-  pages: readonly CalendarPage[]
-  pagerRef: RefObject<PagerView | null>
-  scrollRef: AnimatedRef<ScrollView>
+  scrollRef: AnimatedRef<Animated.ScrollView>
+  verticalScrollProps: ScrollLockProps
   nativeScrollGesture: GestureType
-  nativePagerGesture: GestureType
   onScroll: ScrollHandlerProcessed<Record<string, unknown>>
-  onPageScroll: ReturnType<typeof usePagerPageScroll>["onPageScroll"]
-  onPageSelected: (event: PagerViewOnPageSelectedEvent) => void
-  onPageScrollStateChanged: (event: PageScrollStateChangedNativeEvent) => void
   onScrollBeginDrag: () => void
   onScrollEndDrag: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
   onViewportLayout: (event: LayoutChangeEvent) => void
   onMomentumScrollBegin: () => void
   onMomentumScrollEnd: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
-  onAccessiblePageRequest: (
-    direction: WeekDirection,
-    source: CalendarTransitionSource,
-  ) => void
+  onAccessiblePageRequest: (direction: -1 | 1) => void
   pixelsPerHour: SharedValue<number>
-  settledPixelsPerHour: number
-  todayKey: string
-  nowMinuteOfDay: number
-  nowVisible: boolean
-  nowOnCommittedPage: boolean
-  nowLabel: string
+  pagerRef: AnimatedRef<Animated.ScrollView>
+  pager: HorizontalPager
   t: TFunction
-  onEventPress: (uid: string) => void
-  onEventFocused: (key: string, dateKey: string, generation: number) => void
-  registerTarget: (
-    key: string,
-    dateKey: string,
-    minute: number,
-    node: View | null,
-  ) => void
-  onProbeDiagnostic?:
-    | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
-    | undefined
-  isEventActivationBlocked: () => boolean
+  children: ReactNode
 }) {
   const theme = useTheme()
   const fullDayRowStyle = useAnimatedStyle(() => ({
-    height: renderHeight(pixelsPerHour.get()),
-  }))
-  const gutterHeightStyle = useAnimatedStyle(() => ({
-    height: renderHeight(pixelsPerHour.get()),
-  }))
-  const pagerHeightStyle = useAnimatedStyle(() => ({
-    height: renderHeight(pixelsPerHour.get()),
+    height: dayRowHeight(pixelsPerHour.get()),
   }))
 
   return (
     <GestureDetector gesture={nativeScrollGesture}>
       <Animated.ScrollView
         ref={scrollRef}
+        animatedProps={verticalScrollProps}
         testID="owned-calendar-canvas"
         collapsable={false}
         style={styles.viewport}
         contentContainerStyle={styles.scrollContent}
         contentInsetAdjustmentBehavior="automatic"
-        contentOffset={{ x: 0, y: initialVerticalOffset }}
+        // Android re-applies a `contentOffset` prop whenever the view's props
+        // are re-sent, which the animated `scrollEnabled` does on every pinch.
+        // There the first viewport measurement seeks instead.
+        contentOffset={
+          Platform.OS === "ios" ? { x: 0, y: initialVerticalOffset } : undefined
+        }
         scrollsToTop={false}
         removeClippedSubviews={false}
         directionalLockEnabled
@@ -254,13 +145,13 @@ export function OwnedCalendarCanvas({
           },
         ]}
         onAccessibilityAction={({ nativeEvent }) => {
-          if (nativeEvent.actionName === "increment")
-            onAccessiblePageRequest(1, "next")
+          if (nativeEvent.actionName === "increment") onAccessiblePageRequest(1)
           if (nativeEvent.actionName === "decrement")
-            onAccessiblePageRequest(-1, "previous")
+            onAccessiblePageRequest(-1)
         }}
       >
         <Animated.View
+          testID="owned-calendar-day"
           style={[
             styles.fullDayRow,
             { borderColor: theme.separator },
@@ -268,84 +159,112 @@ export function OwnedCalendarCanvas({
           ]}
           collapsable={false}
         >
-          <Animated.View
-            testID="owned-calendar-hour-gutter"
-            style={[
-              styles.gutter,
-              { borderColor: theme.separator },
-              gutterHeightStyle,
-            ]}
-            pointerEvents="none"
-          >
-            <View
-              testID="owned-calendar-hour-gutter-labels"
-              accessible={false}
-              importantForAccessibility="no-hide-descendants"
-              style={StyleSheet.absoluteFill}
-            >
-              {Array.from({ length: 23 }, (_, index) => index + 1).map(
-                (hour) => (
-                  <AnimatedHourLabel
-                    key={hour}
-                    hour={hour}
-                    label={formatHourStartLabel(hour, locale, uses24HourClock)}
-                    pixelsPerHour={pixelsPerHour}
-                  />
-                ),
-              )}
-            </View>
-          </Animated.View>
-          <GestureDetector gesture={nativePagerGesture}>
-            <AnimatedPagerView
-              ref={pagerRef}
-              key={`${generation}:${geometryRevision}`}
-              testID="owned-calendar-pager"
-              style={[styles.pager, pagerHeightStyle]}
-              initialPage={CENTER_PAGE}
-              offscreenPageLimit={1}
-              overdrag={false}
-              onPageScroll={
-                onPageScroll as unknown as (
-                  event: PagerViewOnPageScrollEvent,
-                ) => void
-              }
-              onPageSelected={onPageSelected}
-              onPageScrollStateChanged={onPageScrollStateChanged}
-              accessible={false}
-            >
-              {pages.map((page) => (
-                <CalendarPageCanvas
-                  key={page.key}
-                  page={page}
-                  pixelsPerHour={pixelsPerHour}
-                  settledPixelsPerHour={settledPixelsPerHour}
-                  todayKey={nowVisible ? todayKey : null}
-                  nowMinuteOfDay={nowMinuteOfDay}
-                  nowAccessibilityLabel={
-                    nowOnCommittedPage
-                      ? t("calendar.nowLabel", { time: nowLabel })
-                      : undefined
-                  }
-                  t={t}
-                  locale={locale}
-                  displayZone={displayZone}
-                  onEventPress={onEventPress}
-                  onEventFocused={onEventFocused}
-                  generation={generation}
-                  registerTarget={registerTarget}
-                  onProbeDiagnostic={onProbeDiagnostic}
-                  isEventActivationBlocked={isEventActivationBlocked}
-                />
-              ))}
-            </AnimatedPagerView>
-          </GestureDetector>
+          <HourGutter
+            locale={locale}
+            uses24HourClock={uses24HourClock}
+            pixelsPerHour={pixelsPerHour}
+          />
+          <HourLines
+            pixelsPerHour={pixelsPerHour}
+            background={theme.backgroundElement}
+            color={theme.separator}
+          />
+          {pager.pageWidth > 0 && (
+            <HorizontalPagerView key={mode} scrollRef={pagerRef} pager={pager}>
+              {children}
+            </HorizontalPagerView>
+          )}
         </Animated.View>
       </Animated.ScrollView>
     </GestureDetector>
   )
 }
 
-function AnimatedHourLabel({
+// Android re-applies a `contentOffset` prop whenever the view's props are
+// re-sent, which the animated `scrollEnabled` does, so the pager is placed with
+// `scrollTo` once its content has laid out and stays hidden until it has moved.
+function HorizontalPagerView({
+  scrollRef,
+  pager,
+  children,
+}: {
+  scrollRef: AnimatedRef<Animated.ScrollView>
+  pager: HorizontalPager
+  children: ReactNode
+}) {
+  const visibility = useAnimatedStyle(() => ({
+    opacity: pager.positioned.get() ? 1 : 0,
+  }))
+  return (
+    <GestureDetector gesture={pager.nativeGesture}>
+      <Animated.ScrollView
+        ref={scrollRef}
+        animatedProps={pager.scrollProps}
+        testID="owned-calendar-pager"
+        horizontal
+        pagingEnabled={Platform.OS === "ios"}
+        snapToInterval={
+          Platform.OS === "android" ? pager.pageWidth + 1e-3 : undefined
+        }
+        disableIntervalMomentum
+        decelerationRate="fast"
+        directionalLockEnabled
+        bounces={false}
+        overScrollMode="never"
+        showsHorizontalScrollIndicator={false}
+        scrollEventThrottle={16}
+        accessible={false}
+        importantForAccessibility="no"
+        onScroll={pager.scrollHandler}
+        onContentSizeChange={pager.onContentSizeChange}
+        style={[styles.pager, { width: pager.pageWidth }, visibility]}
+        contentContainerStyle={{
+          width: pager.contentWidth,
+          height: PAGE_CONTENT_HEIGHT,
+        }}
+      >
+        {children}
+      </Animated.ScrollView>
+    </GestureDetector>
+  )
+}
+
+function HourGutter({
+  locale,
+  uses24HourClock,
+  pixelsPerHour,
+}: {
+  locale: AppLocale
+  uses24HourClock: boolean | null
+  pixelsPerHour: SharedValue<number>
+}) {
+  const theme = useTheme()
+  return (
+    <View
+      testID="owned-calendar-hour-gutter"
+      style={[styles.gutter, { borderColor: theme.separator }]}
+      pointerEvents="none"
+    >
+      <View
+        testID="owned-calendar-hour-gutter-labels"
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
+        style={StyleSheet.absoluteFill}
+      >
+        {HOURS.map((hour) => (
+          <HourLabel
+            key={hour}
+            hour={hour}
+            label={formatHourStartLabel(hour, locale, uses24HourClock)}
+            pixelsPerHour={pixelsPerHour}
+          />
+        ))}
+      </View>
+    </View>
+  )
+}
+
+function HourLabel({
   hour,
   label,
   pixelsPerHour,
@@ -368,630 +287,50 @@ function AnimatedHourLabel({
   )
 }
 
-function CalendarPageCanvas({
-  page,
+/** One hour-line layer shared by every page, behind the transparent pages. */
+// It spans the viewport rather than the measured page width, so the grid is
+// already drawn while the pager waits for its first layout and placement.
+function HourLines({
   pixelsPerHour,
-  settledPixelsPerHour,
-  todayKey,
-  nowMinuteOfDay,
-  nowAccessibilityLabel,
-  t,
-  locale,
-  displayZone,
-  onEventPress,
-  onEventFocused,
-  generation,
-  registerTarget,
-  onProbeDiagnostic,
-  isEventActivationBlocked,
+  background,
+  color,
 }: {
-  page: CalendarPage
   pixelsPerHour: SharedValue<number>
-  settledPixelsPerHour: number
-  todayKey: string | null
-  nowMinuteOfDay: number
-  nowAccessibilityLabel: string | undefined
-  t: TFunction
-  locale: AppLocale
-  displayZone: string
-  onEventPress: (uid: string) => void
-  onEventFocused: (key: string, dateKey: string, generation: number) => void
-  generation: number
-  registerTarget: (
-    key: string,
-    dateKey: string,
-    minute: number,
-    node: View | null,
-  ) => void
-  onProbeDiagnostic?:
-    | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
-    | undefined
-  isEventActivationBlocked: () => boolean
+  background: string
+  color: string
 }) {
-  const theme = useTheme()
-  const pageHeightStyle = useAnimatedStyle(() => ({
-    height: renderHeight(pixelsPerHour.get()),
-  }))
   return (
-    <Animated.View
-      testID={`owned-calendar-page-${page.direction}`}
-      collapsable={false}
-      accessible={false}
-      accessibilityElementsHidden={page.direction !== 0}
-      importantForAccessibility={
-        page.direction === 0 ? "yes" : "no-hide-descendants"
-      }
-      style={[
-        styles.page,
-        {
-          backgroundColor: theme.backgroundElement,
-          borderColor: theme.separator,
-        },
-        pageHeightStyle,
-      ]}
-    >
-      <CalendarGrid
-        direction={page.direction}
-        columns={page.columns}
-        pixelsPerHour={pixelsPerHour}
-        todayKey={todayKey}
-        nowMinuteOfDay={nowMinuteOfDay}
-        nowAccessibilityLabel={nowAccessibilityLabel}
-      />
-      <CalendarTiles
-        page={page}
-        locale={locale}
-        displayZone={displayZone}
-        pixelsPerHour={pixelsPerHour}
-        settledPixelsPerHour={settledPixelsPerHour}
-        onEventPress={onEventPress}
-        onEventFocused={onEventFocused}
-        generation={generation}
-        registerTarget={registerTarget}
-        onProbeDiagnostic={onProbeDiagnostic}
-        isEventActivationBlocked={isEventActivationBlocked}
-        t={t}
-      />
-      {__DEV__ && (
-        <View style={styles.preview} pointerEvents="none">
-          <ThemedText type="small">{page.key}</ThemedText>
-          <ThemedText type="small">
-            {t("calendar.weekPagingSize", {
-              width: "100%",
-              height: gridContentHeight(
-                FULL_DAY_START_MINUTE,
-                FULL_DAY_END_MINUTE,
-                settledPixelsPerHour,
-              ),
-            })}
-          </ThemedText>
-        </View>
-      )}
-    </Animated.View>
-  )
-}
-
-function CalendarTiles({
-  page,
-  locale,
-  displayZone,
-  pixelsPerHour,
-  settledPixelsPerHour,
-  onEventPress,
-  onEventFocused,
-  generation,
-  registerTarget,
-  onProbeDiagnostic,
-  isEventActivationBlocked,
-  t,
-}: {
-  page: CalendarPage
-  locale: AppLocale
-  displayZone: string
-  pixelsPerHour: SharedValue<number>
-  settledPixelsPerHour: number
-  onEventPress: (uid: string) => void
-  onEventFocused: (key: string, dateKey: string, generation: number) => void
-  generation: number
-  registerTarget: (
-    key: string,
-    dateKey: string,
-    minute: number,
-    node: View | null,
-  ) => void
-  onProbeDiagnostic?:
-    | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
-    | undefined
-  isEventActivationBlocked: () => boolean
-  t: TFunction
-}) {
-  const theme = useTheme()
-  const [chooser, setChooser] = useState<{
-    page: CalendarPage
-    items: readonly TimedTileV1[]
-  } | null>(null)
-  const chooserItems = chooser?.page === page ? chooser.items : null
-  const platform = Platform.OS === "ios" ? "ios" : "android"
-  const accessibilityEntries =
-    page.direction === 0 ? projectCalendarAccessibilityEntries(page) : null
-  const accessibilityOrder = new Map(
-    accessibilityEntries?.map((entry, index) => [entry.tile, index]),
-  )
-  const accessibilityTilesByDate = new Map<string, TimedTileV1[]>()
-  for (const entry of accessibilityEntries ?? []) {
-    const entriesForDate = accessibilityTilesByDate.get(entry.dateKey)
-    if (entriesForDate === undefined) {
-      accessibilityTilesByDate.set(entry.dateKey, [entry.tile])
-    } else {
-      entriesForDate.push(entry.tile)
-    }
-  }
-  const targetConflictComponents = page.columns.map((column) =>
-    planTargetConflicts({
-      items:
-        accessibilityEntries === null
-          ? column.tiles
-          : (accessibilityTilesByDate.get(column.key) ?? []),
-      pixelsPerHour: settledPixelsPerHour,
-      platform,
-    }),
-  )
-  return (
-    <>
-      <View pointerEvents="box-none" style={styles.tileColumns}>
-        {page.columns.map((column, columnIndex) => {
-          const components = targetConflictComponents[columnIndex]!
-          return (
-            <View
-              key={column.key}
-              pointerEvents="box-none"
-              style={styles.tileColumn}
-            >
-              {(accessibilityTilesByDate.get(column.key) ?? column.tiles).map(
-                (tile) => (
-                  <TimedCalendarTile
-                    key={tile.key}
-                    tile={tile}
-                    dateKey={column.key}
-                    locale={locale}
-                    displayZone={displayZone}
-                    pixelsPerHour={pixelsPerHour}
-                    settledPixelsPerHour={settledPixelsPerHour}
-                    accessible={page.direction === 0}
-                    projectionIndex={accessibilityOrder.get(tile)}
-                    onProbeDiagnostic={onProbeDiagnostic}
-                    registerTarget={
-                      page.direction === 0 ? registerTarget : undefined
-                    }
-                    generation={generation}
-                    onNativeFocused={onEventFocused}
-                    onPress={() => onEventPress(tile.identity.uid)}
-                    t={t}
-                  />
-                ),
-              )}
-              {components.map((component) =>
-                component.items.length > 1 ? (
-                  <Pressable
-                    key={`conflict:${component.key}`}
-                    testID={`owned-calendar-conflict-${component.key}`}
-                    accessible={false}
-                    accessibilityElementsHidden
-                    importantForAccessibility="no-hide-descendants"
-                    onPress={() => {
-                      if (!isEventActivationBlocked())
-                        setChooser({
-                          page,
-                          items: component.items,
-                        })
-                    }}
-                    style={[
-                      styles.conflictTarget,
-                      horizontalRectangleStyle(component.rectangle),
-                      {
-                        top: component.rectangle.top,
-                        height:
-                          component.rectangle.bottom - component.rectangle.top,
-                      },
-                    ]}
-                  />
-                ) : null,
-              )}
-            </View>
-          )
-        })}
-      </View>
-      <Modal
-        testID="owned-calendar-event-chooser-modal"
-        visible={chooserItems !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setChooser(null)}
-      >
-        <View style={styles.chooserBackdrop}>
-          <View
-            testID="owned-calendar-event-chooser"
-            accessibilityViewIsModal
-            accessibilityLabel={t("calendar.event.chooser.title")}
-            style={[
-              styles.chooser,
-              { backgroundColor: theme.backgroundElement },
-            ]}
-          >
-            <ThemedText type="subtitle">
-              {t("calendar.event.chooser.title")}
-            </ThemedText>
-            {chooserItems?.map((tile) => (
-              <Pressable
-                key={tile.key}
-                accessibilityRole="button"
-                accessibilityLabel={eventLabel(tile, locale, displayZone, t)}
-                onPress={() => {
-                  setChooser(null)
-                  onEventPress(tile.identity.uid)
-                }}
-                style={styles.chooserOption}
-              >
-                <ThemedText>
-                  {eventLabel(tile, locale, displayZone, t)}
-                </ThemedText>
-              </Pressable>
-            ))}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t("calendar.event.chooser.cancel")}
-              onPress={() => setChooser(null)}
-              style={styles.chooserOption}
-            >
-              <ThemedText>{t("calendar.event.chooser.cancel")}</ThemedText>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
-    </>
-  )
-}
-
-function horizontalRectangleStyle(rectangle: { left: number; right: number }) {
-  return {
-    left: `${rectangle.left * 100}%` as const,
-    right:
-      rectangle.right === 1 ? 2 : (`${(1 - rectangle.right) * 100}%` as const),
-  }
-}
-
-function eventLabel(
-  tile: TimedTileV1,
-  locale: AppLocale,
-  displayZone: string,
-  t: TFunction,
-) {
-  const time = formatTimeRange(tile.startsAt, tile.endsAt, locale, displayZone)
-  const progress = checklistProgressLabel(t, tile.checklist)
-  return t(
-    progress === undefined
-      ? "calendar.event.label"
-      : "calendar.event.labelWithProgress",
-    {
-      title: tile.title,
-      time,
-      location: tile.location ?? "",
-      progress,
-    },
-  )
-}
-
-function probeTargetFrame(
-  onProbeDiagnostic:
-    | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
-    | undefined,
-  identity: string,
-  order: number | undefined,
-) {
-  if (onProbeDiagnostic === undefined || order === undefined || order < 0)
-    return undefined
-  return ({ nativeEvent }: LayoutChangeEvent) =>
-    onProbeDiagnostic({
-      kind: "target-frame",
-      identity,
-      order,
-      frame: nativeEvent.layout,
-    })
-}
-
-function TimedCalendarTile({
-  tile,
-  dateKey,
-  locale,
-  displayZone,
-  pixelsPerHour,
-  settledPixelsPerHour,
-  accessible,
-  projectionIndex,
-  onProbeDiagnostic,
-  registerTarget,
-  generation,
-  onNativeFocused,
-  onPress,
-  t,
-}: {
-  tile: TimedTileV1
-  dateKey: string
-  locale: AppLocale
-  displayZone: string
-  pixelsPerHour: SharedValue<number>
-  settledPixelsPerHour: number
-  accessible: boolean
-  projectionIndex: number | undefined
-  onProbeDiagnostic?:
-    | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
-    | undefined
-  registerTarget?:
-    | ((
-        key: string,
-        dateKey: string,
-        minute: number,
-        node: View | null,
-      ) => void)
-    | undefined
-  generation: number
-  onNativeFocused: (
-    identity: string,
-    dateKey: string,
-    generation: number,
-  ) => void
-  onPress: () => void
-  t: TFunction
-}) {
-  const platform = Platform.OS === "ios" ? "ios" : "android"
-  const minimumTarget = platform === "ios" ? 44 : 48
-  const interactionStyle = useAnimatedStyle(() => {
-    const livePixelsPerHour = pixelsPerHour.get()
-    const visual = liveEventVisualGeometry(
-      tile.shape,
-      tile.startMinute,
-      tile.endMinute,
-      livePixelsPerHour,
-    )
-    return liveEventInteractionGeometry(
-      visual,
-      24 * livePixelsPerHour,
-      minimumTarget,
-    )
-  })
-  const visualStyle = useAnimatedStyle(() => {
-    const livePixelsPerHour = pixelsPerHour.get()
-    const visual = liveEventVisualGeometry(
-      tile.shape,
-      tile.startMinute,
-      tile.endMinute,
-      livePixelsPerHour,
-    )
-    const interaction = liveEventInteractionGeometry(
-      visual,
-      24 * livePixelsPerHour,
-      minimumTarget,
-    )
-    return { top: visual.top - interaction.top, height: visual.height }
-  })
-  const label = eventLabel(tile, locale, displayZone, t)
-  const visual = (
-    <Animated.View
-      accessible={false}
+    <View
+      testID="owned-calendar-hour-lines"
       pointerEvents="none"
-      style={[
-        styles.tile,
-        {
-          backgroundColor: tile.appearance.surface,
-          borderLeftColor: tile.appearance.accent,
-          borderColor: tile.appearance.outline,
-          borderWidth: tile.appearance.increasedContrast ? 2 : 0,
-          borderLeftWidth: 3,
-        },
-        visualStyle,
-      ]}
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
+      style={[styles.hourLines, { backgroundColor: background }]}
     >
-      {tile.shape === "interval" && (
-        <ThemedText
-          accessible={false}
-          type="captionSmall"
-          style={[styles.tileTitle, { color: tile.appearance.foreground }]}
-        >
-          {tile.title}
-        </ThemedText>
-      )}
-      {tile.shape === "interval" &&
-        tile.location !== undefined &&
-        ((tile.endMinute - tile.startMinute) / 60) * settledPixelsPerHour >=
-          40 && (
-          <ThemedText
-            accessible={false}
-            type="captionSmall"
-            style={{ color: tile.appearance.foreground }}
-          >
-            {tile.location}
-          </ThemedText>
-        )}
-      {tile.shape === "interval" &&
-        ((tile.endMinute - tile.startMinute) / 60) * settledPixelsPerHour >=
-          60 && (
-          <ChecklistProgressIndicator
-            progress={tile.checklist}
-            variant="compact"
-          />
-        )}
-    </Animated.View>
-  )
-  const button = (
-    <Pressable
-      ref={(node) => {
-        if (registerTarget !== undefined)
-          registerTarget(tile.key, dateKey, tile.startMinute, node)
-      }}
-      accessible={accessible}
-      accessibilityElementsHidden={!accessible}
-      importantForAccessibility={accessible ? "yes" : "no-hide-descendants"}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityHint={t("calendar.event.hint")}
-      onPress={onPress}
-      style={styles.tileTarget}
-    >
-      {visual}
-    </Pressable>
-  )
-  return (
-    <Animated.View
-      testID={`owned-calendar-event-${tile.identity.uid}`}
-      pointerEvents="box-none"
-      onLayout={
-        accessible
-          ? probeTargetFrame(onProbeDiagnostic, tile.key, projectionIndex)
-          : undefined
-      }
-      style={[
-        styles.tileAnchor,
-        horizontalRectangleStyle({ left: tile.startX, right: tile.endX }),
-        interactionStyle,
-      ]}
-    >
-      {accessible ? (
-        <CalendarFocusObserverView
-          testID={`owned-calendar-focus-observer-${tile.identity.uid}`}
-          identity={tile.key}
-          dateKey={dateKey}
-          generation={generation}
-          onAccessibilityFocused={({ nativeEvent }) =>
-            onNativeFocused(
-              nativeEvent.identity,
-              nativeEvent.dateKey,
-              nativeEvent.generation,
-            )
-          }
-          style={styles.tileTarget}
-        >
-          {button}
-        </CalendarFocusObserverView>
-      ) : (
-        button
-      )}
-    </Animated.View>
-  )
-}
-
-function CalendarGrid({
-  direction,
-  columns,
-  pixelsPerHour,
-  todayKey,
-  nowMinuteOfDay,
-  nowAccessibilityLabel,
-}: {
-  direction: number
-  columns: readonly WeekColumn[]
-  pixelsPerHour: SharedValue<number>
-  todayKey: string | null
-  nowMinuteOfDay: number
-  nowAccessibilityLabel: string | undefined
-}) {
-  const theme = useTheme()
-  const clockHeightStyle = useAnimatedStyle(() => ({
-    height: renderHeight(pixelsPerHour.get()),
-  }))
-  return (
-    <Animated.View
-      testID={`owned-calendar-page-clock-${direction}`}
-      style={[styles.clockPlane, clockHeightStyle]}
-      pointerEvents="none"
-    >
-      <View style={styles.dayColumns}>
-        {columns.map((column) => {
-          const isToday = column.key === todayKey
-          const exposesNow = isToday && direction === 0
-          return (
-            <View
-              key={column.key}
-              testID={`owned-calendar-column-${direction}-${column.key}`}
-              accessible={false}
-              importantForAccessibility={
-                exposesNow ? "no" : "no-hide-descendants"
-              }
-              style={[styles.dayColumn, { borderColor: theme.separator }]}
-            >
-              {isToday && (
-                <AnimatedNowIndicator
-                  testID={`owned-calendar-now-${direction}-${column.key}`}
-                  minuteOfDay={nowMinuteOfDay}
-                  pixelsPerHour={pixelsPerHour}
-                  color={theme.primary}
-                  accessibilityLabel={
-                    exposesNow ? nowAccessibilityLabel : undefined
-                  }
-                />
-              )}
-            </View>
-          )
-        })}
-      </View>
       {MINOR_MINUTES.map((minute) => (
-        <AnimatedGridLine
+        <GridLine
           key={`minor-${minute}`}
-          testID={`owned-calendar-minor-${direction}-${minute}`}
+          testID={`owned-calendar-minor-${minute}`}
           minute={minute}
           pixelsPerHour={pixelsPerHour}
-          color={theme.separator}
+          color={color}
           minor
         />
       ))}
       {MAJOR_MINUTES.map((minute) => (
-        <AnimatedGridLine
+        <GridLine
           key={`major-${minute}`}
-          testID={`owned-calendar-major-${direction}-${minute}`}
+          testID={`owned-calendar-major-${minute}`}
           minute={minute}
           pixelsPerHour={pixelsPerHour}
-          color={theme.separator}
+          color={color}
         />
       ))}
-    </Animated.View>
+    </View>
   )
 }
 
-// The current-time indicator. Its non-color cue is SHAPE: a filled cap at the
-// leading edge of the rule, legible in greyscale and without colour perception.
-// Vertical placement runs on the UI thread off the live pinch scale, so it
-// tracks a zoom without a per-frame React state write.
-function AnimatedNowIndicator({
-  testID,
-  minuteOfDay,
-  pixelsPerHour,
-  color,
-  accessibilityLabel,
-}: {
-  testID: string
-  minuteOfDay: number
-  pixelsPerHour: SharedValue<number>
-  color: string
-  accessibilityLabel: string | undefined
-}) {
-  const positionStyle = useMinutePositionStyle(minuteOfDay, pixelsPerHour)
-  return (
-    <Animated.View
-      testID={testID}
-      accessible={accessibilityLabel !== undefined}
-      accessibilityRole={accessibilityLabel === undefined ? undefined : "text"}
-      accessibilityLabel={accessibilityLabel}
-      importantForAccessibility={
-        accessibilityLabel === undefined ? "no-hide-descendants" : "yes"
-      }
-      style={[styles.nowIndicator, positionStyle]}
-    >
-      <View style={[styles.nowIndicatorCap, { backgroundColor: color }]} />
-      <View style={[styles.nowIndicatorRule, { backgroundColor: color }]} />
-    </Animated.View>
-  )
-}
-
-function AnimatedGridLine({
+function GridLine({
   testID,
   minute,
   pixelsPerHour,
@@ -1021,39 +360,26 @@ function AnimatedGridLine({
 const styles = StyleSheet.create({
   viewport: { flex: 1 },
   scrollContent: { flexGrow: 1 },
-  fullDayRow: {
-    flexDirection: "row",
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
+  fullDayRow: { overflow: "hidden", borderTopWidth: StyleSheet.hairlineWidth },
   gutter: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
     width: HOURS_COLUMN_WIDTH,
     borderRightWidth: StyleSheet.hairlineWidth,
   },
-  pager: { flex: 1 },
-  page: {
-    width: "100%",
-    overflow: "hidden",
-    borderLeftWidth: StyleSheet.hairlineWidth,
-  },
-  clockPlane: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-  },
-  dayColumns: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    flexDirection: "row",
-  },
-  dayColumn: { flex: 1, borderRightWidth: StyleSheet.hairlineWidth },
   hourLabel: {
     position: "absolute",
     right: 6,
     transform: [{ translateY: -6.5 }],
+  },
+  hourLines: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: HOURS_COLUMN_WIDTH,
   },
   gridLine: {
     position: "absolute",
@@ -1061,50 +387,11 @@ const styles = StyleSheet.create({
     right: 0,
     height: StyleSheet.hairlineWidth,
   },
-  nowIndicator: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    transform: [{ translateY: -NOW_CAP_SIZE / 2 }],
-  },
-  nowIndicatorCap: {
-    width: NOW_CAP_SIZE,
-    height: NOW_CAP_SIZE,
-    borderRadius: NOW_CAP_SIZE / 2,
-  },
-  nowIndicatorRule: { flex: 1, height: 2 },
   minorLine: { opacity: 0.5 },
-  preview: { position: "absolute", top: 16, left: 16, gap: 4 },
-  tileColumns: {
+  pager: {
     position: "absolute",
     top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    flexDirection: "row",
+    left: HOURS_COLUMN_WIDTH,
+    height: PAGE_CONTENT_HEIGHT,
   },
-  tileColumn: { flex: 1, position: "relative" },
-  tileAnchor: { position: "absolute" },
-  tileTarget: { flex: 1 },
-  conflictTarget: { position: "absolute" },
-  tile: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    overflow: "hidden",
-    borderRadius: 2,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-  },
-  tileTitle: { fontWeight: 600 },
-  chooserBackdrop: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
-  },
-  chooser: { borderRadius: 12, padding: 16, gap: 8 },
-  chooserOption: { minHeight: 48, justifyContent: "center", padding: 8 },
 })

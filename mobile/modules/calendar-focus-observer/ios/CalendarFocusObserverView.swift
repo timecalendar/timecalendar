@@ -4,7 +4,6 @@ import UIKit
 class CalendarFocusObserverView: ExpoView {
   var identity = ""
   var dateKey = ""
-  var generation = -1
   let onAccessibilityFocused = EventDispatcher()
   private var observer: NSObjectProtocol?
 
@@ -38,7 +37,7 @@ class CalendarFocusObserverView: ExpoView {
   }
 
   private func handleFocus(_ notification: Notification) {
-    guard window != nil, !identity.isEmpty, generation >= 0,
+    guard window != nil, !identity.isEmpty,
       let target = subviews.first, subviews.count == 1,
       let focused = notification.userInfo?[UIAccessibility.focusedElementUserInfoKey]
     else { return }
@@ -57,7 +56,6 @@ class CalendarFocusObserverView: ExpoView {
     onAccessibilityFocused([
       "identity": identity,
       "dateKey": dateKey,
-      "generation": generation,
     ])
   }
 }

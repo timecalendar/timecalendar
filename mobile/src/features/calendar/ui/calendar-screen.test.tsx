@@ -3,34 +3,31 @@ import {
   cleanup,
   fireEvent,
   render,
+  renderHook,
   screen,
   waitFor,
 } from "@testing-library/react-native"
 import * as Localization from "expo-localization"
 import { router, useIsFocused, useLocalSearchParams } from "expo-router"
-import {
-  AccessibilityInfo,
-  AppState,
-  Platform,
-  type ScrollView,
-  StyleSheet,
-} from "react-native"
+import { AccessibilityInfo, AppState, Platform, StyleSheet } from "react-native"
 import * as Reanimated from "react-native-reanimated"
 
 import { isDevVariant } from "@/config/variant"
 import {
-  buildCalendarTimelinePresentation,
+  addDaysInZone,
+  type CalendarEvent,
+  type CalendarWindowReader,
+  dayKey,
   formatFullDay,
   formatMonthYear,
-  planCalendarThreePageRange,
+  pageIndexOfInstant,
+  pageKey,
   startOfWeekInZone,
   type TimedCalendarEventV1,
   useCalendarClock,
   useCalendarEvents,
-  useCalendarTimelinePresentation,
   useSyncCalendars,
 } from "@/features/calendar/data"
-import { useCalendarEventsSnapshot } from "@/features/calendar/data/events"
 import { useChecklistProgress } from "@/features/event-checklists"
 import {
   getCalendarZoomPixelsPerHour,
@@ -42,9 +39,14 @@ import {
 } from "@/features/settings/prefs"
 import { remove } from "@/storage"
 import { recordAccessibilityProbeDiagnostic } from "@/test-support/owned-calendar/accessibility-probe"
+import {
+  flushUiThread,
+  placeCalendarPager,
+} from "@/test-support/owned-calendar/pager-driver"
 import { resolveResponsiveLayout } from "@/theme"
 
 import { CalendarScreen } from "./calendar-screen"
+import { useCalendarTitleFocus } from "./calendar-screen/use-calendar-title-focus"
 
 jest.mock("@/features/calendar/data", () => {
   const actual = jest.requireActual<typeof import("@/features/calendar/data")>(
@@ -54,23 +56,21 @@ jest.mock("@/features/calendar/data", () => {
     ...actual,
     useCalendarClock: jest.fn(),
     useCalendarEvents: jest.fn(),
-    useCalendarTimelinePresentation: jest.fn(
-      (
-        input: Parameters<typeof actual.useCalendarTimelinePresentation>[0],
-      ) => ({
-        presentation: actual.buildCalendarTimelinePresentation({
-          range: actual.planCalendarThreePageRange(input),
-          generation: input.generation,
-          events: [],
-          checklistProgress: new Map(),
+    useCalendarWindow: jest.fn(
+      (environment: Parameters<typeof actual.useCalendarWindow>[0]) =>
+        actual.useCalendarWindow({
+          ...environment,
+          reader: environment.reader ?? mockReadWindow,
         }),
-        ready: true,
-        error: undefined,
-      }),
     ),
     useSyncCalendars: jest.fn(),
   }
 })
+
+jest.mock("@/db", () => ({
+  ...jest.requireActual("@/db"),
+  subscribeToTableChanges: jest.fn(() => () => undefined),
+}))
 
 jest.mock("@/config/variant", () => ({ isDevVariant: jest.fn(() => false) }))
 
@@ -85,11 +85,6 @@ jest.mock("@/features/event-checklists", () => {
   const actual = jest.requireActual("@/features/event-checklists")
   return { ...actual, useChecklistProgress: jest.fn() }
 })
-
-jest.mock("@/features/calendar/data/events", () => ({
-  ...jest.requireActual("@/features/calendar/data/events"),
-  useCalendarEventsSnapshot: jest.fn(),
-}))
 
 jest.mock("expo-router", () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -144,9 +139,29 @@ jest.mock(
 )
 
 const ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone
+const HIDDEN = { includeHiddenElements: true }
+const WEEK_DATE_ID = /^owned-calendar-date-\d{4}-\d{2}-\d{2}$/
+let mockWindowEvents: readonly CalendarEvent[] = []
+const mockReadWindow = jest.fn<
+  ReturnType<CalendarWindowReader>,
+  Parameters<CalendarWindowReader>
+>(async ({ chunks }) => ({
+  chunks: new Map(
+    chunks.map((chunk) => [
+      chunk.start,
+      { events: mockWindowEvents, checklist: new Map() },
+    ]),
+  ),
+  visibleCalendarIds: new Set(["calendar-1"]),
+  rejectedCounts: {
+    "invalid-identity": 0,
+    "invalid-start": 0,
+    "invalid-end": 0,
+    "reversed-range": 0,
+    "invalid-date-range": 0,
+  },
+}))
 const mockUseCalendarEvents = useCalendarEvents as jest.Mock
-const mockUseCalendarTimelinePresentation =
-  useCalendarTimelinePresentation as jest.Mock
 const mockUseCalendarClock = useCalendarClock as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
 const mockUseChecklistProgress = useChecklistProgress as jest.Mock
@@ -160,9 +175,7 @@ const mockSetParams = router.setParams as jest.Mock
 const mockSync = jest.fn()
 const mockAnnounce = jest.spyOn(AccessibilityInfo, "announceForAccessibility")
 const mockUseCalendars = jest.spyOn(Localization, "useCalendars")
-const pagerMock = jest.requireMock<{
-  __pagerMock: { deferNextTransition: () => void }
-}>("react-native-pager-view").__pagerMock
+const mockScrollTo = jest.spyOn(Reanimated, "scrollTo")
 
 function deviceCalendars(uses24hourClock: boolean | null) {
   return [
@@ -216,6 +229,11 @@ function calendarEvent(
   }
 }
 
+function weekPageId(date: Date) {
+  const space = { mode: "week", firstWeekday: 1 } as const
+  return `owned-calendar-page-${pageKey(space, pageIndexOfInstant(space, date, ZONE))}`
+}
+
 async function openCalendarMenu() {
   await fireEvent.press(screen.getByTestId("calendar-view"))
   await waitFor(() => {
@@ -228,19 +246,39 @@ async function chooseCalendarView(view: "day" | "week" | "agenda") {
   await fireEvent.press(screen.getByTestId(`menu-action-${view}`))
 }
 
+/**
+ * Lays the pager out and lands the scroll where the screen placed it, the way
+ * the native view reports its offset after a programmatic `scrollTo`.
+ */
+async function settleCalendarPager() {
+  const pager = await placeCalendarPager()
+  const position = await landWherePlaced(pager)
+  const swipe = async (pages: number) => {
+    await pager.swipe(position.current, position.current + pages)
+    position.current += pages
+  }
+  return { ...pager, position, swipe }
+}
+
+async function landWherePlaced(
+  pager: Awaited<ReturnType<typeof placeCalendarPager>>,
+  position = { current: 0 },
+) {
+  await flushUiThread()
+  const x = mockScrollTo.mock.calls.at(-1)?.[1] ?? pager.origin
+  position.current = (x - pager.origin) / pager.pageWidth
+  await act(async () => {
+    pager.send(position.current)
+  })
+  return position
+}
+
 beforeEach(() => {
   AppState.currentState = "active"
+  mockWindowEvents = []
+  mockReadWindow.mockClear()
+  mockUseCalendarEvents.mockReset()
   mockUseCalendarEvents.mockReturnValue([calendarEvent()])
-  mockUseCalendarTimelinePresentation.mockImplementation((input) => ({
-    presentation: buildCalendarTimelinePresentation({
-      range: planCalendarThreePageRange(input),
-      generation: input.generation,
-      events: [],
-      checklistProgress: new Map(),
-    }),
-    ready: true,
-    error: undefined,
-  }))
   mockUseCalendarClock.mockReturnValue(new Date())
   mockUseSyncCalendars.mockReturnValue(syncState())
   mockUseChecklistProgress.mockReturnValue(new Map())
@@ -252,6 +290,7 @@ beforeEach(() => {
   mockPush.mockReset()
   mockSetParams.mockReset()
   mockAnnounce.mockClear()
+  mockScrollTo.mockClear()
   mockUseCalendars.mockReturnValue(deviceCalendars(true))
   remove(SETTINGS_KEYS.showWeekends)
   remove(SETTINGS_KEYS.calendarView)
@@ -268,6 +307,7 @@ describe("CalendarScreen owned shell", () => {
     })
 
     await render(<CalendarScreen />)
+    await settleCalendarPager()
 
     const early = await screen.findByRole("button", {
       name: /^Fixture probe-early,/,
@@ -278,6 +318,7 @@ describe("CalendarScreen owned shell", () => {
     ).toEqual({ x: 0, y: 540 })
     expect(early).toBeOnTheScreen()
     expect(late).toBeOnTheScreen()
+    expect(mockReadWindow).not.toHaveBeenCalled()
 
     await fireEvent.press(late)
     expect(mockRecordAccessibilityProbeDiagnostic).toHaveBeenCalledWith({
@@ -295,80 +336,12 @@ describe("CalendarScreen owned shell", () => {
     })
 
     await render(<CalendarScreen />)
+    await settleCalendarPager()
 
-    await waitFor(() => {
-      expect(screen.getByTestId("owned-calendar-canvas")).toBeOnTheScreen()
-    })
-    expect(screen.queryByText("Fixture probe-early")).toBeNull()
+    await waitFor(() => expect(mockReadWindow).toHaveBeenCalled())
+    expect(screen.queryByText("Fixture probe-early", HIDDEN)).toBeNull()
     expect(mockRecordAccessibilityProbeDiagnostic).not.toHaveBeenCalled()
   })
-
-  it.each([
-    { position: 0, destination: "2026-06-08" },
-    { position: 2, destination: "2026-06-22" },
-  ])(
-    "keeps $destination visible while the swipe's local read is pending",
-    async ({ position, destination }) => {
-      setCalendarView("week")
-      mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-15" })
-      const adjacent = calendarEvent({
-        title: "Destination class",
-        startsAt: new Date(`${destination}T10:00:00Z`),
-        endsAt: new Date(`${destination}T11:00:00Z`),
-      })
-      const loaded = {
-        events: [adjacent],
-        ready: true,
-        error: undefined,
-        revision: "loaded",
-        counts: {},
-      }
-      const mockSnapshot = useCalendarEventsSnapshot as jest.Mock
-      mockSnapshot.mockReturnValue(loaded)
-      mockUseCalendarTimelinePresentation.mockImplementation(
-        jest.requireActual<typeof import("@/features/calendar/data")>(
-          "@/features/calendar/data",
-        ).useCalendarTimelinePresentation,
-      )
-      const view = await render(<CalendarScreen />)
-      const pager = screen.getByTestId("owned-calendar-pager")
-      mockSnapshot.mockReturnValue({
-        ...loaded,
-        events: [],
-        ready: false,
-        revision: "pending",
-      })
-
-      await fireEvent(pager, "pageScrollStateChanged", {
-        nativeEvent: { pageScrollState: "dragging" },
-      })
-      await fireEvent(pager, "pageSelected", { nativeEvent: { position } })
-      await fireEvent(pager, "pageScrollStateChanged", {
-        nativeEvent: { pageScrollState: "idle" },
-      })
-
-      const centeredDate = screen.getByTestId(
-        `owned-calendar-date-0-${destination}`,
-      )
-      expect(centeredDate).toBeOnTheScreen()
-      expect(
-        screen.getByRole("button", { name: /^Destination class,/ }),
-      ).toBeOnTheScreen()
-      const centeredPager = screen.getByTestId("owned-calendar-pager")
-
-      mockSnapshot.mockReturnValue({ ...loaded, revision: "replacement" })
-      await view.rerender(<CalendarScreen />)
-      expect(screen.getByTestId("owned-calendar-pager")).toBe(centeredPager)
-      expect(screen.getByTestId(`owned-calendar-date-0-${destination}`)).toBe(
-        centeredDate,
-      )
-      expect(
-        screen.getByRole("button", { name: /^Destination class,/ }),
-      ).toBeOnTheScreen()
-      expect(mockAnnounce).toHaveBeenCalledTimes(1)
-      expect(mockSync).not.toHaveBeenCalled()
-    },
-  )
 
   it("shows and announces the missing-title fallback in Agenda", async () => {
     mockUseCalendarEvents.mockReturnValue([
@@ -387,68 +360,55 @@ describe("CalendarScreen owned shell", () => {
     setShowWeekends(false)
     mockUseCalendarClock.mockReturnValue(new Date("2026-06-19T23:59:00"))
     const view = await render(<CalendarScreen />)
-    const agendaRange = mockUseCalendarEvents.mock.calls.at(-1)?.[0]
+    await settleCalendarPager()
     const initialHeader = screen.getByTestId("calendar-header-title").props
       .children
 
     expect(screen.getByLabelText("FRI 19, Today")).toBeOnTheScreen()
     expect(
-      screen.getByTestId("owned-calendar-now-0-2026-06-19", {
-        includeHiddenElements: true,
-      }),
+      screen.getByTestId("owned-calendar-now-2026-06-19", HIDDEN),
     ).toBeOnTheScreen()
 
     mockAnnounce.mockClear()
-    mockUseCalendarEvents.mockClear()
+    mockReadWindow.mockClear()
     mockUseCalendarClock.mockReturnValue(new Date("2026-06-20T00:00:00"))
     await view.rerender(<CalendarScreen />)
 
     expect(screen.queryByLabelText(/Today/)).toBeNull()
-    expect(
-      screen.queryByTestId(/^owned-calendar-now--?\d-/, {
-        includeHiddenElements: true,
-      }),
-    ).toBeNull()
+    expect(screen.queryByTestId(/^owned-calendar-now-/, HIDDEN)).toBeNull()
     expect(screen.queryByLabelText(/Current time/)).toBeNull()
     expect(screen.getByTestId("calendar-header-title")).toHaveTextContent(
       initialHeader,
     )
-    expect(mockUseCalendarEvents).toHaveBeenLastCalledWith(agendaRange)
+    expect(mockReadWindow).not.toHaveBeenCalled()
     expect(mockAnnounce).not.toHaveBeenCalled()
   })
 
   it("opens synced and personal timed tiles by their original UID", async () => {
     setCalendarView("day")
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-16" })
-    const maths = calendarEvent({
-      identity: { source: "synced", uid: "class-original" },
-      id: "class-compatibility",
-      title: "Maths",
-      startsAt: new Date("2026-06-16T10:00:00.000Z"),
-      endsAt: new Date("2026-06-16T11:00:00.000Z"),
-      location: "B12",
-    })
-    const personal = calendarEvent({
-      identity: { source: "personal", uid: "personal-original" },
-      id: "personal-compatibility",
-      title: "Study",
-      startsAt: new Date("2026-06-16T12:00:00.000Z"),
-      endsAt: new Date("2026-06-16T13:00:00.000Z"),
-      location: undefined,
-      userCalendarId: undefined,
-    })
-    mockUseCalendarTimelinePresentation.mockImplementation((input) => ({
-      presentation: buildCalendarTimelinePresentation({
-        range: planCalendarThreePageRange(input),
-        generation: input.generation,
-        events: [maths, personal],
-        checklistProgress: new Map(),
+    mockWindowEvents = [
+      calendarEvent({
+        identity: { source: "synced", uid: "class-original" },
+        id: "class-compatibility",
+        title: "Maths",
+        startsAt: new Date("2026-06-16T10:00:00.000Z"),
+        endsAt: new Date("2026-06-16T11:00:00.000Z"),
+        location: "B12",
       }),
-      ready: true,
-      error: undefined,
-    }))
+      calendarEvent({
+        identity: { source: "personal", uid: "personal-original" },
+        id: "personal-compatibility",
+        title: "Study",
+        startsAt: new Date("2026-06-16T12:00:00.000Z"),
+        endsAt: new Date("2026-06-16T13:00:00.000Z"),
+        location: undefined,
+        userCalendarId: undefined,
+      }),
+    ]
 
     await render(<CalendarScreen />)
+    await settleCalendarPager()
     await fireEvent.press(
       await screen.findByRole("button", { name: /^Maths,/ }),
     )
@@ -462,23 +422,17 @@ describe("CalendarScreen owned shell", () => {
   it("restores the activated event when Calendar regains route focus", async () => {
     setCalendarView("day")
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-16" })
-    const event = calendarEvent({
-      identity: { source: "synced", uid: "return-identity" },
-      id: "return-identity",
-      title: "Return class",
-    })
-    mockUseCalendarTimelinePresentation.mockImplementation((input) => ({
-      presentation: buildCalendarTimelinePresentation({
-        range: planCalendarThreePageRange(input),
-        generation: input.generation,
-        events: [event],
+    mockWindowEvents = [
+      calendarEvent({
+        identity: { source: "synced", uid: "return-identity" },
+        id: "return-identity",
+        title: "Return class",
       }),
-      ready: true,
-      error: undefined,
-    }))
+    ]
     const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
     try {
       const view = await render(<CalendarScreen />)
+      await settleCalendarPager()
       const observer = await screen.findByTestId(
         "owned-calendar-focus-observer-return-identity",
       )
@@ -486,15 +440,15 @@ describe("CalendarScreen owned shell", () => {
         nativeEvent: {
           identity: observer.props.identity,
           dateKey: observer.props.dateKey,
-          generation: observer.props.generation,
         },
       })
       await fireEvent.press(
-        await screen.findByRole("button", { name: /^Return class,/ }),
+        screen.getByRole("button", { name: /^Return class,/ }),
       )
       expect(mockPush).toHaveBeenLastCalledWith(
         "/event-details/return-identity",
       )
+      expect(focus).not.toHaveBeenCalled()
       mockIsFocused.mockReturnValue(false)
       await view.rerender(<CalendarScreen />)
       mockIsFocused.mockReturnValue(true)
@@ -508,7 +462,7 @@ describe("CalendarScreen owned shell", () => {
   it("opens each crowded synced and personal semantic identity directly", async () => {
     setCalendarView("day")
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-16" })
-    const crowded = [
+    mockWindowEvents = [
       calendarEvent({
         identity: { source: "synced", uid: "crowded-synced" },
         id: "synced-alias",
@@ -525,17 +479,9 @@ describe("CalendarScreen owned shell", () => {
         userCalendarId: undefined,
       }),
     ]
-    mockUseCalendarTimelinePresentation.mockImplementation((input) => ({
-      presentation: buildCalendarTimelinePresentation({
-        range: planCalendarThreePageRange(input),
-        generation: input.generation,
-        events: crowded,
-      }),
-      ready: true,
-      error: undefined,
-    }))
 
     await render(<CalendarScreen />)
+    await settleCalendarPager()
     await fireEvent.press(
       await screen.findByRole("button", { name: /^Crowded class,/ }),
     )
@@ -549,52 +495,34 @@ describe("CalendarScreen owned shell", () => {
     expect(
       screen.getByTestId(
         "owned-calendar-conflict-synced:crowded-synced|personal:crowded-personal",
-        { includeHiddenElements: true },
+        HIDDEN,
       ),
     ).toHaveProp("accessible", false)
   })
 
-  it("pages away and back using only local presentation reads", async () => {
+  it("pages away and back on resident window rows without syncing", async () => {
     setCalendarView("day")
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-16" })
-    const maths = calendarEvent({
-      identity: { source: "synced", uid: "maths-offline" },
-      id: "maths-offline",
-      title: "Maths",
-      startsAt: new Date("2026-06-16T10:00:00.000Z"),
-      endsAt: new Date("2026-06-16T11:00:00.000Z"),
-      location: "B12",
-    })
-    mockUseCalendarTimelinePresentation.mockImplementation((input) => ({
-      presentation: buildCalendarTimelinePresentation({
-        range: planCalendarThreePageRange(input),
-        generation: input.generation,
-        events: [maths],
+    mockWindowEvents = [
+      calendarEvent({
+        identity: { source: "synced", uid: "maths-offline" },
+        id: "maths-offline",
+        title: "Maths",
+        startsAt: new Date("2026-06-16T10:00:00.000Z"),
+        endsAt: new Date("2026-06-16T11:00:00.000Z"),
+        location: "B12",
       }),
-      ready: true,
-      error: undefined,
-    }))
+    ]
     await render(<CalendarScreen />)
+    const pager = await settleCalendarPager()
     expect(
       await screen.findByRole("button", { name: /^Maths,/ }),
     ).toBeOnTheScreen()
 
-    await fireEvent(
-      screen.getByTestId("owned-calendar-canvas"),
-      "accessibilityAction",
-      { nativeEvent: { actionName: "increment" } },
-    )
-    await waitFor(() =>
-      expect(screen.queryByRole("button", { name: /^Maths,/ })).toBeNull(),
-    )
-    await fireEvent(
-      screen.getByTestId("owned-calendar-canvas"),
-      "accessibilityAction",
-      { nativeEvent: { actionName: "decrement" } },
-    )
-    expect(
-      await screen.findByRole("button", { name: /^Maths,/ }),
-    ).toBeOnTheScreen()
+    await pager.swipe(1)
+    expect(screen.queryByRole("button", { name: /^Maths,/ })).toBeNull()
+    await pager.swipe(-1)
+    expect(screen.getByRole("button", { name: /^Maths,/ })).toBeOnTheScreen()
     expect(mockSync).not.toHaveBeenCalled()
     expect(mockPush).not.toHaveBeenCalled()
   })
@@ -608,7 +536,7 @@ describe("CalendarScreen owned shell", () => {
         name: formatFullDay(new Date(), "en", ZONE),
       }),
     ).toBeOnTheScreen()
-    expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(1)
+    expect(screen.getAllByTestId(WEEK_DATE_ID)).toHaveLength(1)
     await openCalendarMenu()
     expect(
       screen.getByTestId("menu-action-day").props.accessibilityState.selected,
@@ -618,12 +546,9 @@ describe("CalendarScreen owned shell", () => {
   it("keeps persisted Day after remount but derives a fresh date", async () => {
     setCalendarView("day")
     const first = await render(<CalendarScreen />)
-    await fireEvent(
-      screen.getByTestId("owned-calendar-canvas"),
-      "accessibilityAction",
-      { nativeEvent: { actionName: "increment" } },
-    )
-    expect(mockAnnounce).toHaveBeenCalledTimes(1)
+    const pager = await settleCalendarPager()
+    await pager.swipe(1)
+    await waitFor(() => expect(mockAnnounce).toHaveBeenCalledTimes(1))
     await first.unmount()
     mockAnnounce.mockClear()
 
@@ -643,9 +568,8 @@ describe("CalendarScreen owned shell", () => {
   it("switches Week to Monday Day and preserves the settled clock offset", async () => {
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-16" })
     await render(<CalendarScreen />)
-    await waitFor(() =>
-      expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(7),
-    )
+    await settleCalendarPager()
+    expect(screen.getAllByTestId(WEEK_DATE_ID)).toHaveLength(7)
     await fireEvent(
       screen.getByTestId("owned-calendar-canvas"),
       "momentumScrollEnd",
@@ -653,16 +577,18 @@ describe("CalendarScreen owned shell", () => {
         nativeEvent: {
           contentOffset: { x: 0, y: 540 },
           contentInset: { top: 0, bottom: 0, left: 0, right: 0 },
-          contentSize: { width: 320, height: 1441 },
-          layoutMeasurement: { width: 320, height: 500 },
+          contentSize: { width: 400, height: 1441 },
+          layoutMeasurement: { width: 400, height: 800 },
         },
       },
     )
+    mockAnnounce.mockClear()
 
     await chooseCalendarView("day")
-    expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(1)
     expect(
-      screen.getByTestId("owned-calendar-date-0-2026-09-14"),
+      screen.getByRole("adjustable", {
+        name: formatFullDay(new Date(2026, 8, 14), "en", ZONE),
+      }),
     ).toBeOnTheScreen()
     expect(screen.getByTestId("owned-calendar-canvas")).toHaveProp(
       "contentOffset",
@@ -676,60 +602,27 @@ describe("CalendarScreen owned shell", () => {
     setShowWeekends(false)
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-18" })
     await render(<CalendarScreen />)
-    await waitFor(() =>
-      expect(
-        screen.getByTestId("owned-calendar-date-0-2026-09-18"),
-      ).toBeOnTheScreen(),
-    )
+    const pager = await settleCalendarPager()
+    expect(
+      screen.getByTestId("owned-calendar-date-2026-09-18"),
+    ).toBeOnTheScreen()
+    mockAnnounce.mockClear()
 
     for (const label of ["SAT 19", "SUN 20"]) {
-      await fireEvent(
-        screen.getByTestId("owned-calendar-canvas"),
-        "accessibilityAction",
-        { nativeEvent: { actionName: "increment" } },
-      )
+      await pager.swipe(1)
       expect(
         screen.getByLabelText(new RegExp(`^${label}(?:, Today)?$`)),
       ).toBeOnTheScreen()
     }
 
     await chooseCalendarView("week")
-    expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(5)
+    expect(screen.getAllByTestId(WEEK_DATE_ID)).toHaveLength(5)
     expect(
-      screen.getByTestId("owned-calendar-date-0-2026-09-14"),
+      screen.getByTestId("owned-calendar-date-2026-09-14"),
     ).toBeOnTheScreen()
-    expect(mockAnnounce).toHaveBeenCalledTimes(2)
+    await waitFor(() => expect(mockAnnounce).toHaveBeenCalledTimes(2))
   })
 
-  it("rejects callbacks from a partial Week drag after switching to Day", async () => {
-    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-16" })
-    await render(<CalendarScreen />)
-    await waitFor(() =>
-      expect(
-        screen.getByTestId("owned-calendar-date-0-2026-09-14"),
-      ).toBeOnTheScreen(),
-    )
-    const stalePager = screen.getByTestId("owned-calendar-pager", {
-      includeHiddenElements: true,
-    })
-    const staleSelected = stalePager.props.onPageSelected
-    const staleState = stalePager.props.onPageScrollStateChanged
-    await fireEvent(stalePager, "pageScroll", {
-      nativeEvent: { position: 1, offset: 0.45 },
-    })
-
-    await chooseCalendarView("day")
-    await act(async () => {
-      staleSelected({ nativeEvent: { position: 2 } })
-      staleState({ nativeEvent: { pageScrollState: "idle" } })
-    })
-
-    expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(1)
-    expect(
-      screen.getByTestId("owned-calendar-date-0-2026-09-14"),
-    ).toBeOnTheScreen()
-    expect(mockAnnounce).not.toHaveBeenCalled()
-  })
   it.each([
     [false, "1 AM"],
     [true, "01:00"],
@@ -741,9 +634,7 @@ describe("CalendarScreen owned shell", () => {
       await render(<CalendarScreen />)
       expect(screen.queryByTestId("owned-calendar-hour-label-0")).toBeNull()
       expect(
-        screen.getByTestId("owned-calendar-hour-label-1", {
-          includeHiddenElements: true,
-        }),
+        screen.getByTestId("owned-calendar-hour-label-1", HIDDEN),
       ).toHaveTextContent(firstVisibleHour)
     },
   )
@@ -773,19 +664,9 @@ describe("CalendarScreen owned shell", () => {
 
   it("reactively changes only week presentation while retaining seven-day context and offset", async () => {
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-14" })
-    mockUseCalendarEvents.mockReturnValue([
-      calendarEvent({
-        id: "weekend-1",
-        startsAt: new Date(2026, 8, 19, 9),
-        endsAt: new Date(2026, 8, 19, 10),
-      }),
-    ])
     await render(<CalendarScreen />)
-    await waitFor(() => {
-      expect(
-        screen.getAllByTestId(/^owned-calendar-date-0-\d{4}-\d{2}-\d{2}$/),
-      ).toHaveLength(7)
-    })
+    await settleCalendarPager()
+    expect(screen.getAllByTestId(WEEK_DATE_ID)).toHaveLength(7)
     await fireEvent(
       screen.getByTestId("owned-calendar-canvas"),
       "momentumScrollEnd",
@@ -793,26 +674,25 @@ describe("CalendarScreen owned shell", () => {
         nativeEvent: {
           contentOffset: { x: 0, y: 360 },
           contentInset: { top: 0, bottom: 0, left: 0, right: 0 },
-          contentSize: { width: 320, height: 1441 },
-          layoutMeasurement: { width: 320, height: 500 },
+          contentSize: { width: 400, height: 1441 },
+          layoutMeasurement: { width: 400, height: 800 },
         },
       },
     )
+    mockAnnounce.mockClear()
 
     await act(async () => setShowWeekends(false))
-    expect(
-      screen.getAllByTestId(/^owned-calendar-date-0-\d{4}-\d{2}-\d{2}$/),
-    ).toHaveLength(5)
+    expect(screen.getAllByTestId(WEEK_DATE_ID)).toHaveLength(5)
     expect(screen.getByTestId("owned-calendar-canvas")).toHaveProp(
       "contentOffset",
       { x: 0, y: 360 },
     )
-    const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0]
-    expect(range.from).toEqual(new Date(2026, 8, 14))
-    expect(range.to).toEqual(new Date(2026, 8, 21))
     expect(mockAnnounce).not.toHaveBeenCalled()
 
     await chooseCalendarView("agenda")
+    const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0]
+    expect(range.from).toEqual(new Date(2026, 8, 14))
+    expect(range.to).toEqual(new Date(2026, 8, 21))
     expect(screen.getByText("Algorithms")).toBeOnTheScreen()
   })
 
@@ -838,29 +718,35 @@ describe("CalendarScreen owned shell", () => {
   })
 
   it("does not describe an intentionally blank shell as empty event data", async () => {
-    mockUseCalendarEvents.mockReturnValue([])
     await render(<CalendarScreen />)
+    await settleCalendarPager()
 
     expect(screen.getByTestId("owned-calendar-canvas")).toBeOnTheScreen()
     expect(screen.queryByTestId("calendar-empty")).toBeNull()
   })
 
-  it("consumes a valid one-shot focus date and updates heading and range", async () => {
+  it("consumes a valid one-shot focus date and reads its week", async () => {
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-08-06" })
     await render(<CalendarScreen />)
+    await settleCalendarPager()
 
-    await waitFor(() => {
-      expect(
-        screen.getByRole("adjustable", {
-          name: formatFullDay(new Date(2026, 7, 3), "en", ZONE),
-        }),
-      ).toBeOnTheScreen()
-      expect(mockSetParams).toHaveBeenCalledWith({ focusDate: undefined })
-    })
-    const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0]
-    expect(range.to.getTime() - range.from.getTime()).toBeGreaterThanOrEqual(
-      6 * 24 * 60 * 60 * 1000,
+    const monday = new Date(2026, 7, 3)
+    expect(
+      screen.getByRole("adjustable", {
+        name: formatFullDay(monday, "en", ZONE),
+      }),
+    ).toBeOnTheScreen()
+    expect(mockSetParams).toHaveBeenCalledWith({ focusDate: undefined })
+    expect(screen.getByTestId(weekPageId(monday))).toBeOnTheScreen()
+    const requested = mockReadWindow.mock.calls.flatMap(
+      ([request]) => request.chunks,
     )
+    expect(
+      requested.some(
+        (chunk) =>
+          chunk.from <= monday && addDaysInZone(monday, 7, ZONE) <= chunk.to,
+      ),
+    ).toBe(true)
   })
 
   it("ignores an invalid focus date after consuming it", async () => {
@@ -875,47 +761,34 @@ describe("CalendarScreen owned shell", () => {
     expect(mockSetParams).toHaveBeenCalledWith({ focusDate: undefined })
   })
 
-  it("returns to Today without scrolling the mounted timeline to midnight", async () => {
-    const scrollRef = { current: null } as ReturnType<
-      typeof Reanimated.useAnimatedRef
-    >
-    const refSpy = jest
-      .spyOn(Reanimated, "useAnimatedRef")
-      .mockReturnValue(scrollRef)
+  it("returns to Today by paging without moving the vertical timeline", async () => {
     mockUseCalendarClock.mockReturnValue(new Date("2026-06-17T12:00:00"))
-    try {
-      await render(<CalendarScreen />)
-      const canvas = screen.getByTestId("owned-calendar-canvas")
-      await fireEvent(canvas, "layout", {
-        nativeEvent: { layout: { x: 0, y: 0, width: 360, height: 500 } },
-      })
-      const scrollTo = jest.spyOn(scrollRef.current as ScrollView, "scrollTo")
-      try {
-        await fireEvent(canvas, "accessibilityAction", {
-          nativeEvent: { actionName: "increment" },
-        })
-        expect(
-          screen.getByTestId("owned-calendar-date-0-2026-06-22"),
-        ).toBeOnTheScreen()
-        scrollTo.mockClear()
+    await render(<CalendarScreen />)
+    const pager = await settleCalendarPager()
+    const canvas = screen.getByTestId("owned-calendar-canvas")
+    await pager.swipe(1)
+    expect(
+      screen.getByTestId("owned-calendar-date-2026-06-22"),
+    ).toBeOnTheScreen()
+    mockScrollTo.mockClear()
 
-        expect(canvas).toHaveProp("scrollsToTop", false)
-        await fireEvent.press(screen.getByTestId("calendar-today"))
+    await fireEvent.press(screen.getByTestId("calendar-today"))
+    await flushUiThread()
 
-        expect(
-          screen.getByTestId("owned-calendar-date-0-2026-06-17"),
-        ).toBeOnTheScreen()
-        expect(screen.queryByTestId("calendar-today")).toBeNull()
-        expect(screen.getByTestId("owned-calendar-canvas")).toBe(canvas)
-        expect(canvas).toHaveProp("scrollsToTop", false)
-        expect(scrollTo).not.toHaveBeenCalled()
-      } finally {
-        scrollTo.mockRestore()
-      }
-    } finally {
-      await cleanup()
-      refSpy.mockRestore()
-    }
+    expect(mockScrollTo).toHaveBeenCalledTimes(1)
+    expect(mockScrollTo.mock.calls[0]?.slice(1)).toEqual([
+      pager.origin + (pager.position.current - 1) * pager.pageWidth,
+      0,
+      false,
+    ])
+    await landWherePlaced(pager, pager.position)
+    expect(
+      screen.getByTestId("owned-calendar-date-2026-06-17"),
+    ).toBeOnTheScreen()
+    expect(screen.queryByTestId("calendar-today")).toBeNull()
+    expect(screen.getByTestId("owned-calendar-canvas")).toBe(canvas)
+    expect(canvas).toHaveProp("scrollsToTop", false)
+    expect(canvas).toHaveProp("contentOffset", { x: 0, y: 0 })
   })
 
   it("retains Today as an observable selected-date action", async () => {
@@ -929,90 +802,68 @@ describe("CalendarScreen owned shell", () => {
     expect(screen.getByTestId("calendar-today")).toBeOnTheScreen()
 
     await fireEvent.press(screen.getByTestId("calendar-today"))
-    await waitFor(() => {
-      expect(
-        screen.getByRole("adjustable", {
-          name: formatFullDay(
-            startOfWeekInZone(new Date(), ZONE, 1),
-            "en",
-            ZONE,
-          ),
-        }),
-      ).toBeOnTheScreen()
-    })
+    expect(
+      screen.getByRole("adjustable", {
+        name: formatFullDay(startOfWeekInZone(new Date(), ZONE, 1), "en", ZONE),
+      }),
+    ).toBeOnTheScreen()
     expect(screen.queryByTestId("calendar-today")).toBeNull()
   })
 
-  it("commits one next week to the heading, native title, Agenda range, and announcement", async () => {
+  it("commits one swiped week to the heading, native title, Agenda range, and announcement", async () => {
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-08-31" })
     await render(<CalendarScreen />)
-    await waitFor(() => {
-      expect(
-        screen.getByRole("adjustable", {
-          name: formatFullDay(new Date(2026, 7, 31), "en", ZONE),
-        }),
-      ).toBeOnTheScreen()
-    })
+    const pager = await settleCalendarPager()
+    expect(
+      screen.getByRole("adjustable", {
+        name: formatFullDay(new Date(2026, 7, 31), "en", ZONE),
+      }),
+    ).toBeOnTheScreen()
+    mockAnnounce.mockClear()
 
-    await fireEvent(
-      screen.getByTestId("owned-calendar-canvas"),
-      "accessibilityAction",
-      { nativeEvent: { actionName: "increment" } },
-    )
+    await pager.swipe(1)
 
     const destination = new Date(2026, 8, 7)
-    await waitFor(() => {
-      expect(
-        screen.getByRole("adjustable", {
-          name: formatFullDay(destination, "en", ZONE),
-        }),
-      ).toBeOnTheScreen()
-      expect(screen.getByTestId("calendar-header-title")).toHaveTextContent(
-        formatMonthYear(destination, "en", ZONE),
-      )
-      expect(screen.getByTestId("calendar-header-title")).toHaveProp(
-        "accessibilityRole",
-        "header",
-      )
-      expect(screen.getByTestId("calendar-header-title")).toHaveProp(
-        "accessibilityLabel",
-        `${formatMonthYear(destination, "en", ZONE)}, ${formatFullDay(destination, "en", ZONE)}`,
-      )
-    })
-    const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0]
-    expect(range.from).toEqual(destination)
-    expect(mockAnnounce).toHaveBeenCalledTimes(1)
+    expect(
+      screen.getByRole("adjustable", {
+        name: formatFullDay(destination, "en", ZONE),
+      }),
+    ).toBeOnTheScreen()
+    const title = screen.getByTestId("calendar-header-title")
+    expect(title).toHaveTextContent(formatMonthYear(destination, "en", ZONE))
+    expect(title).toHaveProp("accessibilityRole", "header")
+    expect(title).toHaveProp(
+      "accessibilityLabel",
+      `${formatMonthYear(destination, "en", ZONE)}, ${formatFullDay(destination, "en", ZONE)}`,
+    )
+    await waitFor(() => expect(mockAnnounce).toHaveBeenCalledTimes(1))
     expect(mockAnnounce).toHaveBeenCalledWith(
       formatFullDay(destination, "en", ZONE),
     )
-    expect(
-      screen.getAllByTestId(/^owned-calendar-page--?\d$/, {
-        includeHiddenElements: true,
-      }),
-    ).toHaveLength(3)
+    expect(screen.getByTestId(weekPageId(destination))).toBeOnTheScreen()
+    expect(screen.queryByTestId(weekPageId(new Date(2026, 7, 31)))).toBeNull()
+
+    await chooseCalendarView("agenda")
+    expect(mockUseCalendarEvents.mock.calls.at(-1)?.[0].from).toEqual(
+      destination,
+    )
   })
 
   it("focuses the visible title without a second context announcement when its date is gone", async () => {
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-08-31" })
-    const event = calendarEvent({
-      identity: { source: "synced", uid: "old-week" },
-      id: "old-week",
-      title: "Old week class",
-      startsAt: new Date(2026, 7, 31, 9),
-      endsAt: new Date(2026, 7, 31, 10),
-    })
-    mockUseCalendarTimelinePresentation.mockImplementation((input) => ({
-      presentation: buildCalendarTimelinePresentation({
-        range: planCalendarThreePageRange(input),
-        generation: input.generation,
-        events: [event],
+    mockWindowEvents = [
+      calendarEvent({
+        identity: { source: "synced", uid: "old-week" },
+        id: "old-week",
+        title: "Old week class",
+        startsAt: new Date(2026, 7, 31, 9),
+        endsAt: new Date(2026, 7, 31, 10),
       }),
-      ready: true,
-      error: undefined,
-    }))
+    ]
     const focus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus")
     try {
       await render(<CalendarScreen />)
+      const pager = await settleCalendarPager()
       const observer = await screen.findByTestId(
         "owned-calendar-focus-observer-old-week",
       )
@@ -1020,14 +871,12 @@ describe("CalendarScreen owned shell", () => {
         nativeEvent: {
           identity: observer.props.identity,
           dateKey: observer.props.dateKey,
-          generation: observer.props.generation,
         },
       })
-      await fireEvent(
-        screen.getByTestId("owned-calendar-canvas"),
-        "accessibilityAction",
-        { nativeEvent: { actionName: "increment" } },
-      )
+      mockAnnounce.mockClear()
+
+      await pager.swipe(1)
+
       await waitFor(() => expect(focus).toHaveBeenCalledTimes(1))
       const destination = new Date(2026, 8, 7)
       expect(screen.getByTestId("calendar-header-title")).toHaveProp(
@@ -1038,138 +887,6 @@ describe("CalendarScreen owned shell", () => {
     } finally {
       focus.mockRestore()
     }
-  })
-
-  it("commits a deferred settle after the request rerenders the controller", async () => {
-    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-07" })
-    await render(<CalendarScreen />)
-    pagerMock.deferNextTransition()
-    await fireEvent(
-      screen.getByTestId("owned-calendar-canvas"),
-      "accessibilityAction",
-      { nativeEvent: { actionName: "increment" } },
-    )
-    expect(
-      screen.getByRole("adjustable", {
-        name: formatFullDay(new Date(2026, 8, 7), "en", ZONE),
-      }),
-    ).toBeOnTheScreen()
-    const pager = screen.getByTestId("owned-calendar-pager", {
-      includeHiddenElements: true,
-    })
-    await fireEvent(pager, "pageSelected", { nativeEvent: { position: 2 } })
-    await fireEvent(pager, "pageScrollStateChanged", {
-      nativeEvent: { pageScrollState: "idle" },
-    })
-    expect(
-      screen.getByRole("adjustable", {
-        name: formatFullDay(new Date(2026, 8, 14), "en", ZONE),
-      }),
-    ).toBeOnTheScreen()
-  })
-
-  it("pages past the initial three slots in both directions with deferred native settlements", async () => {
-    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-07" })
-    await render(<CalendarScreen />)
-    await fireEvent(screen.getByTestId("owned-calendar-canvas"), "layout", {
-      nativeEvent: { layout: { width: 320, height: 500 } },
-    })
-    let day = 7
-    for (const direction of [1, 1, 1, 1, -1, -1, -1, -1, -1]) {
-      const pager = screen.getByTestId("owned-calendar-pager", {
-        includeHiddenElements: true,
-      })
-      await fireEvent(pager, "pageSelected", {
-        nativeEvent: { position: 1 + direction },
-      })
-      expect(
-        screen.getByRole("adjustable", {
-          name: formatFullDay(new Date(2026, 8, day), "en", ZONE),
-        }),
-      ).toBeOnTheScreen()
-      await fireEvent(pager, "pageScrollStateChanged", {
-        nativeEvent: { pageScrollState: "idle" },
-      })
-      day += direction * 7
-      expect(
-        screen.getByRole("adjustable", {
-          name: formatFullDay(new Date(2026, 8, day), "en", ZONE),
-        }),
-      ).toBeOnTheScreen()
-      expect(mockUseCalendarEvents.mock.calls.at(-1)?.[0].from).toEqual(
-        new Date(2026, 8, day),
-      )
-      expect(
-        screen.getAllByTestId(/^owned-calendar-page--?\d$/, {
-          includeHiddenElements: true,
-        }),
-      ).toHaveLength(3)
-    }
-    expect(mockAnnounce).toHaveBeenCalledTimes(9)
-  })
-
-  it("discards a settle interrupted by iOS inactivity and resumes from the committed week", async () => {
-    const listener = jest.mocked(AppState.addEventListener)
-    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-07" })
-    await render(<CalendarScreen />)
-    const pager = screen.getByTestId("owned-calendar-pager", {
-      includeHiddenElements: true,
-    })
-    await fireEvent(pager, "pageSelected", { nativeEvent: { position: 2 } })
-    const onState = listener.mock.calls.findLast(
-      ([type]) => type === "change",
-    )?.[1]
-    expect(onState).toBeDefined()
-    await act(async () => {
-      onState?.("inactive")
-      onState?.("background")
-    })
-    await act(async () => onState?.("active"))
-    await fireEvent(pager, "pageScrollStateChanged", {
-      nativeEvent: { pageScrollState: "idle" },
-    })
-    expect(
-      screen.getByRole("adjustable", {
-        name: formatFullDay(new Date(2026, 8, 7), "en", ZONE),
-      }),
-    ).toBeOnTheScreen()
-    expect(mockAnnounce).not.toHaveBeenCalled()
-    await fireEvent(
-      screen.getByTestId("owned-calendar-canvas"),
-      "accessibilityAction",
-      { nativeEvent: { actionName: "increment" } },
-    )
-    expect(
-      screen.getByRole("adjustable", {
-        name: formatFullDay(new Date(2026, 8, 14), "en", ZONE),
-      }),
-    ).toBeOnTheScreen()
-    listener.mockClear()
-  })
-
-  it("discards a completion superseded by Today", async () => {
-    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-08-31" })
-    await render(<CalendarScreen />)
-    await waitFor(() => {
-      expect(screen.getByTestId("owned-calendar-canvas")).toBeOnTheScreen()
-    })
-    const pager = screen.getByTestId("owned-calendar-pager", {
-      includeHiddenElements: true,
-    })
-    await fireEvent(pager, "pageSelected", { nativeEvent: { position: 2 } })
-
-    await fireEvent.press(screen.getByTestId("calendar-today"))
-    await fireEvent(pager, "pageScrollStateChanged", {
-      nativeEvent: { pageScrollState: "idle" },
-    })
-
-    const todayWeek = startOfWeekInZone(new Date(), ZONE, 1)
-    expect(
-      screen.getByRole("adjustable", {
-        name: formatFullDay(todayWeek, "en", ZONE),
-      }),
-    ).toBeOnTheScreen()
-    expect(mockAnnounce).not.toHaveBeenCalled()
   })
 })
 
@@ -1197,6 +914,27 @@ describe("CalendarScreen retained Agenda", () => {
     expect(screen.getByTestId("agenda-section-list")).toBeOnTheScreen()
   })
 
+  it("scopes the agenda read to the Agenda view", async () => {
+    await render(<CalendarScreen />)
+    await settleCalendarPager()
+    expect(mockUseCalendarEvents).not.toHaveBeenCalled()
+
+    await chooseCalendarView("agenda")
+    const from = startOfWeekInZone(new Date(), ZONE, 1)
+    const to = addDaysInZone(from, 7, ZONE)
+    expect(mockUseCalendarEvents).toHaveBeenLastCalledWith({
+      from,
+      to,
+      civilFromDay: dayKey(from, ZONE),
+      civilToDay: dayKey(to, ZONE),
+    })
+
+    mockUseCalendarEvents.mockClear()
+    await chooseCalendarView("day")
+    expect(screen.getByTestId("owned-calendar-canvas")).toBeOnTheScreen()
+    expect(mockUseCalendarEvents).not.toHaveBeenCalled()
+  })
+
   it("retains the measured lane, checklist progress, and refresh", async () => {
     mockUseChecklistProgress.mockReturnValue(
       new Map([["synced-1", { completed: 1, total: 2, isComplete: false }]]),
@@ -1217,9 +955,7 @@ describe("CalendarScreen retained Agenda", () => {
       maxWidth: (metrics.maxContentWidth ?? 0) + 2 * metrics.gutter,
       paddingHorizontal: metrics.gutter,
     })
-    expect(
-      screen.getByText("1/2", { includeHiddenElements: true }),
-    ).toBeOnTheScreen()
+    expect(screen.getByText("1/2", HIDDEN)).toBeOnTheScreen()
     screen
       .getByTestId("agenda-section-list")
       .props.refreshControl.props.onRefresh()
@@ -1313,12 +1049,10 @@ describe("CalendarScreen platform chrome", () => {
     ).toBeCloseTo(631.67, 2)
 
     await chooseCalendarView("day")
-    expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(1)
+    expect(screen.getAllByTestId(WEEK_DATE_ID)).toHaveLength(1)
     expect(
       StyleSheet.flatten(
-        screen.getByTestId("owned-calendar-major-0-1440", {
-          includeHiddenElements: true,
-        }).props.style,
+        screen.getByTestId("owned-calendar-major-1440", HIDDEN).props.style,
       ).top,
     ).toBe(1680)
 
@@ -1392,16 +1126,73 @@ describe("CalendarScreen display-zone heading", () => {
     setTimezonePreference("Asia/Kathmandu")
     await render(<CalendarScreen />)
 
-    await waitFor(() => {
-      expect(
-        screen.getByRole("adjustable", {
-          name: formatFullDay(
-            new Date("2026-06-14T18:15:00.000Z"),
-            "en",
-            "Asia/Kathmandu",
-          ),
-        }),
-      ).toBeOnTheScreen()
-    })
+    expect(
+      screen.getByRole("adjustable", {
+        name: formatFullDay(
+          new Date("2026-06-14T18:15:00.000Z"),
+          "en",
+          "Asia/Kathmandu",
+        ),
+      }),
+    ).toBeOnTheScreen()
+  })
+})
+
+describe("useCalendarTitleFocus", () => {
+  type Props = Parameters<typeof useCalendarTitleFocus>[0]
+  const base: Props = {
+    view: "week",
+    routeFocused: true,
+    presentationReady: true,
+    pageKey: "week:20619",
+    heading: "Monday, June 15, 2026",
+  }
+
+  it("announces each committed page key once, never the page shown on arrival", async () => {
+    const { result, rerender } = await renderHook(
+      (props: Props) => useCalendarTitleFocus(props),
+      { initialProps: base },
+    )
+    await act(async () => result.current.onContextSettled("week:20619", false))
+    expect(mockAnnounce).not.toHaveBeenCalled()
+
+    const next = { ...base, pageKey: "week:20626", heading: "Next week" }
+    await rerender(next)
+    await act(async () => result.current.onContextSettled("week:20619", false))
+    expect(mockAnnounce).not.toHaveBeenCalled()
+    await act(async () => result.current.onContextSettled("week:20626", false))
+    await act(async () => result.current.onContextSettled("week:20626", false))
+    expect(mockAnnounce).toHaveBeenCalledTimes(1)
+    expect(mockAnnounce).toHaveBeenCalledWith("Next week")
+  })
+
+  it("stays silent when the title took focus or the route is not focused", async () => {
+    const { result, rerender } = await renderHook(
+      (props: Props) => useCalendarTitleFocus(props),
+      { initialProps: base },
+    )
+    await rerender({ ...base, pageKey: "week:20626", routeFocused: false })
+    await act(async () => result.current.onContextSettled("week:20626", false))
+    await rerender({ ...base, pageKey: "week:20626" })
+    await act(async () => result.current.onContextSettled("week:20626", true))
+    await act(async () => result.current.onContextSettled("week:20626", false))
+    expect(mockAnnounce).not.toHaveBeenCalled()
+  })
+
+  it("offers the title target only on a ready, focused timeline", async () => {
+    const { result, rerender } = await renderHook(
+      (props: Props) => useCalendarTitleFocus(props),
+      { initialProps: base },
+    )
+    expect(result.current.titleTargetActive).toBe(true)
+    for (const props of [
+      { ...base, view: "agenda" as const },
+      { ...base, routeFocused: false },
+      { ...base, presentationReady: false },
+    ]) {
+      await rerender(props)
+      expect(result.current.titleTargetActive).toBe(false)
+      expect(result.current.pageTitleTarget).toBeNull()
+    }
   })
 })

@@ -1,34 +1,43 @@
-import {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react"
+import { type Ref, useImperativeHandle, useState } from "react"
 import { useTranslation } from "react-i18next"
-import {
-  AccessibilityInfo,
-  findNodeHandle,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native"
+import { StyleSheet, View } from "react-native"
 import { GestureDetector } from "react-native-gesture-handler"
+import { useReducedMotion } from "react-native-reanimated"
 
 import {
   type AppLocale,
   type CalendarTimelineMode,
-  type CalendarTimelinePresentationV1,
-  type CalendarTransitionRequest,
+  dayKey,
   type FirstWeekday,
   formatClockTime,
+  FULL_DAY_END_MINUTE,
+  FULL_DAY_START_MINUTE,
+  MOUNTED_PAGE_RADIUS,
+  nowIndicatorPosition,
+  pageAnchor,
+  type PageIndex,
+  pageIndexOfInstant,
+  pageKey,
+  type PagePresenter,
+  type PageTileV1,
 } from "@/features/calendar/data"
 import { useTheme } from "@/theme"
 
 import { OwnedCalendarCanvas } from "./owned-calendar-canvas"
+import { EventChooser } from "./owned-calendar-chooser"
 import { useOwnedCalendarCoordinator } from "./owned-calendar-coordinator"
+import {
+  type CalendarPageTitleTarget,
+  useCalendarFocusRestoration,
+} from "./owned-calendar-focus"
+import {
+  PAGE_CONTENT_HEIGHT,
+  useScrollLockProps,
+} from "./owned-calendar-geometry"
 import { OwnedCalendarDateHeader } from "./owned-calendar-header"
+import { CalendarPage, type PageEventHandlers } from "./owned-calendar-page"
+import { pagerPageWidth, useOwnedCalendarPager } from "./owned-calendar-pager"
+import { pagingLog } from "./owned-calendar-paging-log"
 import type {
   CalendarZoomCommand,
   CalendarZoomSettlement,
@@ -41,10 +50,16 @@ export type OwnedCalendarProbeDiagnostic = {
   frame: Readonly<{ x: number; y: number; width: number; height: number }>
 }
 
+export type OwnedCalendarShellHandle = {
+  requestZoom: (command: CalendarZoomCommand) => void
+  restoreFocus: () => void
+}
+
 type OwnedCalendarShellProps = {
+  ref?: Ref<OwnedCalendarShellHandle>
   heading: string
   pageTitleTarget?: CalendarPageTitleTarget | null
-  onContextSettled?: (revision: number, titleFocused: boolean) => void
+  onContextSettled?: (pageKey: string, titleFocused: boolean) => void
   mode: CalendarTimelineMode
   anchor: Date
   displayZone: string
@@ -55,348 +70,172 @@ type OwnedCalendarShellProps = {
   uses24HourClock: boolean | null
   initialVerticalOffset: number
   initialPixelsPerHour: number
-  generation: number
-  revisionFloor: number
-  acceptedTransitionRevision?: number | null
-  transitionPending?: boolean
-  presentationReady?: boolean
+  presentPage: PagePresenter
   routeFocused?: boolean
+  onDateCommitted: (anchor: Date) => void
+  onPageWindowChange?: (center: PageIndex) => void
   onVerticalOffsetSettled: (offset: number) => void
   onZoomSettled: (settlement: CalendarZoomSettlement) => void
-  onTransitionRequest: (request: CalendarTransitionRequest) => void
-  onTransitionSettled: (revision: number) => void
-  onTransitionCancelled: (revision: number) => void
-  presentation?: CalendarTimelinePresentationV1
   onEventPress?: (uid: string) => void
   onProbeDiagnostic?:
     | ((diagnostic: OwnedCalendarProbeDiagnostic) => void)
     | undefined
 }
 
-export type OwnedCalendarShellHandle = {
-  requestZoom: (command: CalendarZoomCommand) => void
-  restoreFocus: () => void
-}
+const ignore = () => undefined
 
-const ignoreEventPress = () => undefined
-const NO_COLUMNS: readonly {
-  key: string
-  tiles: readonly { key: string }[]
-}[] = []
-
-type FocusTarget = { node: View; dateKey: string; minute: number }
-type FocusMemory = { key: string; dateKey: string }
-export type CalendarPageTitleTarget = {
-  node: Text
-  visibleTitle: string
-  label: string
-  contextHeading: string
-  generation: number
-  revision: number
-}
-type FocusContext = {
-  generation: number
-  revision: number
-  presentationGeneration: number | undefined
-  routeFocused: boolean
-  transitionPending: boolean
-  presentationReady: boolean
-}
-
-function requestRestoredFocus({
-  targets,
-  headings,
-  pageTitleTarget,
+// Props and the pager are destructured, never spread: the compiler treats a
+// rest object as mutable, which would rebuild every page's handlers each render.
+export function OwnedCalendarShell({
+  ref,
   heading,
-  generation,
-  revision,
-  currentColumns,
-  lastFocused,
-  lastRestore,
-  restoreKey,
-  pixelsPerHour,
-  scrollTo,
-  isCurrent,
-  onFocused,
-}: {
-  targets: Map<string, FocusTarget>
-  headings: Map<string, View>
-  pageTitleTarget: CalendarPageTitleTarget | null | undefined
-  heading: string
-  generation: number
-  revision: number
-  currentColumns: readonly {
-    key: string
-    tiles: readonly { key: string }[]
-  }[]
-  lastFocused: { current: FocusMemory | null }
-  lastRestore: { current: string | null }
-  restoreKey: string
-  pixelsPerHour: number
-  scrollTo: (y: number) => void
-  isCurrent: () => boolean
-  onFocused?: (titleFocused: boolean) => void
-}): number | "waiting" | null {
-  if (lastRestore.current === restoreKey || lastFocused.current === null)
-    return null
-  const last = lastFocused.current
-  const target = targets.get(last.key)
-  const identityPresent = currentColumns.some((column) =>
-    column.tiles.some((tile) => tile.key === last.key),
-  )
-  const datePresent = currentColumns.some(
-    (column) => column.key === last.dateKey,
-  )
-  if (identityPresent && target === undefined) return "waiting"
-  const dateNode = datePresent ? headings.get(last.dateKey) : undefined
-  if (datePresent && target === undefined && !dateNode) return "waiting"
-  const title =
-    pageTitleTarget?.generation === generation &&
-    pageTitleTarget.revision === revision &&
-    pageTitleTarget.contextHeading === heading &&
-    pageTitleTarget.label.includes(pageTitleTarget.visibleTitle) &&
-    pageTitleTarget.label.includes(heading)
-      ? pageTitleTarget
-      : null
-  const node = target?.node ?? dateNode ?? title?.node
-  if (node === null || node === undefined) return "waiting"
-  const titleFocused = node === title?.node
-  if (target !== undefined)
-    scrollTo(Math.max(0, (target.minute / 60) * pixelsPerHour - 96))
-  return requestAnimationFrame(() => {
-    if (!isCurrent() || lastRestore.current === restoreKey) return
-    const handle = findNodeHandle(node)
-    if (handle !== null) {
-      lastRestore.current = restoreKey
-      AccessibilityInfo.setAccessibilityFocus(handle)
-      onFocused?.(titleFocused)
-    }
-  })
-}
-
-export const OwnedCalendarShell = forwardRef<
-  OwnedCalendarShellHandle,
-  OwnedCalendarShellProps
->(function OwnedCalendarShell(props, ref) {
+  pageTitleTarget,
+  onContextSettled,
+  mode,
+  anchor,
+  displayZone,
+  locale,
+  firstWeekday,
+  currentDate,
+  uses24HourClock,
+  initialVerticalOffset,
+  initialPixelsPerHour,
+  presentPage,
+  routeFocused,
+  onDateCommitted,
+  onPageWindowChange,
+  onVerticalOffsetSettled,
+  onZoomSettled,
+  onEventPress: onEventActivated,
+  onProbeDiagnostic,
+}: OwnedCalendarShellProps) {
   const { t } = useTranslation()
   const theme = useTheme()
-  const coordinator = useOwnedCalendarCoordinator(props)
-  const {
-    acceptedTransitionRevision,
-    generation: currentGeneration,
-    heading,
-    onContextSettled,
-    pageTitleTarget,
-    presentation,
-    presentationReady,
-    routeFocused,
-    transitionPending,
-  } = props
-  const [targets] = useState(() => new Map<string, FocusTarget>())
-  const [headings] = useState(() => new Map<string, View>())
-  const activeGeneration = useRef(props.generation)
-  const focusContext = useRef<FocusContext>({
-    generation: props.generation,
-    revision: props.acceptedTransitionRevision ?? 0,
-    presentationGeneration: props.presentation?.generation,
-    routeFocused: props.routeFocused !== false,
-    transitionPending: props.transitionPending ?? false,
-    presentationReady: props.presentationReady !== false,
+  const reduceMotion = useReducedMotion()
+  const space = { mode, firstWeekday }
+  const anchorIndex = pageIndexOfInstant(space, anchor, displayZone)
+  const coordinator = useOwnedCalendarCoordinator({
+    anchor,
+    mode,
+    displayZone,
+    currentDate,
+    initialVerticalOffset,
+    initialPixelsPerHour,
+    onVerticalOffsetSettled,
+    onZoomSettled,
   })
-  const titleContext = useRef(props.pageTitleTarget)
-  const returnFrame = useRef<number | null>(null)
-  useLayoutEffect(() => {
-    activeGeneration.current = props.generation
-    titleContext.current = props.pageTitleTarget
-    focusContext.current = {
-      generation: props.generation,
-      revision: props.acceptedTransitionRevision ?? 0,
-      presentationGeneration: props.presentation?.generation,
-      routeFocused: props.routeFocused !== false,
-      transitionPending: props.transitionPending ?? false,
-      presentationReady: props.presentationReady !== false,
-    }
-    if (returnFrame.current !== null) {
-      cancelAnimationFrame(returnFrame.current)
-      returnFrame.current = null
-    }
-  }, [
-    props.acceptedTransitionRevision,
-    props.generation,
-    props.presentation?.generation,
-    props.presentationReady,
-    props.pageTitleTarget,
-    props.routeFocused,
-    props.transitionPending,
-  ])
-  const lastFocused = useRef<FocusMemory | null>(null)
-  const lastRestore = useRef<string | null>(null)
-  const lastAutoRevision = useRef<string | null>(null)
-  const returnEpoch = useRef(0)
-  const pendingReturn = useRef(false)
-  const currentColumns = props.presentation?.pages[1].columns ?? NO_COLUMNS
-  const isFocusContextCurrent = (generation: number, revision: number) => {
-    const current = focusContext.current
-    return (
-      current.generation === generation &&
-      current.revision === revision &&
-      current.presentationGeneration === generation &&
-      current.routeFocused &&
-      !current.transitionPending &&
-      current.presentationReady
-    )
+  const {
+    scrollRef: pagerRef,
+    scrollHandler,
+    scrollProps,
+    nativeGesture,
+    onContentSizeChange,
+    scrollX,
+    positioned,
+    pageWidth,
+    contentWidth,
+    mountedIndexes,
+    settled,
+    moving,
+    isMoving,
+    pageLeft,
+    step,
+  } = useOwnedCalendarPager({
+    space,
+    anchorIndex,
+    pageWidth: pagerPageWidth(coordinator.viewportWidth),
+    scrollLocked: coordinator.scrollLocked,
+    pinchGesture: coordinator.pinchGesture,
+    trackNativeTouch: coordinator.trackNativeTouch,
+    onSettled: (index) =>
+      onDateCommitted(pageAnchor(space, index, displayZone)),
+    onCenterChange: (center) => {
+      onPageWindowChange?.(center)
+      // Builds the next pages to enter the window a frame after this crossing
+      // commits, so the next crossing mounts a page that is already presented.
+      requestAnimationFrame(() => {
+        presentPage(center - MOUNTED_PAGE_RADIUS - 1)
+        presentPage(center + MOUNTED_PAGE_RADIUS + 1)
+      })
+    },
+  })
+  const pager = {
+    scrollHandler,
+    scrollProps,
+    nativeGesture,
+    onContentSizeChange,
+    positioned,
+    pageWidth,
+    contentWidth,
   }
-  const registerTarget = (
-    key: string,
-    dateKey: string,
-    minute: number,
-    node: View | null,
-  ) => {
-    if (node === null) targets.delete(key)
-    else if (!targets.has(key)) targets.set(key, { node, dateKey, minute })
-  }
-  const rememberTarget = (key: string, dateKey: string, generation: number) => {
-    const revision = props.acceptedTransitionRevision ?? 0
-    if (
-      activeGeneration.current !== generation ||
-      !isFocusContextCurrent(generation, revision) ||
-      targets.get(key)?.dateKey !== dateKey ||
-      (lastFocused.current?.key === key &&
-        lastFocused.current.dateKey === dateKey)
-    )
-      return
-    lastFocused.current = { key, dateKey }
-  }
-  useEffect(() => {
-    const revision = acceptedTransitionRevision ?? 0
-    if (
-      routeFocused === false ||
-      transitionPending ||
-      presentationReady === false ||
-      presentation?.generation !== currentGeneration
-    )
-      return
-    const autoRevision = `${currentGeneration}:${revision}`
-    if (lastAutoRevision.current === autoRevision) return
-    const frame = requestRestoredFocus({
-      targets,
-      headings,
+  const verticalScrollProps = useScrollLockProps(coordinator.scrollLocked)
+  const committed = presentPage(settled)
+  const committedKey = committed.pageKey
+  const contextReady =
+    committed.status === "ready" &&
+    !moving &&
+    committedKey === pageKey(space, anchorIndex)
+
+  const [chooser, setChooser] = useState<readonly PageTileV1[] | null>(null)
+  const { registerTarget, rememberTarget, registerHeading, restoreFocus } =
+    useCalendarFocusRestoration({
+      committedKey,
+      currentColumns: committed.columns,
+      contextReady,
+      routeFocused,
       pageTitleTarget,
       heading,
-      generation: currentGeneration,
-      revision,
-      currentColumns,
-      lastFocused,
-      lastRestore,
-      restoreKey: `${currentGeneration}:${revision}:${returnEpoch.current}`,
-      pixelsPerHour: coordinator.pixelsPerHour.get(),
-      scrollTo: (y) =>
-        coordinator.scrollRef.current?.scrollTo({ y, animated: false }),
-      isCurrent: () =>
-        isFocusContextCurrent(currentGeneration, revision) &&
-        titleContext.current === pageTitleTarget,
-      onFocused: (titleFocused) => {
-        pendingReturn.current = false
-        lastAutoRevision.current = autoRevision
-        onContextSettled?.(revision, titleFocused)
-      },
+      onContextSettled,
+      pixelsPerHour: coordinator.pixelsPerHour,
+      scrollRef: coordinator.scrollRef,
     })
-    if (frame === null) {
-      lastAutoRevision.current = autoRevision
-      onContextSettled?.(revision, false)
-    }
-    if (typeof frame === "number") return () => cancelAnimationFrame(frame)
-  }, [
-    coordinator.pixelsPerHour,
-    coordinator.scrollRef,
-    currentColumns,
-    currentGeneration,
-    headings,
-    heading,
-    onContextSettled,
-    pageTitleTarget,
-    acceptedTransitionRevision,
-    presentation,
-    presentationReady,
-    routeFocused,
-    transitionPending,
-    targets,
-  ])
-  const restoreFocus = () => {
-    returnEpoch.current += 1
-    const revision = props.acceptedTransitionRevision ?? 0
-    if (
-      props.routeFocused === false ||
-      props.transitionPending ||
-      props.presentationReady === false ||
-      props.presentation?.generation !== props.generation
-    )
-      return
-    if (returnFrame.current !== null) cancelAnimationFrame(returnFrame.current)
-    const frame = requestRestoredFocus({
-      targets,
-      headings,
-      pageTitleTarget: props.pageTitleTarget,
-      heading: props.heading,
-      generation: props.generation,
-      revision,
-      currentColumns,
-      lastFocused,
-      lastRestore,
-      restoreKey: `${props.generation}:${revision}:${returnEpoch.current}`,
-      pixelsPerHour: coordinator.pixelsPerHour.get(),
-      scrollTo: (y) =>
-        coordinator.scrollRef.current?.scrollTo({ y, animated: false }),
-      isCurrent: () =>
-        isFocusContextCurrent(props.generation, revision) &&
-        titleContext.current === props.pageTitleTarget,
-      onFocused: () => {
-        pendingReturn.current = false
-      },
-    })
-    pendingReturn.current = frame !== null
-    returnFrame.current = typeof frame === "number" ? frame : null
-  }
-  const restoreFocusRef = useRef(restoreFocus)
-  useLayoutEffect(() => {
-    restoreFocusRef.current = restoreFocus
-  })
-  useEffect(() => {
-    if (
-      pendingReturn.current &&
-      props.routeFocused !== false &&
-      !props.transitionPending &&
-      props.presentationReady !== false &&
-      props.presentation?.generation === props.generation &&
-      props.pageTitleTarget !== null &&
-      props.pageTitleTarget !== undefined
-    )
-      restoreFocusRef.current()
-  }, [
-    props.acceptedTransitionRevision,
-    props.generation,
-    props.pageTitleTarget,
-    props.presentation?.generation,
-    props.presentationReady,
-    props.routeFocused,
-    props.transitionPending,
-  ])
-  useEffect(
-    () => () => {
-      if (returnFrame.current !== null)
-        cancelAnimationFrame(returnFrame.current)
-    },
-    [],
-  )
+
+  const { isVerticalMovementOwned } = coordinator
+  const isEventActivationBlocked = () => isVerticalMovementOwned() || isMoving()
   const onEventPress = (uid: string) => {
-    if (coordinator.isEventActivationBlocked()) return
-    const eventPress = props.onEventPress ?? ignoreEventPress
+    if (isEventActivationBlocked()) return
+    const eventPress = onEventActivated ?? ignore
     eventPress(uid)
+  }
+  const handlers: PageEventHandlers = {
+    onEventPress,
+    onEventFocused: rememberTarget,
+    onChooseConflict: setChooser,
+    registerTarget,
+    isEventActivationBlocked,
+    onProbeDiagnostic,
   }
   useImperativeHandle(ref, () => ({
     requestZoom: coordinator.requestZoom,
     restoreFocus,
   }))
+
+  const todayKey = dayKey(currentDate, displayZone)
+  // Explicit full-day bounds and the settled scale — the helper's 07:00–21:00
+  // defaults stay as they are for Home's mini timeline and the agenda.
+  const nowIndicator = nowIndicatorPosition(currentDate, displayZone, {
+    pixelsPerHour: initialPixelsPerHour,
+    startMinute: FULL_DAY_START_MINUTE,
+    endMinute: FULL_DAY_END_MINUTE,
+  })
+  const nowLabel = t("calendar.nowLabel", {
+    time: formatClockTime(currentDate, locale, displayZone, uses24HourClock),
+  })
+  const presentStartedAt = pagingLog.now()
+  const pages = mountedIndexes.map((index) => {
+    const presentation = presentPage(index)
+    const isCommitted = index === settled
+    const hasToday =
+      nowIndicator.visible &&
+      presentation.columns.some((column) => column.key === todayKey)
+    return {
+      presentation,
+      left: pageLeft(index),
+      committed: isCommitted,
+      hasToday,
+    }
+  })
+  pagingLog.present(pagingLog.now() - presentStartedAt)
 
   return (
     <View
@@ -405,64 +244,70 @@ export const OwnedCalendarShell = forwardRef<
       style={[styles.shell, { backgroundColor: theme.background }]}
     >
       <OwnedCalendarDateHeader
-        registerHeading={(dateKey, node) => {
-          if (node === null) headings.delete(dateKey)
-          else headings.set(dateKey, node)
-        }}
-        pages={coordinator.pages}
-        locale={props.locale}
-        displayZone={props.displayZone}
-        todayKey={coordinator.todayKey}
+        registerHeading={registerHeading}
+        pages={pages}
+        pageWidth={pageWidth}
+        contentWidth={contentWidth}
+        scrollX={scrollX}
+        positioned={positioned}
+        todayKey={todayKey}
         todayLabel={t("calendar.today")}
-        stripStyle={coordinator.headerStripStyle}
       />
       <GestureDetector gesture={coordinator.pinchGesture}>
         <OwnedCalendarCanvas
-          heading={props.heading}
-          mode={props.mode}
-          locale={props.locale}
-          displayZone={props.displayZone}
-          uses24HourClock={props.uses24HourClock}
-          initialVerticalOffset={props.initialVerticalOffset}
-          generation={props.generation}
-          geometryRevision={coordinator.geometryRevision}
-          pages={coordinator.pages}
-          pagerRef={coordinator.pagerRef}
+          heading={heading}
+          mode={mode}
+          locale={locale}
+          uses24HourClock={uses24HourClock}
+          initialVerticalOffset={initialVerticalOffset}
           scrollRef={coordinator.scrollRef}
+          verticalScrollProps={verticalScrollProps}
           nativeScrollGesture={coordinator.nativeScrollGesture}
-          nativePagerGesture={coordinator.nativePagerGesture}
-          onPageScroll={coordinator.onPageScroll}
-          onPageSelected={coordinator.onPageSelected}
-          onPageScrollStateChanged={coordinator.onPageScrollStateChanged}
           onScroll={coordinator.onScroll}
           onScrollBeginDrag={coordinator.onScrollBeginDrag}
           onScrollEndDrag={coordinator.onScrollEndDrag}
           onViewportLayout={coordinator.onViewportLayout}
           onMomentumScrollBegin={coordinator.onMomentumScrollBegin}
           onMomentumScrollEnd={coordinator.settleVertical}
-          onAccessiblePageRequest={coordinator.requestAccessiblePage}
+          onAccessiblePageRequest={(direction) => {
+            if (!coordinator.scrollLocked.get()) step(direction, !reduceMotion)
+          }}
           pixelsPerHour={coordinator.pixelsPerHour}
-          settledPixelsPerHour={props.initialPixelsPerHour}
-          todayKey={coordinator.todayKey}
-          nowMinuteOfDay={coordinator.nowMinuteOfDay}
-          nowVisible={coordinator.nowVisible}
-          nowOnCommittedPage={coordinator.nowOnCommittedPage}
-          nowLabel={formatClockTime(
-            props.currentDate,
-            props.locale,
-            props.displayZone,
-            props.uses24HourClock,
-          )}
+          pagerRef={pagerRef}
+          pager={pager}
           t={t}
-          onEventPress={onEventPress}
-          onEventFocused={rememberTarget}
-          registerTarget={registerTarget}
-          onProbeDiagnostic={props.onProbeDiagnostic}
-          isEventActivationBlocked={coordinator.isEventActivationBlocked}
-        />
+        >
+          {pages.map((page) => (
+            <CalendarPage
+              key={page.presentation.pageKey}
+              presentation={page.presentation}
+              left={page.left}
+              width={pageWidth}
+              height={PAGE_CONTENT_HEIGHT}
+              committed={page.committed}
+              nowDateKey={page.hasToday ? todayKey : null}
+              nowMinuteOfDay={page.hasToday ? coordinator.nowMinuteOfDay : 0}
+              nowLabel={page.hasToday && page.committed ? nowLabel : undefined}
+              pixelsPerHour={coordinator.pixelsPerHour}
+              settledPixelsPerHour={initialPixelsPerHour}
+              handlers={handlers}
+              t={t}
+            />
+          ))}
+        </OwnedCalendarCanvas>
       </GestureDetector>
+      <EventChooser
+        tiles={chooser}
+        onChoose={(uid) => {
+          setChooser(null)
+          onEventPress(uid)
+        }}
+        onClose={() => setChooser(null)}
+      />
     </View>
   )
-})
+}
 
-const styles = StyleSheet.create({ shell: { flex: 1 } })
+const styles = StyleSheet.create({
+  shell: { flex: 1 },
+})

@@ -1,5 +1,5 @@
+export type { CalendarPageTitleTarget } from "./owned-calendar-focus"
 export type {
-  CalendarPageTitleTarget,
   OwnedCalendarProbeDiagnostic,
   OwnedCalendarShellHandle,
 } from "./owned-calendar-shell"

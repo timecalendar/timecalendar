@@ -2,11 +2,17 @@ import { render, screen, within } from "@testing-library/react-native"
 
 import { OwnedCalendarShell } from "@/features/calendar/renderer"
 import i18n from "@/i18n"
+import { placeCalendarPager } from "@/test-support/owned-calendar/pager-driver"
 
-import { pageIndexOfInstant, type PageSpace } from "./page-index"
-import { buildPagePresentation } from "./page-presentation"
-import { planCalendarThreePageRange } from "./range-plan"
-import { buildCalendarTimelinePresentation } from "./timeline-presentation"
+import {
+  type PageIndex,
+  pageIndexOfInstant,
+  type PageSpace,
+} from "./page-index"
+import {
+  buildPagePresentation,
+  type PagePresentationEnvironment,
+} from "./page-presentation"
 import type { TimedCalendarEventV1 } from "./types"
 
 jest.mock("@/hooks/use-color-scheme", () => ({
@@ -51,20 +57,25 @@ describe("page presentation labels match what the owned shell renders", () => {
       ["a", { completed: 1, total: 3, isComplete: false }],
       ["c", { completed: 2, total: 2, isComplete: true }],
     ])
-    const range = planCalendarThreePageRange({
-      anchor,
-      mode: "week",
+    const space: PageSpace = { mode: "week", firstWeekday: 1 }
+    const environment: PagePresentationEnvironment = {
+      locale: "en",
       displayZone: "UTC",
-      firstWeekday: 1,
       showWeekends: true,
-    })
-    const presentation = buildCalendarTimelinePresentation({
-      range,
-      generation: 0,
-      events,
-      checklistProgress: checklist,
+      scheme: "light",
+      increasedContrast: false,
       localizedNoTitle: i18n.t("calendar.event.noTitle"),
-    })
+      t: i18n.t,
+    }
+    const presentPage = (index: PageIndex) =>
+      buildPagePresentation({
+        space,
+        index,
+        status: "ready",
+        events,
+        checklist,
+        environment,
+      })
     await render(
       <OwnedCalendarShell
         heading="Monday, June 15th, 2026"
@@ -78,37 +89,17 @@ describe("page presentation labels match what the owned shell renders", () => {
         uses24HourClock
         initialVerticalOffset={0}
         initialPixelsPerHour={60}
-        generation={0}
-        revisionFloor={0}
-        presentation={presentation}
-        onTransitionRequest={jest.fn()}
-        onTransitionSettled={jest.fn()}
-        onTransitionCancelled={jest.fn()}
+        presentPage={presentPage}
+        onDateCommitted={jest.fn()}
         onVerticalOffsetSettled={jest.fn()}
         onZoomSettled={jest.fn()}
       />,
     )
+    await placeCalendarPager()
 
-    const space: PageSpace = { mode: "week", firstWeekday: 1 }
-    const page = buildPagePresentation({
-      space,
-      index: pageIndexOfInstant(space, anchor, "UTC"),
-      status: "ready",
-      events,
-      checklist,
-      environment: {
-        locale: "en",
-        displayZone: "UTC",
-        showWeekends: true,
-        scheme: "light",
-        increasedContrast: false,
-        localizedNoTitle: i18n.t("calendar.event.noTitle"),
-        t: i18n.t,
-      },
-    })
-
+    const page = presentPage(pageIndexOfInstant(space, anchor, "UTC"))
     const tiles = page.columns.flatMap((column) => column.tiles)
-    expect(tiles).toHaveLength(3)
+    expect(tiles.map((tile) => tile.identity.uid)).toEqual(["a", "b", "c"])
     for (const tile of tiles) {
       const anchorView = screen.getByTestId(
         `owned-calendar-event-${tile.identity.uid}`,
@@ -119,7 +110,7 @@ describe("page presentation labels match what the owned shell renders", () => {
     }
     for (const column of page.columns) {
       expect(
-        screen.getByTestId(`owned-calendar-date-0-${column.key}`).props
+        screen.getByTestId(`owned-calendar-date-${column.key}`).props
           .accessibilityLabel,
       ).toBe(column.header.label)
     }

@@ -225,6 +225,7 @@ const workletSafeImports = {
     "stepPixelsPerHour",
     "usableViewportCenterY",
   ],
+  "./owned-calendar-geometry": ["dayRowHeight"],
   "react-native-reanimated": true,
   "react-native-worklets": true,
 }
