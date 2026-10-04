@@ -134,7 +134,8 @@ The complete decision matrix is:
 | every other legacy key | any | none | Drop |
 
 Theme mapping is `system → system`, `light → light`, and `dark → dark`. When `theme` is absent,
-`dark_mode == true` maps to `dark`; every other valid or absent value maps to `system`. Each
+`dark_mode == true` maps to `dark` and `dark_mode == false` maps to `system`. When both keys are
+absent, no value is written and the RN default remains `system`. Each
 preference is independent: an invalid preference is skipped, the RN default is retained, and the
 run settles partial without affecting valid preferences or records.
 
@@ -219,7 +220,7 @@ and adds narrow accessors for:
 | Legacy participant | MMKV key | Type | Scope |
 | --- | --- | --- | --- |
 | `theme` / fallback `dark_mode` | `settings.themePreference` | `system`, `light`, or `dark` | environment-independent |
-| `current_version` | `changelogSeenVersion` | non-negative safe integer | environment-independent |
+| `current_version` | `changelogSeenVersion` | non-negative safe integer no higher than the bundled changelog version | environment-independent |
 | `notification_calendar` | `notifications.isActive` | boolean | backend-bound |
 | `startup_screen` | `navigation.startupTab` (new) | `home` or `calendar` | environment-independent |
 | `show_weekends` | `settings.showWeekends` (existing canonical key) | boolean | environment-independent |

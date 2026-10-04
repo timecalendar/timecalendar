@@ -44,11 +44,13 @@ signed-device presence and survival remain an evidence gate — see
 
 ### 1.3 React Native — SQLite via Drizzle
 
-One database, `timecalendar.db` (`mobile/src/db/index.ts`), with six current tables declared in
+One database, `timecalendar.db` (`mobile/src/db/index.ts`), with six application tables declared in
 `mobile/src/db/schema.ts`: durable `personal_events`, `user_calendars`, `checklist_items`, plus
 server-owned/cache `calendar_events`, `activity_logs`, and `activity_state`. The durable-table
-columns deliberately receive the normalized Flutter shapes. Schema migrations run at startup
-(`mobile/src/app/_layout.tsx:42` → `mobile/src/db/migrate.ts`).
+columns deliberately receive the normalized Flutter shapes. The singleton `legacy_migration_run`
+and `legacy_migration_report_outbox` tables retain migration state separately from those six
+application tables. Root bootstrap awaits schema migrations before environment recovery and import
+(`mobile/src/app/_layout.tsx` → `mobile/src/db/migrate.ts`).
 
 ### 1.4 React Native — MMKV key/value
 
@@ -298,7 +300,7 @@ and appear on-device with the `flutter.` prefix.
 | --- | --- |
 | **What / owner** | `Week` \| `Planning` (`app/lib/modules/calendar/models/ui/calendar_view_type.dart`), default `Week`. Calendar. |
 | **Flutter stores it** | `flutter.calendar_view_type` (string) |
-| **RN expects it** | **Nothing persisted.** The RN calendar view is React state initialised to `"week"` on every launch (`mobile/src/features/calendar/ui/calendar-screen/use-calendar-screen-controller.ts`) — no storage key exists for it. |
+| **RN expects it** | Flutter's value is not imported. The RN-owned `settings.calendarView` preference keeps its current value or the RN default week view. |
 | **Class** | 🔵 **DELIBERATELY DROPPED** |
 | **Visible offline right after the update** | The calendar opens in the RN default week view regardless of the Flutter choice. |
 | **Verified by** | `OFF-13` |
@@ -310,7 +312,7 @@ and appear on-device with the `flutter.` prefix.
 | --- | --- |
 | **What / owner** | Four more Flutter calendar/app preferences: show weekends in week view (default `true`); colour courses by group rather than individually (default `false`); the pinch-zoom hour height (default `60.0`); which tab opens at launch, `home` \| `calendar` (default `home`). Settings. |
 | **Flutter stores it** | `flutter.show_weekends`, `flutter.colors_by_group`, `flutter.calendar_hour_height`, `flutter.startup_screen` |
-| **RN expects it** | The import contract adds `calendar.showWeekends` and `navigation.startupTab`. Group-colour mode and hour height have no target and keep RN defaults. |
+| **RN expects it** | `settings.showWeekends` and `navigation.startupTab` receive preserved weekend/startup choices. Group-colour mode is dropped. Flutter hour height is not imported into the RN-owned `settings.calendarZoomPixelsPerHour` preference; its current value or RN default remains. |
 | **Class** | 🔴 **DEVICE** for weekends/startup tab; 🔵 **DELIBERATELY DROPPED** for group colours/hour height |
 | **Visible offline right after the update** | Weekend visibility and startup tab match Flutter. Group-colour mode and hour height use RN defaults. |
 | **Verified by** | `OFF-13` |
@@ -384,7 +386,7 @@ and appear on-device with the `flutter.` prefix.
 
 | | |
 | --- | --- |
-| **What / owner** | MMKV `schoolSelection.schoolId` + `schoolSelection.groupValues` (`mobile/src/features/school-selection/store/types.ts`). RN derives "onboarding complete" from the presence of a school selection (`isOnboardingComplete()`). **Flutter has no equivalent key** — its school/grade choices are transient provider state used to build the subscription, and the resulting school identity survives only *inside* the `user_calendars` row (`schoolId`, `schoolName`). |
+| **What / owner** | MMKV `schoolSelection.schoolId` + `schoolSelection.groupValues` (`mobile/src/features/school-selection/store/types.ts`). RN derives "onboarding complete" from a school selection or `onboarding.migrationSuppressed` (`isOnboardingComplete()`). **Flutter has no equivalent key** — its school/grade choices are transient provider state used to build the subscription, and the resulting school identity survives only *inside* the `user_calendars` row (`schoolId`, `schoolName`). |
 | **Flutter stores it** | Nothing directly; `user_calendars.schoolId` / `schoolName` are the only durable trace. |
 | **RN expects it** | Do not synthesize either school-selection key. The import contract adds `onboarding.migrationSuppressed` and sets it when a valid calendar imports or is already present identically. |
 | **Class** | 🔴 **DEVICE compatibility state** |
