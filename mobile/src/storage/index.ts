@@ -10,6 +10,12 @@ import {
   type BackendEnvironment,
 } from "@/config/backend-environment"
 
+import {
+  getMigrationEdit,
+  MIGRATION_EDITS_KEY,
+  recordMigrationEdit,
+} from "./migration-integrity"
+
 // Thin seam over react-native-mmkv (v4 / Nitro) — the single place the app
 // touches the KV backend, so it stays swappable and feature call sites import
 // @/storage, never react-native-mmkv directly (lint-enforced, see eslint.config.js).
@@ -24,6 +30,9 @@ export const STORAGE_KEYS = {
   timezone: "settings.timezonePreference",
   lastManualTimezone: "settings.lastManualTimezone",
   showWeekends: "settings.showWeekends",
+  startupTab: "navigation.startupTab",
+  migrationSuppressed: "onboarding.migrationSuppressed",
+  migrationNativeEdits: MIGRATION_EDITS_KEY,
   calendarView: "settings.calendarView",
   calendarZoomPixelsPerHour: "settings.calendarZoomPixelsPerHour",
   changelogSeenVersion: "changelogSeenVersion",
@@ -54,6 +63,9 @@ export const STORAGE_KEY_CLASSIFICATION = {
   [STORAGE_KEYS.timezone]: "environment-independent",
   [STORAGE_KEYS.lastManualTimezone]: "environment-independent",
   [STORAGE_KEYS.showWeekends]: "environment-independent",
+  [STORAGE_KEYS.startupTab]: "environment-independent",
+  [STORAGE_KEYS.migrationSuppressed]: "backend-bound",
+  [STORAGE_KEYS.migrationNativeEdits]: "environment-independent",
   [STORAGE_KEYS.calendarView]: "environment-independent",
   [STORAGE_KEYS.calendarZoomPixelsPerHour]: "environment-independent",
   [STORAGE_KEYS.changelogSeenVersion]: "environment-independent",
@@ -146,6 +158,7 @@ export function getString(key: string): string | undefined {
 
 export function setString(key: string, value: string): void {
   storage.set(key, value)
+  recordMigrationEdit(storage, key, value)
 }
 
 export function getBoolean(key: string): boolean | undefined {
@@ -154,6 +167,7 @@ export function getBoolean(key: string): boolean | undefined {
 
 export function setBoolean(key: string, value: boolean): void {
   storage.set(key, value)
+  recordMigrationEdit(storage, key, value)
 }
 
 export function getNumber(key: string): number | undefined {
@@ -162,6 +176,11 @@ export function getNumber(key: string): number | undefined {
 
 export function setNumber(key: string, value: number): void {
   storage.set(key, value)
+  recordMigrationEdit(storage, key, value)
+}
+
+export function getNativeEditFingerprint(key: string): string | undefined {
+  return getMigrationEdit(storage, key)
 }
 
 export function has(key: string): boolean {

@@ -1,0 +1,1039 @@
+{
+  "date": "2026-10-04",
+  "syntheticOnly": true,
+  "command": "MIGRATION_SERVER_CONTRACT=1 npm test -- --runInBand --coverage",
+  "suites": {
+    "passed": 242,
+    "failed": 1,
+    "total": 243
+  },
+  "tests": {
+    "passed": 2422,
+    "failed": 1,
+    "total": 2423
+  },
+  "coverageThresholdsPassed": true,
+  "failures": [
+    {
+      "path": "mobile/src/features/calendar/ui/calendar-screen.test.tsx",
+      "name": "CalendarScreen owned shell runs the deterministic accessibility fixture only on the development route"
+    }
+  ],
+  "baseline": {
+    "commit": "ca663a2d059032615efe7f3899dadbe7b1d6196f",
+    "method": "isolated git archive with installed dependencies symlinked",
+    "calendarScreen": {
+      "passed": 48,
+      "failed": 1,
+      "sameFailure": true
+    }
+  },
+  "storageBackends": {
+    "sqlite": "actual node:sqlite DatabaseSync with production SQL migrations; file reopen and SIGKILL/WAL recovery",
+    "mmkv": "react-native-mmkv Jest backend through production storage seam; native proof is separate"
+  },
+  "coreTests": [
+    {
+      "path": "mobile/src/features/legacy-migration/data/resource-boundaries.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "enforces actual 256KiB text, 512B IDs, 2MiB lines and 50000-array caps at offset -1",
+          "status": "passed"
+        },
+        {
+          "name": "enforces actual 256KiB text, 512B IDs, 2MiB lines and 50000-array caps at offset 0",
+          "status": "passed"
+        },
+        {
+          "name": "enforces actual 256KiB text, 512B IDs, 2MiB lines and 50000-array caps at offset 1",
+          "status": "passed"
+        },
+        {
+          "name": "enforces actual physical-line and live-record caps at offset -1",
+          "status": "passed"
+        },
+        {
+          "name": "enforces actual physical-line and live-record caps at offset 0",
+          "status": "passed"
+        },
+        {
+          "name": "enforces actual physical-line and live-record caps at offset 1",
+          "status": "passed"
+        },
+        {
+          "name": "streams the real 64MiB boundary without retaining a whole-file string at offset -1",
+          "status": "passed"
+        },
+        {
+          "name": "streams the real 64MiB boundary without retaining a whole-file string at offset 0",
+          "status": "passed"
+        },
+        {
+          "name": "streams the real 64MiB boundary without retaining a whole-file string at offset 1",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/data/engine.sqlite.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "imports all approved data at v1 into actual SQLite and MMKV seam, retaining source",
+          "status": "passed"
+        },
+        {
+          "name": "imports all approved data at v2 into actual SQLite and MMKV seam, retaining source",
+          "status": "passed"
+        },
+        {
+          "name": "imports all approved data at v3 into actual SQLite and MMKV seam, retaining source",
+          "status": "passed"
+        },
+        {
+          "name": "converges after real SQLite close/reopen at before_journal",
+          "status": "passed"
+        },
+        {
+          "name": "converges after real SQLite close/reopen at after_journal",
+          "status": "passed"
+        },
+        {
+          "name": "converges after real SQLite close/reopen at after_parse",
+          "status": "passed"
+        },
+        {
+          "name": "converges after real SQLite close/reopen at during_sqlite",
+          "status": "passed"
+        },
+        {
+          "name": "converges after real SQLite close/reopen at after_sqlite",
+          "status": "passed"
+        },
+        {
+          "name": "converges after real SQLite close/reopen at after_native_write",
+          "status": "passed"
+        },
+        {
+          "name": "converges after real SQLite close/reopen at after_native_progress",
+          "status": "passed"
+        },
+        {
+          "name": "converges after real SQLite close/reopen at before_terminal",
+          "status": "passed"
+        },
+        {
+          "name": "converges after real SQLite close/reopen at after_terminal",
+          "status": "passed"
+        },
+        {
+          "name": "keeps terminal state immutable, skips source discovery, and verifies native restore once",
+          "status": "passed"
+        },
+        {
+          "name": "accepts legitimate post-import RN edits without a restore alarm",
+          "status": "passed"
+        },
+        {
+          "name": "does not overwrite divergent RN rows, tokens or native preferences",
+          "status": "passed"
+        },
+        {
+          "name": "compares decoded hidden fields, ignoring JSON formatting and key order",
+          "status": "passed"
+        },
+        {
+          "name": "reparses a changed source on retry and preserves newer RN content",
+          "status": "passed"
+        },
+        {
+          "name": "recovers a kill after the hidden_events native write before progress journaling",
+          "status": "passed"
+        },
+        {
+          "name": "recovers a kill after the theme native write before progress journaling",
+          "status": "passed"
+        },
+        {
+          "name": "recovers a kill after the current_version native write before progress journaling",
+          "status": "passed"
+        },
+        {
+          "name": "recovers a kill after the notification_calendar native write before progress journaling",
+          "status": "passed"
+        },
+        {
+          "name": "recovers a kill after the startup_screen native write before progress journaling",
+          "status": "passed"
+        },
+        {
+          "name": "recovers a kill after the show_weekends native write before progress journaling",
+          "status": "passed"
+        },
+        {
+          "name": "recovers a kill after the onboarding native write before progress journaling",
+          "status": "passed"
+        },
+        {
+          "name": "settles a failure for hiddenEvents.set independently from siblings",
+          "status": "passed"
+        },
+        {
+          "name": "settles a failure for settings.themePreference independently from siblings",
+          "status": "passed"
+        },
+        {
+          "name": "settles a failure for changelogSeenVersion independently from siblings",
+          "status": "passed"
+        },
+        {
+          "name": "settles a failure for notifications.isActive independently from siblings",
+          "status": "passed"
+        },
+        {
+          "name": "settles a failure for navigation.startupTab independently from siblings",
+          "status": "passed"
+        },
+        {
+          "name": "settles a failure for settings.showWeekends independently from siblings",
+          "status": "passed"
+        },
+        {
+          "name": "settles a failure for onboarding.migrationSuppressed independently from siblings",
+          "status": "passed"
+        },
+        {
+          "name": "settles a readback failure for hiddenEvents.set independently",
+          "status": "passed"
+        },
+        {
+          "name": "settles a readback failure for settings.themePreference independently",
+          "status": "passed"
+        },
+        {
+          "name": "settles a readback failure for changelogSeenVersion independently",
+          "status": "passed"
+        },
+        {
+          "name": "settles a readback failure for notifications.isActive independently",
+          "status": "passed"
+        },
+        {
+          "name": "settles a readback failure for navigation.startupTab independently",
+          "status": "passed"
+        },
+        {
+          "name": "settles a readback failure for settings.showWeekends independently",
+          "status": "passed"
+        },
+        {
+          "name": "settles a readback failure for onboarding.migrationSuppressed independently",
+          "status": "passed"
+        },
+        {
+          "name": "settles absent startup durably with one offline outbox entry",
+          "status": "passed"
+        },
+        {
+          "name": "settles empty startup durably with one offline outbox entry",
+          "status": "passed"
+        },
+        {
+          "name": "settles prefs_only startup durably with one offline outbox entry",
+          "status": "passed"
+        },
+        {
+          "name": "settles invalid startup durably with one offline outbox entry",
+          "status": "passed"
+        },
+        {
+          "name": "settles unsupported startup durably with one offline outbox entry",
+          "status": "passed"
+        },
+        {
+          "name": "settles unavailable startup durably with one offline outbox entry",
+          "status": "passed"
+        },
+        {
+          "name": "settles limit startup durably with one offline outbox entry",
+          "status": "passed"
+        },
+        {
+          "name": "never creates journal/discovers while identity or effective backend is ineligible",
+          "status": "passed"
+        },
+        {
+          "name": "leaves a failed terminal transaction retryable rather than falsely complete",
+          "status": "passed"
+        },
+        {
+          "name": "rolls back entity writes atomically and preserves independent preferences after handled SQLite failure",
+          "status": "passed"
+        },
+        {
+          "name": "maintains report privacy and bounds independently of imported nonUUID IDs",
+          "status": "passed"
+        },
+        {
+          "name": "delivers offline outbox independently with stable replay ID, bounded retry and accurate permanent rejection attempts",
+          "status": "passed"
+        },
+        {
+          "name": "replays upload after a killed acknowledgement without changing its payload",
+          "status": "passed"
+        },
+        {
+          "name": "rejects invalid journal terminal/retry shapes and singleton duplicates in actual SQLite",
+          "status": "passed"
+        },
+        {
+          "name": "rejects malformed durable counters_json before any source discovery",
+          "status": "passed"
+        },
+        {
+          "name": "rejects malformed durable counters_json before any source discovery",
+          "status": "passed"
+        },
+        {
+          "name": "rejects malformed durable counters_json before any source discovery",
+          "status": "passed"
+        },
+        {
+          "name": "rejects malformed durable error_codes_json before any source discovery",
+          "status": "passed"
+        },
+        {
+          "name": "rejects malformed durable error_codes_json before any source discovery",
+          "status": "passed"
+        },
+        {
+          "name": "rejects malformed durable error_codes_json before any source discovery",
+          "status": "passed"
+        },
+        {
+          "name": "rejects malformed durable error_codes_json before any source discovery",
+          "status": "passed"
+        },
+        {
+          "name": "rejects malformed durable preference_progress before any source discovery",
+          "status": "passed"
+        },
+        {
+          "name": "validates every dataset counter before updating the durable journal",
+          "status": "passed"
+        },
+        {
+          "name": "pauses report delivery on backend changes and bounds transient retry delays",
+          "status": "passed"
+        },
+        {
+          "name": "recovers actual SIGKILL of a SQLite writer with transaction committed=false",
+          "status": "passed"
+        },
+        {
+          "name": "recovers actual SIGKILL of a SQLite writer with transaction committed=true",
+          "status": "passed"
+        },
+        {
+          "name": "keeps terminal reports and imported values intact after normal RN edits and deletions",
+          "status": "passed"
+        },
+        {
+          "name": "settles target verification read failures with a private bounded code",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/data/runtime.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "gates actual application identity fr.samuelprak.timecalendar and backend production",
+          "status": "passed"
+        },
+        {
+          "name": "gates actual application identity fr.samuelprak.timecalendar.dev and backend production",
+          "status": "passed"
+        },
+        {
+          "name": "gates actual application identity fr.samuelprak.timecalendar and backend preproduction",
+          "status": "passed"
+        },
+        {
+          "name": "gates actual application identity null and backend production",
+          "status": "passed"
+        },
+        {
+          "name": "never discovers on unsupported platforms",
+          "status": "passed"
+        },
+        {
+          "name": "settles and delivers through the generated client on ios with safe missing release metadata",
+          "status": "passed"
+        },
+        {
+          "name": "settles and delivers through the generated client on android with safe missing release metadata",
+          "status": "passed"
+        },
+        {
+          "name": "retains a terminal report when the generated client reports schema failure",
+          "status": "passed"
+        },
+        {
+          "name": "retains a terminal report when the generated client reports offline failure",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "mobile/src/db/migrate.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "runMigrations drives migrate() with the committed bundle",
+          "status": "passed"
+        },
+        {
+          "name": "runMigrations records a migration failure through the @/firebase seam",
+          "status": "passed"
+        },
+        {
+          "name": "runMigrations wraps a non-Error rejection before recording it",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/data/sync.sqlite.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "preserves imported checklists, personal data and hidden filters through repeated real SQLite calendar replacement",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/data/preferences.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "maps every allowed preference without importing deliberately dropped settings",
+          "status": "passed"
+        },
+        {
+          "name": "maps dark_mode true only when theme is absent",
+          "status": "passed"
+        },
+        {
+          "name": "maps dark_mode false only when theme is absent",
+          "status": "passed"
+        },
+        {
+          "name": "isolates invalid type/read failure for theme",
+          "status": "passed"
+        },
+        {
+          "name": "isolates invalid type/read failure for dark_mode",
+          "status": "passed"
+        },
+        {
+          "name": "isolates invalid type/read failure for current_version",
+          "status": "passed"
+        },
+        {
+          "name": "isolates invalid type/read failure for notification_calendar",
+          "status": "passed"
+        },
+        {
+          "name": "isolates invalid type/read failure for startup_screen",
+          "status": "passed"
+        },
+        {
+          "name": "isolates invalid type/read failure for show_weekends",
+          "status": "passed"
+        },
+        {
+          "name": "rejects invalid/future changelog value -1 without clamping",
+          "status": "passed"
+        },
+        {
+          "name": "rejects invalid/future changelog value 1.5 without clamping",
+          "status": "passed"
+        },
+        {
+          "name": "rejects invalid/future changelog value NaN without clamping",
+          "status": "passed"
+        },
+        {
+          "name": "rejects invalid/future changelog value Infinity without clamping",
+          "status": "passed"
+        },
+        {
+          "name": "rejects invalid/future changelog value 9007199254740992 without clamping",
+          "status": "passed"
+        },
+        {
+          "name": "rejects invalid/future changelog value 5 without clamping",
+          "status": "passed"
+        },
+        {
+          "name": "rejects invalid/future changelog value \"2\" without clamping",
+          "status": "passed"
+        },
+        {
+          "name": "keeps no-source preferences absent and never falls back from an invalid theme",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/ui/startup-tabs-gate.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "lands on the migrated calendar tab before mounting changelog and permits returning Home",
+          "status": "passed"
+        },
+        {
+          "name": "preserves explicit routes and the normal Home default at /",
+          "status": "passed"
+        },
+        {
+          "name": "preserves explicit routes and the normal Home default at /calendar",
+          "status": "passed"
+        },
+        {
+          "name": "preserves explicit routes and the normal Home default at /event-details/cold-notification",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/data/report.contract.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "bounds every terminal result and filters UUID edges independently of import",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "mobile/src/api/mutator.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "never logs private report payloads or echoed calendar IDs",
+          "status": "passed"
+        },
+        {
+          "name": "customFetchResponse preserves status, Headers, and parsed data for every HTTP status",
+          "status": "passed"
+        },
+        {
+          "name": "customFetchResponse accepts a ASCII JSON body at exactly 512 KiB",
+          "status": "passed"
+        },
+        {
+          "name": "customFetchResponse accepts a multibyte JSON body at exactly 512 KiB",
+          "status": "passed"
+        },
+        {
+          "name": "customFetchResponse accepts a three-byte JSON body at exactly 512 KiB",
+          "status": "passed"
+        },
+        {
+          "name": "customFetchResponse accepts a four-byte JSON body at exactly 512 KiB",
+          "status": "passed"
+        },
+        {
+          "name": "customFetchResponse rejects an export-guide body above 512 KiB before parsing",
+          "status": "passed"
+        },
+        {
+          "name": "customFetchResponse rejects malformed export-guide JSON with a static transport error",
+          "status": "passed"
+        },
+        {
+          "name": "customFetchResponse forwards already-aborted and live caller cancellation",
+          "status": "passed"
+        },
+        {
+          "name": "customFetchResponse shares timeout and reset cancellation and clears settled timers",
+          "status": "passed"
+        },
+        {
+          "name": "customFetchResponse keeps export-guide diagnostics bounded and payload-free",
+          "status": "passed"
+        },
+        {
+          "name": "customFetchResponse uses a coarse duration bucket at 500ms",
+          "status": "passed"
+        },
+        {
+          "name": "customFetchResponse uses a coarse duration bucket at 2000ms",
+          "status": "passed"
+        },
+        {
+          "name": "customFetchResponse fails before fetch while the backend runtime is resetting",
+          "status": "passed"
+        },
+        {
+          "name": "customFetch resolves with the parsed body and targets <baseURL><url> with JSON headers",
+          "status": "passed"
+        },
+        {
+          "name": "customFetch sets Content-Type when a request body is sent",
+          "status": "passed"
+        },
+        {
+          "name": "customFetch rejects a non-2xx response with an ApiError carrying the status + parsed body",
+          "status": "passed"
+        },
+        {
+          "name": "customFetch redacts contact request and response bodies from development diagnostics",
+          "status": "passed"
+        },
+        {
+          "name": "customFetch keeps payload diagnostics for non-sensitive API paths",
+          "status": "passed"
+        },
+        {
+          "name": "customFetch falls back to the raw text body when the response is not JSON",
+          "status": "passed"
+        },
+        {
+          "name": "customFetch resolves undefined for an empty response body",
+          "status": "passed"
+        },
+        {
+          "name": "customFetch forwards an already-aborted caller signal to the underlying fetch",
+          "status": "passed"
+        },
+        {
+          "name": "customFetch cancels an in-flight request when a live caller signal later aborts",
+          "status": "passed"
+        },
+        {
+          "name": "customFetch aborts a never-resolving request once the default timeout elapses",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "mobile/src/storage/migration-participants.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "accepts real settings hooks, hidden edits and changelog advancement at the next terminal launch",
+          "status": "passed"
+        },
+        {
+          "name": "classifies startup intent and onboarding suppression during environment reset",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/ui/report-runtime.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "retries after connected foreground/timer opportunities and tears down independently",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/data/native-source.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "reads only 64KiB chunks and closes the read-only handle on EOF",
+          "status": "passed"
+        },
+        {
+          "name": "closes the handle when parsing stops at a bound or an I/O read fails",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/data/parser.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "normalizes every approved entity from version 1 including nulls, local dates and exact colors",
+          "status": "passed"
+        },
+        {
+          "name": "normalizes every approved entity from version 2 including nulls, local dates and exact colors",
+          "status": "passed"
+        },
+        {
+          "name": "normalizes every approved entity from version 3 including nulls, local dates and exact colors",
+          "status": "passed"
+        },
+        {
+          "name": "replays writes, number/string keys and tombstones in source order",
+          "status": "passed"
+        },
+        {
+          "name": "picks latest valid logical ID, then latest token, while invalid later duplicates cannot suppress siblings",
+          "status": "passed"
+        },
+        {
+          "name": "salvages malformed interior and truncated final lines with no raw diagnostics",
+          "status": "passed"
+        },
+        {
+          "name": "fails unsupported or absent metadata \"\" without importing",
+          "status": "passed"
+        },
+        {
+          "name": "fails unsupported or absent metadata \"{}\n\" without importing",
+          "status": "passed"
+        },
+        {
+          "name": "fails unsupported or absent metadata \"[]\n\" without importing",
+          "status": "passed"
+        },
+        {
+          "name": "fails unsupported or absent metadata \"{\\\"sembast\\\":1,\\\"version\\\":4}\n\" without importing",
+          "status": "passed"
+        },
+        {
+          "name": "fails unsupported or absent metadata \"{\\\"sembast\\\":1,\\\"version\\\":-1}\n\" without importing",
+          "status": "passed"
+        },
+        {
+          "name": "fails unsupported or absent metadata \"{\\\"sembast\\\":1,\\\"version\\\":1.1}\n\" without importing",
+          "status": "passed"
+        },
+        {
+          "name": "fails unsupported or absent metadata \"{\\\"sembast\\\":1}\n\" without importing",
+          "status": "passed"
+        },
+        {
+          "name": "fails unsupported or absent metadata \"{\\\"version\\\":3,\" without importing",
+          "status": "passed"
+        },
+        {
+          "name": "accepts a BOM only at byte zero and strict UTF8 across chunk boundaries",
+          "status": "passed"
+        },
+        {
+          "name": "rejects UID-less historical records, invalid dates, nested fields and prototype-bearing values",
+          "status": "passed"
+        },
+        {
+          "name": "salvages calendars and checklists independently when field types are invalid",
+          "status": "passed"
+        },
+        {
+          "name": "uses the final hidden record, deduplicates exact strings and salvages each array independently",
+          "status": "passed"
+        },
+        {
+          "name": "enforces file, line, record, text, array and diagnostic bounds at offset -1",
+          "status": "passed"
+        },
+        {
+          "name": "enforces file, line, record, text, array and diagnostic bounds at offset 0",
+          "status": "passed"
+        },
+        {
+          "name": "enforces file, line, record, text, array and diagnostic bounds at offset 1",
+          "status": "passed"
+        },
+        {
+          "name": "counts physical blank lines and skips an oversized line without accumulating it",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/ui/bootstrap-gate.test.tsx",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "orders schema, environment recovery, migration and every application consumer without timeout",
+          "status": "passed"
+        },
+        {
+          "name": "shares schema work across concurrent callers and rejects failed prerequisites",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "mobile/src/features/splash/ui/use-app-ready.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "hands off the splash when root prerequisites have completed",
+          "status": "passed"
+        },
+        {
+          "name": "never lets elapsed time bypass pending storage readiness",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "mobile/src/features/notifications/ui/notification-native-controls.contract.test.ts",
+      "status": "passed",
+      "tests": [
+        {
+          "name": "native notification control ownership contract keeps every route thin and registered with Router-owned sheet options",
+          "status": "passed"
+        },
+        {
+          "name": "native notification control ownership contract keeps Expo UI in chrome and data ownership out of feature UI",
+          "status": "passed"
+        },
+        {
+          "name": "native notification control ownership contract pins preset-over-Custom and one explicit custom commit",
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "coreCoverage": [
+    {
+      "path": "mobile/src/api/mutator.ts",
+      "statements": {
+        "hit": 93,
+        "total": 93
+      },
+      "branches": {
+        "hit": 60,
+        "total": 63
+      }
+    },
+    {
+      "path": "mobile/src/db/legacy-migration.ts",
+      "statements": {
+        "hit": 79,
+        "total": 79
+      },
+      "branches": {
+        "hit": 97,
+        "total": 97
+      }
+    },
+    {
+      "path": "mobile/src/db/migrate.ts",
+      "statements": {
+        "hit": 4,
+        "total": 4
+      },
+      "branches": {
+        "hit": 0,
+        "total": 0
+      }
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/index.ts",
+      "statements": {
+        "hit": 0,
+        "total": 0
+      },
+      "branches": {
+        "hit": 0,
+        "total": 0
+      }
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/data/bootstrap.ts",
+      "statements": {
+        "hit": 4,
+        "total": 4
+      },
+      "branches": {
+        "hit": 0,
+        "total": 0
+      }
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/data/engine.ts",
+      "statements": {
+        "hit": 153,
+        "total": 165
+      },
+      "branches": {
+        "hit": 96,
+        "total": 105
+      }
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/data/native-source.ts",
+      "statements": {
+        "hit": 11,
+        "total": 11
+      },
+      "branches": {
+        "hit": 2,
+        "total": 2
+      }
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/data/normalize.ts",
+      "statements": {
+        "hit": 66,
+        "total": 66
+      },
+      "branches": {
+        "hit": 73,
+        "total": 73
+      }
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/data/outbox.ts",
+      "statements": {
+        "hit": 20,
+        "total": 20
+      },
+      "branches": {
+        "hit": 12,
+        "total": 12
+      }
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/data/parser.ts",
+      "statements": {
+        "hit": 141,
+        "total": 149
+      },
+      "branches": {
+        "hit": 111,
+        "total": 120
+      }
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/data/preferences.ts",
+      "statements": {
+        "hit": 40,
+        "total": 40
+      },
+      "branches": {
+        "hit": 40,
+        "total": 40
+      }
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/data/report.ts",
+      "statements": {
+        "hit": 16,
+        "total": 16
+      },
+      "branches": {
+        "hit": 13,
+        "total": 14
+      }
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/data/runtime.ts",
+      "statements": {
+        "hit": 11,
+        "total": 11
+      },
+      "branches": {
+        "hit": 12,
+        "total": 12
+      }
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/data/types.ts",
+      "statements": {
+        "hit": 15,
+        "total": 15
+      },
+      "branches": {
+        "hit": 8,
+        "total": 8
+      }
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/ui/bootstrap-gate.tsx",
+      "statements": {
+        "hit": 10,
+        "total": 13
+      },
+      "branches": {
+        "hit": 4,
+        "total": 8
+      }
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/ui/report-runtime.tsx",
+      "statements": {
+        "hit": 13,
+        "total": 13
+      },
+      "branches": {
+        "hit": 2,
+        "total": 2
+      }
+    },
+    {
+      "path": "mobile/src/features/legacy-migration/ui/startup-tabs-gate.tsx",
+      "statements": {
+        "hit": 10,
+        "total": 10
+      },
+      "branches": {
+        "hit": 10,
+        "total": 10
+      }
+    },
+    {
+      "path": "mobile/src/features/splash/ui/use-app-ready.ts",
+      "statements": {
+        "hit": 2,
+        "total": 2
+      },
+      "branches": {
+        "hit": 1,
+        "total": 1
+      }
+    },
+    {
+      "path": "mobile/src/storage/migration-integrity.ts",
+      "statements": {
+        "hit": 23,
+        "total": 25
+      },
+      "branches": {
+        "hit": 23,
+        "total": 25
+      }
+    },
+    {
+      "path": "mobile/src/storage/migration-participants.ts",
+      "statements": {
+        "hit": 9,
+        "total": 9
+      },
+      "branches": {
+        "hit": 10,
+        "total": 10
+      }
+    }
+  ],
+  "finalFocused": {
+    "passed": 168,
+    "failed": 0,
+    "suites": 16
+  },
+  "checks": {
+    "typescript": "pass",
+    "lint": "pass (zero warnings)",
+    "reactCompiler": "pass (24 functions)",
+    "reactDoctor": "pass (47 changed files)",
+    "performanceContracts": "pass (15 tests)"
+  }
+}

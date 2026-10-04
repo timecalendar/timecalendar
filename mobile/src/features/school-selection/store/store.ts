@@ -1,4 +1,5 @@
 import { getString, remove, setString } from "@/storage"
+import { isMigrationOnboardingSuppressed } from "@/storage/migration-participants"
 
 import {
   encodeGroupValues,
@@ -47,5 +48,5 @@ export function hasSelection(): boolean {
 }
 
 export function isOnboardingComplete(): boolean {
-  return hasSelection()
+  return hasSelection() || isMigrationOnboardingSuppressed()
 }

@@ -14,6 +14,7 @@ import {
 import { drizzle } from "drizzle-orm/expo-sqlite"
 import { openDatabaseSync } from "expo-sqlite"
 
+import { createMigrationRepository } from "./legacy-migration"
 import { useLiveQuery } from "./live-query"
 import { resetBackendDatabaseWith } from "./reset"
 import {
@@ -42,6 +43,7 @@ const expoDb = openDatabaseSync("timecalendar.db", {
 })
 
 export const db = drizzle(expoDb)
+export const legacyMigrationRepository = createMigrationRepository(expoDb)
 
 /* istanbul ignore next -- native singleton wiring; reset.ts owns the tested transaction */
 export function resetBackendDatabase(): void {

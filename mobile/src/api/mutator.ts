@@ -99,13 +99,15 @@ const request = async (
   const fullUrl = `${getApiBaseUrl()}${url}`
   const method = options.method ?? "GET"
   const pathname = new URL(fullUrl).pathname
-  const redactPayload = __DEV__ && pathname === CONTACT_PATH
+  const sensitiveMigrationReport = pathname === "/v1/migration-reports"
+  const redactPayload =
+    __DEV__ && (pathname === CONTACT_PATH || sensitiveMigrationReport)
   const sensitiveExportGuide = pathname === EXPORT_GUIDES_PATH
   const startedAt = Date.now()
   let responseStatus: number | undefined
 
   if (__DEV__ && !sensitiveExportGuide) {
-    if (redactPayload) console.log(`[api] → ${method} ${CONTACT_PATH}`)
+    if (redactPayload) console.log(`[api] → ${method} ${pathname}`)
     else console.log(`[api] → ${method} ${fullUrl}`, options.body ?? "")
   }
 
@@ -143,7 +145,7 @@ const request = async (
           `[api] ← ${method} ${EXPORT_GUIDES_PATH} status=${response.status} duration=${durationBucket(Date.now() - startedAt)} outcome=response`,
         )
       } else if (redactPayload)
-        console.log(`[api] ← ${response.status} ${method} ${CONTACT_PATH}`)
+        console.log(`[api] ← ${response.status} ${method} ${pathname}`)
       else
         console.log(
           `[api] ← ${response.status} ${method} ${fullUrl}`,

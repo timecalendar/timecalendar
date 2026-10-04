@@ -23,6 +23,12 @@ import {
 import { useStartupSync } from "@/features/calendar"
 import { EnvironmentRuntimeGate } from "@/features/environment"
 import {
+  BootstrapGate,
+  createBootstrapStage,
+  MigrationReportRuntime,
+  runLegacyMigration,
+} from "@/features/legacy-migration"
+import {
   useNotificationSyncRuntime,
   useNotificationTapRouting,
 } from "@/features/notifications"
@@ -42,17 +48,9 @@ export const unstable_settings = {
   initialRouteName: "(tabs)",
 }
 
-// Apply the committed migration bundle at startup, before features read tables
-// (fire-and-forget, mirroring the i18n side-effect wiring). Failures are
-// recorded through @/firebase inside the runner.
-void runMigrations()
+const initializeSchema = createBootstrapStage(runMigrations)
 
-// Fire the startup calendar sync once (fire-and-forget, mirroring the i18n /
-// runMigrations startup posture — D5). It is a component (not a top-level side
-// effect) because the sync wires the generated mutation, which needs the
-// QueryClient in context; it renders nothing. Mounted inside the query provider.
-// It goes through the feature data/ hook (@/features/calendar), never @/db data
-// directly (boundary B-3/B-4).
+// Sync needs QueryClient context and must mount after durable migration settles.
 function StartupSync() {
   useStartupSync()
   return null
@@ -113,131 +111,142 @@ export default function RootLayout() {
     // GestureHandlerRootView remains the outermost wrapper for the Expo runtime
     // and the app's current and future owned gesture consumers.
     <GestureHandlerRootView style={styles.root}>
-      <EnvironmentRuntimeGate>
-        {/* The sync persister (ADR 013 / D8) restores the schools/groups query
+      <BootstrapGate initialize={initializeSchema}>
+        <EnvironmentRuntimeGate>
+          <BootstrapGate initialize={runLegacyMigration}>
+            {/* The sync persister (ADR 013 / D8) restores the schools/groups query
           cache synchronously — no async restore gate / isRestoring handling; the
           existing splash already gates first paint and the cache is restored by
           the time queries run. */}
-        <PersistQueryClientProvider
-          client={queryClient}
-          persistOptions={persistOptions}
-        >
-          <OtaUpdateRuntime />
-          <StartupSync />
-          <ActivityRuntime />
-          <NotificationRuntime />
-          <NotificationTapRouting />
-          <LocaleSynchronizer />
-          <ThemeProvider value={navTheme}>
-            <Stack screenOptions={rootScreenOptions}>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="profile" options={{ headerShown: false }} />
-              <Stack.Screen name="more" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="onboarding"
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="calendar-import-result"
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen name="appearance-settings" />
-              <Stack.Screen name="language-settings" />
-              <Stack.Screen name="settings-gallery" />
-              <Stack.Screen name="about" />
-              <Stack.Screen name="changelog" />
-              <Stack.Screen
-                name="changelog-sheet"
-                options={{
-                  presentation:
-                    Platform.OS === "ios" ? "formSheet" : "fullScreenModal",
-                  sheetAllowedDetents: [1],
-                  sheetGrabberVisible: true,
-                }}
-              />
-              {/* The display-timezone picker screen — a Stack sibling of (tabs),
+            <PersistQueryClientProvider
+              client={queryClient}
+              persistOptions={persistOptions}
+            >
+              <OtaUpdateRuntime />
+              <MigrationReportRuntime />
+              <StartupSync />
+              <ActivityRuntime />
+              <NotificationRuntime />
+              <NotificationTapRouting />
+              <LocaleSynchronizer />
+              <ThemeProvider value={navTheme}>
+                <Stack screenOptions={rootScreenOptions}>
+                  <Stack.Screen
+                    name="(tabs)"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="profile"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen name="more" options={{ headerShown: false }} />
+                  <Stack.Screen
+                    name="onboarding"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="calendar-import-result"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen name="appearance-settings" />
+                  <Stack.Screen name="language-settings" />
+                  <Stack.Screen name="settings-gallery" />
+                  <Stack.Screen name="about" />
+                  <Stack.Screen name="changelog" />
+                  <Stack.Screen
+                    name="changelog-sheet"
+                    options={{
+                      presentation:
+                        Platform.OS === "ios" ? "formSheet" : "fullScreenModal",
+                      sheetAllowedDetents: [1],
+                      sheetGrabberVisible: true,
+                    }}
+                  />
+                  {/* The display-timezone picker screen — a Stack sibling of (tabs),
                 reached from Settings, mirroring appearance settings. Header
                 shown for the accessible back affordance + the screen's own
                 title. Deep-linkable: timecalendar-dev://timezone-settings. */}
-              <Stack.Screen name="timezone-settings" />
-              <Stack.Screen
-                name="timezone-chooser"
-                options={{
-                  presentation:
-                    Platform.OS === "ios" ? "formSheet" : "fullScreenModal",
-                  sheetAllowedDetents: [0.85, 1],
-                  sheetInitialDetentIndex: 0,
-                  sheetGrabberVisible: true,
-                }}
-              />
-              <Stack.Screen name="personal-event-form" />
-              {/* The standalone personal-events list, relocated off the Home tab
+                  <Stack.Screen name="timezone-settings" />
+                  <Stack.Screen
+                    name="timezone-chooser"
+                    options={{
+                      presentation:
+                        Platform.OS === "ios" ? "formSheet" : "fullScreenModal",
+                      sheetAllowedDetents: [0.85, 1],
+                      sheetInitialDetentIndex: 0,
+                      sheetGrabberVisible: true,
+                    }}
+                  />
+                  <Stack.Screen name="personal-event-form" />
+                  {/* The standalone personal-events list, relocated off the Home tab
                 (ADR 022 — the Home tab is now the today view). A Stack sibling of
                 (tabs), reached from Settings, mirroring calendar management.
                 Deep-linkable: timecalendar-dev://personal-events. */}
-              <Stack.Screen name="personal-events" />
-              {/* Header shown so the read-only details screen has the default
+                  <Stack.Screen name="personal-events" />
+                  {/* Header shown so the read-only details screen has the default
                 accessible back affordance (the screen sets its localized title
                 via its own <Stack.Screen options>). Deep-linkable:
                 timecalendar-dev://event-details/<uid>. */}
-              <Stack.Screen name="event-details/[uid]" />
-              {/* The hidden-events management screen (Phase 05 Ship A) — a Stack
+                  <Stack.Screen name="event-details/[uid]" />
+                  {/* The hidden-events management screen (Phase 05 Ship A) — a Stack
                 sibling of (tabs), reached from Settings, where
                 hide-by-name (no per-event details surface) is un-hideable.
                 Header shown for the accessible back affordance + the screen's
                 own title. Deep-linkable: timecalendar-dev://hidden-events. */}
-              <Stack.Screen name="hidden-events" />
-              {/* The Activity timeline — a Stack sibling of (tabs), reached from
+                  <Stack.Screen name="hidden-events" />
+                  {/* The Activity timeline — a Stack sibling of (tabs), reached from
                 Settings. Deep-linkable: timecalendar-dev://activity. */}
-              <Stack.Screen name="activity" />
-              {/* The notification subscription preferences screen (Phase 06 Ship
+                  <Stack.Screen name="activity" />
+                  {/* The notification subscription preferences screen (Phase 06 Ship
                 B) — a Stack sibling of (tabs), reached from Settings,
                 mirroring appearance settings / hidden-events. Header shown for the
                 accessible back affordance + the screen's own title.
                 Deep-linkable: timecalendar-dev://notification-settings. */}
-              <Stack.Screen name="notification-settings" />
-              <Stack.Screen name="notification-frequency" />
-              <Stack.Screen name="notification-days-ahead" />
-              <Stack.Screen
-                name="notification-days-custom"
-                options={{
-                  presentation:
-                    Platform.OS === "ios" ? "formSheet" : "fullScreenModal",
-                  sheetAllowedDetents: [0.5],
-                  sheetGrabberVisible: true,
-                }}
-              />
-              <Stack.Screen name="feedback" />
-              {/* The user-calendars management list ("Calendriers") and its
+                  <Stack.Screen name="notification-settings" />
+                  <Stack.Screen name="notification-frequency" />
+                  <Stack.Screen name="notification-days-ahead" />
+                  <Stack.Screen
+                    name="notification-days-custom"
+                    options={{
+                      presentation:
+                        Platform.OS === "ios" ? "formSheet" : "fullScreenModal",
+                      sheetAllowedDetents: [0.5],
+                      sheetGrabberVisible: true,
+                    }}
+                  />
+                  <Stack.Screen name="feedback" />
+                  {/* The user-calendars management list ("Calendriers") and its
                 per-calendar page (name, visibility, delete) — Stack siblings of
                 (tabs), reached from the Settings summary. Deep-linkable:
                 timecalendar-dev://user-calendars[/<id>]. */}
-              <Stack.Screen name="user-calendars" />
-              <Stack.Screen name="user-calendars/[id]" />
-              {/* The dev-only import deep-link target (ADR 030) — a Stack sibling
+                  <Stack.Screen name="user-calendars" />
+                  <Stack.Screen name="user-calendars/[id]" />
+                  {/* The dev-only import deep-link target (ADR 030) — a Stack sibling
                 of (tabs), the E2E seam that makes the app durably hold a seeded
                 calendar token so real synced data renders. Headerless (it self-
                 routes to /calendar on success). The import ACTION is runtime-gated
                 on the app variant (inert in production); the route file still
                 ships in the prod bundle. Deep-linkable:
                 timecalendar-dev://dev-import?token=<token>. */}
-              <Stack.Screen
-                name="dev-import"
-                options={{ headerShown: false }}
-              />
-              {/* The dev-only native paging spike (E02): renders only in dev
+                  <Stack.Screen
+                    name="dev-import"
+                    options={{ headerShown: false }}
+                  />
+                  {/* The dev-only native paging spike (E02): renders only in dev
                 variants and is reached by deep link, never from navigation. */}
-              <Stack.Screen
-                name="dev-paging-spike"
-                options={{ headerShown: false }}
-              />
-            </Stack>
-            {/* Above the Stack: covers the whole app during startup, fades out (or
+                  <Stack.Screen
+                    name="dev-paging-spike"
+                    options={{ headerShown: false }}
+                  />
+                </Stack>
+                {/* Above the Stack: covers the whole app during startup, fades out (or
               cuts under reduced motion) once useAppReady() resolves. */}
-            <SplashScreen />
-          </ThemeProvider>
-        </PersistQueryClientProvider>
-      </EnvironmentRuntimeGate>
+                <SplashScreen />
+              </ThemeProvider>
+            </PersistQueryClientProvider>
+          </BootstrapGate>
+        </EnvironmentRuntimeGate>
+      </BootstrapGate>
     </GestureHandlerRootView>
   )
 }

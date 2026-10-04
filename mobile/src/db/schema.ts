@@ -1,4 +1,46 @@
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core"
+import { sql } from "drizzle-orm"
+import {
+  check,
+  index,
+  integer,
+  sqliteTable,
+  text,
+} from "drizzle-orm/sqlite-core"
+
+export const legacyMigrationRun = sqliteTable(
+  "legacy_migration_run",
+  {
+    id: integer("id").primaryKey(),
+    state: text("state").notNull(),
+    reportId: text("report_id").notNull().unique(),
+    attemptCount: integer("attempt_count").notNull(),
+    startedAt: text("started_at").notNull(),
+    completedAt: text("completed_at"),
+    sourceVersion: integer("source_version"),
+    sourceSizeBytes: integer("source_size_bytes"),
+    sourceFingerprint: text("source_fingerprint"),
+    sqliteCommitted: integer("sqlite_committed").notNull().default(0),
+    preferenceProgress: text("preference_progress")
+      .notNull()
+      .default('{"version":1,"participants":{}}'),
+    countersJson: text("counters_json").notNull().default("{}"),
+    errorCodesJson: text("error_codes_json").notNull().default("[]"),
+    terminalOutcome: text("terminal_outcome"),
+  },
+  (table) => [check("legacy_migration_singleton", sql`${table.id} = 1`)],
+)
+
+export const legacyMigrationReportOutbox = sqliteTable(
+  "legacy_migration_report_outbox",
+  {
+    reportId: text("report_id").primaryKey(),
+    payloadJson: text("payload_json").notNull(),
+    attemptCount: integer("attempt_count").notNull().default(0),
+    nextAttemptAt: text("next_attempt_at"),
+    deliveredAt: text("delivered_at"),
+    createdAt: text("created_at").notNull(),
+  },
+)
 
 // The first real feature schema — Personal events (TIM-132 / ADR 011).
 //

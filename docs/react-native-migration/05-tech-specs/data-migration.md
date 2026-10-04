@@ -197,17 +197,17 @@ The exact entity mapping is:
 | calendar `id` | `user_calendars.id` | validated string; authoritative key even for pre-v3 store keys |
 | calendar `token` | `user_calendars.token` | exact string; never logged |
 | calendar `name` | `user_calendars.name` | exact string |
-| calendar `schoolName` / `schoolId` | `user_calendars.school_name` / `school_id` | absent becomes SQL null |
+| calendar `schoolName` / `schoolId` | `user_calendars.school_name` / `school_id` | absent or explicit null becomes SQL null |
 | calendar `lastUpdatedAt` / `createdAt` | `user_calendars.last_updated_at` / `created_at` | canonical UTC ISO string |
 | calendar `visible` | `user_calendars.visible` | exact boolean; missing becomes true |
 | event `uid` | `personal_events.uid` | validated string and primary key |
 | event `title` / `color` | `personal_events.title` / `color` | exact accepted strings; colour is never transformed |
 | event `startsAt` / `endsAt` / `exportedAt` | `personal_events.starts_at` / `ends_at` / `exported_at` | canonical UTC ISO strings; pre-v2 names mapped first |
-| event `location` / `description` | `personal_events.location` / `description` | absent becomes SQL null; empty string remains empty |
+| event `location` / `description` | `personal_events.location` / `description` | absent or explicit null becomes SQL null; empty string remains empty |
 | checklist `uuid` / `eventUid` | `checklist_items.uuid` / `event_uid` | exact validated strings; `uuid` is primary key |
 | checklist `content` | `checklist_items.content` | exact accepted string |
 | checklist `isChecked` / `order` | `checklist_items.is_checked` / `order` | exact boolean / finite integer |
-| checklist `createdAt` / `updatedAt` / `deletedAt` | `checklist_items.created_at` / `updated_at` / `deleted_at` | absent becomes SQL null; otherwise canonical UTC ISO |
+| checklist `createdAt` / `updatedAt` / `deletedAt` | `checklist_items.created_at` / `updated_at` / `deleted_at` | absent or explicit null becomes SQL null; otherwise canonical UTC ISO |
 
 No Flutter field is written to `calendar_events`, `activity_logs`, or `activity_state`.
 
@@ -222,7 +222,7 @@ and adds narrow accessors for:
 | `current_version` | `changelogSeenVersion` | non-negative safe integer | environment-independent |
 | `notification_calendar` | `notifications.isActive` | boolean | backend-bound |
 | `startup_screen` | `navigation.startupTab` (new) | `home` or `calendar` | environment-independent |
-| `show_weekends` | `calendar.showWeekends` (new) | boolean | environment-independent |
+| `show_weekends` | `settings.showWeekends` (existing canonical key) | boolean | environment-independent |
 | final `hidden_events` record | `hiddenEvents.set` | JSON `{uidHiddenEvents:string[], namedHiddenEvents:string[]}` | backend-bound |
 | qualifying imported calendar | `onboarding.migrationSuppressed` (new) | boolean | backend-bound |
 
@@ -263,7 +263,7 @@ production resumes the normal gate.
 - Accept only known primitive types; do not coerce strings to numbers or numbers to strings.
 - Validate identifiers as non-empty strings no longer than 512 UTF-8 bytes.
 - Validate user text as strings no longer than 256 KiB per field. Preserve accepted text exactly.
-- Validate timestamps as finite ISO-8601 instants and store their UTC ISO representation.
+- Validate timestamps as finite ISO-8601 dates and store their UTC ISO representation. Flutter calendar/checklist serializers can emit local ISO strings without a zone; these retain the device-local interpretation used by Dart on that device. UTC/offset-bearing strings retain their explicit instant. Invalid calendar dates and reversed event ranges are rejected.
 - Reject `NaN`, infinities, invalid dates, prototype-bearing objects, and unexpected nested shapes.
 - Ignore unknown fields after validation; never persist a raw legacy object.
 - Record only bounded error codes, store names, and line numbers locally. Never record values.
@@ -271,13 +271,11 @@ production resumes the normal gate.
 ### 4.2 Entity rules
 
 - **Calendars:** require `id`, non-empty `name`, non-empty `token`, valid creation/update instants,
-  and boolean `visible` (missing legacy `visible` becomes `true`). Optional school fields must be
-  strings. Preserve the token exactly in SQLite and nowhere else.
+  and boolean `visible` (missing legacy `visible` becomes `true`). Optional school fields accept strings, absence, or explicit null, matching Flutter’s serializer. Preserve the token exactly in SQLite and nowhere else.
 - **Personal events:** require `uid`, title, valid `#RRGGBB` colour, valid start/end/export instants,
-  and `endsAt >= startsAt`. Preserve colour bytes and letter case exactly. Optional location and
-  description must be strings or absent.
+  and `endsAt >= startsAt`. Preserve colour bytes and letter case exactly. Optional location and description accept strings, absence, or explicit null.
 - **Checklist items:** require `uuid`, `eventUid`, content, boolean checked state, and finite
-  integer order. Optional timestamps must be valid. A checklist can reference either a school
+  integer order. Optional timestamps accept absence or explicit null; present strings must be valid. A checklist can reference either a school
   event or a personal event and is not rejected merely because its event is not yet cached.
 - **Hidden events:** validate the UID and name arrays separately, keep valid string members in
   source order, remove exact duplicates, and report invalid members. If one array is invalid as a
@@ -414,9 +412,8 @@ Backup/restore is not permission to re-arm a terminal importer. Configure Androi
 the target SQLite database, MMKV state, legacy database, and legacy preferences have an explicit,
 reviewed disposition, while Firebase-managed token state follows its SDK rules. Because SQLite
 target rows and the terminal journal share one database transaction, a restored terminal row and
-its SQLite imports are consistent. On every terminal startup, verify the expected MMKV participant
-keys. A missing/divergent participant after restore produces a sanitized
-`terminal_integrity_mismatch` report and uses the current RN value/default; it does not rerun the
+its SQLite imports are consistent. On every eligible terminal startup, verify the expected MMKV participant keys. The SQLite journal stores only local hashes for successful participants. Normal RN setters record bounded local edit hashes in `legacyMigration.nativeEdits.v1`; a current value matching its edit witness is an ordinary newer choice. These hashes never enter reports, logs, analytics, or crash attachments. Missing values or divergence without an edit witness are integrity mismatches. A missing/divergent participant after restore produces one additional immutable sanitized
+`integrity_failure` report with `TERMINAL_INTEGRITY_MISMATCH` and uses the current RN value/default; it does not rerun the
 legacy import or overwrite a newer choice. Physical QA must test this path before Android rollout.
 
 ## 8. Journal and state machine
@@ -607,7 +604,7 @@ only:
 - report delivery-attempt metadata maintained by the server.
 
 It must never contain calendar tokens, event titles/descriptions/locations, checklist text, hidden
-event identifiers or names, preference values, raw lines/files, source fingerprint, device name,
+event identifiers or names, preference values, raw lines/files, source fingerprint, local edit witnesses, device name,
 Firebase identifiers, or hashes of any of those values. Calendar IDs must not be copied into
 general logs, analytics, metrics labels, or crash breadcrumbs.
 

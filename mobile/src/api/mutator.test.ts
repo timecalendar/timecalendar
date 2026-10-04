@@ -51,6 +51,24 @@ afterEach(() => {
   jest.useRealTimers()
 })
 
+it("never logs private report payloads or echoed calendar IDs", async () => {
+  const log = jest.spyOn(console, "log").mockImplementation(() => {})
+  const privateId = "00000000-0000-4000-8000-000000000001"
+  fetchMock.mockResolvedValueOnce(
+    jsonResponse(200, { echoedPrivateId: privateId }),
+  )
+  try {
+    await customFetch("/v1/migration-reports", {
+      method: "POST",
+      body: JSON.stringify({ calendarIds: [privateId] }),
+    })
+    expect(JSON.stringify(log.mock.calls)).not.toContain(privateId)
+    expect(JSON.stringify(log.mock.calls)).not.toContain("calendarIds")
+  } finally {
+    log.mockRestore()
+  }
+})
+
 describe("customFetchResponse", () => {
   it("preserves status, Headers, and parsed data for every HTTP status", async () => {
     fetchMock

@@ -19,8 +19,8 @@ describe("native notification control ownership contract", () => {
     expect(layout).toContain('name="notification-frequency"')
     expect(layout).toContain('name="notification-days-ahead"')
     expect(layout).toContain('name="notification-days-custom"')
-    expect(layout).toContain(
-      'presentation:\n                    Platform.OS === "ios" ? "formSheet"',
+    expect(layout).toMatch(
+      /presentation:\s+Platform\.OS === "ios" \? "formSheet"/,
     )
     expect(layout).toContain("sheetGrabberVisible: true")
   })
