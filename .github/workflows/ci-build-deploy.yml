@@ -217,11 +217,19 @@ jobs:
     - name: Run tests
       run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ github.sha }} npm run test
 
-    # The in-process Nest HTTP smoke (`server/test/*.e2e-spec.ts`). It has no
-    # backing-service dependency; `ci/e2e-server.sh` still owns the real
-    # Postgres/Redis/Nest lifecycle for the mobile and Flutter device E2E.
+    # Reporting E2E uses the services above, psql for the actual role-grant
+    # script, and the shared OpenAPI file outside the server build context.
+    # Install the client only in this disposable container, not the published image.
     - name: Run server E2E tests
-      run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ github.sha }} npm run test:e2e -- --runInBand
+      run: |
+        docker run --rm --env-file="./ci/.env.test" -e CI=true --network host \
+          -v "$PWD/openapi:/usr/src/openapi:ro" \
+          ghcr.io/timecalendar/timecalendar:${{ github.sha }} \
+          sh -ec '
+            apt-get update
+            apt-get install -y --no-install-recommends postgresql-client
+            npm run test:e2e -- --runInBand
+          '
 
     # The Nest app cannot boot without a service-account-shaped key file; the
     # spec emit only needs the JSON shape, never a real credential.

@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-04",
+  "baselineRemoteMain": "ca663a2d059032615efe7f3899dadbe7b1d6196f",
+  "checks": {
+    "reportingE2E": {
+      "passed": 32,
+      "failed": 0,
+      "suites": 2,
+      "seconds": 14.158
+    },
+    "ciContractTests": {
+      "passed": 90,
+      "failed": 0,
+      "command": "node --test ci/disclosure-scan.test.mjs ci/check-ghcr-retention.test.mjs"
+    },
+    "ghcrRetentionContract": "valid",
+    "workflowYamlAndE2EShellSyntax": "pass",
+    "disclosureBaselineInvariant": {
+      "entries": 29,
+      "result": "pass"
+    },
+    "configuredDisclosurePatterns": "not available locally; derived and structural detectors active"
+  },
+  "cleanup": {
+    "authorizedByCoordinator": true,
+    "receiverStopped": true,
+    "redisStopped": true,
+    "postgresStopped": true,
+    "servicePortsNoLongerListening": [
+      8090,
+      37292,
+      37291
+    ],
+    "postgresDataPreserved": true,
+    "sourceAndEvidencePreserved": true
+  },
+  "ciBoundary": {
+    "productionImageUnchanged": true,
+    "testContainerInstallsPostgresqlClient": true,
+    "sharedOpenapiMountedReadOnly": true,
+    "containerInvocationLocallyExecuted": false
+  },
+  "limitations": [
+    "Local E2E uses PostgreSQL18; CI uses repository PostgreSQL14 and is not yet observed on the candidate.",
+    "Full mobile and server suites each have one independently reproduced baseline failure; broad suites were not repeated without product changes.",
+    "GitHub configured disclosure patterns are unavailable locally.",
+    "Final-tree disclosure scans do not prove unpublished commit history contains no prior disclosed text."
+  ]
+}

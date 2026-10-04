@@ -1,7 +1,7 @@
   console.log
     ◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
 
-      at _log (../../../../../..$REPO_ROOT/server/node_modules/dotenv/lib/main.js:131:11)
+      at _log ([server-dependencies]/dotenv/lib/main.js:131:11)
 
 FAIL src/modules/notification-pipeline/repositories/notification-outbox.repository.test.ts
   NotificationOutboxRepository
