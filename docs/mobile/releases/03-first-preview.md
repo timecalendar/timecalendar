@@ -101,7 +101,7 @@ The first preview is complete only when:
 
 ## 3.6 Shipped record — iOS internal preview, 2026-08-28
 
-The iOS half of the first preview shipped. Android has not.
+The iOS half of the first preview shipped. The Android half shipped on 2026-09-07 — see §3.8.
 
 | Field               | Value                                                                                          |
 | ------------------- | ---------------------------------------------------------------------------------------------- |
@@ -136,11 +136,11 @@ The Android half was attempted and stopped before building. §3.3 step 2–5 was
 building on top of the state that was there would have produced an upload Play rejects. What the
 three Android prerequisites actually looked like, read back from the Expo API rather than assumed:
 
-| Prerequisite                        | State found                                                               | State now                                      |
-| ----------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------- |
-| Upload key in EAS credentials       | An unrelated EAS-generated keystore, alias `aa6e0585…`, SHA-1 `135a8d77…` | **Fixed** — the held upload key is imported    |
-| EAS remote `versionCode`            | `1`                                                                       | Still `1` — needs the live Play value          |
-| Play service account for EAS Submit | `googleServiceAccountKeyForSubmissions = null`                            | Still absent — Play Console act, see the inbox |
+| Prerequisite                        | State found                                                                     | State now                                     |
+| ----------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------- |
+| Upload key in EAS credentials       | An unrelated EAS-generated keystore, alias `aa6e0585…`, SHA-1 `135a8d77…`       | **Fixed** — the held upload key is imported   |
+| EAS remote `versionCode`            | `1`                                                                             | **Fixed 2026-09-07** — set to `137` from the live production track (§3.8) |
+| Play service account for EAS Submit | `googleServiceAccountKeyForSubmissions = null`                                   | **Fixed 2026-09-07** — `eas-submit@timecalendar-samuelprak.iam.gserviceaccount.com`, key on the build host only (§3.8) |
 
 ### The keystore that was there was not the upload key
 
@@ -197,7 +197,8 @@ stays open rather than being answered from a submit log.
 Once the service account exists, the rest is agent work — it lets EAS read the live version counter,
 submit, and read Play-side state back. It is filed as one operator item in
 [`inbox/2026-08-28-android-preview-play-access.md`](../../react-native-migration/inbox/2026-08-28-android-preview-play-access.md),
-together with the physical-device verification §3.5 requires on both platforms.
+together with the physical-device verification §3.5 requires on both platforms. **Done on
+2026-09-07 — see §3.8.**
 
 ### §3.5 scoreboard after this pass
 
@@ -211,6 +212,81 @@ together with the physical-device verification §3.5 requires on both platforms.
 | Build identifies the approved SHA/profile/channel | ✅                         | ➖ no build                |
 | OTA compatible + incompatible cases               | ⏸ waits on the OTA service | ⏸ waits on the OTA service |
 | No secret or private key in git/logs/comments     | ✅                         | ✅                         |
+
+## 3.8 Shipped record — Android internal preview, 2026-09-07
+
+The Android half of the first preview shipped to the Play **internal** track.
+
+| Field                 | Value                                                                                                                                         |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source SHA            | `664f85d41637dafa54d84dd42d8afc9f65b3dfa4` on `main`, working tree clean                                                                      |
+| Version / versionCode | `4.0.0` / `138`                                                                                                                               |
+| Runtime fingerprint   | `0b71cb05a04b24b9c15ea7ccfbf6934ff41f3070`                                                                                                    |
+| Artifact SHA-256      | `6e414ce8ce9bc12779e51c2ce3379b2b7115a6fedc34c9296ee5ae359a5cebc2` (98,492,146 bytes, `.aab`)                                                 |
+| Package               | `fr.samuelprak.timecalendar`, minSdk `24`, targetSdk/compileSdk `36`                                                                          |
+| OTA channel           | `expo-channel-name = preview`, `backendEnvironmentCapability = preview`, `updates.url = https://ota.timecalendar.app/manifest`                |
+| Upload signing        | upload cert SHA-1 `99f82ae8…` / SHA-256 `1a04470a…` — `keytool -printcert -jarfile` on the `.aab`; EAS default build credentials (§3.7)         |
+| Host toolchain        | WSL2 Ubuntu 22.04, Node 24.13.0 / npm 11.6.2, eas-cli 23.2.0 (local build plugin 23.1.0), Temurin JDK 21+35, Gradle 9.3.1, NDK 27.1.12297006 |
+| Destination           | Play internal track, EAS submission `3df4f9c5-c62e-428e-b460-aac51914ebe7`                                                                    |
+
+Play-side state, read back from the Play Developer API rather than from the submit log: the internal
+track carries release `4.0.0` with versionCode `138`, status `completed`, and Play's bundle `138`
+SHA-256 equals the local artifact hash above. Production remains `137 (3.1.0)`; alpha and beta are
+untouched. Nothing was promoted.
+
+### Prerequisites cleared this pass
+
+- **Play service account.** `eas-submit@timecalendar-samuelprak.iam.gserviceaccount.com`, created
+  with no Google Cloud role; granted in Play Console only *release to testing tracks* and *view app
+  information* for `fr.samuelprak.timecalendar`. The JSON key lives at repo-root `ci/keys/` on the
+  build host (gitignored), not in EAS and not in git.
+- **EAS remote `versionCode`.** Set to `137`, the live production value read through the Play API
+  (`edits.tracks`). Three failed local builds each consumed the `autoIncrement`; the counter was
+  reset to `137` before every retry, so the shipped build is `138` with no gap.
+- **App-signing certificate (public).** Read by the owner from Play Console → *App integrity*:
+  SHA-256 `4646f746ddff4189c372e0e5fae619b7816cafa94a2bea12164fca516b578685`, SHA-1
+  `df64f86481e27c41691f6473027087930c74d3ea`. Play Console's expected upload certificate matches
+  §3.7 exactly. The Play Developer API does **not** expose the app-signing certificate, so the §3.5
+  "Play-delivered fingerprint matches" line closes on-device: compare the installed APK's signer
+  against this value.
+- That app-signing SHA-1 is **not** among the four `certificate_hash` values in
+  `mobile/firebase/google-services.json`. The RN app has no Google Sign-In dependency and
+  Crashlytics/Analytics do not gate on SHA-1, so this is informational; revisit before adding any
+  SHA-1-gated Firebase feature.
+
+### Host caveats (build ran on WSL, not the macOS host)
+
+ADR 040 names the macOS host; this build ran on the owner's WSL host with the same `eas build
+--local` path and EAS-managed credentials, producing a correctly signed artifact. Three
+host-specific issues were cleared, none touching the repository:
+
+1. The build's fresh `npm ci` fails under npm 11.8 (`Missing: @emnapi/core`/`runtime`); the
+   `.nvmrc` Node 24.13.0 (npm 11.6.2) installs the committed lockfile unchanged.
+2. Local `node_modules` must be installed by that same npm before building, or the fingerprint
+   eas-cli computes locally differs from the one computed in the build copy and the
+   `CONFIGURE_EXPO_UPDATES` phase aborts with "Runtime version mismatch".
+3. Gradle 9.3.1 exhausted the project-default JVM metaspace; `~/.gradle/gradle.properties` with
+   `org.gradle.jvmargs=-Xmx8g -XX:MaxMetaspaceSize=2g` (user-home overrides project) fixed it.
+
+`expo doctor` reported non-blocking warnings during the build (Hermes V1 memory regression on
+`expo@56.0.11`, minor dependency version drift, a `react-doctor` script/bin name conflict). They are
+dependency-maintenance items, not preview-build defects, and are not addressed by this record.
+
+### §3.5 scoreboard after this pass
+
+| §3.5 line                                         | iOS                        | Android                                   |
+| ------------------------------------------------- | -------------------------- | ----------------------------------------- |
+| Store accepted a build for the existing identity  | ✅ build 142               | ✅ versionCode 138, internal track        |
+| Named physical device installed it                | ❌ operator item           | ❌ operator item                          |
+| Build numbers exceed previous uploads             | ✅ 142                     | ✅ 138 > 137                              |
+| Host toolchain recorded                           | ✅ §3.6                    | ✅ §3.8                                   |
+| Play-delivered signing fingerprint matches        | n/a                        | ⏳ expected value recorded; verify on-device |
+| Build identifies the approved SHA/profile/channel | ✅                         | ✅                                        |
+| OTA compatible + incompatible cases               | ⏸ waits on the OTA service | ⏸ waits on the OTA service                |
+| No secret or private key in git/logs/comments     | ✅                         | ✅                                        |
+
+Still open: the Play **The team** internal tester list (no API for email lists — Play Console act),
+the physical-device installs on both platforms, and the OTA cases.
 
 ## Official references
 
