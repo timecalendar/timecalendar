@@ -155,6 +155,11 @@ test("the isolated Metro configuration rewrites only debug app entry requests", 
   )
   assert(rewritten.startsWith("/scripts/migration-rehearsal/entry.bundle?"))
   assert(rewritten.includes("transform.routerRoot=src%2Fapp"))
+  const direct = config.server.rewriteRequestUrl(
+    "/scripts/migration-rehearsal/entry.bundle?platform=android&dev=true&transform.engine=hermes",
+  )
+  assert(direct.includes("transform.routerRoot=src%2Fapp"))
+  assert(direct.includes("transform.engine=hermes"))
   assert.equal(
     config.server.rewriteRequestUrl("/assets/font.ttf"),
     "/assets/font.ttf",
@@ -163,6 +168,13 @@ test("the isolated Metro configuration rewrites only debug app entry requests", 
     () =>
       config.server.rewriteRequestUrl(
         "/node_modules/expo-router/entry.bundle?platform=ios&dev=false",
+      ),
+    /debug-only/,
+  )
+  assert.throws(
+    () =>
+      config.server.rewriteRequestUrl(
+        "/scripts/migration-rehearsal/entry.bundle?platform=android&dev=false",
       ),
     /debug-only/,
   )

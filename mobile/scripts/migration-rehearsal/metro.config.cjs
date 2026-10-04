@@ -6,7 +6,7 @@ config.server.rewriteRequestUrl = (input) => {
   const resolved = rewrite ? rewrite(input) : input
   const url = new URL(resolved, "http://localhost")
   if (
-    /\/(?:node_modules\/expo-router\/entry|\.expo\/\.virtual-metro-entry|index)\.bundle$/.test(
+    /\/(?:node_modules\/expo-router\/entry|\.expo\/\.virtual-metro-entry|scripts\/migration-rehearsal\/entry|index)\.bundle$/.test(
       url.pathname,
     )
   ) {
