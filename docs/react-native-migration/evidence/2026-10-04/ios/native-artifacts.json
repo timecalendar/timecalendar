@@ -1,0 +1,32 @@
+{
+  "flutter-seed-a": {
+    "identity": "fr.samuelprak.timecalendar",
+    "version": "3.1.0",
+    "build": "134",
+    "platform": "iOS Simulator arm64",
+    "fileCount": 197,
+    "fileManifestSha256": "dd121830019d445aeb88df4c06ad694fd9a0ee30bb5f6705feee121f82eae2d9",
+    "manifestAlgorithm": "SHA256 of UTF-8 compact JSON sorted [relative POSIX path, file SHA256] pairs, symlinks dereferenced",
+    "localPath": "/private/tmp/timecalendar-flutter-seed-a.app"
+  },
+  "flutter-seed-b": {
+    "identity": "fr.samuelprak.timecalendar",
+    "version": "3.1.0",
+    "build": "134",
+    "platform": "iOS Simulator arm64",
+    "fileCount": 197,
+    "fileManifestSha256": "c75a324a20a9a2d8b01766104bcc5f371164137b981a2040cac677729b9f4626",
+    "manifestAlgorithm": "SHA256 of UTF-8 compact JSON sorted [relative POSIX path, file SHA256] pairs, symlinks dereferenced",
+    "localPath": "$REPO_ROOT/app/build/ios/Debug-iphonesimulator/Runner.app"
+  },
+  "react-native": {
+    "identity": "fr.samuelprak.timecalendar",
+    "version": "4.0.0",
+    "build": "1",
+    "platform": "iOS Simulator arm64",
+    "fileCount": 132,
+    "fileManifestSha256": "c2e09a97c15a27184fa07223b6f3b0be9638d8525c8162388709434135743fda",
+    "manifestAlgorithm": "SHA256 of UTF-8 compact JSON sorted [relative POSIX path, file SHA256] pairs, symlinks dereferenced",
+    "localPath": "/private/tmp/timecalendar-migration-rn-ios/Build/Products/Debug-iphonesimulator/TimeCalendar.app"
+  }
+}

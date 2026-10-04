@@ -1,0 +1,7 @@
+{
+  "snapshot": "2026-10-04-native-1",
+  "files": 1451,
+  "archiveBytes": 2735880,
+  "sha256": "798e6ebf2a9feacdd2a091ed89ec525ffcc82843cf685a00eb1a40358d49ea97",
+  "excludes": "secrets, env files, signing material, generated RN projects, Flutter iOS, dependencies/build outputs"
+}

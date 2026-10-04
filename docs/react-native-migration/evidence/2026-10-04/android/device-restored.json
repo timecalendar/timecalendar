@@ -1,0 +1,9 @@
+{
+  "capturedAt": "2026-10-04T18:03:08.555964+00:00",
+  "fixtureAppStopped": true,
+  "airplaneMode": "0",
+  "wifiSetting": "1",
+  "mobileDataPreference": "1",
+  "restoreIntent": "Original radio settings: airplane off, Wi-Fi on, mobile data on",
+  "sourceAndTargetSandboxesRetained": true
+}

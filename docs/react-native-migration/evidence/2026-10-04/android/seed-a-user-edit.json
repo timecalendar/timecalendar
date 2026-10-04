@@ -1,0 +1,22 @@
+{
+  "capturedAt": "2026-10-04T18:01:16.718093+00:00",
+  "action": "Actual event detail Toggle done on first imported checklist item",
+  "seedChecked": true,
+  "row": [
+    {
+      "uuid": "migration-fixture-checklist-0",
+      "event_uid": "migration-fixture-event-0",
+      "is_checked": 0
+    }
+  ],
+  "journal": [
+    {
+      "state": "SETTLED_SUCCESS",
+      "report_id": "6c8eec01-f56f-4449-9a9a-838607f79a4e",
+      "attempt_count": 1,
+      "sqlite_committed": 1,
+      "terminal_outcome": "success"
+    }
+  ],
+  "outboxCount": 1
+}

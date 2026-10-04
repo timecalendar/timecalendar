@@ -1,0 +1,120 @@
+{
+  "status": {
+    "harness": "synthetic-fetch-only",
+    "mode": "online",
+    "revision": 2,
+    "localReportReceiverConfigured": true,
+    "counts": {
+      "total": 10,
+      "offlineFailures": 4,
+      "blockedUnknown": 1,
+      "syncCalls": 2,
+      "activityCalls": 2,
+      "reportCalls": 1,
+      "reportsForwarded": 1,
+      "reportsAccepted": 1
+    },
+    "reports": [
+      {
+        "reportId": "6c8eec01-f56f-4449-9a9a-838607f79a4e",
+        "outcome": "success",
+        "attempts": 1,
+        "accepted": true
+      }
+    ],
+    "startup": [
+      {
+        "phase": "transport_installed"
+      },
+      {
+        "phase": "identity_checked",
+        "productionIdentity": true,
+        "productionCapability": true
+      },
+      {
+        "phase": "router_required"
+      },
+      {
+        "phase": "root_registered"
+      },
+      {
+        "phase": "timer_alive"
+      }
+    ]
+  },
+  "snapshot": {
+    "fixture": "SEED-A",
+    "phase": "after-sync",
+    "syntheticOnly": true,
+    "expected": {
+      "calendars": 1,
+      "personalEvents": 5,
+      "checklistItems": 5,
+      "hiddenUids": 1,
+      "hiddenNames": 1
+    },
+    "selector": {
+      "source": "shipping selectPageEvents over real SQLite decoded rows",
+      "decodedCount": 29,
+      "visibleCount": 27,
+      "hiddenUidsExcluded": true,
+      "hiddenNamesExcluded": true,
+      "linkedCourseVisible": true,
+      "visibleCourseVisible": true
+    },
+    "counts": {
+      "calendars": 1,
+      "personalEvents": 5,
+      "checklistItems": 5,
+      "cachedEvents": 29,
+      "activeSchoolLinkedChecklist": 2
+    },
+    "checks": {
+      "calendarCount": true,
+      "calendarSourceFields": true,
+      "migrationSuppressed": true,
+      "cachePhase": true,
+      "personalEventCount": true,
+      "checklistCount": true,
+      "calendarIdentityAndTokens": true,
+      "personalFields": true,
+      "checklistFields": true,
+      "hiddenUids": true,
+      "hiddenNames": true,
+      "darkTheme": true,
+      "notificationsDisabled": true,
+      "startupCalendar": true,
+      "weekendsHidden": true,
+      "droppedPreferencesAbsent": true,
+      "changelogImportedOrAdvanced": true,
+      "hiddenSelector": true
+    },
+    "allChecksPass": true,
+    "journal": [
+      {
+        "state": "SETTLED_SUCCESS",
+        "report_id": "6c8eec01-f56f-4449-9a9a-838607f79a4e",
+        "attempt_count": 1,
+        "source_version": 3,
+        "sqlite_committed": 1,
+        "terminal_outcome": "success"
+      }
+    ],
+    "outbox": [
+      {
+        "report_id": "6c8eec01-f56f-4449-9a9a-838607f79a4e",
+        "attempt_count": 3,
+        "next_attempt_at": null,
+        "delivered_at": "2026-10-04T17:57:21.093Z"
+      }
+    ],
+    "cached": {
+      "linkedCoursePresent": true,
+      "visibleCoursePresent": true,
+      "revision2Present": true
+    },
+    "eligible": true
+  },
+  "capturedAt": "2026-10-04T17:59:47.662483+00:00",
+  "trigger": "Actual Home pull-to-refresh, synthetic revision2, same stable UIDs; radios off"
+}

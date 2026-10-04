@@ -1,0 +1,17 @@
+{
+  "originalRadioPreferences": {
+    "airplaneMode": 0,
+    "wifi": 1,
+    "mobileData": 1
+  },
+  "beforeFirstRnLaunch": {
+    "airplaneMode": "enabled",
+    "wifiSetting": 0,
+    "mobileDataPreference": 1,
+    "internetProbe": "ping 1.1.1.1: connect: Network is unreachable",
+    "transport": "USB adb reverse only"
+  },
+  "fixtureFirstInstallTime": "2026-10-04 19:27:40 Europe/Paris",
+  "fixtureSourceVersion": "3.1.0+134",
+  "originalProductionCleanup": "One authorized uninstall completed before fixture; no uninstall/clear between source and target."
+}

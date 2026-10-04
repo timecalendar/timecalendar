@@ -1,0 +1,7 @@
+allprojects {
+  afterEvaluate { project ->
+    if (project.name == 'app' && project.plugins.hasPlugin('com.android.application')) {
+      project.android.defaultConfig.versionCode = 135
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "platform": "ios-simulator",
+  "identity": "fr.samuelprak.timecalendar",
+  "sourceBinary": "Flutter 3.1.0+134 debug, actual model serializers",
+  "simulator": "BED9EB3C-ABA1-497B-A39B-6C791392C11E",
+  "fixture": {
+    "fixture": "SEED-A",
+    "source": "Flutter models + Sembast + shared_preferences",
+    "databaseVersion": 3,
+    "calendars": 1,
+    "personalEvents": 5,
+    "checklistItems": 5,
+    "hiddenUids": 1,
+    "hiddenNames": 1,
+    "allowlistedPreferences": 6,
+    "droppedPreferences": 6
+  },
+  "database": {
+    "logicalPath": "Documents/simple_database.db",
+    "bytes": 3565,
+    "lines": 13,
+    "sha256": "84c08758089a3a7929ba765193086c0a347cc53d866c61c602a9a5ac405cfbca",
+    "metadata": {
+      "version": 3,
+      "sembast": 1
+    }
+  },
+  "preferences": {
+    "backend": "ios-user-defaults",
+    "allowlistedCount": 6,
+    "types": {
+      "current_version": "int",
+      "theme": "str",
+      "dark_mode": "bool",
+      "notification_calendar": "bool",
+      "startup_screen": "str",
+      "show_weekends": "bool"
+    },
+    "syntheticValuesMatch": true,
+    "allowlistSha256": "8540c96cf2942811b5c82a5d4cabf4796c4c9e70e4a73f2172334f8a4422029e"
+  }
+}

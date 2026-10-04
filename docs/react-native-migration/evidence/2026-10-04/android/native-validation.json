@@ -1,0 +1,21 @@
+{
+  "identity": "fr.samuelprak.timecalendar",
+  "sourceVersion": "3.1.0+134",
+  "targetVersion": "4.0.0+135",
+  "debugCertificatesMatch": true,
+  "externalStoragePermissionsAbsent": true,
+  "backupRulesReferenced": true,
+  "tests": {
+    "tests": "5",
+    "failures": "0",
+    "errors": "0",
+    "skipped": "0",
+    "time": "0.055"
+  },
+  "artifacts": {
+    "flutter-seed-a.apk": "59c45cbfc610159469046cfaaa24a719bc10b38b44f2ed270944f022c73d127a",
+    "rn-migration-debug.apk": "c91d83db45508c011a527dfed71fa57f04e76ed9c612f92220227328bdbbe7fc"
+  },
+  "appConfigSha256": "89f3ca78d9206c4878c06fe73da5c43c68b79fd252b18a3f9f3403652996c6e9",
+  "packageLockSha256": "2f36fc5411486fe4376c680b70859fbbbd4185a561290d8f8d04de5ca6f54814"
+}

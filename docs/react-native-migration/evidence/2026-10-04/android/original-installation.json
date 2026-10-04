@@ -1,0 +1,18 @@
+{
+  "device": "OnePlus 6",
+  "serial": "86fa07cc",
+  "identity": "fr.samuelprak.timecalendar",
+  "phase": "original-nonfixture-before-authorized-cleanup",
+  "packageMetadata": [
+    "versionCode=138 minSdk=24 targetSdk=36",
+    "versionName=4.0.0",
+    "flags=[ HAS_CODE ALLOW_CLEAR_USER_DATA ALLOW_BACKUP ]",
+    "lastUpdateTime=2026-09-08 01:27:22",
+    "installerPackageName=com.android.vending",
+    "signatures=PackageSignatures{7939992 version:3, signatures:[eace025b], past signatures:[]}",
+    "firstInstallTime=2023-09-06 22:28:20",
+    "android.permission.POST_NOTIFICATIONS: granted=true, flags=[ USER_SET|USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]",
+    "android.permission.CAMERA: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED|AUTO_REVOKED]"
+  ],
+  "authorization": "User explicitly authorized deletion for fixtures, relayed in msg_e1f1ce5074b2; cleanup has not happened yet."
+}
