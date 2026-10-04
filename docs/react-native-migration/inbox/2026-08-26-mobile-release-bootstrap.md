@@ -20,16 +20,19 @@ React Native preview through TestFlight and Play internal testing.
 - [ ] In the password manager, record Expo account recovery/custody, EAS project ownership, Apple team/app
       IDs, Play account/package, public fingerprints and credential rotation owners. Never paste a
       private key or service-account JSON into this note.
-- [ ] Confirm the highest live Android version code and iOS build number; initialize EAS remote
-      versions from those values.
+- [x] Confirm the highest live Android version code and iOS build number; initialize EAS remote
+      versions from those values. *(iOS `142` on 2026-08-28; Android `137` read from the live
+      production track via the Play API on 2026-09-07, first preview build took `138` —
+      [release document 3](../../mobile/releases/03-first-preview.md) §3.8.)*
 - [ ] Confirm the reviewed store-distributed preview profile described in
       [release document 3](../../mobile/releases/03-first-preview.md) has landed.
 - [x] Configure EAS-managed iOS signing on the correct Apple team and Android signing with the
       accepted upload key. *(iOS via the shipped preview, §3.6; Android via the upload-key import,
       §3.7.)*
-- [ ] Configure least-privilege App Store Connect / Play submission authorization outside git.
-      *(App Store Connect done — EAS holds the API key and it submitted build 142. The Play service
-      account is still missing and is the item that gates the whole Android half; see
+- [x] Configure least-privilege App Store Connect / Play submission authorization outside git.
+      *(App Store Connect done — EAS holds the API key and it submitted build 142. Play done
+      2026-09-07 — service account `eas-submit@…` with testing-track rights only, key on the build
+      host; it submitted versionCode 138. See
       [`2026-08-28-android-preview-play-access.md`](./2026-08-28-android-preview-play-access.md).)*
 - [ ] Create or confirm **The team** internal tester group/list in both stores.
 - [ ] While authenticated to the public EAS project, validate both release profiles on both

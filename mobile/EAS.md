@@ -80,6 +80,14 @@ Install dependencies under the Node version pinned in the repo-root `.nvmrc` (No
 that pin fails `npm ci` in `mobile/` against the committed lockfile; the pinned version installs it
 unchanged.
 
+The Android `.aab` also builds on a Linux/WSL host with the Android SDK and a JDK (proved with the
+2026-09-07 preview, [release document 3](../docs/mobile/releases/03-first-preview.md) §3.8). Three
+host-side steps are required there, in order: `nvm use` the `.nvmrc` Node (the build's `npm ci`
+fails under a newer npm), run `npm ci` in `mobile/` with that same npm so the local fingerprint
+matches the build copy's, and give Gradle more JVM memory in `~/.gradle/gradle.properties`
+(`org.gradle.jvmargs=-Xmx8g -XX:MaxMetaspaceSize=2g`). Every failed local build still consumes
+the remote `autoIncrement`; reset the counter with `eas build:version:set` before retrying.
+
 Local builds carry caveats the CLI won't remind you of:
 
 - **No build caching.** Expo does not support it for local builds.
