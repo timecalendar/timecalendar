@@ -121,6 +121,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // Android 13+ runtime notification permission (ADR 026), paired with the
       // runtime request in @/firebase requestNotificationPermission.
       permissions: ["POST_NOTIFICATIONS"],
+      // Legacy migration reads only the app sandbox; FileSystem's external-storage
+      // permissions are unnecessary even on older supported Android versions.
+      blockedPermissions: ["READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"],
       adaptiveIcon: {
         // Brand-pale-pink field (the icon card's own background tone) behind the
         // transparent calendar foreground. A flat colour, not a background image:
@@ -136,6 +139,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       "expo-router",
       "expo-localization",
       "expo-updates",
+      "./modules/legacy-migration-source/app.plugin.js",
       // Local SQLite (Drizzle migration runner lives in src/db). expo-sqlite and
       // react-native-mmkv v4/Nitro both link under the existing iOS
       // useFrameworks "static" set below — no new expo-build-properties (D8).

@@ -1,0 +1,7 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": { "modules": ["LegacyMigrationSourceModule"] },
+  "android": {
+    "modules": ["expo.modules.legacymigrationsource.LegacyMigrationSourceModule"]
+  }
+}

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+  <cloud-backup>
+    <include domain="file" path="SQLite/" />
+    <include domain="file" path="mmkv/" />
+    <include domain="root" path="app_flutter/simple_database.db" />
+    <include domain="sharedpref" path="FlutterSharedPreferences.xml" />
+    <include domain="sharedpref" path="FlutterSharedPreferences.xml.bak" />
+  </cloud-backup>
+  <device-transfer>
+    <include domain="file" path="SQLite/" />
+    <include domain="file" path="mmkv/" />
+    <include domain="root" path="app_flutter/simple_database.db" />
+    <include domain="sharedpref" path="FlutterSharedPreferences.xml" />
+    <include domain="sharedpref" path="FlutterSharedPreferences.xml.bak" />
+  </device-transfer>
+</data-extraction-rules>

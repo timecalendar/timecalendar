@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~56.0.17",
+    "@noble/hashes": "1.8.0",
     "@react-native-firebase/analytics": "^24.1.1",
     "@react-native-firebase/app": "^24.1.1",
     "@react-native-firebase/crashlytics": "^24.1.1",
@@ -22,6 +23,7 @@
     "expo-crypto": "~56.0.4",
     "expo-dev-client": "~56.0.20",
     "expo-device": "~56.0.4",
+    "expo-file-system": "~56.0.11",
     "expo-font": "~56.0.6",
     "expo-glass-effect": "~56.0.4",
     "expo-image": "~56.0.11",

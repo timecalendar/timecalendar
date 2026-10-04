@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+  <include domain="file" path="SQLite/" />
+  <include domain="file" path="mmkv/" />
+  <include domain="root" path="app_flutter/simple_database.db" />
+  <include domain="sharedpref" path="FlutterSharedPreferences.xml" />
+  <include domain="sharedpref" path="FlutterSharedPreferences.xml.bak" />
+</full-backup-content>

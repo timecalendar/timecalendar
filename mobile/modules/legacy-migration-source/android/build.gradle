@@ -1,0 +1,20 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.legacymigrationsource'
+version = '1.0.0'
+
+android {
+  namespace 'expo.modules.legacymigrationsource'
+  defaultConfig {
+    versionCode 1
+    versionName '1.0.0'
+  }
+}
+
+dependencies {
+  testImplementation 'junit:junit:4.13.2'
+  testImplementation 'net.sf.kxml:kxml2:2.3.0'
+}
