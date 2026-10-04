@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-10-04T18:02:00Z",
+  "nativeUI": "Root CUA independently observes Light Selected after worker cold restart",
+  "remainingChecklistItems": 133,
+  "deletedChecklistAbsent": true,
+  "journal": {
+    "state": "SETTLED_SUCCESS",
+    "attempt": 1,
+    "reportId": "7000d54a-612c-4726-bbb8-4e8fd82c1ecf"
+  },
+  "outboxCount": 1,
+  "deliveredCount": 1
+}

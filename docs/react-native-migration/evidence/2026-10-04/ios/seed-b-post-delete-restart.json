@@ -1,0 +1,120 @@
+{
+  "status": {
+    "harness": "synthetic-fetch-only",
+    "mode": "offline",
+    "revision": 1,
+    "localReportReceiverConfigured": false,
+    "counts": {
+      "total": 1,
+      "offlineFailures": 1,
+      "blockedUnknown": 0,
+      "syncCalls": 0,
+      "activityCalls": 0,
+      "reportCalls": 0,
+      "reportsForwarded": 0,
+      "reportsAccepted": 0
+    },
+    "reports": [],
+    "startup": [
+      {
+        "phase": "transport_installed"
+      },
+      {
+        "phase": "identity_checked",
+        "productionIdentity": true,
+        "productionCapability": true
+      },
+      {
+        "phase": "router_required"
+      },
+      {
+        "phase": "root_registered"
+      },
+      {
+        "phase": "timer_alive"
+      }
+    ]
+  },
+  "snapshot": {
+    "fixture": "SEED-B",
+    "phase": "after-sync",
+    "syntheticOnly": true,
+    "expected": {
+      "calendars": 3,
+      "personalEvents": 60,
+      "checklistItems": 134,
+      "hiddenUids": 21,
+      "hiddenNames": 6
+    },
+    "selector": {
+      "source": "shipping selectPageEvents over real SQLite decoded rows",
+      "decodedCount": 31,
+      "visibleCount": 3,
+      "hiddenUidsExcluded": true,
+      "hiddenNamesExcluded": true,
+      "linkedCourseVisible": true,
+      "visibleCourseVisible": true
+    },
+    "counts": {
+      "calendars": 3,
+      "personalEvents": 60,
+      "checklistItems": 133,
+      "cachedEvents": 31,
+      "activeSchoolLinkedChecklist": 67
+    },
+    "checks": {
+      "calendarCount": true,
+      "calendarSourceFields": true,
+      "migrationSuppressed": true,
+      "cachePhase": true,
+      "personalEventCount": true,
+      "checklistCount": false,
+      "calendarIdentityAndTokens": true,
+      "personalFields": true,
+      "checklistFields": false,
+      "hiddenUids": true,
+      "hiddenNames": true,
+      "darkTheme": true,
+      "notificationsDisabled": true,
+      "startupCalendar": true,
+      "weekendsHidden": true,
+      "droppedPreferencesAbsent": true,
+      "changelogImportedOrAdvanced": true,
+      "hiddenSelector": true
+    },
+    "allChecksPass": false,
+    "journal": [
+      {
+        "state": "SETTLED_SUCCESS",
+        "report_id": "7000d54a-612c-4726-bbb8-4e8fd82c1ecf",
+        "attempt_count": 1,
+        "source_version": 3,
+        "sqlite_committed": 1,
+        "terminal_outcome": "success"
+      }
+    ],
+    "outbox": [
+      {
+        "report_id": "7000d54a-612c-4726-bbb8-4e8fd82c1ecf",
+        "attempt_count": 4,
+        "next_attempt_at": null,
+        "delivered_at": "2026-10-04T17:52:11.659Z"
+      }
+    ],
+    "cached": {
+      "linkedCoursePresent": true,
+      "visibleCoursePresent": true,
+      "revision2Present": true
+    },
+    "eligible": true
+  },
+  "capturedAt": "2026-10-04T17:59:41.387279+00:00",
+  "proof": "Actual Hermes readback after shipping UI checklist deletion and cold process restart",
+  "expectedBaselineDifferences": [
+    "checklistCount: one deliberate UI deletion reduces 134 to 133",
+    "checklistFields: shipping deletion renumbers the remaining items for the owning event"
+  ],
+  "deletedChecklistStillAbsent": true,
+  "sourceBytesUnchanged": true,
+  "sourceStillReadOnly": true
+}

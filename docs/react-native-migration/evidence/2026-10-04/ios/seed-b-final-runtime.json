@@ -1,0 +1,10 @@
+{
+  "capturedAt": "2026-10-04T18:06:15.581578+00:00",
+  "fixture": "SEED-B",
+  "simulatorState": "Shutdown",
+  "appTerminatedBeforeShutdown": true,
+  "sourceRetained": true,
+  "sourceMode": "0o444",
+  "targetDatabaseRetained": true,
+  "approval": "Coordinator accepted final independent UI/SQLite proof and authorized graceful B-only shutdown; data retained"
+}

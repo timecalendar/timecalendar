@@ -1,0 +1,13 @@
+{
+  "platform": "ios",
+  "fixture": "SEED-B",
+  "comparison": "original retained Sembast fields against actual native SQLite read-only",
+  "localTimestampZone": "Europe/Paris",
+  "counts": {
+    "user_calendars": 3,
+    "personal_events": 60,
+    "checklist_items": 134
+  },
+  "fieldsCompared": 1576,
+  "mismatches": []
+}

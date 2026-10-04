@@ -1,0 +1,40 @@
+{
+  "platform": "ios",
+  "fixture": "SEED-B",
+  "capturedAt": "2026-10-04T17:47:57.415581+00:00",
+  "counts": {
+    "__drizzle_migrations": 6,
+    "personal_events": 60,
+    "user_calendars": 3,
+    "calendar_events": 0,
+    "checklist_items": 134,
+    "activity_logs": 0,
+    "activity_state": 0,
+    "legacy_migration_report_outbox": 1,
+    "legacy_migration_run": 1
+  },
+  "journal": [
+    {
+      "state": "SETTLED_SUCCESS",
+      "report_id": "7000d54a-612c-4726-bbb8-4e8fd82c1ecf",
+      "attempt_count": 1,
+      "started_at": "2026-10-04T17:46:26.893Z",
+      "completed_at": "2026-10-04T17:46:27.113Z",
+      "source_version": 3,
+      "source_size_bytes": 61010,
+      "sqlite_committed": 1,
+      "counters_json": "{\"version\":1,\"datasets\":{\"user_calendars\":{\"candidate\":3,\"imported\":3,\"already_present\":0,\"skipped_invalid\":0,\"skipped_conflict\":0},\"personal_events\":{\"candidate\":60,\"imported\":60,\"already_present\":0,\"skipped_invalid\":0,\"skipped_conflict\":0},\"checklist_items\":{\"candidate\":134,\"imported\":134,\"already_present\":0,\"skipped_invalid\":0,\"skipped_conflict\":0},\"hidden_events\":{\"candidate\":1,\"imported\":1,\"already_present\":0,\"skipped_invalid\":0,\"skipped_conflict\":0},\"theme\":{\"candidate\":1,\"imported\":1,\"already_present\":0,\"skipped_invalid\":0,\"skipped_conflict\":0},\"current_version\":{\"candidate\":1,\"imported\":1,\"already_present\":0,\"skipped_invalid\":0,\"skipped_conflict\":0},\"notification_calendar\":{\"candidate\":1,\"imported\":1,\"already_present\":0,\"skipped_invalid\":0,\"skipped_conflict\":0},\"startup_screen\":{\"candidate\":1,\"imported\":1,\"already_present\":0,\"skipped_invalid\":0,\"skipped_conflict\":0},\"show_weekends\":{\"candidate\":1,\"imported\":1,\"already_present\":0,\"skipped_invalid\":0,\"skipped_conflict\":0},\"onboarding\":{\"candidate\":1,\"imported\":1,\"already_present\":0,\"skipped_invalid\":0,\"skipped_conflict\":0}}}",
+      "error_codes_json": "{\"version\":1,\"diagnostics\":{\"counts\":[],\"examples\":[],\"truncated\":false}}",
+      "terminal_outcome": "success"
+    }
+  ],
+  "outbox": [
+    {
+      "report_id": "7000d54a-612c-4726-bbb8-4e8fd82c1ecf",
+      "attempt_count": 1,
+      "next_attempt_at": "2026-10-04T17:46:57.234Z",
+      "delivered_at": null,
+      "created_at": "2026-10-04T17:46:27.113Z"
+    }
+  ]
+}

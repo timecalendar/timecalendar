@@ -1,0 +1,12 @@
+{
+  "capturedAt": "2026-10-04T17:53:51.661827+00:00",
+  "action": "Actual event detail UI toggled first imported checklist item",
+  "seedChecked": true,
+  "row": [
+    {
+      "uuid": "migration-fixture-checklist-0",
+      "event_uid": "migration-fixture-event-0",
+      "is_checked": 0
+    }
+  ]
+}

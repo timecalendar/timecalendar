@@ -1035,5 +1035,37 @@
     "reactCompiler": "pass (24 functions)",
     "reactDoctor": "pass (47 changed files)",
     "performanceContracts": "pass (15 tests)"
+  },
+  "nativeRuntimeEvidence": {
+    "scope": "Shipping Expo SQLite and native MMKV through isolated synthetic transport; actual Android device and iOS simulator; signed release gates excluded",
+    "android": {
+      "fixture": "SEED-A",
+      "baselineChecks": 17,
+      "syncChecksEach": 18,
+      "syncRevisions": 2,
+      "baselinePass": true,
+      "uiChecklistEditSurvivesColdRestart": true,
+      "sourceAndPreferencesUnchanged": true,
+      "singleDeliveredReport": true,
+      "proof": "../android/seed-a-post-edit-restart.json"
+    },
+    "ios": {
+      "fixture": "SEED-B",
+      "baselineChecks": 17,
+      "independentFieldComparisons": 1576,
+      "fieldMismatches": 0,
+      "syncChecksEach": 18,
+      "syncRevisions": 2,
+      "baselinePass": true,
+      "uiChecklistEditSurvivesColdRestart": true,
+      "uiChecklistDeletionSurvivesColdRestart": true,
+      "uiThemeEditSurvivesColdRestart": true,
+      "sourceAndPreferencesUnchanged": true,
+      "singleDeliveredReport": true,
+      "noFalseIntegrityReportAfterThemeEdit": true,
+      "proof": "../ios/seed-b-verification.md"
+    },
+    "actualPrivateReportPersistence": "../reporting/qa-transport/device-receipts.json",
+    "storedPrivatePayloadValidation": "../reporting/qa-transport/device-privacy.json"
   }
 }

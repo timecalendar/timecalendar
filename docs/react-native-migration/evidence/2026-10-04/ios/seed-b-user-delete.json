@@ -1,0 +1,10 @@
+{
+  "capturedAt": "2026-10-04T17:57:50.680117+00:00",
+  "action": "Actual imported event detail UI: Remove item for synthetic checklist 0",
+  "removedFromNativeSQLite": true,
+  "remainingChecklistCount": 133,
+  "sourceWrites": false,
+  "initialAccessibilityCaptureBeforeRefresh": true,
+  "removedFromRenderedScreenshot": true,
+  "renderedEvidence": "seed-b-checklist-after-delete.png"
+}
