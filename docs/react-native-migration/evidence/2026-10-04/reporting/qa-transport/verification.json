@@ -24,7 +24,7 @@
   "startupRouting": "debug-only shipping ExpoRoot/context/Head at location=/; raw bundle URLs otherwise choose unmatched route",
   "independentCoordinatorHarnessCheck": {
     "time": "2026-10-04T17:47:00Z",
-    "commit": "5c88c876",
+    "commit": "590edb63",
     "tests": 12,
     "passed": 12,
     "failed": 0,
@@ -52,11 +52,11 @@
   "storedPayloadPrivacyEvidence": "device-privacy.json",
   "independentCoordinatorFinalHarnessCheck": {
     "time": "2026-10-04T18:00:25Z",
-    "commit": "40cfb571",
+    "commit": "ea37ca51",
     "tests": 12,
     "passed": 12,
     "failed": 0,
     "durationMs": 446.64,
-    "includes": "cc456182 direct Android bundle routerRoot and release rejection checks"
+    "includes": "d0c6e2a6 direct Android bundle routerRoot and release rejection checks"
   }
 }

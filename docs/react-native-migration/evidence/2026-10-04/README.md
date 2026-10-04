@@ -7,10 +7,10 @@ Implementation, deterministic acceptance and the local Android SEED-A/iOS SEED-B
 | Area | Commit / evidence | Observed result |
 | --- | --- | --- |
 | Mobile parser, journal, SQLite/MMKV participants, bootstrap, outbox | `39f37b22` · [core report](core/README.md) · [test inventory](core/verification.json) | 168/168 focused tests pass; full mobile 2,422/2,423, all coverage thresholds pass |
-| Current storage mapping and QA inventory | `41793a35` · [persisted inventory](../../04-migration-qa/02-persisted-data-inventory.md) | Canonical weekend key, retained RN-only preferences, onboarding suppression and journal/outbox documented |
-| Server/private schema, API/generated RN contract, security/retention | `f5f3ded5` · [reporting report](reporting/README.md) · [checks](reporting/verification.json) | Validator 50 tests; real Nest/Postgres/Redis E2E 32 tests; build/lint/codegen pass |
-| Isolated synthetic native transport/readback harness | `9eb168db`, `5c88c876`, `cc456182` · [harness evidence](reporting/qa-transport/README.md) | Offline by default; only synthetic calendar tokens; local first-party report receiver; host harness tests pass |
-| Native bridge, backup policy, fixture writer and builds | `33ec327a`, evidence `f2281888` · [native report](native/README.md) | Five Android native tests; Swift preference/path checks; production CNG/iOS simulator build and remote Android build pass |
+| Current storage mapping and QA inventory | `fa1d104f` · [persisted inventory](../../04-migration-qa/02-persisted-data-inventory.md) | Canonical weekend key, retained RN-only preferences, onboarding suppression and journal/outbox documented |
+| Server/private schema, API/generated RN contract, security/retention | `09956181` · [reporting report](reporting/README.md) · [checks](reporting/verification.json) | Validator 50 tests; real Nest/Postgres/Redis E2E 32 tests; build/lint/codegen pass |
+| Isolated synthetic native transport/readback harness | `669a776f`, `590edb63`, `d0c6e2a6` · [harness evidence](reporting/qa-transport/README.md) | Offline by default; only synthetic calendar tokens; local first-party report receiver; host harness tests pass |
+| Native bridge, backup policy, fixture writer and builds | `4145cb16`, evidence `b2620b18` · [native report](native/README.md) | Five Android native tests; Swift preference/path checks; production CNG/iOS simulator build and remote Android build pass |
 
 The single mobile failure is the unchanged calendar accessibility `probe-late` test. Core independently reproduced it in a clean archive of `ca663a2d059032615efe7f3899dadbe7b1d6196f`. The server has one independently reproduced baseline notification-outbox failure; [the reporting report](reporting/README.md) includes its original-archive evidence. These failures remain visible rather than being suppressed.
 

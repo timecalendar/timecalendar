@@ -1,6 +1,6 @@
 # Local rehearsal continuation state
 
-Native implementation commit: `33ec327a`. This record is current at 2026-10-04 18:13 UTC. Runtime cleanup is complete; see `cleanup.json`.
+Native implementation commit: `4145cb16`. This record is current at 2026-10-04 18:13 UTC. Runtime cleanup is complete; see `cleanup.json`.
 
 - Native worker task `task_20820d471040`, dispatch `ctx_71d6416eaedd`, terminal `term_1dc6355a-9a50-4ed5-872f-d1b90bff7594`; coordinator terminal `term_f3e052e9-f509-4c51-b478-02b6acf5fdc1`.
 - Native worker owns OnePlus and shared Metro. Coordinator transferred exclusive iOS B UI/runtime verification to core terminal `term_00230276-2bae-4798-b8dd-13edf36672a7` at 17:55 UTC; it acknowledged. Do not operate that simulator concurrently.

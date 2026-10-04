@@ -6,8 +6,8 @@ Hermes controls, exact readback assertions and network boundaries are documented
 [the harness README](../../../../../../mobile/scripts/migration-rehearsal/README.md).
 
 `verification.json` records twelve passing Node checks and the coordinator's
-independent twelve-test run at `5c88c876` (17:47 UTC), plus its earlier six-test
-transport check. The final independent run at `40cfb571` (18:00 UTC) also passes
+independent twelve-test run at `590edb63` (17:47 UTC), plus its earlier six-test
+transport check. The final independent run at `ea37ca51` (18:00 UTC) also passes
 all twelve checks, including the direct Android bundle rewrite.
 `receiver-smoke.json` records two HTTP acknowledgements
 persisted as one real PostgreSQL report, with receipt count two. The calibration ID

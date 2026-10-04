@@ -16,6 +16,15 @@ The configured GitHub disclosure-pattern secret is unavailable locally; derived
 identity and structural detectors remain active. [Verification data](verification.json)
 records the exact scope and limitations.
 
+The unpublished migration history contains no findings across 87 evidence blobs
+(75 text blobs, 7,206 lines) under the available detectors. Known local home and
+checkout prefixes are absent from all 87 blobs. The published baseline and concurrent
+remote documentation commit remain intact. All 13 protected source entries match
+the device-validated versions; documentation reference maintenance does not change
+product code. The coordinator independently recomputed the three iOS artifact
+manifests: Flutter A and B each contain 197 files, and React Native contains 132;
+all documented counts and manifest hashes match the actual binaries.
+
 Existing broad results remain authoritative: one mobile and one server test failure
 each reproduce in untouched baseline archives. Product code has no subsequent
 changes requiring another broad run. Local reporting tests use PostgreSQL 18;

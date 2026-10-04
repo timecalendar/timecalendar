@@ -1,6 +1,6 @@
 # Core migration acceptance, 2026-10-04
 
-The TypeScript importer, SQLite journal/outbox, MMKV participants, production eligibility, and ordered root bootstrap are implemented in `39f37b22`, with mapping documentation aligned in `41793a35`. All fixtures and evidence in this directory are synthetic. The automated core matrix is executable in the checked-out mobile project; [the consolidated index](../README.md) links actual native and server/database proof.
+The TypeScript importer, SQLite journal/outbox, MMKV participants, production eligibility, and ordered root bootstrap are implemented in `39f37b22`, with mapping documentation aligned in `fa1d104f`. All fixtures and evidence in this directory are synthetic. The automated core matrix is executable in the checked-out mobile project; [the consolidated index](../README.md) links actual native and server/database proof.
 
 ## Implementation
 

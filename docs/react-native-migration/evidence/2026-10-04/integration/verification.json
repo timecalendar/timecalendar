@@ -19,7 +19,37 @@
       "entries": 29,
       "result": "pass"
     },
-    "configuredDisclosurePatterns": "not available locally; derived and structural detectors active"
+    "configuredDisclosurePatterns": "not available locally; derived and structural detectors active",
+    "unpublishedEvidenceHistory": {
+      "evidenceBlobs": 87,
+      "textBlobs": 75,
+      "lines": 7206,
+      "findings": 0,
+      "knownHomeOrCheckoutPrefixBlobs": 0,
+      "configuredPatterns": "unavailable; derived and structural detectors active",
+      "scope": "All reachable evidence blobs in the unpublished migration commit range before the reference-only follow-up"
+    },
+    "protectedSourceEntries": {
+      "count": 13,
+      "unchanged": true
+    },
+    "iosArtifactsIndependentVerification": {
+      "flutter-seed-a": {
+        "fileCount": 197,
+        "fileCountMatches": true,
+        "manifestMatches": true
+      },
+      "flutter-seed-b": {
+        "fileCount": 197,
+        "fileCountMatches": true,
+        "manifestMatches": true
+      },
+      "react-native": {
+        "fileCount": 132,
+        "fileCountMatches": true,
+        "manifestMatches": true
+      }
+    }
   },
   "cleanup": {
     "authorizedByCoordinator": true,
@@ -43,7 +73,7 @@
   "limitations": [
     "Local E2E uses PostgreSQL18; CI uses repository PostgreSQL14 and is not yet observed on the candidate.",
     "Full mobile and server suites each have one independently reproduced baseline failure; broad suites were not repeated without product changes.",
-    "GitHub configured disclosure patterns are unavailable locally.",
-    "Final-tree disclosure scans do not prove unpublished commit history contains no prior disclosed text."
-  ]
+    "GitHub configured disclosure patterns are unavailable locally."
+  ],
+  "reviewedConcurrentRemoteMain": "05536f7779230e7e04783e333df69d7c944c283b"
 }

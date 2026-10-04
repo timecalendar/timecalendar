@@ -144,7 +144,7 @@ and exactly one delivered report. The post-edit fixture-equality mismatch is int
 and documented in `../android/seed-a-post-edit-restart.json`. Final source retention still
 passes. The fixture app is stopped; original airplane mode off, Wi-Fi on and mobile data on settings are restored.
 
-Native implementation is committed as `33ec327a`. Simulator artifact aggregate hashes use
+Native implementation is committed as `4145cb16`. Simulator artifact aggregate hashes use
 the explicit algorithm recorded in `../ios/native-artifacts.json`, including Flutter A,
 Flutter B and RN apps. These are local simulator/debug artifacts, not signed store releases.
 
