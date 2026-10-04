@@ -1,0 +1,19 @@
+{
+  "capturedAt": "2026-10-04T18:05:19.565940+00:00",
+  "method": "read-only SQLite from stopped OnePlus fixture app; no WAL files present",
+  "integrity": "ok",
+  "counts": {
+    "user_calendars": 1,
+    "personal_events": 5,
+    "checklist_items": 5,
+    "calendar_events": 29
+  },
+  "journal": {
+    "state": "SETTLED_SUCCESS",
+    "reportId": "6c8eec01-f56f-4449-9a9a-838607f79a4e",
+    "attempt": 1
+  },
+  "editedChecklistUnchecked": true,
+  "outboxCount": 1,
+  "deliveredCount": 1
+}

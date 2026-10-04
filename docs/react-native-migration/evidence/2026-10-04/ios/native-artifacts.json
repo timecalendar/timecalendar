@@ -17,7 +17,8 @@
     "fileCount": 197,
     "fileManifestSha256": "c75a324a20a9a2d8b01766104bcc5f371164137b981a2040cac677729b9f4626",
     "manifestAlgorithm": "SHA256 of UTF-8 compact JSON sorted [relative POSIX path, file SHA256] pairs, symlinks dereferenced",
-    "localPath": "$REPO_ROOT/app/build/ios/Debug-iphonesimulator/Runner.app"
+    "localPath": "app/build/ios/Debug-iphonesimulator/Runner.app",
+    "localPathBase": "repository-root"
   },
   "react-native": {
     "identity": "fr.samuelprak.timecalendar",

@@ -19,9 +19,10 @@ xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Debug
 On remote WSL, from the isolated snapshot's `app/`:
 
 ```sh
-export ANDROID_HOME=$REMOTE_HOME/Android/Sdk
+export ANDROID_HOME="$HOME/Android/Sdk"
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-export PATH=$REMOTE_HOME/timecalendar-migration-20261004/tools/flutter/bin:/usr/bin:/bin
+export MIGRATION_SNAPSHOT_ROOT="$HOME/timecalendar-migration-20261004"
+export PATH="$MIGRATION_SNAPSHOT_ROOT/tools/flutter/bin:/usr/bin:/bin"
 flutter pub get
 flutter build apk --debug --target tool/migration_seed.dart --dart-define=MIGRATION_SEED=SEED-A
 ```
@@ -63,9 +64,9 @@ certificates before installing either artifact. This is a standard disposable de
 key, not a production upload or Play signing credential. Example inside the snapshot:
 
 ```sh
-$REMOTE_HOME/Android/Sdk/build-tools/36.0.0/apksigner sign --ks mobile/android/app/debug.keystore --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --out artifacts/flutter-seed-a.apk app/build/app/outputs/flutter-apk/app-debug.apk
-$REMOTE_HOME/Android/Sdk/build-tools/36.0.0/apksigner verify --print-certs artifacts/flutter-seed-a.apk
-$REMOTE_HOME/Android/Sdk/build-tools/36.0.0/apksigner verify --print-certs mobile/android/app/build/outputs/apk/debug/app-debug.apk
+"$ANDROID_HOME/build-tools/36.0.0/apksigner" sign --ks mobile/android/app/debug.keystore --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --out artifacts/flutter-seed-a.apk app/build/app/outputs/flutter-apk/app-debug.apk
+"$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs artifacts/flutter-seed-a.apk
+"$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs mobile/android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
 ## Read-only source evidence

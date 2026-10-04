@@ -80,7 +80,7 @@ It contains no prior TimeCalendar installation. Argent is excluded.
 Both binaries use `fr.samuelprak.timecalendar`. Local APK debug signing and simulator
 replacement establish local sandbox compatibility only. They do not establish Play,
 TestFlight, App Store, physical-iPhone data protection, backup/restore, or release-mode
-performance gates. No production service deployment or store submission is authorized.
+performance gates. No production service deployment or store submission was performed.
 
 ## Android backup disposition
 
@@ -119,7 +119,7 @@ The pinned Flutter 3.44.2 migrator adds `android.builtInKotlin=false` and `andro
   the shipping outbox. iOS report `7000d54a-612c-4726-bbb8-4e8fd82c1ecf` is delivered at
   17:52:11 UTC, Android `6c8eec01-f56f-4449-9a9a-838607f79a4e` at 17:57:21 UTC.
   Retry backoff remains authoritative. Receiver evidence excludes the calibration report.
-- iOS actual Home pull-to-refresh with synthetic revisions1 and2 preserves imported rows
+- iOS actual Home pull-to-refresh with synthetic revisions 1 and 2 preserves imported rows
   and linked checklists; the shipping selector excludes hidden UIDs/names. Source retention
   is checked after sync. No calendar HTTP request reaches production.
 
@@ -132,16 +132,27 @@ Runtime.enable and Debugger.enable. These launcher fixes are isolated in the reh
 
 Android radio-off proof is distinct from iOS injected fetch failure. Native SDK and OTA/store
 behavior are outside the harness proof. The synthetic iOS A sandbox is seeded and retained;
-its target replacement has not been run. The core worker owns remaining iOS B edit/delete
-verification after the 17:55 UTC coordinator-authorized handoff.
+its target replacement has not been run. The core worker completed iOS B checklist
+edit/deletion and Light-theme changes through shipping UI, verified each across cold restart, and retained the original source. See
+`../ios/seed-b-post-edit-restart.json`, `../ios/seed-b-post-delete-restart.json`,
+`../ios/seed-b-post-theme-edit-restart.json` and `../ios/seed-b-final-source.json`.
 
-Android's second actual UI refresh also passes all18 checks with revision2 present.
-The imported checklist0 was then unchecked through the Event screen. A controlled cold
-restart retains that edit, all other datasets, the original successful journal attempt1,
+Android's second actual UI refresh also passes all 18 checks with revision 2 present.
+The imported checklist 0 was then unchecked through the Event screen. A controlled cold
+restart retains that edit, all other datasets, the original successful journal attempt 1,
 and exactly one delivered report. The post-edit fixture-equality mismatch is intentional
 and documented in `../android/seed-a-post-edit-restart.json`. Final source retention still
-passes. The fixture app is stopped; original airplane0/Wi-Fi1/mobile1 settings are restored.
+passes. The fixture app is stopped; original airplane mode off, Wi-Fi on and mobile data on settings are restored.
 
 Native implementation is committed as `33ec327a`. Simulator artifact aggregate hashes use
 the explicit algorithm recorded in `../ios/native-artifacts.json`, including Flutter A,
 Flutter B and RN apps. These are local simulator/debug artifacts, not signed store releases.
+
+Coordinator final Android inspection independently confirms SQLite integrity_check=ok,
+stable counts/report/journal and the persisted unchecked item; see
+`../android/seed-a-independent-final.json`.
+
+Runtime cleanup is complete: the Android fixture is stopped with original radio settings
+restored, both owned USB reverse mappings are removed, iOS B is shut down, and the owned
+Metro server is stopped. Source files and target sandboxes remain retained. See
+`cleanup.json`; the reporting worker owns the independent local receiver lifecycle.

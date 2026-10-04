@@ -1,0 +1,31 @@
+{
+  "capturedAt": "2026-10-04T18:13:59.714872+00:00",
+  "ownedMetro": {
+    "port": 8086,
+    "stopped": true,
+    "verification": "lsof reports no TCP listener"
+  },
+  "android": {
+    "serial": "86fa07cc",
+    "ownedReversePortsRemoved": [
+      8086,
+      8090
+    ],
+    "reverseMappingsRemaining": 0,
+    "appStoppedAndRadiosRestoredEvidence": "../android/device-restored.json",
+    "retainedSourceAndTargetEvidence": "../android/seed-a-independent-final.json"
+  },
+  "ios": {
+    "simulator": "4CADEE84-03D3-49ED-921E-29C728C7423F",
+    "state": "Shutdown",
+    "sourceRetained": true,
+    "targetDatabaseRetained": true,
+    "evidence": "../ios/seed-b-final-runtime.json"
+  },
+  "localReportReceiver": {
+    "port": 8090,
+    "owner": "reporting worker",
+    "lifecycle": "separate from native cleanup"
+  },
+  "uninstallOrClearDuringCleanup": false
+}
