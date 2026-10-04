@@ -202,7 +202,7 @@ export function OwnedCalendarShell({
       heading,
       onContextSettled,
       pixelsPerHour: coordinator.pixelsPerHour,
-      scrollRef: coordinator.scrollRef,
+      scrollTo: coordinator.scrollToOffset,
     })
 
   const { isVerticalMovementOwned } = coordinator
@@ -303,7 +303,6 @@ export function OwnedCalendarShell({
           onMomentumScrollBegin={coordinator.onMomentumScrollBegin}
           onMomentumScrollEnd={coordinator.settleVertical}
           pixelsPerHour={coordinator.pixelsPerHour}
-          settledPixelsPerHour={initialPixelsPerHour}
           pagerRef={pagerRef}
           pagerProbeRef={probeRef}
           pager={pager}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useEffectEvent, useRef, useState } from "react"
 import {
   AppState,
   type NativeScrollEvent,
@@ -127,6 +127,7 @@ export function useOwnedCalendarCoordinator({
     pinchActive,
     pinchInterruptionSequence,
     scrollRef,
+    scrollToOffset,
     trackNativeTouch,
     verticalCallbacksBlocked,
   } = zoom
@@ -212,6 +213,9 @@ export function useOwnedCalendarCoordinator({
   const isVerticalMovementOwned = () =>
     movementOwnedRef.current || pinchActive.get()
 
+  const restoreVerticalOffset = useEffectEvent(() => {
+    scrollToOffset(committedVerticalOffsetRef.current)
+  })
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") return
@@ -222,10 +226,7 @@ export function useOwnedCalendarCoordinator({
       }
       verticalCandidateRef.current = null
       movementOwnedRef.current = false
-      scrollRef.current?.scrollTo({
-        y: committedVerticalOffsetRef.current,
-        animated: false,
-      })
+      restoreVerticalOffset()
     })
     return () => {
       subscription.remove()
@@ -234,7 +235,7 @@ export function useOwnedCalendarCoordinator({
         cancelAnimationFrame(verticalFrameRef.current)
       }
     }
-  }, [pinchActive, scrollRef])
+  }, [pinchActive])
 
   return {
     nowMinuteOfDay,
@@ -252,6 +253,7 @@ export function useOwnedCalendarCoordinator({
     scrollLocked: zoom.scrollLocked,
     trackNativeTouch,
     scrollRef,
+    scrollToOffset,
     settleVertical,
   }
 }

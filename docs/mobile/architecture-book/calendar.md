@@ -33,11 +33,23 @@ on the UI thread. Vertical callbacks stay gated through settlement, so queued of
 cannot replace the focal result; when the lock lifts, the pager snaps to the nearest page or
 settles where it rests.
 Settled offset and zoom props acknowledge the live renderer state without issuing another
-scroll command. React Native's iOS `scrollTo` bounds exclude UIKit's automatically adjusted
-tab-bar inset, so replaying a native settlement would hide the final hours behind the glass bar.
+scroll command. Programmatic scrolling clamps against the live day height, viewport and automatic
+insets. iOS enables `scrollToOverflowEnabled` so a focal scroll can arrive before Fabric commits
+the new day height; React Native's older native content extent cannot clamp that valid live offset.
+Focus reveal, initial/external positioning, background restoration and cancellation share these
+bounds. Initial positioning preserves its supplied offset until viewport measurement is available.
 Pinch ownership starts on activation. A touch pinch keeps its last two-finger anchor when
 release updates report fewer than two fingers; an unactivated gesture cannot restore a
 pinch baseline.
+Visible grid lines, hour labels, the current-time cue and committed event surfaces use fixed
+layout baselines. Their UI-thread transforms depend directly on the live shared scale and do not
+rebase when React acknowledges settlement. Event surfaces keep fixed rounded caps, a stretched
+middle and a live-height clip with inverse-scaled readable text. Each animated style captures the
+shared scale directly so Reanimated subscribes to changes. Plain native-layout siblings own event
+press/focus targets and the current-time accessibility bounds; they receive settled geometry and
+never carry the visual transforms. This keeps independent React layout and Reanimated updates
+from combining a new baseline with an old transform. Targets remain activation-gated during
+owned movement, and the zoom-dependent conflict overlays use settled target geometry.
 Calendar tab reselect-to-top is disabled. A plain adjustable View in the date header's
 52-point gutter corner exposes the committed localized day or week context and translated
 previous/next actions. It is at least 56 points tall. Neither ScrollView is an accessible
@@ -367,6 +379,12 @@ separate. The binding contract and regression scenarios live in the
 - A Home action may pass a one-shot `focusDate` to Calendar, which consumes it after use.
 
 ## Verification
+
+The compiled pinch contract runs the renderer through the Expo native Babel configuration and
+uses the installed Reanimated mapper registry to exercise shared-value subscriptions without React
+rerenders. It checks event endpoints, cap sizes, live text clipping, inverse text scale, settled target
+bounds and both mixed native layout/transform delivery orders. It models style composition rather
+than UIKit/Fabric paint or assistive technology; native verification remains a separate requirement.
 
 Unit/component tests cover display-zone day/week civil arithmetic, mode persistence and corrupt
 recovery, page index/window/re-base arithmetic, UI-thread settlement and stale-event filtering,

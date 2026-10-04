@@ -243,6 +243,71 @@ describe("calendar zoom settlement", () => {
     expect(scrollTo).not.toHaveBeenCalled()
   })
 
+  it("keeps initial offsets before viewport and automatic insets are measured", async () => {
+    const { result } = await renderHook(useOwnedCalendarZoom, {
+      initialProps: { ...props, initialRawOffset: -64 },
+    })
+    expect(scrollTo).toHaveBeenLastCalledWith({ y: -64, animated: false })
+    expect(result.current.rawOffset.get()).toBe(-64)
+  })
+
+  it("bounds focus and restoration commands using live zoom and automatic insets", async () => {
+    const { result } = await renderHook(useOwnedCalendarZoom, {
+      initialProps: props,
+    })
+    await act(async () =>
+      result.current.onScroll({
+        nativeEvent: {
+          contentOffset: { x: 0, y: 300 },
+          layoutMeasurement: { width: 320, height: 500 },
+          contentInset: { top: 44, bottom: 80 },
+        },
+      } as never),
+    )
+    for (const [scale, requested, expected] of [
+      [60, 1343, 1020],
+      [80, 1823, 1500],
+      [40, 900, 540],
+      [40, -999, -44],
+      [40, -20, -20],
+      [40, Number.NaN, -44],
+    ]) {
+      await act(async () => {
+        result.current.pixelsPerHour.set(scale!)
+        result.current.scrollToOffset(requested!)
+      })
+      expect(scrollTo).toHaveBeenLastCalledWith({
+        y: expected,
+        animated: false,
+      })
+      expect(result.current.rawOffset.get()).toBe(expected)
+    }
+  })
+
+  it("cancels to a bounded baseline even when pinch starts during native overscroll", async () => {
+    const { result } = await renderHook(useOwnedCalendarZoom, {
+      initialProps: props,
+    })
+    await act(async () =>
+      result.current.onScroll({
+        nativeEvent: {
+          contentOffset: { x: 0, y: 1100 },
+          layoutMeasurement: { width: 320, height: 500 },
+          contentInset: { top: 44, bottom: 80 },
+        },
+      } as never),
+    )
+    const { handlers } = result.current.pinchGesture
+    await act(async () => {
+      handlers.onStart?.(pinchEvent())
+      handlers.onUpdate?.(pinchEvent(1.5))
+      handlers.onFinalize?.(pinchEvent(1.5), false)
+    })
+    expect(result.current.pixelsPerHour.get()).toBe(60)
+    expect(result.current.rawOffset.get()).toBe(1020)
+    expect(props.onZoomSettled).not.toHaveBeenCalled()
+  })
+
   it("applies an external zoom preference", async () => {
     const { result, rerender } = await renderHook(useOwnedCalendarZoom, {
       initialProps: props,

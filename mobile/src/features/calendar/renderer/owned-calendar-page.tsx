@@ -398,31 +398,6 @@ function TimedCalendarTile({
     24 * settledPixelsPerHour,
     MINIMUM_TARGET,
   )
-  const anchorStyle = useAnimatedStyle(() => ({
-    transform: [
-      {
-        translateY:
-          roundToDevicePixel(
-            liveEventVisualGeometry(
-              tile.shape,
-              tile.startMinute,
-              tile.endMinute,
-              pixelsPerHour.get(),
-            ).top,
-            PIXEL_RATIO,
-          ) - roundToDevicePixel(settledVisual.top, PIXEL_RATIO),
-      },
-    ],
-  }))
-  const visual = (
-    <LiveTileVisual
-      tile={tile}
-      pixelsPerHour={pixelsPerHour}
-      settledPixelsPerHour={settledPixelsPerHour}
-      top={settledVisual.top - interaction.top}
-      height={settledVisual.height}
-    />
-  )
   const button = (
     <Pressable
       ref={(node) =>
@@ -435,43 +410,47 @@ function TimedCalendarTile({
       accessibilityHint={t("calendar.event.hint")}
       onPress={() => handlers.onEventPress(tile.identity.uid)}
       style={styles.tileTarget}
-    >
-      {visual}
-    </Pressable>
+    />
   )
   return (
-    <Animated.View
-      testID={`owned-calendar-event-${tile.identity.uid}`}
-      pointerEvents="box-none"
-      onLayout={probeTargetFrame(
-        handlers.onProbeDiagnostic,
-        tile.key,
-        tile.accessibilityOrder,
-      )}
-      style={[
-        styles.tileAnchor,
-        horizontalRectangleStyle({ left: tile.startX, right: tile.endX }),
-        interaction,
-        anchorStyle,
-      ]}
-    >
-      <CalendarFocusObserverView
-        testID={`owned-calendar-focus-observer-${tile.identity.uid}`}
-        identity={tile.key}
-        dateKey={dateKey}
-        pageKey={pageKey}
-        onAccessibilityFocused={({ nativeEvent }) =>
-          handlers.onEventFocused(
-            nativeEvent.identity,
-            nativeEvent.dateKey,
-            nativeEvent.pageKey,
-          )
-        }
-        style={styles.tileTarget}
+    <>
+      <LiveTileVisual
+        tile={tile}
+        pixelsPerHour={pixelsPerHour}
+        settledPixelsPerHour={settledPixelsPerHour}
+      />
+      <View
+        testID={`owned-calendar-event-${tile.identity.uid}`}
+        pointerEvents="box-none"
+        onLayout={probeTargetFrame(
+          handlers.onProbeDiagnostic,
+          tile.key,
+          tile.accessibilityOrder,
+        )}
+        style={[
+          styles.tileAnchor,
+          horizontalRectangleStyle({ left: tile.startX, right: tile.endX }),
+          interaction,
+        ]}
       >
-        {button}
-      </CalendarFocusObserverView>
-    </Animated.View>
+        <CalendarFocusObserverView
+          testID={`owned-calendar-focus-observer-${tile.identity.uid}`}
+          identity={tile.key}
+          dateKey={dateKey}
+          pageKey={pageKey}
+          onAccessibilityFocused={({ nativeEvent }) =>
+            handlers.onEventFocused(
+              nativeEvent.identity,
+              nativeEvent.dateKey,
+              nativeEvent.pageKey,
+            )
+          }
+          style={styles.tileTarget}
+        >
+          {button}
+        </CalendarFocusObserverView>
+      </View>
+    </>
   )
 }
 
@@ -479,35 +458,45 @@ function LiveTileVisual({
   tile,
   pixelsPerHour,
   settledPixelsPerHour,
-  top,
-  height,
 }: {
   tile: PageTileV1
   pixelsPerHour: SharedValue<number>
   settledPixelsPerHour: number
-  top: number
-  height: number
 }) {
   const surface = tileSurfaceStyle(tile)
-  const minimumHeight =
+  // Slice dimensions are permanent: settlement only relays native target bounds.
+  const height =
     tile.shape === "point"
       ? POINT_MARKER_SIZE
       : ((tile.endMinute - tile.startMinute) / 60) * MIN_PIXELS_PER_HOUR
-  const cap = Math.min(TILE_CAP_HEIGHT, height / 2, minimumHeight / 2)
+  const cap = Math.min(TILE_CAP_HEIGHT, height / 2)
   const visibleHeight = Math.max(height, StyleSheet.hairlineWidth)
   const middleHeight =
     Math.max(visibleHeight - 2 * cap, 0) + StyleSheet.hairlineWidth * 2
-  const liveHeight = () => {
+  const anchorStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateY: liveEventVisualGeometry(
+          tile.shape,
+          tile.startMinute,
+          tile.endMinute,
+          pixelsPerHour.get(),
+        ).top,
+      },
+    ],
+  }))
+  const liveHeight = (scale: number) => {
     "worklet"
     return tile.shape === "point"
       ? POINT_MARKER_SIZE
-      : ((tile.endMinute - tile.startMinute) / 60) * pixelsPerHour.get()
+      : ((tile.endMinute - tile.startMinute) / 60) * scale
   }
   const middleStyle = useAnimatedStyle(() => ({
     transform: [
       {
         scaleY:
-          (Math.max(liveHeight() - 2 * cap, 0) + StyleSheet.hairlineWidth * 2) /
+          (Math.max(liveHeight(pixelsPerHour.get()) - 2 * cap, 0) +
+            StyleSheet.hairlineWidth * 2) /
           middleHeight,
       },
     ],
@@ -516,7 +505,8 @@ function LiveTileVisual({
     transform: [
       {
         translateY:
-          Math.max(liveHeight(), StyleSheet.hairlineWidth) - visibleHeight,
+          Math.max(liveHeight(pixelsPerHour.get()), StyleSheet.hairlineWidth) -
+          visibleHeight,
       },
     ],
   }))
@@ -524,7 +514,8 @@ function LiveTileVisual({
     transform: [
       {
         scaleY:
-          Math.max(liveHeight(), StyleSheet.hairlineWidth) / visibleHeight,
+          Math.max(liveHeight(pixelsPerHour.get()), StyleSheet.hairlineWidth) /
+          visibleHeight,
       },
     ],
   }))
@@ -532,15 +523,24 @@ function LiveTileVisual({
     transform: [
       {
         scaleY:
-          visibleHeight / Math.max(liveHeight(), StyleSheet.hairlineWidth),
+          visibleHeight /
+          Math.max(liveHeight(pixelsPerHour.get()), StyleSheet.hairlineWidth),
       },
     ],
   }))
   return (
-    <View
+    <Animated.View
+      testID={`owned-calendar-visual-${tile.identity.uid}`}
       accessible={false}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
       pointerEvents="none"
-      style={[styles.liveTile, { top, height: visibleHeight }]}
+      style={[
+        styles.liveTile,
+        horizontalRectangleStyle({ left: tile.startX, right: tile.endX }),
+        { top: 0, height: visibleHeight },
+        anchorStyle,
+      ]}
     >
       <View
         style={[styles.tileSlice, surface, styles.tileTopCap, { height: cap }]}
@@ -573,14 +573,14 @@ function LiveTileVisual({
           />
         </Animated.View>
       </Animated.View>
-    </View>
+    </Animated.View>
   )
 }
 
 // The current-time indicator. Its non-color cue is SHAPE: a filled cap at the
 // leading edge of the rule, legible in greyscale and without colour perception.
-// Vertical placement runs on the UI thread off the live pinch scale, so it
-// tracks a zoom without a per-frame React state write.
+// The visible cue uses UI-thread transforms; its semantic sibling uses settled
+// native layout so accessibility bounds do not depend on synchronous transforms.
 function NowIndicator({
   testID,
   minuteOfDay,
@@ -599,34 +599,46 @@ function NowIndicator({
   const positionStyle = useMinutePositionStyle(
     minuteOfDay,
     pixelsPerHour,
-    settledPixelsPerHour,
     -NOW_CAP_SIZE / 2,
   )
   return (
-    <Animated.View
-      testID={testID}
-      accessible={accessibilityLabel !== undefined}
-      accessibilityRole={accessibilityLabel === undefined ? undefined : "text"}
-      accessibilityLabel={accessibilityLabel}
-      importantForAccessibility={
-        accessibilityLabel === undefined ? "no-hide-descendants" : "yes"
-      }
-      style={[
-        styles.nowIndicator,
-        {
-          top: minutePositionTop(
-            minuteOfDay,
-            settledPixelsPerHour,
-            PIXEL_RATIO,
-            -NOW_CAP_SIZE / 2,
-          ),
-        },
-        positionStyle,
-      ]}
-    >
-      <View style={[styles.nowIndicatorCap, { backgroundColor: color }]} />
-      <View style={[styles.nowIndicatorRule, { backgroundColor: color }]} />
-    </Animated.View>
+    <>
+      <View
+        testID={testID}
+        pointerEvents="none"
+        accessible={accessibilityLabel !== undefined}
+        accessibilityRole={
+          accessibilityLabel === undefined ? undefined : "text"
+        }
+        accessibilityLabel={accessibilityLabel}
+        importantForAccessibility={
+          accessibilityLabel === undefined ? "no-hide-descendants" : "yes"
+        }
+        style={[
+          styles.nowIndicator,
+          {
+            top: minutePositionTop(
+              minuteOfDay,
+              settledPixelsPerHour,
+              PIXEL_RATIO,
+              -NOW_CAP_SIZE / 2,
+            ),
+            height: NOW_CAP_SIZE,
+          },
+        ]}
+      />
+      <Animated.View
+        testID={`${testID}-visual`}
+        pointerEvents="none"
+        accessible={false}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={[styles.nowIndicator, positionStyle]}
+      >
+        <View style={[styles.nowIndicatorCap, { backgroundColor: color }]} />
+        <View style={[styles.nowIndicatorRule, { backgroundColor: color }]} />
+      </Animated.View>
+    </>
   )
 }
 
@@ -643,6 +655,7 @@ const styles = StyleSheet.create({
   dayColumn: { flex: 1, borderRightWidth: StyleSheet.hairlineWidth },
   nowIndicator: {
     position: "absolute",
+    top: 0,
     left: 0,
     right: 0,
     flexDirection: "row",

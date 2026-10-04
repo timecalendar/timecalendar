@@ -3,7 +3,6 @@ import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
-  PixelRatio,
   Platform,
   StyleSheet,
   View,
@@ -23,7 +22,6 @@ import {
   fullDayMajorMinutes,
   fullDayMinorMinutes,
   HOURS_COLUMN_WIDTH,
-  minutePositionTop,
   PAGE_WINDOW_RADIUS,
 } from "@/features/calendar/data"
 import { useTheme } from "@/theme"
@@ -38,7 +36,6 @@ import {
 const MAJOR_MINUTES = fullDayMajorMinutes()
 const MINOR_MINUTES = fullDayMinorMinutes()
 const HOURS = Array.from({ length: 23 }, (_, index) => index + 1)
-const PIXEL_RATIO = PixelRatio.get()
 const IS_IOS = Platform.OS === "ios"
 const IS_ANDROID = Platform.OS === "android"
 
@@ -68,7 +65,6 @@ export function OwnedCalendarCanvas({
   onMomentumScrollBegin,
   onMomentumScrollEnd,
   pixelsPerHour,
-  settledPixelsPerHour,
   pagerRef,
   pagerProbeRef,
   pager,
@@ -87,7 +83,6 @@ export function OwnedCalendarCanvas({
   onMomentumScrollBegin: () => void
   onMomentumScrollEnd: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
   pixelsPerHour: SharedValue<number>
-  settledPixelsPerHour: number
   pagerRef: AnimatedRef<Animated.ScrollView>
   pagerProbeRef: AnimatedRef<Animated.View>
   pager: HorizontalPager
@@ -108,6 +103,9 @@ export function OwnedCalendarCanvas({
         style={styles.viewport}
         contentContainerStyle={styles.scrollContent}
         contentInsetAdjustmentBehavior="automatic"
+        // Programmatic offsets are bounded against live geometry; iOS can still
+        // have the previous frame's content height when a pinch scroll arrives.
+        scrollToOverflowEnabled={IS_IOS}
         // Android re-applies a `contentOffset` prop whenever the view's props
         // are re-sent, which the animated `scrollEnabled` does on every pinch.
         // There the first viewport measurement seeks instead.
@@ -138,11 +136,9 @@ export function OwnedCalendarCanvas({
             locale={locale}
             uses24HourClock={uses24HourClock}
             pixelsPerHour={pixelsPerHour}
-            settledPixelsPerHour={settledPixelsPerHour}
           />
           <HourLines
             pixelsPerHour={pixelsPerHour}
-            settledPixelsPerHour={settledPixelsPerHour}
             background={theme.backgroundElement}
             color={theme.separator}
           />
@@ -235,12 +231,10 @@ function HourGutter({
   locale,
   uses24HourClock,
   pixelsPerHour,
-  settledPixelsPerHour,
 }: {
   locale: AppLocale
   uses24HourClock: boolean | null
   pixelsPerHour: SharedValue<number>
-  settledPixelsPerHour: number
 }) {
   const theme = useTheme()
   return (
@@ -261,7 +255,6 @@ function HourGutter({
             hour={hour}
             label={formatHourStartLabel(hour, locale, uses24HourClock)}
             pixelsPerHour={pixelsPerHour}
-            settledPixelsPerHour={settledPixelsPerHour}
           />
         ))}
       </View>
@@ -273,34 +266,14 @@ function HourLabel({
   hour,
   label,
   pixelsPerHour,
-  settledPixelsPerHour,
 }: {
   hour: number
   label: string
   pixelsPerHour: SharedValue<number>
-  settledPixelsPerHour: number
 }) {
-  const positionStyle = useMinutePositionStyle(
-    hour * 60,
-    pixelsPerHour,
-    settledPixelsPerHour,
-    -6.5,
-  )
+  const positionStyle = useMinutePositionStyle(hour * 60, pixelsPerHour, -6.5)
   return (
-    <Animated.View
-      style={[
-        styles.hourLabel,
-        {
-          top: minutePositionTop(
-            hour * 60,
-            settledPixelsPerHour,
-            PIXEL_RATIO,
-            -6.5,
-          ),
-        },
-        positionStyle,
-      ]}
-    >
+    <Animated.View style={[styles.hourLabel, positionStyle]}>
       <ThemedText
         type="captionSmall"
         themeColor="textSecondary"
@@ -319,12 +292,10 @@ function HourLabel({
 // already drawn while the pager waits for its first layout and placement.
 function HourLines({
   pixelsPerHour,
-  settledPixelsPerHour,
   background,
   color,
 }: {
   pixelsPerHour: SharedValue<number>
-  settledPixelsPerHour: number
   background: string
   color: string
 }) {
@@ -342,7 +313,6 @@ function HourLines({
           testID={`owned-calendar-minor-${minute}`}
           minute={minute}
           pixelsPerHour={pixelsPerHour}
-          settledPixelsPerHour={settledPixelsPerHour}
           color={color}
           minor
         />
@@ -353,7 +323,6 @@ function HourLines({
           testID={`owned-calendar-major-${minute}`}
           minute={minute}
           pixelsPerHour={pixelsPerHour}
-          settledPixelsPerHour={settledPixelsPerHour}
           color={color}
         />
       ))}
@@ -365,22 +334,16 @@ function GridLine({
   testID,
   minute,
   pixelsPerHour,
-  settledPixelsPerHour,
   color,
   minor = false,
 }: {
   testID: string
   minute: number
   pixelsPerHour: SharedValue<number>
-  settledPixelsPerHour: number
   color: string
   minor?: boolean
 }) {
-  const positionStyle = useMinutePositionStyle(
-    minute,
-    pixelsPerHour,
-    settledPixelsPerHour,
-  )
+  const positionStyle = useMinutePositionStyle(minute, pixelsPerHour)
   return (
     <Animated.View
       testID={testID}
@@ -388,7 +351,6 @@ function GridLine({
         styles.gridLine,
         minor && styles.minorLine,
         { backgroundColor: color },
-        { top: minutePositionTop(minute, settledPixelsPerHour, PIXEL_RATIO) },
         positionStyle,
       ]}
     />
@@ -409,6 +371,7 @@ const styles = StyleSheet.create({
   },
   hourLabel: {
     position: "absolute",
+    top: 0,
     right: 6,
   },
   hourLines: {
@@ -420,6 +383,7 @@ const styles = StyleSheet.create({
   },
   gridLine: {
     position: "absolute",
+    top: 0,
     left: 0,
     right: 0,
     height: StyleSheet.hairlineWidth,

@@ -88,6 +88,21 @@ function styledTestNode(node: unknown): StyledTestNode {
   return node as StyledTestNode
 }
 
+function renderedTop(style: Parameters<typeof StyleSheet.flatten>[0]) {
+  const flat = StyleSheet.flatten(style) as {
+    top?: number
+    transform?: { translateY?: number }[]
+  }
+  const transforms = flat.transform
+  return (
+    Number(flat.top ?? 0) +
+    (transforms ?? []).reduce(
+      (sum, transform) => sum + (transform.translateY ?? 0),
+      0,
+    )
+  )
+}
+
 function presenter({
   mode = "week",
   firstWeekday = 1,
@@ -249,6 +264,7 @@ describe("OwnedCalendarShell", () => {
       getByGestureTestId("owned-calendar-pinch") as unknown as {
         handlers: {
           onStart: (event: Record<string, unknown>) => void
+          onUpdate: (event: Record<string, unknown>) => void
           onEnd: (event: Record<string, unknown>, success: boolean) => void
           onFinalize: (event: Record<string, unknown>, success: boolean) => void
         }
@@ -343,6 +359,63 @@ describe("OwnedCalendarShell", () => {
     )
   })
 
+  it("keeps a focal scroll beyond the previous native content height through settlement", async () => {
+    const reactions = recordAnimatedReactions()
+    let nativeOffset = 0
+    let allowOverflow = false
+    const oldNativeMaximum = 24 * 60 - 500
+    // RN iOS clamps scrollTo against current contentSize unless overflow is
+    // enabled. Keep that extent stale until after the final pinch frame.
+    const nativeScroll = jest
+      .spyOn(Reanimated, "scrollTo")
+      .mockImplementation((_ref, x, y) => {
+        if (x === 0)
+          nativeOffset = allowOverflow ? y : Math.min(y, oldNativeMaximum)
+      })
+    try {
+      await renderPlaced(shell())
+      const canvas = screen.getByTestId("owned-calendar-canvas")
+      allowOverflow = canvas.props.scrollToOverflowEnabled === true
+      await fireEvent.scroll(canvas, scrollEvent(0))
+      await act(async () =>
+        fireNativeOwnerStart("owned-calendar-native-scroll"),
+      )
+      await fireEvent.scroll(canvas, scrollEvent(490))
+      await act(async () => {
+        const pinch = pinchHandlers()
+        pinch.onStart({
+          scale: 1,
+          focalX: 160,
+          focalY: 250,
+          numberOfPointers: 2,
+        })
+        pinch.onUpdate({
+          scale: 2,
+          focalX: 160,
+          focalY: 250,
+          numberOfPointers: 2,
+        })
+        reactions.flush()
+      })
+      const desiredOffset = (490 + 250) * 2 - 250
+      expect(nativeOffset).toBe(desiredOffset)
+      await act(async () => {
+        const pinch = pinchHandlers()
+        pinch.onEnd({}, true)
+        pinch.onFinalize({}, true)
+      })
+      expect(onZoomSettled).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          pixelsPerHour: 120,
+          rawOffset: nativeOffset,
+        }),
+      )
+    } finally {
+      nativeScroll.mockRestore()
+      reactions.restore()
+    }
+  })
+
   it("renders a timed class at its actual time and opens its original UID", async () => {
     const onEventPress = jest.fn()
     const onProbeDiagnostic = jest.fn()
@@ -376,8 +449,10 @@ describe("OwnedCalendarShell", () => {
       height: 60,
     })
     for (const [scale, top, height] of [
-      [40, 398, 44],
+      [80, 800, 80],
       [120, 1200, 120],
+      [40, 398, 44],
+      [60, 600, 60],
     ] as const) {
       await view.rerender(
         shell({ presentPage, onEventPress, initialPixelsPerHour: scale }),
@@ -390,13 +465,26 @@ describe("OwnedCalendarShell", () => {
           screen.getByTestId("owned-calendar-event-original-42").props.style,
         ),
       ).toMatchObject({ top, height })
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId("owned-calendar-event-original-42").props.style,
+        ).transform,
+      ).toBeUndefined()
+      await focusEvent("original-42")
+      await fireEvent.press(
+        screen.getByRole("button", { name: "Maths, 10:00 – 11:00 B12" }),
+      )
+      expect(onEventPress).toHaveBeenLastCalledWith("original-42")
+      expect(
+        screen.getAllByRole("button", { name: "Maths, 10:00 – 11:00 B12" }),
+      ).toHaveLength(1)
     }
     const tile = screen.getByRole("button", {
       name: "Maths, 10:00 – 11:00 B12",
     })
     expect(tile).toHaveProp("accessibilityHint", "View details")
-    expect(screen.getByText("Maths")).toBeOnTheScreen()
-    expect(screen.getByText("B12")).toBeOnTheScreen()
+    expect(screen.getByText("Maths", HIDDEN)).toBeOnTheScreen()
+    expect(screen.getByText("B12", HIDDEN)).toBeOnTheScreen()
     await fireEvent.press(tile)
     expect(onEventPress).toHaveBeenCalledWith("original-42")
   })
@@ -427,10 +515,14 @@ describe("OwnedCalendarShell", () => {
       right: 2,
     })
 
-    const tile = screen.getByRole("button", {
-      name: `${title}, 10:00 – 11:00 ${location}`,
-    })
-    const visual = styledTestNode(tile.children[0])
+    expect(
+      screen.getByRole("button", {
+        name: `${title}, 10:00 – 11:00 ${location}`,
+      }),
+    ).toBeOnTheScreen()
+    const visual = styledTestNode(
+      screen.getByTestId("owned-calendar-visual-long-content", HIDDEN),
+    )
     expect(visual.children).toHaveLength(4)
     expect(
       StyleSheet.flatten(styledTestNode(visual.children[0]).props.style),
@@ -454,8 +546,8 @@ describe("OwnedCalendarShell", () => {
       StyleSheet.flatten(styledTestNode(textWindow.children[0]).props.style),
     ).toMatchObject({ paddingVertical: 2, transformOrigin: "top" })
 
-    const titleText = screen.getByText(title)
-    const locationText = screen.getByText(location)
+    const titleText = screen.getByText(title, HIDDEN)
+    const locationText = screen.getByText(location, HIDDEN)
     expect(titleText.props).toMatchObject({ accessible: false })
     expect(titleText.props.numberOfLines).toBeUndefined()
     expect(titleText.props.ellipsizeMode).toBeUndefined()
@@ -491,20 +583,22 @@ describe("OwnedCalendarShell", () => {
     )
 
     const visual = styledTestNode(
-      screen.getByRole("button", { name: /tiny/ }).children[0],
+      screen.getByTestId("owned-calendar-visual-tiny", HIDDEN),
     )
     const cap = StyleSheet.flatten(
       styledTestNode(visual.children[0]).props.style,
     ) as { height: number }
     const bottom = StyleSheet.flatten(
       styledTestNode(visual.children[2]).props.style,
-    ) as { top: number; height: number }
+    ) as { top: number; height: number; transform: { translateY: number }[] }
     const clip = StyleSheet.flatten(
       styledTestNode(visual.children[3]).props.style,
     ) as { transform: unknown }
     expect(cap.height).toBeLessThanOrEqual(40 / 60 / 2)
-    expect(bottom.top + bottom.height).toBe(2)
-    expect(clip.transform).toEqual([{ scaleY: 1 }])
+    expect(
+      bottom.top + bottom.height + bottom.transform[0]!.translateY,
+    ).toBeCloseTo(2)
+    expect(clip.transform).toEqual([{ scaleY: 3 }])
   })
 
   it("keeps inner slice borders absent in increased contrast", async () => {
@@ -524,7 +618,7 @@ describe("OwnedCalendarShell", () => {
     )
 
     const visual = styledTestNode(
-      screen.getByRole("button", { name: /contrast/ }).children[0],
+      screen.getByTestId("owned-calendar-visual-contrast", HIDDEN),
     )
     const top = StyleSheet.flatten(
       styledTestNode(visual.children[0]).props.style,
@@ -713,7 +807,7 @@ describe("OwnedCalendarShell", () => {
         await view.rerender(shell({ presentPage, routeFocused: false }))
         await view.rerender(shell({ presentPage, routeFocused: true }))
         expect(scrollTo).toHaveBeenCalledWith({
-          y: 23 * 60 - 96,
+          y: 24 * 60 - 800,
           animated: false,
         })
         await waitFor(() => expect(focus).toHaveBeenCalledTimes(1))
@@ -930,17 +1024,12 @@ describe("OwnedCalendarShell", () => {
       top: 698,
       height: 44,
     })
-    expect(
-      StyleSheet.flatten(
-        styledTestNode(
-          styledTestNode(styledTestNode(pointAnchor.children[0]).children[0])
-            .children[0],
-        ).props.style,
-      ),
-    ).toMatchObject({
-      top: 20,
-      height: 4,
-    })
+    const pointVisual = screen.getByTestId(
+      "owned-calendar-visual-noon-point",
+      HIDDEN,
+    )
+    expect(renderedTop(pointVisual.props.style)).toBe(718)
+    expect(StyleSheet.flatten(pointVisual.props.style).height).toBe(4)
     expect(screen.queryByText("(No title)")).toBeNull()
     const pointButton = screen.getByRole("button", {
       name: "(No title), 12:00 – 12:00 B12",
@@ -953,18 +1042,18 @@ describe("OwnedCalendarShell", () => {
       top: 759,
       height: 44,
     })
-    expect(
-      StyleSheet.flatten(
-        styledTestNode(
-          styledTestNode(styledTestNode(tinyAnchor.children[0]).children[0])
-            .children[0],
-        ).props.style,
-      ),
-    ).toMatchObject({
-      top: 21,
-      height: 2,
-    })
-    expect(screen.getByText("Maths")).toBeOnTheScreen()
+    const tinyVisual = screen.getByTestId(
+      "owned-calendar-visual-two-minutes",
+      HIDDEN,
+    )
+    expect(renderedTop(tinyVisual.props.style)).toBe(780)
+    const tinyClip = styledTestNode(tinyVisual.children[3])
+    const tinyClipStyle = StyleSheet.flatten(tinyClip.props.style) as {
+      height: number
+      transform: { scaleY: number }[]
+    }
+    expect(tinyClipStyle.height * tinyClipStyle.transform[0]!.scaleY).toBe(2)
+    expect(screen.getByText("Maths", HIDDEN)).toBeOnTheScreen()
     expect(screen.queryByText("Long room name")).toBeNull()
     expect(screen.getAllByRole("button", HIDDEN)).toHaveLength(2)
   })
@@ -1030,13 +1119,16 @@ describe("OwnedCalendarShell", () => {
       HIDDEN,
     )
     expect(StyleSheet.flatten(indicator.props.style).top).toBe(716)
-    expect(indicator.children).toHaveLength(2)
+    expect(
+      screen.getByTestId("owned-calendar-now-2026-06-17-visual", HIDDEN)
+        .children,
+    ).toHaveLength(2)
     expect(indicator).toHaveProp("accessible", true)
     expect(indicator).toHaveProp("accessibilityRole", "text")
     expect(indicator).toHaveProp("accessibilityLabel", "Current time, 12:00")
     expect(screen.queryByTestId("owned-calendar-now-label")).toBeNull()
     expect(screen.getAllByTestId(/^owned-calendar-now-/, HIDDEN)).toHaveLength(
-      1,
+      2,
     )
   })
 
@@ -1573,7 +1665,8 @@ describe("OwnedCalendarShell", () => {
       screen.getByTestId("owned-calendar-major-1440", HIDDEN).props.style,
     )
     expect(style).toMatchObject({
-      top: 1440,
+      top: 0,
+      transform: [{ translateY: 1440 }],
       height: StyleSheet.hairlineWidth,
       backgroundColor: Colors.light.separator,
     })
@@ -1600,15 +1693,15 @@ describe("OwnedCalendarShell", () => {
     await renderPlaced(shell({ initialPixelsPerHour: 90 }))
 
     expect(
-      StyleSheet.flatten(
+      renderedTop(
         screen.getByTestId("owned-calendar-major-1440", HIDDEN).props.style,
-      ).top,
+      ),
     ).toBe(2160)
     expect(
-      StyleSheet.flatten(
+      renderedTop(
         screen.getByTestId("owned-calendar-hour-label-12", HIDDEN).parent?.props
           .style,
-      ).top,
+      ),
     ).toBe(1073.5)
     expect(
       StyleSheet.flatten(
@@ -1753,7 +1846,7 @@ describe("OwnedCalendarShell", () => {
       const eventReveals = () =>
         scrollTo.mock.calls.filter(
           ([options]) =>
-            typeof options === "object" && options.y === 23 * 60 - 96,
+            typeof options === "object" && options.y === 24 * 60 - 800,
         )
 
       await view.rerender(

@@ -398,7 +398,8 @@ describe("owned Calendar paging repository contract", () => {
       "type FocusTarget = { node: View; dateKey: string; minute: number }",
     )
     expect(focus).toContain("new Map<string, FocusTarget>()")
-    expect(focus).toContain("scrollRef.current?.scrollTo")
+    expect(focus).toContain("scrollTo: (offset: number) => void")
+    expect(shell).toContain("scrollTo: coordinator.scrollToOffset")
     expect(focus).toContain("AccessibilityInfo.setAccessibilityFocus")
     expect(projection).toContain("entries.sort(compareEntries)")
     expect(

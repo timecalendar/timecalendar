@@ -1333,8 +1333,8 @@ describe("CalendarScreen platform chrome", () => {
     expect(
       StyleSheet.flatten(
         screen.getByTestId("owned-calendar-major-1440", HIDDEN).props.style,
-      ).top,
-    ).toBe(1680)
+      ).transform,
+    ).toEqual([{ translateY: 1680 }])
 
     await openCalendarMenu()
     expect(

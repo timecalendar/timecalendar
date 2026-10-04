@@ -1,14 +1,7 @@
-import {
-  type RefObject,
-  useEffect,
-  useEffectEvent,
-  useRef,
-  useState,
-} from "react"
+import { useEffect, useEffectEvent, useRef, useState } from "react"
 import {
   AccessibilityInfo,
   findNodeHandle,
-  type ScrollView,
   type Text,
   type View,
 } from "react-native"
@@ -102,7 +95,7 @@ export function useCalendarFocusRestoration({
   heading,
   onContextSettled,
   pixelsPerHour,
-  scrollRef,
+  scrollTo,
 }: {
   committedKey: string
   currentColumns: readonly PageColumnV1[]
@@ -114,7 +107,7 @@ export function useCalendarFocusRestoration({
     | ((pageKey: string, titleFocused: boolean) => void)
     | undefined
   pixelsPerHour: SharedValue<number>
-  scrollRef: RefObject<{ scrollTo: ScrollView["scrollTo"] } | null>
+  scrollTo: (offset: number) => void
 }) {
   const [targets] = useState(() => new Map<string, FocusTarget>())
   const [headings] = useState(() => new Map<string, View>())
@@ -173,7 +166,7 @@ export function useCalendarFocusRestoration({
         lastRestore,
         restoreKey,
         pixelsPerHour: pixelsPerHour.get(),
-        scrollTo: (y) => scrollRef.current?.scrollTo({ y, animated: false }),
+        scrollTo,
         isCurrent,
         onFocused,
       })

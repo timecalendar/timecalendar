@@ -29,24 +29,22 @@ export const PAGE_CONTENT_HEIGHT = dayRowHeight(MAX_PIXELS_PER_HOUR)
 
 const PIXEL_RATIO = PixelRatio.get()
 
+// Visible coordinates never rebase when React acknowledges a zoom. Layout and
+// UI-thread transforms can reach native views in different frames.
 export function useMinutePositionStyle(
   minute: number,
   pixelsPerHour: SharedValue<number>,
-  settledPixelsPerHour: number,
   offset = 0,
 ) {
-  const top = minutePositionTop(
-    minute,
-    settledPixelsPerHour,
-    PIXEL_RATIO,
-    offset,
-  )
   return useAnimatedStyle(() => ({
     transform: [
       {
-        translateY:
-          minutePositionTop(minute, pixelsPerHour.get(), PIXEL_RATIO, offset) -
-          top,
+        translateY: minutePositionTop(
+          minute,
+          pixelsPerHour.get(),
+          PIXEL_RATIO,
+          offset,
+        ),
       },
     ],
   }))

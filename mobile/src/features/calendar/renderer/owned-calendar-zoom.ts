@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from "react"
+import { useEffectEvent, useLayoutEffect, useRef } from "react"
 import type { LayoutChangeEvent } from "react-native"
 import { Gesture } from "react-native-gesture-handler"
 import Animated, {
@@ -11,6 +11,7 @@ import Animated, {
 import { scheduleOnRN } from "react-native-worklets"
 
 import {
+  clampRawOffset,
   DEFAULT_PIXELS_PER_HOUR,
   focalPreservingRawOffset,
   fullDayContentHeight,
@@ -77,6 +78,24 @@ export function useOwnedCalendarZoom({
   const scrollRevision = useSharedValue(0)
   const geometryRevision = useSharedValue(0)
   const pinchGeometryRevision = useSharedValue(0)
+  const boundedRawOffset = (requested: number, scale: number) => {
+    "worklet"
+    // Automatic insets and the viewport are not known on the initial mount.
+    if (viewportHeight.get() <= 0)
+      return Number.isFinite(requested) ? requested : 0
+    return clampRawOffset(requested, {
+      contentHeight: fullDayContentHeight(scale),
+      viewportHeight: viewportHeight.get(),
+      topInset: topInset.get(),
+      bottomInset: bottomInset.get(),
+    })
+  }
+  const scrollToOffset = (requested: number) => {
+    const nextOffset = boundedRawOffset(requested, pixelsPerHour.get())
+    rawOffset.set(nextOffset)
+    scrollRef.current?.scrollTo({ y: nextOffset, animated: false })
+    return nextOffset
+  }
   const unlockScrollIfReleased = () => {
     "worklet"
     if (pinchStarted.get() || verticalTouched.get() || horizontalTouched.get())
@@ -177,7 +196,9 @@ export function useOwnedCalendarZoom({
         pinchGeometryRevision.get() === geometryRevision.get()
       ) {
         pixelsPerHour.set(pinchBaselineScale.get())
-        rawOffset.set(pinchBaselineOffset.get())
+        rawOffset.set(
+          boundedRawOffset(pinchBaselineOffset.get(), pinchBaselineScale.get()),
+        )
         scrollRevision.set(scrollRevision.get() + 1)
       }
       pinchActive.set(false)
@@ -255,7 +276,7 @@ export function useOwnedCalendarZoom({
       pinchInterruptionSequence.set(interruptionSequence)
       verticalCallbacksBlocked.set(true)
     }
-    rawOffset.set(nextRawOffset)
+    rawOffset.set(boundedRawOffset(nextRawOffset, pixelsPerHour.get()))
     scrollRevision.set(scrollRevision.get() + 1)
     return interruptionSequence
   }
@@ -298,24 +319,24 @@ export function useOwnedCalendarZoom({
     })
   }
 
+  const applyInitialOffset = useEffectEvent(scrollToOffset)
   useLayoutEffect(() => {
     const nextScale = resolvePixelsPerHour(initialPixelsPerHour)
     const previous = appliedPixelsPerHour.current
     appliedPixelsPerHour.current = nextScale
-    // Settled props acknowledge native motion. Replaying them with scrollTo
-    // clamps away UIKit's automatic tab-bar inset in React Native's iOS command.
+    // Settled props acknowledge native motion; replaying an acknowledgement
+    // can rewind a newer gesture before its own settlement reaches React.
     if (
       previous !== null &&
       (previous === nextScale || pixelsPerHour.get() === nextScale)
     )
       return
     pixelsPerHour.set(nextScale)
-    rawOffset.set(initialRawOffset)
+    const nextOffset = applyInitialOffset(initialRawOffset)
     pinchBaselineScale.set(nextScale)
-    pinchBaselineOffset.set(initialRawOffset)
+    pinchBaselineOffset.set(nextOffset)
     pinchActive.set(false)
     pinchStarted.set(false)
-    scrollRef.current?.scrollTo({ y: initialRawOffset, animated: false })
   }, [
     initialPixelsPerHour,
     initialRawOffset,
@@ -324,8 +345,6 @@ export function useOwnedCalendarZoom({
     pinchBaselineScale,
     pinchStarted,
     pixelsPerHour,
-    rawOffset,
-    scrollRef,
   ])
 
   return {
@@ -340,6 +359,7 @@ export function useOwnedCalendarZoom({
     pixelsPerHour,
     rawOffset,
     requestZoom,
+    scrollToOffset,
     scrollLocked,
     scrollRef,
     trackNativeTouch,
