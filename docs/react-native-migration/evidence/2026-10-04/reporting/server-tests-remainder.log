@@ -1,0 +1,278 @@
+PASS src/modules/notification-pipeline/models/merge-calendar-changes.test.ts (9.567 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar/services/calendar.service.test.ts (9.522 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-log/jobs/prune-calendar-log.job.test.ts (9.593 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-sync/calendar-sync-ci-proof.test.ts (8.665 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/schools/esiee/esiee-get-unit-name-pipe.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/config/observability/instrumentations.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/schools/esiee/esiee-get-event-type-pipe.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar/models/calendar-content.entity.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/shared/utils/to-error-type.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ override existing { override: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-sync/services/calendar-sync-workers.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar/repositories/calendar-content.repository.unit.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/pipes/generate-uid-pipe.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ override existing { override: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/pipes/parse-teachers-pipe.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/schools/univangers/univangers-strategy.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar/helpers/calendar-name.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ override existing { override: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/config/observability/upstream-domain.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/services/fetch.service.integration.test.ts (5.043 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-sync/repositories/calendar-failure.repository.test.ts (5.125 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ override existing { override: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/notifier/models/notification-strings.test.ts (5.27 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar/controllers/calendar.controller.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/schools/esiee/esiee-parse-description-pipe.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/renamers/ade-export-window.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/pipes/remove-exported-at-pipe.test.ts (5.02 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/contact/helpers/email-to-name.test.ts (5.159 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/strategies/generic-strategy.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/export-guide/data/initial-export-guide-catalogue.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ override existing { override: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/pipes/sort-location-pipe.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/schools/univsmb/univsmb-strategy.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/schools/univstetienne/univstetienne-strategy.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/schools/univrouen/univrouen-strategy.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-sync/calendar-sync.constants.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/shared/validators/is-iana-timezone.spec.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/renamers/replace-url-renamer.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ override existing { override: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/schools/ensea/ensea-strategy.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ override existing { override: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+
+Test Suites: 34 passed, 34 total
+Tests:       97 passed, 97 total
+Snapshots:   0 total
+Time:        160.884 s
+Ran all test suites within paths "src/config/observability/instrumentations.test.ts", "src/config/observability/upstream-domain.test.ts", "src/modules/calendar-log/jobs/prune-calendar-log.job.test.ts", "src/modules/calendar-sync/calendar-sync-ci-proof.test.ts", "src/modules/calendar-sync/calendar-sync.constants.test.ts", "src/modules/calendar-sync/repositories/calendar-failure.repository.test.ts", "src/modules/calendar-sync/services/calendar-sync-workers.test.ts", "src/modules/calendar/controllers/calendar.controller.test.ts", "src/modules/calendar/helpers/calendar-name.test.ts", "src/modules/calendar/models/calendar-content.entity.test.ts", "src/modules/calendar/repositories/calendar-content.repository.unit.test.ts", "src/modules/calendar/services/calendar.service.test.ts", "src/modules/contact/helpers/email-to-name.test.ts", "src/modules/export-guide/data/initial-export-guide-catalogue.test.ts", "src/modules/fetch/pipes/generate-uid-pipe.test.ts", "src/modules/fetch/pipes/parse-teachers-pipe.test.ts", "src/modules/fetch/pipes/remove-exported-at-pipe.test.ts", "src/modules/fetch/pipes/sort-location-pipe.test.ts", "src/modules/fetch/renamers/ade-export-window.test.ts", "src/modules/fetch/renamers/replace-url-renamer.test.ts", "src/modules/fetch/schools/ensea/ensea-strategy.test.ts", "src/modules/fetch/schools/esiee/esiee-get-event-type-pipe.test.ts", "src/modules/fetch/schools/esiee/esiee-get-unit-name-pipe.test.ts", "src/modules/fetch/schools/esiee/esiee-parse-description-pipe.test.ts", "src/modules/fetch/schools/univangers/univangers-strategy.test.ts", "src/modules/fetch/schools/univrouen/univrouen-strategy.test.ts", "src/modules/fetch/schools/univsmb/univsmb-strategy.test.ts", "src/modules/fetch/schools/univstetienne/univstetienne-strategy.test.ts", "src/modules/fetch/services/fetch.service.integration.test.ts", "src/modules/fetch/strategies/generic-strategy.test.ts", "src/modules/notification-pipeline/models/merge-calendar-changes.test.ts", "src/modules/notifier/models/notification-strings.test.ts", "src/modules/shared/utils/to-error-type.test.ts", "src/modules/shared/validators/is-iana-timezone.spec.ts".

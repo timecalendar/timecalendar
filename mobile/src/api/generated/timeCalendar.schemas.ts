@@ -478,6 +478,344 @@ export interface SendMessageDto {
   calendarUrl?: string
 }
 
+export type MigrationReportSchemaVersion =
+  (typeof MigrationReportSchemaVersion)[keyof typeof MigrationReportSchemaVersion]
+
+export const MigrationReportSchemaVersion = {
+  NUMBER_1: 1,
+} as const
+
+export type MigrationReportPlatform =
+  (typeof MigrationReportPlatform)[keyof typeof MigrationReportPlatform]
+
+export const MigrationReportPlatform = {
+  ios: "ios",
+  android: "android",
+} as const
+
+export type MigrationReportOutcome =
+  (typeof MigrationReportOutcome)[keyof typeof MigrationReportOutcome]
+
+export const MigrationReportOutcome = {
+  success: "success",
+  partial: "partial",
+  failed: "failed",
+} as const
+
+export type MigrationReportReason =
+  (typeof MigrationReportReason)[keyof typeof MigrationReportReason]
+
+export const MigrationReportReason = {
+  completed: "completed",
+  no_legacy_source: "no_legacy_source",
+  empty_legacy_store: "empty_legacy_store",
+  malformed_source: "malformed_source",
+  source_unavailable: "source_unavailable",
+  resource_limit: "resource_limit",
+  target_failure: "target_failure",
+  integrity_failure: "integrity_failure",
+} as const
+
+export type MigrationReportDatasetsCalendars = {
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  candidate: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  imported: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  already_present: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  skipped_invalid: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  skipped_conflict: number
+}
+
+export type MigrationReportDatasetsPersonalEvents = {
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  candidate: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  imported: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  already_present: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  skipped_invalid: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  skipped_conflict: number
+}
+
+export type MigrationReportDatasetsChecklistItems = {
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  candidate: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  imported: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  already_present: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  skipped_invalid: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  skipped_conflict: number
+}
+
+export type MigrationReportDatasetsHiddenEvents = {
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  candidate: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  imported: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  already_present: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  skipped_invalid: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  skipped_conflict: number
+}
+
+export type MigrationReportDatasetsPreferences = {
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  candidate: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  imported: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  already_present: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  skipped_invalid: number
+  /**
+   * @minimum 0
+   * @maximum 1000000
+   */
+  skipped_conflict: number
+}
+
+export type MigrationReportDatasets = {
+  calendars: MigrationReportDatasetsCalendars
+  personal_events: MigrationReportDatasetsPersonalEvents
+  checklist_items: MigrationReportDatasetsChecklistItems
+  hidden_events: MigrationReportDatasetsHiddenEvents
+  preferences: MigrationReportDatasetsPreferences
+}
+
+export type MigrationReportErrorsItem =
+  | {
+      stage: "discovery"
+      code: "SOURCE_OPEN_FAILED" | "SOURCE_CHANGED_DURING_RETRY"
+      /**
+       * @minimum 1
+       * @maximum 1000000
+       */
+      count: number
+    }
+  | {
+      stage: "parse"
+      code:
+        | "INVALID_UTF8"
+        | "INVALID_METADATA"
+        | "UNSUPPORTED_VERSION"
+        | "FILE_LIMIT"
+        | "LINE_LIMIT"
+        | "LINE_TOO_LONG"
+        | "MALFORMED_JSON"
+        | "TRUNCATED_TAIL"
+      /**
+       * @minimum 1
+       * @maximum 1000000
+       */
+      count: number
+    }
+  | {
+      stage: "normalize"
+      code:
+        | "INVALID_RECORD"
+        | "INVALID_PREFERENCE"
+        | "DUPLICATE_SOURCE_ID"
+        | "DUPLICATE_SOURCE_TOKEN"
+      /**
+       * @minimum 1
+       * @maximum 1000000
+       */
+      count: number
+    }
+  | {
+      stage: "apply_sqlite"
+      code:
+        | "TARGET_ID_CONFLICT"
+        | "TARGET_TOKEN_CONFLICT"
+        | "SQLITE_WRITE_FAILED"
+      /**
+       * @minimum 1
+       * @maximum 1000000
+       */
+      count: number
+    }
+  | {
+      stage: "apply_native"
+      code:
+        | "TARGET_NATIVE_CONFLICT"
+        | "MMKV_WRITE_FAILED"
+        | "MMKV_READBACK_FAILED"
+      /**
+       * @minimum 1
+       * @maximum 1000000
+       */
+      count: number
+    }
+  | {
+      stage: "verify"
+      code: "TARGET_VERIFY_FAILED" | "TERMINAL_INTEGRITY_MISMATCH"
+      /**
+       * @minimum 1
+       * @maximum 1000000
+       */
+      count: number
+    }
+  | {
+      stage: "report_delivery"
+      code: "REPORT_REJECTED"
+      /**
+       * @minimum 1
+       * @maximum 1000000
+       */
+      count: number
+    }
+
+/**
+ * Strict terminal migration report, at most 16384 uncompressed bytes. All nested objects reject unknown fields. completedAt must not precede startedAt. Calendar IDs and error stage/code pairs must be unique. Durations/counts are capped by the client; non-UUID calendar IDs are omitted and calendarIdsTruncated is set. No credentials or source content are allowed.
+ */
+export interface MigrationReport {
+  schemaVersion: MigrationReportSchemaVersion
+  /** @pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$ */
+  reportId: string
+  platform: MigrationReportPlatform
+  /**
+   * @maxLength 20
+   * @pattern ^\d{1,6}\.\d{1,6}\.\d{1,6}$
+   */
+  targetAppVersion: string
+  /**
+   * @maxLength 10
+   * @pattern ^\d{1,10}$
+   */
+  targetBuild: string
+  /**
+   * @maxLength 20
+   * @pattern ^\d{1,6}\.\d{1,6}\.\d{1,6}$
+   */
+  sourceAppVersion?: string
+  /**
+   * @minimum 0
+   * @maximum 2147483647
+   */
+  sourceDatabaseVersion?: number
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  osMajorVersion: number
+  /**
+   * @minLength 24
+   * @maxLength 24
+   * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d\.\d{3}(?:Z))$
+   */
+  startedAt: string
+  /**
+   * @minLength 24
+   * @maxLength 24
+   * @pattern ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d\.\d{3}(?:Z))$
+   */
+  completedAt: string
+  /**
+   * @minimum 0
+   * @maximum 604800000
+   */
+  durationMs: number
+  /**
+   * @minimum 1
+   * @maximum 1000
+   */
+  attemptCount: number
+  outcome: MigrationReportOutcome
+  reason: MigrationReportReason
+  datasets: MigrationReportDatasets
+  /** @maxItems 23 */
+  errors: MigrationReportErrorsItem[]
+  examplesTruncated: boolean
+  /**
+   * @maxItems 100
+   * @items.pattern ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+   */
+  calendarIds: string[]
+  calendarIdsTruncated: boolean
+}
+
 export type ExportGuideV1ControllerFindCatalogueParams = {
   locale: ExportGuideV1ControllerFindCatalogueLocale
   clientSchema: ExportGuideV1ControllerFindCatalogueClientSchema
@@ -505,4 +843,8 @@ export const ExportGuideV1ControllerFindCatalogueClientSchema = {
 
 export type FeatureFlagControllerEvaluateFlagsParams = {
   keys: string
+}
+
+export type MigrationReportControllerAccept200 = {
+  accepted: true
 }

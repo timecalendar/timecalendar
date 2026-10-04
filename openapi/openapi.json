@@ -654,6 +654,75 @@
           "Contact"
         ]
       }
+    },
+    "/v1/migration-reports": {
+      "post": {
+        "description": "Write-only ingestion without a user session. First accepted payload wins; replay returns the same acknowledgement without exposing stored data. Limits: 60 requests per IP per minute and 10 per report ID per hour.",
+        "operationId": "MigrationReportController_accept",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MigrationReport"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "accepted"
+                  ],
+                  "properties": {
+                    "accepted": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid report; no submitted content is reflected"
+          },
+          "413": {
+            "description": "Body exceeds 16384 bytes"
+          },
+          "415": {
+            "description": "Only uncompressed application/json is accepted"
+          },
+          "429": {
+            "description": "Rate limited; Retry-After is seconds until the limit expires",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 3600
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Reporting temporarily unavailable"
+          }
+        },
+        "summary": "Accept a private terminal migration report",
+        "tags": [
+          "Migration reports"
+        ]
+      }
     }
   },
   "info": {
@@ -1836,6 +1905,558 @@
           "email",
           "message"
         ]
+      },
+      "MigrationReport": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "number",
+            "enum": [
+              1
+            ]
+          },
+          "reportId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "ios",
+              "android"
+            ]
+          },
+          "targetAppVersion": {
+            "type": "string",
+            "maxLength": 20,
+            "pattern": "^\\d{1,6}\\.\\d{1,6}\\.\\d{1,6}$"
+          },
+          "targetBuild": {
+            "type": "string",
+            "maxLength": 10,
+            "pattern": "^\\d{1,10}$"
+          },
+          "sourceAppVersion": {
+            "type": "string",
+            "maxLength": 20,
+            "pattern": "^\\d{1,6}\\.\\d{1,6}\\.\\d{1,6}$"
+          },
+          "sourceDatabaseVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "osMajorVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "startedAt": {
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+          },
+          "completedAt": {
+            "type": "string",
+            "minLength": 24,
+            "maxLength": 24,
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+          },
+          "durationMs": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 604800000
+          },
+          "attemptCount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "success",
+              "partial",
+              "failed"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "no_legacy_source",
+              "empty_legacy_store",
+              "malformed_source",
+              "source_unavailable",
+              "resource_limit",
+              "target_failure",
+              "integrity_failure"
+            ]
+          },
+          "datasets": {
+            "type": "object",
+            "properties": {
+              "calendars": {
+                "type": "object",
+                "properties": {
+                  "candidate": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "imported": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "already_present": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "skipped_invalid": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "skipped_conflict": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  }
+                },
+                "required": [
+                  "candidate",
+                  "imported",
+                  "already_present",
+                  "skipped_invalid",
+                  "skipped_conflict"
+                ],
+                "additionalProperties": false
+              },
+              "personal_events": {
+                "type": "object",
+                "properties": {
+                  "candidate": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "imported": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "already_present": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "skipped_invalid": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "skipped_conflict": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  }
+                },
+                "required": [
+                  "candidate",
+                  "imported",
+                  "already_present",
+                  "skipped_invalid",
+                  "skipped_conflict"
+                ],
+                "additionalProperties": false
+              },
+              "checklist_items": {
+                "type": "object",
+                "properties": {
+                  "candidate": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "imported": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "already_present": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "skipped_invalid": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "skipped_conflict": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  }
+                },
+                "required": [
+                  "candidate",
+                  "imported",
+                  "already_present",
+                  "skipped_invalid",
+                  "skipped_conflict"
+                ],
+                "additionalProperties": false
+              },
+              "hidden_events": {
+                "type": "object",
+                "properties": {
+                  "candidate": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "imported": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "already_present": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "skipped_invalid": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "skipped_conflict": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  }
+                },
+                "required": [
+                  "candidate",
+                  "imported",
+                  "already_present",
+                  "skipped_invalid",
+                  "skipped_conflict"
+                ],
+                "additionalProperties": false
+              },
+              "preferences": {
+                "type": "object",
+                "properties": {
+                  "candidate": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "imported": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "already_present": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "skipped_invalid": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "skipped_conflict": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  }
+                },
+                "required": [
+                  "candidate",
+                  "imported",
+                  "already_present",
+                  "skipped_invalid",
+                  "skipped_conflict"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "calendars",
+              "personal_events",
+              "checklist_items",
+              "hidden_events",
+              "preferences"
+            ],
+            "additionalProperties": false
+          },
+          "errors": {
+            "maxItems": 23,
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "discovery"
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "SOURCE_OPEN_FAILED",
+                        "SOURCE_CHANGED_DURING_RETRY"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 1000000
+                    }
+                  },
+                  "required": [
+                    "stage",
+                    "code",
+                    "count"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "parse"
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "INVALID_UTF8",
+                        "INVALID_METADATA",
+                        "UNSUPPORTED_VERSION",
+                        "FILE_LIMIT",
+                        "LINE_LIMIT",
+                        "LINE_TOO_LONG",
+                        "MALFORMED_JSON",
+                        "TRUNCATED_TAIL"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 1000000
+                    }
+                  },
+                  "required": [
+                    "stage",
+                    "code",
+                    "count"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "normalize"
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "INVALID_RECORD",
+                        "INVALID_PREFERENCE",
+                        "DUPLICATE_SOURCE_ID",
+                        "DUPLICATE_SOURCE_TOKEN"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 1000000
+                    }
+                  },
+                  "required": [
+                    "stage",
+                    "code",
+                    "count"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "apply_sqlite"
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "TARGET_ID_CONFLICT",
+                        "TARGET_TOKEN_CONFLICT",
+                        "SQLITE_WRITE_FAILED"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 1000000
+                    }
+                  },
+                  "required": [
+                    "stage",
+                    "code",
+                    "count"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "apply_native"
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "TARGET_NATIVE_CONFLICT",
+                        "MMKV_WRITE_FAILED",
+                        "MMKV_READBACK_FAILED"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 1000000
+                    }
+                  },
+                  "required": [
+                    "stage",
+                    "code",
+                    "count"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "verify"
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "TARGET_VERIFY_FAILED",
+                        "TERMINAL_INTEGRITY_MISMATCH"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 1000000
+                    }
+                  },
+                  "required": [
+                    "stage",
+                    "code",
+                    "count"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "stage": {
+                      "type": "string",
+                      "enum": [
+                        "report_delivery"
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "REPORT_REJECTED"
+                      ]
+                    },
+                    "count": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 1000000
+                    }
+                  },
+                  "required": [
+                    "stage",
+                    "code",
+                    "count"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "examplesTruncated": {
+            "type": "boolean"
+          },
+          "calendarIds": {
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          "calendarIdsTruncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "reportId",
+          "platform",
+          "targetAppVersion",
+          "targetBuild",
+          "osMajorVersion",
+          "startedAt",
+          "completedAt",
+          "durationMs",
+          "attemptCount",
+          "outcome",
+          "reason",
+          "datasets",
+          "errors",
+          "examplesTruncated",
+          "calendarIds",
+          "calendarIdsTruncated"
+        ],
+        "additionalProperties": false,
+        "description": "Strict terminal migration report, at most 16384 uncompressed bytes. All nested objects reject unknown fields. completedAt must not precede startedAt. Calendar IDs and error stage/code pairs must be unique. Durations/counts are capped by the client; non-UUID calendar IDs are omitted and calendarIdsTruncated is set. No credentials or source content are allowed."
       }
     }
   }

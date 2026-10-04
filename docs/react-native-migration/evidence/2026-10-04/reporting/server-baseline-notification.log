@@ -1,0 +1,42 @@
+  console.log
+    ◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (../../../../../..$REPO_ROOT/server/node_modules/dotenv/lib/main.js:131:11)
+
+FAIL src/modules/notification-pipeline/repositories/notification-outbox.repository.test.ts
+  NotificationOutboxRepository
+    fanOut
+      ✓ inserts one outbox row per (subscription, log) pair (67 ms)
+      ✓ skips inactive subscriptions (27 ms)
+      ✓ is idempotent on cursor replay (24 ms)
+      ✕ does nothing when no logs are newer than the cursor (30 ms)
+      ✓ initializes a missing cursor to now, ignoring pre-existing history (25 ms)
+      ✓ advances the cursor so later logs are picked up next tick (25 ms)
+      ✓ leaves logs inside the safety lag window for the next tick (20 ms)
+    drainBatch
+      ✓ drains in batches until the tier is empty (39 ms)
+      ✓ keeps rows when the handler throws (delete-on-enqueue) (26 ms)
+      ✓ skips rows locked by a concurrent drain (SKIP LOCKED) (238 ms)
+
+  ● NotificationOutboxRepository › fanOut › does nothing when no logs are newer than the cursor
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 1
+
+      111 |       const inserted = await repository.fanOut(0)
+      112 |
+    > 113 |       expect(inserted).toBe(0)
+          |                        ^
+      114 |     })
+      115 |
+      116 |     it("initializes a missing cursor to now, ignoring pre-existing history", async () => {
+
+      at Object.<anonymous> (modules/notification-pipeline/repositories/notification-outbox.repository.test.ts:113:24)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 9 passed, 10 total
+Snapshots:   0 total
+Time:        3.212 s, estimated 28 s
+Ran all test suites within paths "src/modules/notification-pipeline/repositories/notification-outbox.repository.test.ts".

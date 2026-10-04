@@ -1,0 +1,19 @@
+
+> @timecalendar/timecalendar@0.0.1 test:e2e
+> jest --config ./test/jest-e2e.json --runInBand
+
+PASS test/migration-report.e2e-spec.ts (21.663 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (node_modules/dotenv/lib/main.js:131:11)
+
+PASS test/liveness.e2e-spec.ts
+
+Test Suites: 2 passed, 2 total
+Tests:       32 passed, 32 total
+Snapshots:   0 total
+Time:        22.002 s, estimated 24 s
+Ran all test suites.

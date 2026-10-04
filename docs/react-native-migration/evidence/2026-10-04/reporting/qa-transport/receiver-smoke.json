@@ -1,0 +1,16 @@
+{
+  "fixtureDatabase": "timecalendar_migration_rehearsal",
+  "reportCount": 1,
+  "receiptCount": 1,
+  "reports": [
+    {
+      "reportId": "c210fa96-6794-4d70-93fd-a4e10cb8830a",
+      "outcome": "success",
+      "reason": "completed",
+      "platform": "ios",
+      "deliveryCount": 2,
+      "receivedAt": "2026-10-04T17:28:55.881Z",
+      "lastReceivedAt": "2026-10-04T17:28:55.899Z"
+    }
+  ]
+}

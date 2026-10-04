@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-04",
+  "command": "cd mobile && node --test scripts/migration-rehearsal/*.test.cjs",
+  "tests": 9,
+  "passed": 9,
+  "failed": 0,
+  "independentCoordinatorTransportCheck": {
+    "time": "2026-10-04T17:24:00Z",
+    "tests": 6,
+    "passed": 6
+  },
+  "receiver": {
+    "host": "127.0.0.1",
+    "port": 8090,
+    "database": "timecalendar_migration_rehearsal",
+    "smokeHttpResults": [
+      200,
+      200
+    ],
+    "durableRows": 1,
+    "deliveryCount": 2
+  },
+  "deviceProof": "owned by native worker; not claimed by Node tests"
+}

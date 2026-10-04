@@ -1,5 +1,6 @@
 import { NestExpressApplication } from "@nestjs/platform-express"
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger"
+import { migrationReportOpenApiSchema } from "modules/migration-report/migration-report.schema"
 
 export const createOpenApiDocument = (app: NestExpressApplication) => {
   const config = new DocumentBuilder()
@@ -7,6 +8,9 @@ export const createOpenApiDocument = (app: NestExpressApplication) => {
     .setDescription("TimeCalendar API")
     .build()
   const document = SwaggerModule.createDocument(app, config)
+  document.components ??= {}
+  document.components.schemas ??= {}
+  document.components.schemas.MigrationReport = migrationReportOpenApiSchema
   // The database-backed health endpoint is an internal dependency/readiness
   // probe, not part of the public contract. The local liveness controller can
   // exclude /health/live via @ApiExcludeEndpoint; nest-shared's controller

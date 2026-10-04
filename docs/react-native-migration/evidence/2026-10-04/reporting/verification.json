@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-04",
+  "environment": {
+    "node": "24.13.0",
+    "postgresql": "18.1",
+    "redis": "local isolated loopback",
+    "postgresql14Verified": false
+  },
+  "checks": {
+    "serverBuild": "pass",
+    "serverEslintAllTypeScript": "pass",
+    "openapiRegenerationByteEqual": "pass",
+    "mobileOrvalGeneration": "pass",
+    "reportSchemaTests": {
+      "passed": 50,
+      "failed": 0
+    },
+    "serverE2E": {
+      "suites": 2,
+      "passed": 32,
+      "failed": 0
+    },
+    "sourceSuitesAcrossBatches": {
+      "executed": 115,
+      "passed": 114,
+      "failed": [
+        "src/modules/notification-pipeline/repositories/notification-outbox.repository.test.ts"
+      ]
+    },
+    "harnessNodeTests": {
+      "passed": 9,
+      "failed": 0
+    },
+    "baselineNotificationFailure": {
+      "revision": "39f37b22f408f1e93fb6baece4248bda542c3823",
+      "source": "git archive HEAD server into /tmp/timecalendar-reporting-20261004/baseline",
+      "configuration": "unmodified archived server source/config; shared node_modules with unchanged versions; separate local timecalendar_baseline database",
+      "passed": 9,
+      "failed": 1,
+      "failure": "does nothing when no logs are newer than the cursor: expected 0, received 1",
+      "log": "server-baseline-notification.log"
+    }
+  },
+  "limitations": [
+    "Initial --runInBand source run stopped after 81 completed suites because its process accumulated about 3.5 GB and spent increasing time in garbage collection; remaining 34 suites used one worker with a 512 MB idle memory limit.",
+    "Notification-outbox cursor test fails identically in both current code and untouched archived server baseline. Millisecond cursor conversion versus database microsecond timestamps is suspected, not proved.",
+    "Export-guide controller failed during the memory-heavy initial run and passed its isolated final rerun.",
+    "No production deployment, role configuration, encrypted-backup verification, store operation or production request.",
+    "Native/device results belong to separate platform evidence; harness unit tests are not device proof."
+  ]
+}

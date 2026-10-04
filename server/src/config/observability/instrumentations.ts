@@ -4,6 +4,10 @@ import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentation
 import type { NodeSDKConfiguration } from "@opentelemetry/sdk-node"
 import { classifyUpstreamDomain } from "./upstream-domain"
 
+export const isMigrationReportRequest = (
+  request: Pick<IncomingMessage, "url">,
+) => /^\/v1\/migration-reports(?:[/?]|$)/i.test(request.url ?? "")
+
 export const annotateOutgoingHttpSpan = (
   span: Pick<Span, "setAttribute">,
   request: Pick<ClientRequest, "host" | "protocol"> | RequestOptions,
@@ -58,6 +62,8 @@ export const createNodeInstrumentations =
       // the original destination hostname and add no causal layer of their own.
       "@opentelemetry/instrumentation-net": { enabled: false },
       "@opentelemetry/instrumentation-http": {
+        // Incoming span URLs/headers are attacker-controlled, including rejected reports.
+        ignoreIncomingRequestHook: isMigrationReportRequest,
         startOutgoingSpanHook: sanitizedOutgoingHttpAttributes,
         requestHook: (span, request) => {
           if (isOutgoingHttpRequest(request)) {

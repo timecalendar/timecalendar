@@ -1,0 +1,60 @@
+import { randomUUID } from "node:crypto"
+import { MigrationReport } from "./migration-report.schema"
+
+export const syntheticMigrationReport = (): MigrationReport => ({
+  schemaVersion: 1,
+  reportId: randomUUID(),
+  platform: "ios",
+  targetAppVersion: "4.0.0",
+  targetBuild: "200",
+  sourceAppVersion: "3.1.0",
+  sourceDatabaseVersion: 3,
+  osMajorVersion: 18,
+  startedAt: "2026-10-04T10:00:00.000Z",
+  completedAt: "2026-10-04T10:00:01.000Z",
+  durationMs: 1000,
+  attemptCount: 1,
+  outcome: "success",
+  reason: "completed",
+  datasets: {
+    calendars: {
+      candidate: 1,
+      imported: 1,
+      already_present: 0,
+      skipped_invalid: 0,
+      skipped_conflict: 0,
+    },
+    personal_events: {
+      candidate: 0,
+      imported: 0,
+      already_present: 0,
+      skipped_invalid: 0,
+      skipped_conflict: 0,
+    },
+    checklist_items: {
+      candidate: 0,
+      imported: 0,
+      already_present: 0,
+      skipped_invalid: 0,
+      skipped_conflict: 0,
+    },
+    hidden_events: {
+      candidate: 0,
+      imported: 0,
+      already_present: 0,
+      skipped_invalid: 0,
+      skipped_conflict: 0,
+    },
+    preferences: {
+      candidate: 1,
+      imported: 1,
+      already_present: 0,
+      skipped_invalid: 0,
+      skipped_conflict: 0,
+    },
+  },
+  errors: [],
+  examplesTruncated: false,
+  calendarIds: ["f8743f5d-9339-4770-923e-b650a9be372e"],
+  calendarIdsTruncated: false,
+})

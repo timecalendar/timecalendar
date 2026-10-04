@@ -5,6 +5,7 @@ import { useContainer } from "class-validator"
 import compression from "compression"
 import helmet from "helmet"
 import { CustomValidationPipe } from "modules/shared/pipes/custom-validation.pipe"
+import { configureMigrationReportIngress } from "modules/migration-report/migration-report-ingress"
 
 const configureMainApp = (
   module: INestApplicationContext,
@@ -12,6 +13,7 @@ const configureMainApp = (
 ) => {
   useContainer(module, { fallbackOnErrors: true })
   app.set("trust proxy", ["loopback", "linklocal", "uniquelocal"])
+  configureMigrationReportIngress(app)
   app.useGlobalPipes(
     new CustomValidationPipe({
       whitelist: true,

@@ -1,0 +1,722 @@
+
+> @timecalendar/timecalendar@0.0.1 test
+> jest --runInBand
+
+PASS src/modules/calendar-sync/services/calendar-sync.service.test.ts (15.849 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-log/controllers/calendar-log-v1.controller.test.ts (5.248 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/services/fetch.service.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-log/models/change-detection/detect-bad-ical-implementation.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-log/repositories/calendar-log-search.repository.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-log/models/change-detection/find-event-changes.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/notification-subscription/repositories/notification-subscription.repository.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar/repositories/calendar.repository.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-log/models/change-detection/find-removed-and-changed-events.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-log/models/change-detection/find-new-events.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/scripts/activity-capacity/plan.test.ts (5.484 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/fetchers/ical-fetcher.test.ts (20.566 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+FAIL src/modules/notification-pipeline/repositories/notification-outbox.repository.test.ts (7.045 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+  ● NotificationOutboxRepository › fanOut › does nothing when no logs are newer than the cursor
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 1
+
+      111 |       const inserted = await repository.fanOut(0)
+      112 |
+    > 113 |       expect(inserted).toBe(0)
+          |                        ^
+      114 |     })
+      115 |
+      116 |     it("initializes a missing cursor to now, ignoring pre-existing history", async () => {
+
+      at Object.<anonymous> (modules/notification-pipeline/repositories/notification-outbox.repository.test.ts:113:24)
+
+PASS src/modules/calendar-log/controllers/calendar-log.controller.test.ts (6.487 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/school/controllers/school.controller.test.ts (12.707 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-sync/services/calendar-sync-all.service.test.ts (5.966 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-log/services/calendar-log-metrics.service.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/export-guide/services/export-guide-publication.integration.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/scripts/seed-e2e-calendar.spec.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ override existing { override: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/notification-subscription/services/notification-subscription.service.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-log/models/calendar-log-cursor.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/feature-flag/services/feature-flag.service.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-log/services/detect-calendar-change.service.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/config/observability/sanitize-log.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar/repositories/add-calendar-sync-planned-at.migration.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+    console.info
+      sanitized migration evidence {"rowCount":4,"relationBytes":81920,"upMs":17.69,"downMs":10.747,"restoreUpMs":16.51,"sampledLockModes":[],"blockedSessions":0,"walBytes":14696}
+
+      at Object.<anonymous> (modules/calendar/repositories/add-calendar-sync-planned-at.migration.test.ts:161:15)
+
+PASS src/modules/calendar-log/repositories/calendar-log.repository.test.ts (5.01 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-sync/controllers/calendar-sync.controller.test.ts (17.648 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/mailer/services/mailer.service.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+[Nest] 42397  - 10/04/2026, 5:13:18 PM    WARN [FirebaseService] FCM token no longer registered; caller should remove it from its subscriber list.
+[Nest] 42397  - 10/04/2026, 5:13:18 PM    WARN [FirebaseService] FCM token no longer registered; caller should remove it from its subscriber list.
+PASS src/modules/firebase/services/firebase.service.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-log/mappers/calendar-log.mapper.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-sync/calendar-sync-tracing.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/export-guide/validation/export-guide-catalogue.validator.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/notification-pipeline/services/notification-drain.service.test.ts (6.181 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-sync/calendar-retry-ci-proof.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ override existing { override: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+FAIL src/modules/export-guide/controllers/export-guide-v1.controller.test.ts (54.737 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+  ● ExportGuideV1Controller › fails closed when the active snapshot is absent
+
+    expected 503 "Service Unavailable", got 401 "Unauthorized"
+
+      141 |     const repository = app.get(ExportGuideCatalogueStore)
+      142 |     const spy = jest.spyOn(repository, "find").mockReturnValueOnce(undefined)
+    > 143 |     await get().expect(503)
+          |                 ^
+      144 |     spy.mockRestore()
+      145 |   })
+      146 |
+
+      at Object.<anonymous> (modules/export-guide/controllers/export-guide-v1.controller.test.ts:143:17)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:309:14)
+      at ../node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:195:23)
+      at localAssert (../node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (../node_modules/supertest/lib/test.js:152:11)
+
+  ● ExportGuideV1Controller › requires no authentication header
+
+    expected 200 "OK", got 503 "Service Unavailable"
+
+      146 |
+      147 |   it("requires no authentication header", async () => {
+    > 148 |     await get().expect(200)
+          |                 ^
+      149 |   })
+      150 |
+      151 |   it("uses the cached exact serialization from the service", async () => {
+
+      at Object.<anonymous> (modules/export-guide/controllers/export-guide-v1.controller.test.ts:148:17)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:309:14)
+      at ../node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:195:23)
+      at localAssert (../node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (../node_modules/supertest/lib/test.js:152:11)
+
+PASS src/modules/school/services/school.service.test.ts (10.421 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/scripts/seed-e2e-activity.test.ts (15.017 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+measuring HTTP ci-http-year @ 50
+measuring HTTP many-changes @ 50
+measuring HTTP ci-http-year @ 100
+measuring HTTP many-changes @ 100
+PASS src/scripts/activity-capacity/http.test.ts (52.757 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/notification-subscription/controllers/notification-subscription.controller.test.ts (26.607 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/export-guide/stores/export-guide-catalogue.store.test.ts (5.024 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/config/observability/calendar-sync-telemetry.test.ts (8.596 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/config/observability/telemetry-logger.test.ts (5.073 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/export-guide/assets/export-guide-asset.validator.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ override existing { override: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar/controllers/calendar-v1.controller.test.ts (32.614 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/strategies/school-strategy.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/contact/clients/crisp.client.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/job-run/services/job-events-listener.service.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-log/models/calendar-log-v1-projection.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/export-guide/services/export-guide-publication.service.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/subject/repositories/calendar-subject.repository.test.ts (6.907 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/school/repositories/school.repository.test.ts (9.725 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/school/mappers/school.mapper.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/renamers/ade-export-window-renamer.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-log/services/calendar-log.service.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ override existing { override: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-log/models/dto/search-calendar-logs-v1.dto.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/contact/controllers/contact.controller.test.ts (20.711 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar/helpers/calendar.helper.test.ts (7.592 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/notifier/notifiers/fcm-push-builder.test.ts
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-sync/jobs/sync-calendar.job.test.ts (6.933 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-sync/services/calendar-sync-metrics.service.test.ts (6.135 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/notifier/jobs/send-push.job.test.ts (10.551 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ override existing { override: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/e2e/e2e-ical-fixture.controller.test.ts (63.644 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/contact/services/contact.service.test.ts (8.978 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/migration-report/migration-report.schema.test.ts (15.576 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/school-group/repositories/school-group.repository.test.ts (16.687 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/export-guide/services/export-guide-bootstrap.service.test.ts (5.656 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-sync/jobs/sync-calendars-fanout.job.test.ts (7.771 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/school/repositories/set-toulouse3-celcat-provider.migration.test.ts (8.665 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ override existing { override: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/parsers/__tests__/parse-ical.test.ts (5.469 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ suppress logs { quiet: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/feature-flag/controllers/feature-flag.controller.test.ts (34.046 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar-sync/controllers/calendar-sync-lifecycle.test.ts (14.079 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/scripts/activity-capacity/redact.test.ts (10.581 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/school-group/services/school-group.service.test.ts (10.208 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/subject/services/subject.service.test.ts (7.712 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/pipes/parse-from-description-pipe.test.ts (8.094 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/calendar-source-classifier.test.ts (15.326 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/notifier/notifiers/fcm-notifier.test.ts (45.264 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/calendar/helpers/calendar-event.helper.test.ts (85.245 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌘ enable debugging { debug: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/school-group/controllers/school-group.controller.test.ts (229.847 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/pipes/hyperplanning-description-pipe.test.ts (19.092 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
+PASS src/modules/fetch/models/calendar-fetch-failure.test.ts (51.165 s)
+  ● Console
+
+    console.log
+      ◇ injected env (2) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+
+      at _log (../node_modules/dotenv/lib/main.js:131:11)
+
