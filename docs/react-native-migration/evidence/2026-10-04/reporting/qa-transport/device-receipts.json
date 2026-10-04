@@ -1,0 +1,34 @@
+{
+  "fixtureDatabase": "timecalendar_migration_rehearsal",
+  "reportCount": 3,
+  "receiptCount": 3,
+  "reports": [
+    {
+      "reportId": "c210fa96-6794-4d70-93fd-a4e10cb8830a",
+      "outcome": "success",
+      "reason": "completed",
+      "platform": "ios",
+      "deliveryCount": 2,
+      "receivedAt": "2026-10-04T17:28:55.881Z",
+      "lastReceivedAt": "2026-10-04T17:28:55.899Z"
+    },
+    {
+      "reportId": "7000d54a-612c-4726-bbb8-4e8fd82c1ecf",
+      "outcome": "success",
+      "reason": "completed",
+      "platform": "ios",
+      "deliveryCount": 1,
+      "receivedAt": "2026-10-04T17:52:11.649Z",
+      "lastReceivedAt": "2026-10-04T17:52:11.649Z"
+    },
+    {
+      "reportId": "6c8eec01-f56f-4449-9a9a-838607f79a4e",
+      "outcome": "success",
+      "reason": "completed",
+      "platform": "android",
+      "deliveryCount": 1,
+      "receivedAt": "2026-10-04T17:57:21.986Z",
+      "lastReceivedAt": "2026-10-04T17:57:21.986Z"
+    }
+  ]
+}

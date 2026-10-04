@@ -1,0 +1,37 @@
+{
+  "capturedAt": "2026-10-04T17:58:40.390Z",
+  "source": "isolated local receiver, calibration report excluded",
+  "validator": "shipping parseMigrationReport",
+  "reports": [
+    {
+      "reportId": "7000d54a-612c-4726-bbb8-4e8fd82c1ecf",
+      "strictAllowlistValid": true,
+      "serializedBytes": 962,
+      "calendarIdsCount": 0,
+      "calendarIdsTruncated": true,
+      "datasetKeys": [
+        "calendars",
+        "checklist_items",
+        "hidden_events",
+        "personal_events",
+        "preferences"
+      ],
+      "errorEntries": 0
+    },
+    {
+      "reportId": "6c8eec01-f56f-4449-9a9a-838607f79a4e",
+      "strictAllowlistValid": true,
+      "serializedBytes": 962,
+      "calendarIdsCount": 0,
+      "calendarIdsTruncated": true,
+      "datasetKeys": [
+        "calendars",
+        "checklist_items",
+        "hidden_events",
+        "personal_events",
+        "preferences"
+      ],
+      "errorEntries": 0
+    }
+  ]
+}

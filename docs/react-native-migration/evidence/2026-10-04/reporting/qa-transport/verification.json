@@ -20,7 +20,7 @@
     "durableRows": 1,
     "deliveryCount": 2
   },
-  "deviceProof": "owned by native worker; not claimed by Node tests",
+  "deviceProof": "Actual iOS SEED-B and Android SEED-A generated-client deliveries independently matched to one durable receiver row each; calibration excluded.",
   "startupRouting": "debug-only shipping ExpoRoot/context/Head at location=/; raw bundle URLs otherwise choose unmatched route",
   "independentCoordinatorHarnessCheck": {
     "time": "2026-10-04T17:47:00Z",
@@ -29,5 +29,34 @@
     "passed": 12,
     "failed": 0,
     "durationMs": 491.66
+  },
+  "iosDeviceReceipt": {
+    "reportId": "7000d54a-612c-4726-bbb8-4e8fd82c1ecf",
+    "serverDeliveryCount": 1,
+    "serverReceivedAt": "2026-10-04T17:52:11.649Z",
+    "outboxDeliveredAt": "2026-10-04T17:52:11.659Z",
+    "outboxAttemptCount": 4,
+    "nativeEvidence": "../../ios/seed-b-sync2.json",
+    "independentServerEvidence": "device-receipts.json"
+  },
+  "androidDeviceReceipt": {
+    "reportId": "6c8eec01-f56f-4449-9a9a-838607f79a4e",
+    "serverDeliveryCount": 1,
+    "serverReceivedAt": "2026-10-04T17:57:21.986Z",
+    "independentServerEvidence": "device-receipts.json",
+    "clockNote": "Device and server wall clocks differ; these timestamps do not measure latency.",
+    "outboxDeliveredAt": "2026-10-04T17:57:21.093Z",
+    "outboxAttemptCount": 3,
+    "nativeEvidence": "../../android/seed-a-sync2.json"
+  },
+  "storedPayloadPrivacyEvidence": "device-privacy.json",
+  "independentCoordinatorFinalHarnessCheck": {
+    "time": "2026-10-04T18:00:25Z",
+    "commit": "40cfb571",
+    "tests": 12,
+    "passed": 12,
+    "failed": 0,
+    "durationMs": 446.64,
+    "includes": "cc456182 direct Android bundle routerRoot and release rejection checks"
   }
 }

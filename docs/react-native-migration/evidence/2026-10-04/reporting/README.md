@@ -79,6 +79,10 @@ and [E2E run](server-e2e-tests.log). The final source command used
 
 The [rehearsal evidence](qa-transport/README.md) separates synthetic Node/receiver
 proof from actual native device execution owned by the platform worker.
+It also records actual iOS SEED-B and Android SEED-A delivery as one durable
+terminal report per device, independently read from the receiver and separated from
+calibration. Both stored payloads pass the shipping strict validator. Device and
+server wall clocks differ, so their timestamps do not establish delivery latency.
 
 ## Runtime and deployment boundary
 

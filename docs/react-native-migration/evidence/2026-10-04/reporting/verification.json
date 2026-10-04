@@ -39,6 +39,14 @@
       "failed": 1,
       "failure": "does nothing when no logs are newer than the cursor: expected 0, received 1",
       "log": "server-baseline-notification.log"
+    },
+    "actualDeviceReceiverReports": {
+      "iosSeedB": 1,
+      "androidSeedA": 1,
+      "calibrationExcluded": true,
+      "strictStoredPayloadValidation": "both pass",
+      "evidence": "qa-transport/device-receipts.json",
+      "privacyEvidence": "qa-transport/device-privacy.json"
     }
   },
   "limitations": [

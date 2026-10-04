@@ -67,6 +67,9 @@ WebSocket, use the exact origin `http://127.0.0.1:8086`, send `Runtime.enable` a
 `Debugger.enable`, then verify a simple `1+1` evaluation before reading app state.
 Use `returnByValue: true`; use `awaitPromise: true` for report delivery. An open
 WebSocket without command responses is not proof that the runtime is inspectable.
+React Native's polyfilled promise can still appear as an object placeholder;
+confirm completion in a later synchronous status/snapshot through `delivered_at`
+and the receiver's durable receipt, not the immediate evaluation return value.
 
 ```js
 __migrationRehearsal.status()

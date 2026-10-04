@@ -7,9 +7,28 @@ Hermes controls, exact readback assertions and network boundaries are documented
 
 `verification.json` records twelve passing Node checks and the coordinator's
 independent twelve-test run at `5c88c876` (17:47 UTC), plus its earlier six-test
-transport check. `receiver-smoke.json` records two HTTP acknowledgements
+transport check. The final independent run at `40cfb571` (18:00 UTC) also passes
+all twelve checks, including the direct Android bundle rewrite.
+`receiver-smoke.json` records two HTTP acknowledgements
 persisted as one real PostgreSQL report, with receipt count two. The calibration ID
 is synthetic and must not be counted as a device migration result.
+
+The real iOS SEED-B outbox delivered report
+`7000d54a-612c-4726-bbb8-4e8fd82c1ecf` through the generated client and local receiver.
+The independent [receiver readback](device-receipts.json) shows exactly one iOS row
+with one receipt delivery at `2026-10-04T17:52:11.649Z`; the
+[native snapshot](../../ios/seed-b-sync2.json) shows `delivered_at` ten milliseconds
+later, after four outbox attempts including offline failures. The Android SEED-A
+report `6c8eec01-f56f-4449-9a9a-838607f79a4e` is also stored exactly once at
+`2026-10-04T17:57:21.986Z`; the [native Android snapshot](../../android/seed-a-sync2.json)
+independently shows its acknowledged outbox on attempt three. Device and server wall clocks differ, so these stamps do not measure
+delivery latency. The separate calibration report remains excluded from the device
+denominator.
+
+The independent [stored-payload privacy check](device-privacy.json) reruns the
+shipping strict validator without exporting the payload: both real device reports
+pass, occupy 962 serialized bytes each, and omit the fixtures' non-UUID calendar
+identifiers with `calendarIdsTruncated=true`.
 
 The real Nest controller/validator/repository receiver binds IPv4 loopback8090;
 Metro is owned by the native worker on8086. The receiver uses the fixed local
