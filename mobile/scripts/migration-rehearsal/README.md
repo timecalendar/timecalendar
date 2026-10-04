@@ -24,7 +24,10 @@ npx expo start --dev-client --max-workers 1 --port 8086
 The pinned Expo 56 CLI reads `EXPO_OVERRIDE_METRO_CONFIG` in
 `instantiateMetro.js`. This internal CLI option is version-sensitive. The config
 preserves Expo's default rewrite (including Hermes/router transform parameters),
-then redirects the default app entry bundle to `entry.js`. Package metadata,
+then redirects the default app entry bundle to `entry.js`. It also restores
+`transform.routerRoot=src/app` on direct rehearsal bundle requests because Android's
+raw loader can reconstruct the URL without its original query parameters. Restart
+Metro after changing this configuration. Package metadata,
 shipping source, native identities, importer eligibility and storage are untouched.
 
 Connect the production-identity debug app to this Metro instance using the normal
@@ -58,6 +61,12 @@ capability checks emit booleans only. Startup diagnostics never include URLs,
 database contents, raw errors or credentials.
 
 ## Inspector controls and readback
+
+Select the platform target from `http://127.0.0.1:8086/json/list`. For its debugger
+WebSocket, use the exact origin `http://127.0.0.1:8086`, send `Runtime.enable` and
+`Debugger.enable`, then verify a simple `1+1` evaluation before reading app state.
+Use `returnByValue: true`; use `awaitPromise: true` for report delivery. An open
+WebSocket without command responses is not proof that the runtime is inspectable.
 
 ```js
 __migrationRehearsal.status()
