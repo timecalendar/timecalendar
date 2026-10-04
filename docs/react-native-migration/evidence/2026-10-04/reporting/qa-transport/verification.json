@@ -21,5 +21,13 @@
     "deliveryCount": 2
   },
   "deviceProof": "owned by native worker; not claimed by Node tests",
-  "startupRouting": "debug-only shipping ExpoRoot/context/Head at location=/; raw bundle URLs otherwise choose unmatched route"
+  "startupRouting": "debug-only shipping ExpoRoot/context/Head at location=/; raw bundle URLs otherwise choose unmatched route",
+  "independentCoordinatorHarnessCheck": {
+    "time": "2026-10-04T17:47:00Z",
+    "commit": "5c88c876",
+    "tests": 12,
+    "passed": 12,
+    "failed": 0,
+    "durationMs": 491.66
+  }
 }
