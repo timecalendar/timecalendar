@@ -54,7 +54,7 @@ operational role-grant script, and actual limited-role permission denials. It pr
 [`verification.json`](verification.json) records the final outcomes. Server build,
 full TypeScript ESLint, Orval generation, and byte-for-byte OpenAPI regeneration
 pass. The strict report validator passes 50 tests; the complete E2E command passes
-32 tests across two suites. The rehearsal transport/readback harness passes nine
+32 tests across two suites. The rehearsal transport/readback harness passes twelve
 Node tests, with receiver smoke requests returning 200 twice and one durable row.
 
 All 115 server source suites were exercised across two batches and a targeted

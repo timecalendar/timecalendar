@@ -1,8 +1,8 @@
 {
   "date": "2026-10-04",
   "command": "cd mobile && node --test scripts/migration-rehearsal/*.test.cjs",
-  "tests": 9,
-  "passed": 9,
+  "tests": 12,
+  "passed": 12,
   "failed": 0,
   "independentCoordinatorTransportCheck": {
     "time": "2026-10-04T17:24:00Z",
@@ -20,5 +20,6 @@
     "durableRows": 1,
     "deliveryCount": 2
   },
-  "deviceProof": "owned by native worker; not claimed by Node tests"
+  "deviceProof": "owned by native worker; not claimed by Node tests",
+  "startupRouting": "debug-only shipping ExpoRoot/context/Head at location=/; raw bundle URLs otherwise choose unmatched route"
 }

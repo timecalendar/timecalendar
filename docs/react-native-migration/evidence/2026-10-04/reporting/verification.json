@@ -28,7 +28,7 @@
       ]
     },
     "harnessNodeTests": {
-      "passed": 9,
+      "passed": 12,
       "failed": 0
     },
     "baselineNotificationFailure": {

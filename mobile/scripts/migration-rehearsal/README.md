@@ -1,9 +1,9 @@
 # Synthetic migration transport rehearsal
 
 This opt-in debug entry runs the shipping importer, gates, repositories and UI
-under the production application ID and production backend eligibility. It changes
-only JavaScript fetch transport. It is never imported by the shipping entry and
-refuses `__DEV__ === false`.
+under the production application ID and production backend eligibility. It controls
+JavaScript fetch transport and starts the shipping router at `/`. It is never
+imported by the shipping entry and refuses `__DEV__ === false`.
 
 Native/device ownership remains with the native worker. Do not replace or clear a
 device's app unless that worker has verified its synthetic Flutter seed. Android
@@ -47,6 +47,15 @@ as a raw bundle; Android has the corresponding React Native loader. This explici
 debug launch does not change release signing or require the production private key.
 It may omit manifest-derived configuration, so verify runtime readiness and importer
 eligibility before interpreting device results.
+
+The isolated `root.js` uses Expo's shipping `ExpoRoot`, route context, `Head.Provider`
+and root registration with `location: "/"`. Raw bundle URLs otherwise select an
+unmatched route before the application's layout and migration gate mount. This
+normalization applies only to the rehearsal entry; shipping routing is unchanged.
+Fixed `[migration-rehearsal]` startup markers identify transport installation,
+router registration, root mounting and timer liveness. Native identity/backend
+capability checks emit booleans only. Startup diagnostics never include URLs,
+database contents, raw errors or credentials.
 
 ## Inspector controls and readback
 
