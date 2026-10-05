@@ -41,6 +41,24 @@ test("immutable GitOps deployment tags cannot lose wildcard protection", () => {
   assert(errors.every((error) => error.includes("main-* deployment tags")));
 });
 
+for (const packageName of ["timecalendar", "timecalendar-web"]) {
+  for (const replacement of ["", "          filter-include-untagged: true", "          # filter-include-untagged: false"]) {
+    test(`${packageName} cannot allow untagged manifest deletion with ${replacement.trim() || "the action default"}`, () => {
+      const validWorkflow = readFileSync(workflowPath, "utf8");
+      const packageStart = validWorkflow.indexOf(`          image-names: ${packageName}\n`);
+      const workflow = validWorkflow.slice(0, packageStart) + validWorkflow.slice(packageStart).replace(
+        "          filter-include-untagged: false",
+        replacement,
+      );
+      assert.notEqual(workflow, validWorkflow);
+
+      assert.deepEqual(validateRetentionWorkflow(workflow), [
+        `${packageName} must exclude untagged OCI child manifests from deletion`,
+      ]);
+    });
+  }
+}
+
 test("extra retention invocations are rejected", () => {
   const workflow = readFileSync(workflowPath, "utf8");
   const extraStep = workflow.slice(workflow.indexOf("      - name: Retain server images"));

@@ -25,6 +25,9 @@ jobs:
           account-type: org
           org-name: timecalendar
           keep-at-least: 5
+          # OCI indexes reference untagged runtime and attestation manifests.
+          # Deleting those children breaks pulls of otherwise protected tags.
+          filter-include-untagged: false
           # GitOps deploys immutable main-<sha> tags in both preprod and production.
           # Protect that whole tag family: keep-at-least cannot protect a quiet
           # production release when main publishes more than five newer images.
@@ -41,6 +44,8 @@ jobs:
           account-type: org
           org-name: timecalendar
           keep-at-least: 5
+          # OCI child manifests must survive alongside their protected tags.
+          filter-include-untagged: false
           # Keep this identical to the server policy. Production promotes the
           # server and web main-<sha> tags in lock-step.
           skip-tags: latest, production, main-*

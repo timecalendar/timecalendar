@@ -131,6 +131,7 @@ export function validateRetentionWorkflow(source) {
     require(inputs.get("cut-off") === "${{ inputs.cut-off || '1 week ago UTC' }}", `${imageName ?? "retention step"} must retain the cut-off fallback`);
     require(inputs.get("dry-run") === "${{ github.event_name == 'workflow_dispatch' }}", `${imageName ?? "retention step"} must force manual runs to dry-run`);
     require(Number(inputs.get("keep-at-least")) >= 5, `${imageName ?? "retention step"} must keep at least five versions`);
+    require(inputs.get("filter-include-untagged") === "false", `${imageName ?? "retention step"} must exclude untagged OCI child manifests from deletion`);
     const protectedTags = new Set((inputs.get("skip-tags") ?? "").split(",").map((tag) => tag.trim()).filter(Boolean));
     require(
       protectedTags.has("latest") &&
