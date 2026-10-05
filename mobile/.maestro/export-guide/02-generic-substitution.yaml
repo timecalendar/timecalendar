@@ -1,0 +1,31 @@
+appId: fr.samuelprak.timecalendar.dev
+---
+- runFlow: helpers/start-onboarding.yaml
+- tapOn: "E2E Export Future Provider"
+- runFlow: helpers/enter-programme.yaml
+- tapOn:
+    id: "onboarding-connect-continue"
+- extendedWaitUntil:
+    visible: "Display your timetable(,.*)?"
+    timeout: 60000
+- assertVisible: "Page 1 of 3"
+- extendedWaitUntil:
+    visible:
+      id: "export-guide-page-image-placeholder"
+    timeout: 60000
+- tapOn:
+    id: "export-guide-next"
+- extendedWaitUntil:
+    visible: "Page 2 of 3"
+    timeout: 60000
+- tapOn:
+    id: "export-guide-next"
+- extendedWaitUntil:
+    visible: "Page 3 of 3"
+    timeout: 60000
+- tapOn:
+    id: "export-guide-next"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-import-content"
+    timeout: 60000

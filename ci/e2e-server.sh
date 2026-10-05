@@ -87,6 +87,52 @@ wait_for_health() {
   fail "GET /health did not return 200 within 60s (see log above)."
 }
 
+verify_export_guide_fixture() {
+  local base="http://localhost:$BACKEND_PORT" catalogue headers body broken_url broken_code
+  log "verifying export-guide E2E fixture boundary…"
+  curl -fsS "$base/feature-flags/evaluate?keys=export-guides-v1" |
+    grep -Fq '"export-guides-v1":true' || fail "test export-guide flag is not enabled."
+  catalogue="$(curl -fsS "$base/schools")"
+  for school in \
+    'E2E Export ADE Safe' \
+    'E2E Export Future Provider' \
+    'E2E Export Missing Connect' \
+    'E2E Export Unsafe Connect'; do
+    grep -Fq "$school" <<< "$catalogue" || fail "missing seeded school: $school"
+  done
+  headers="${TMPDIR:-/tmp}/timecalendar-export-guide-headers.$$"
+  body="${TMPDIR:-/tmp}/timecalendar-export-guide-body.$$"
+  trap 'rm -f "$headers" "$body"' RETURN
+  curl -fsS -D "$headers" -o "$body" \
+    "$base/v1/export-guides?locale=en&clientSchema=1"
+  grep -Eiq '^etag: "[^\r]+"' "$headers" || fail "export-guide ETag is missing."
+  grep -Eiq '^content-language: en' "$headers" || fail "export-guide language is missing."
+  grep -Fq '"catalogueVersion":"2026-09-08.t4"' "$body" || fail "wrong fixture version."
+  grep -Fq 'controlled-broken.png' "$body" || fail "controlled broken image is missing."
+  node -e '
+    const fs = require("fs");
+    const catalogue = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+    const expectedOrigin = "https://timecalendar-dev-public.fra1.digitaloceanspaces.com";
+    const images = catalogue.providers.flatMap((provider) => provider.pages)
+      .flatMap((page) => page.image ? [page.image] : []);
+    if (!images.length || images.some((image) => new URL(image.url).origin !== expectedOrigin)) {
+      process.exit(1);
+    }
+  ' "$body" || fail "export-guide fixture image origin is not approved."
+  broken_url="$(node -e '
+    const fs = require("fs");
+    const catalogue = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+    const page = catalogue.providers.flatMap((provider) => provider.pages)
+      .find((candidate) => candidate.image?.url.includes("controlled-broken.png"));
+    process.stdout.write(page?.image?.url ?? "");
+  ' "$body")"
+  [ -n "$broken_url" ] || fail "controlled broken image URL is unreadable."
+  broken_code="$(curl -ksS -o /dev/null -w '%{http_code}' "$broken_url" || true)"
+  case "$broken_code" in 2??) fail "controlled broken image unexpectedly resolved." ;; esac
+  rm -f "$headers" "$body"
+  trap - RETURN
+}
+
 # --- Compose mode ------------------------------------------------------------
 up_compose() {
   command -v docker >/dev/null 2>&1 || fail "docker is not installed."
@@ -112,6 +158,13 @@ up_compose() {
   # service env.
   log "seeding the timecalendar_test database (db:init)…"
   compose run --rm server npm run db:init
+
+  # The first server boot may precede the destructive test migration. Restart
+  # after seeding so application bootstrap publishes the immutable T4 fixture.
+  compose restart server
+  compose up --wait server
+
+  verify_export_guide_fixture
 
   log "stack up — API serving on http://localhost:$BACKEND_PORT"
 }
@@ -150,12 +203,13 @@ up_native() {
   log "starting the NestJS backend on port ${BACKEND_PORT}…"
   # The subshell execs into node, so the recorded pid IS the server process —
   # `down` kills it directly (no setsid, no process tree).
-  ( cd "$SERVER_DIR" && exec env NODE_ENV=test PORT="$BACKEND_PORT" node dist/main ) \
+  ( cd "$SERVER_DIR" && exec env NODE_ENV=test EXPORT_GUIDE_E2E_FIXTURES=1 PORT="$BACKEND_PORT" node dist/main ) \
       > "$NATIVE_LOG_FILE" 2>&1 &
   echo "$!" > "$NATIVE_PID_FILE"
   log "backend pid $(cat "$NATIVE_PID_FILE") — log: $NATIVE_LOG_FILE"
 
   wait_for_health
+  verify_export_guide_fixture
   log "stack up — API serving on http://localhost:$BACKEND_PORT"
 }
 

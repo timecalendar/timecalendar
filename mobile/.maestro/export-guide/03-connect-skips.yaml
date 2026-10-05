@@ -1,0 +1,23 @@
+appId: fr.samuelprak.timecalendar.dev
+---
+- runFlow: helpers/start-onboarding.yaml
+- tapOn: "E2E Export Missing Connect"
+- runFlow: helpers/enter-programme.yaml
+- extendedWaitUntil:
+    visible:
+      id: "export-guide-page"
+    timeout: 60000
+- assertNotVisible:
+    id: "onboarding-connect-intranet"
+- assertVisible: "Page 1 of 3"
+
+- runFlow: helpers/start-onboarding.yaml
+- tapOn: "E2E Export Unsafe Connect"
+- runFlow: helpers/enter-programme.yaml
+- extendedWaitUntil:
+    visible:
+      id: "export-guide-page"
+    timeout: 60000
+- assertNotVisible:
+    id: "onboarding-connect-intranet"
+- assertVisible: "Page 1 of 2"

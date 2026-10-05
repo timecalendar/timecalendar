@@ -1,0 +1,48 @@
+appId: fr.samuelprak.timecalendar.dev
+---
+- runFlow: helpers/start-onboarding.yaml
+- tapOn:
+    id: "onboarding-school-missing"
+- tapOn:
+    id: "onboarding-institution-input"
+- inputText: "E2E Unlisted University"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - pressKey: back
+- tapOn:
+    id: "onboarding-institution-continue"
+- runFlow: helpers/enter-programme.yaml
+- extendedWaitUntil:
+    visible:
+      id: "export-guide-provider-ade"
+    timeout: 60000
+- assertVisible:
+    id: "export-guide-provider-hplanning"
+- assertVisible:
+    id: "export-guide-provider-celcat"
+- assertVisible:
+    id: "export-guide-provider-generic"
+- tapOn:
+    id: "export-guide-provider-celcat"
+- extendedWaitUntil:
+    visible: "Select your group(,.*)?"
+    timeout: 60000
+- assertVisible: "Page 1 of 3"
+- tapOn:
+    id: "export-guide-next"
+- extendedWaitUntil:
+    visible: "Page 2 of 3"
+    timeout: 60000
+- tapOn:
+    id: "export-guide-next"
+- extendedWaitUntil:
+    visible: "Page 3 of 3"
+    timeout: 60000
+- tapOn:
+    id: "export-guide-next"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-import-content"
+    timeout: 60000

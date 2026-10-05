@@ -24,13 +24,19 @@ import { FeatureFlagModule } from "modules/feature-flag/feature-flag.module"
 import { ObservabilityLifecycleService } from "config/observability/observability-lifecycle.service"
 import { LivenessController } from "health/liveness.controller"
 import { E2eIcalFixtureController } from "e2e/e2e-ical-fixture.controller"
+import { E2eExportGuideControlController } from "e2e/e2e-export-guide-control.controller"
 import { ExportGuideModule } from "modules/export-guide/export-guide.module"
 import { MigrationReportModule } from "modules/migration-report/migration-report.module"
 
 export const e2eFixtureControllers = (
   environment: string = NODE_ENV,
-): (typeof E2eIcalFixtureController)[] =>
-  environment === "test" ? [E2eIcalFixtureController] : []
+): (
+  | typeof E2eIcalFixtureController
+  | typeof E2eExportGuideControlController
+)[] =>
+  environment === "test"
+    ? [E2eIcalFixtureController, E2eExportGuideControlController]
+    : []
 
 @Module({
   imports: [

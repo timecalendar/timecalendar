@@ -16,6 +16,7 @@ import {
 } from "modules/export-guide/models/dto/export-guide.dto"
 import { ExportGuideQueryDto } from "modules/export-guide/models/dto/export-guide-query.dto"
 import { ExportGuideService } from "modules/export-guide/services/export-guide.service"
+import { consumeE2eExportGuideFailure } from "e2e/e2e-export-guide-control.controller"
 
 @Controller("v1/export-guides")
 @ApiTags("Export Guides")
@@ -51,6 +52,10 @@ export class ExportGuideV1Controller {
     @Headers("if-none-match") ifNoneMatch: string | undefined,
     @Res() response: Response,
   ): Promise<void> {
+    if (consumeE2eExportGuideFailure()) {
+      response.status(503).json({ code: "catalogue_unavailable" })
+      return
+    }
     const representation = await this.service.get(
       query.locale,
       query.clientSchema,
