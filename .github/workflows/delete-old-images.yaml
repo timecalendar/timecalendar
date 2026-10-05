@@ -1,21 +1,19 @@
-name: Delete old container images
+name: Audit container images (read only)
 
 on:
-  schedule:
-    - cron: '0 0 * * *'
   workflow_dispatch:
     inputs:
       cut-off:
-        description: The timezone-aware datetime you want to delete container versions that are older than.
+        description: The timezone-aware cutoff for listing old container versions without deleting them.
         required: false
         type: string
 
 jobs:
   clean-ghcr:
-    name: Delete old unused container images
+    name: Report old container images without deletion
     runs-on: ubuntu-latest
     permissions:
-      packages: write
+      packages: read
     steps:
       - name: Retain server images
         uses: snok/container-retention-policy@v2
@@ -34,7 +32,7 @@ jobs:
           skip-tags: latest, production, main-*
           token: ${{ github.token }}
           token-type: github-token
-          dry-run: ${{ github.event_name == 'workflow_dispatch' }}
+          dry-run: true
 
       - name: Retain web images
         uses: snok/container-retention-policy@v2
@@ -51,4 +49,4 @@ jobs:
           skip-tags: latest, production, main-*
           token: ${{ github.token }}
           token-type: github-token
-          dry-run: ${{ github.event_name == 'workflow_dispatch' }}
+          dry-run: true

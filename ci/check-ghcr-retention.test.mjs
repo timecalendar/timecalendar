@@ -13,7 +13,7 @@ test("the committed retention workflow satisfies the contract", () => {
 test("comments cannot provide missing authentication or safety inputs", () => {
   const workflow = readFileSync(workflowPath, "utf8").replace(
     "          token-type: github-token",
-    "          # token-type: github-token\n          # dry-run: ${{ github.event_name == 'workflow_dispatch' }}",
+    "          # token-type: github-token\n          # dry-run: true",
   );
 
   const errors = validateRetentionWorkflow(workflow);
@@ -66,22 +66,34 @@ test("extra retention invocations are rejected", () => {
   assert(errors.some((error) => error.includes("expected exactly 2")));
 });
 
-test("the cron cannot be relocated outside on.schedule", () => {
-  const validWorkflow = readFileSync(workflowPath, "utf8");
-  const workflow = validWorkflow
-    .replace("  schedule:\n    - cron: '0 0 * * *'\n", "  schedule:\n")
-    .concat("\nmisplaced-schedule:\n  - cron: '0 0 * * *'\n");
-  assert.notEqual(workflow, validWorkflow);
+for (const trigger of ["  schedule:\n    - cron: '0 0 * * *'\n", "  push:\n", "  schedule: []\n"]) {
+  test(`automatic trigger ${trigger.trim()} cannot enable cleanup`, () => {
+    const workflow = readFileSync(workflowPath, "utf8").replace("on:\n", `on:\n${trigger}`);
+    const errors = validateRetentionWorkflow(workflow);
+    assert(errors.some((error) => error.includes("automatic cleanup is disabled")));
+  });
+}
 
+test("the audit cannot gain package write permissions", () => {
+  const workflow = readFileSync(workflowPath, "utf8").replace("packages: read", "packages: write");
   const errors = validateRetentionWorkflow(workflow);
-  assert(errors.some((error) => error.includes("on.schedule")));
+  assert(errors.some((error) => error.includes("exactly packages: read")));
 });
+
+for (const replacement of ["false", "${{ github.event_name == 'workflow_dispatch' }}"]) {
+  test(`dry-run cannot become ${replacement}`, () => {
+    const workflow = readFileSync(workflowPath, "utf8").replaceAll("dry-run: true", `dry-run: ${replacement}`);
+    const errors = validateRetentionWorkflow(workflow);
+    assert.equal(errors.length, 2);
+    assert(errors.every((error) => error.includes("unconditionally force dry-run")));
+  });
+}
 
 test("the cut-off input cannot be relocated into the cleanup job environment", () => {
   const validWorkflow = readFileSync(workflowPath, "utf8");
   const cutOffBlock =
     "      cut-off:\n" +
-    "        description: The timezone-aware datetime you want to delete container versions that are older than.\n" +
+    "        description: The timezone-aware cutoff for listing old container versions without deleting them.\n" +
     "        required: false\n" +
     "        type: string\n";
   const misplacedCutOffBlock = cutOffBlock.replace(/^ {6}/gm, "      ");
