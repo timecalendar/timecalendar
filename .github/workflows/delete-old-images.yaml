@@ -1,21 +1,19 @@
-name: Delete old container images
+name: Audit container images (read only)
 
 on:
-  schedule:
-    - cron: '0 0 * * *'
   workflow_dispatch:
     inputs:
       cut-off:
-        description: The timezone-aware datetime you want to delete container versions that are older than.
+        description: The timezone-aware cutoff for listing old container versions without deleting them.
         required: false
         type: string
 
 jobs:
   clean-ghcr:
-    name: Delete old unused container images
+    name: Report old container images without deletion
     runs-on: ubuntu-latest
     permissions:
-      packages: write
+      packages: read
     steps:
       - name: Retain server images
         uses: snok/container-retention-policy@v2
@@ -25,13 +23,16 @@ jobs:
           account-type: org
           org-name: timecalendar
           keep-at-least: 5
+          # OCI indexes reference untagged runtime and attestation manifests.
+          # Deleting those children breaks pulls of otherwise protected tags.
+          filter-include-untagged: false
           # GitOps deploys immutable main-<sha> tags in both preprod and production.
           # Protect that whole tag family: keep-at-least cannot protect a quiet
           # production release when main publishes more than five newer images.
           skip-tags: latest, production, main-*
           token: ${{ github.token }}
           token-type: github-token
-          dry-run: ${{ github.event_name == 'workflow_dispatch' }}
+          dry-run: true
 
       - name: Retain web images
         uses: snok/container-retention-policy@v2
@@ -41,9 +42,11 @@ jobs:
           account-type: org
           org-name: timecalendar
           keep-at-least: 5
+          # OCI child manifests must survive alongside their protected tags.
+          filter-include-untagged: false
           # Keep this identical to the server policy. Production promotes the
           # server and web main-<sha> tags in lock-step.
           skip-tags: latest, production, main-*
           token: ${{ github.token }}
           token-type: github-token
-          dry-run: ${{ github.event_name == 'workflow_dispatch' }}
+          dry-run: true

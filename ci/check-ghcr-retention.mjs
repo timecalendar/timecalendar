@@ -86,14 +86,12 @@ export function validateRetentionWorkflow(source) {
   };
 
   const triggers = findBlock(lines, "on");
-  const schedule = triggers &&
-    findBlock(lines, "schedule", triggers.indent, triggers.start + 1, triggers.end);
-  const hasDailySchedule = schedule &&
-    lines.slice(schedule.start + 1, schedule.end).some(({ line }) =>
-      indentation(line) === schedule.indent + 2 &&
-      /^\s*-\s+cron:\s*['"]0 0 \* \* \*['"]\s*$/.test(line),
-    );
-  require(hasDailySchedule, "daily midnight schedule is missing from on.schedule");
+  const triggerNames = triggers
+    ? lines.slice(triggers.start + 1, triggers.end)
+      .filter(({ line }) => indentation(line) === triggers.indent + 2)
+      .map(({ line }) => line.trim().split(":")[0])
+    : [];
+  require(triggerNames.length === 1 && triggerNames[0] === "workflow_dispatch", "container audit must only allow manual workflow_dispatch; automatic cleanup is disabled");
 
   const workflowDispatch = triggers &&
     findBlock(lines, "workflow_dispatch", triggers.indent, triggers.start + 1, triggers.end);
@@ -112,7 +110,7 @@ export function validateRetentionWorkflow(source) {
   const permissions = scalarMap(lines, job, "permissions");
   require(permissions, "clean-ghcr must declare job-level permissions");
   if (permissions) {
-    require(permissions.size === 1 && permissions.get("packages") === "write", "clean-ghcr permissions must be exactly packages: write");
+    require(permissions.size === 1 && permissions.get("packages") === "read", "clean-ghcr permissions must be exactly packages: read");
   }
 
   const retentionSteps = stepBlocks(lines, job).filter((step) => stepValue(lines, step, "uses") === ACTION);
@@ -129,8 +127,9 @@ export function validateRetentionWorkflow(source) {
     require(inputs.get("account-type") === "org", `${imageName ?? "retention step"} must target an organization account`);
     require(inputs.get("org-name") === "timecalendar", `${imageName ?? "retention step"} must target the timecalendar organization`);
     require(inputs.get("cut-off") === "${{ inputs.cut-off || '1 week ago UTC' }}", `${imageName ?? "retention step"} must retain the cut-off fallback`);
-    require(inputs.get("dry-run") === "${{ github.event_name == 'workflow_dispatch' }}", `${imageName ?? "retention step"} must force manual runs to dry-run`);
+    require(inputs.get("dry-run") === "true", `${imageName ?? "retention step"} must unconditionally force dry-run`);
     require(Number(inputs.get("keep-at-least")) >= 5, `${imageName ?? "retention step"} must keep at least five versions`);
+    require(inputs.get("filter-include-untagged") === "false", `${imageName ?? "retention step"} must exclude untagged OCI child manifests from deletion`);
     const protectedTags = new Set((inputs.get("skip-tags") ?? "").split(",").map((tag) => tag.trim()).filter(Boolean));
     require(
       protectedTags.has("latest") &&
