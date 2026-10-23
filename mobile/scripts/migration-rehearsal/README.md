@@ -111,21 +111,20 @@ device is disconnected from these counters. Use only synthetic app state.
 
 Online capture alone returns 503 so the genuine outbox stays pending. The actual
 local receiver runs the compiled shipping Nest reporting module against the isolated
-`timecalendar_migration_rehearsal` PostgreSQL database on loopback37291 and Redis
-on loopback37292. It creates only that fixed local database/schema, binds IPv4
+`timecalendar_migration_rehearsal` PostgreSQL database on loopback37291. It creates
+only that fixed local database and its `migration_report` table, binds IPv4
 loopback8090, and retains rows across receiver restarts:
 
 ```sh
 # From mobile; server must already have been built.
 node scripts/migration-rehearsal/report-server.cjs
-# A second terminal can inspect bounded, content-free receipt metadata:
+# A second terminal can inspect stored report metadata:
 node scripts/migration-rehearsal/report-server.cjs --status
 ```
 
 Stop the receiver with SIGINT/SIGTERM after device proof. The baseline smoke report
 `c210fa96-6794-4d70-93fd-a4e10cb8830a` is synthetic receiver calibration, not a device
-result. This fixture receiver uses the local database owner; production role
-separation is proved separately by server E2E tests, not this loopback process.
+result.
 
 Optionally,
 configure an explicit reachable local first-party reporting test server:
@@ -144,7 +143,7 @@ iOS test route as appropriate. Only report delivery may use saved real fetch;
 calendar sync remains synthetic. The backend's actual HTTP status determines
 delivery. The shipping outbox's next-attempt time remains authoritative: the manual
 call does not bypass backoff, edit its state, or force delivery early. Report status
-contains only report IDs, outcomes and receipt counts; no report body is logged.
+contains only report IDs, outcomes and report counts; no report body is logged.
 
 ## Checks
 

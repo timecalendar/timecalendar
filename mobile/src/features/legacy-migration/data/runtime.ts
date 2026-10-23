@@ -6,7 +6,7 @@ import {
 import { Platform } from "react-native"
 
 import { migrationReportControllerAccept } from "@/api/generated/migration-reports/migration-reports"
-import type { MigrationReport } from "@/api/generated/timeCalendar.schemas"
+import type { CreateMigrationReportDto } from "@/api/generated/timeCalendar.schemas"
 import { ApiError } from "@/api/mutator"
 import { legacyMigrationRepository, newId } from "@/db"
 import { getEffectiveBackendEnvironment } from "@/features/environment/data/store"
@@ -47,7 +47,7 @@ export const deliverMigrationReports = createReportDelivery({
   async send(payload) {
     try {
       await migrationReportControllerAccept(
-        JSON.parse(payload) as MigrationReport,
+        JSON.parse(payload) as CreateMigrationReportDto,
       )
       return 200
     } catch (error) {

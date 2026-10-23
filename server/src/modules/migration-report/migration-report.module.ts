@@ -1,17 +1,13 @@
 import { Module } from "@nestjs/common"
-import { MigrationReportController } from "./migration-report.controller"
-import { MigrationReportRateLimiter } from "./migration-report-rate-limiter"
-import { MigrationReportRepository } from "./repositories/migration-report.repository"
-import { PruneMigrationReportsJob } from "./prune-migration-reports.job"
-import { MigrationReportService } from "./migration-report.service"
+import { TypeOrmModule } from "@nestjs/typeorm"
+import { MigrationReportController } from "modules/migration-report/controllers/migration-report.controller"
+import { MigrationReport } from "modules/migration-report/models/migration-report.entity"
+import { MigrationReportRepository } from "modules/migration-report/repositories/migration-report.repository"
+import { MigrationReportService } from "modules/migration-report/services/migration-report.service"
 
 @Module({
+  imports: [TypeOrmModule.forFeature([MigrationReport])],
+  providers: [MigrationReportRepository, MigrationReportService],
   controllers: [MigrationReportController],
-  providers: [
-    MigrationReportRateLimiter,
-    MigrationReportRepository,
-    MigrationReportService,
-    PruneMigrationReportsJob,
-  ],
 })
 export class MigrationReportModule {}

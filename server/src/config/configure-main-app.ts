@@ -3,9 +3,9 @@ import { INestApplicationContext } from "@nestjs/common"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import { useContainer } from "class-validator"
 import compression from "compression"
+import { json } from "express"
 import helmet from "helmet"
 import { CustomValidationPipe } from "modules/shared/pipes/custom-validation.pipe"
-import { configureMigrationReportIngress } from "modules/migration-report/migration-report-ingress"
 
 const configureMainApp = (
   module: INestApplicationContext,
@@ -13,7 +13,11 @@ const configureMainApp = (
 ) => {
   useContainer(module, { fallbackOnErrors: true })
   app.set("trust proxy", ["loopback", "linklocal", "uniquelocal"])
-  configureMigrationReportIngress(app)
+  const parseMigrationReport = json({ limit: "16kb" })
+  // Wrapped: Nest skips its global JSON parser when a layer named jsonParser exists.
+  app.use("/v1/migration-reports", (req, res, next) =>
+    parseMigrationReport(req, res, next),
+  )
   app.useGlobalPipes(
     new CustomValidationPipe({
       whitelist: true,

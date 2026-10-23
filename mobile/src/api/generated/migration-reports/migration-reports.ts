@@ -14,8 +14,8 @@ import type {
 } from "@tanstack/react-query"
 
 import type {
-  MigrationReport,
-  MigrationReportControllerAccept200,
+  CreateMigrationReportDto,
+  CreateMigrationReportRepDto,
 } from "../timeCalendar.schemas"
 
 import { customFetch } from "../../mutator"
@@ -28,39 +28,38 @@ export const getMigrationReportControllerAcceptUrl = () => {
 }
 
 /**
- * Write-only ingestion without a user session. First accepted payload wins; replay returns the same acknowledgement without exposing stored data. Limits: 60 requests per IP per minute and 10 per report ID per hour.
- * @summary Accept a private terminal migration report
+ * @summary Submit a data migration report
  */
 export const migrationReportControllerAccept = async (
-  migrationReport: MigrationReport,
+  createMigrationReportDto: CreateMigrationReportDto,
   options?: RequestInit,
-): Promise<MigrationReportControllerAccept200> => {
-  return customFetch<MigrationReportControllerAccept200>(
+): Promise<CreateMigrationReportRepDto> => {
+  return customFetch<CreateMigrationReportRepDto>(
     getMigrationReportControllerAcceptUrl(),
     {
       ...options,
       method: "POST",
       headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(migrationReport),
+      body: JSON.stringify(createMigrationReportDto),
     },
   )
 }
 
 export const getMigrationReportControllerAcceptMutationOptions = <
-  TError = ErrorType<void>,
+  TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof migrationReportControllerAccept>>,
     TError,
-    { data: MigrationReport },
+    { data: CreateMigrationReportDto },
     TContext
   >
   request?: SecondParameter<typeof customFetch>
 }): UseMutationOptions<
   Awaited<ReturnType<typeof migrationReportControllerAccept>>,
   TError,
-  { data: MigrationReport },
+  { data: CreateMigrationReportDto },
   TContext
 > => {
   const mutationKey = ["migrationReportControllerAccept"]
@@ -74,7 +73,7 @@ export const getMigrationReportControllerAcceptMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof migrationReportControllerAccept>>,
-    { data: MigrationReport }
+    { data: CreateMigrationReportDto }
   > = (props) => {
     const { data } = props ?? {}
 
@@ -87,21 +86,22 @@ export const getMigrationReportControllerAcceptMutationOptions = <
 export type MigrationReportControllerAcceptMutationResult = NonNullable<
   Awaited<ReturnType<typeof migrationReportControllerAccept>>
 >
-export type MigrationReportControllerAcceptMutationBody = MigrationReport
-export type MigrationReportControllerAcceptMutationError = ErrorType<void>
+export type MigrationReportControllerAcceptMutationBody =
+  CreateMigrationReportDto
+export type MigrationReportControllerAcceptMutationError = ErrorType<unknown>
 
 /**
- * @summary Accept a private terminal migration report
+ * @summary Submit a data migration report
  */
 export const useMigrationReportControllerAccept = <
-  TError = ErrorType<void>,
+  TError = ErrorType<unknown>,
   TContext = unknown,
 >(
   options?: {
     mutation?: UseMutationOptions<
       Awaited<ReturnType<typeof migrationReportControllerAccept>>,
       TError,
-      { data: MigrationReport },
+      { data: CreateMigrationReportDto },
       TContext
     >
     request?: SecondParameter<typeof customFetch>
@@ -110,7 +110,7 @@ export const useMigrationReportControllerAccept = <
 ): UseMutationResult<
   Awaited<ReturnType<typeof migrationReportControllerAccept>>,
   TError,
-  { data: MigrationReport },
+  { data: CreateMigrationReportDto },
   TContext
 > => {
   return useMutation(
