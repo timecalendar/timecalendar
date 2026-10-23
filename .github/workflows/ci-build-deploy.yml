@@ -119,6 +119,13 @@ jobs:
     - name: Set target environment
       run: ./ci/set-target-env.sh
 
+    # A commit that leaves server/ untouched is a full layer-cache hit, which
+    # reuses the cached image config and its `created` time. Preprod's
+    # image-updater (newest-build) orders tags by `created`, so stamp each
+    # build with its commit time: still reproducible, and newer commits sort later.
+    - name: Stamp image creation time with commit time
+      run: echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v4
 
