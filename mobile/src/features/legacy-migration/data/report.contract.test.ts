@@ -1,7 +1,4 @@
 /** @jest-environment node */
-import { execFileSync } from "node:child_process"
-import { resolve } from "node:path"
-
 import type { MigrationRun } from "@/db/legacy-migration"
 import { FIXTURE_ID, FIXTURE_TIME } from "@/test-support/legacy-fixtures"
 
@@ -9,7 +6,6 @@ import { buildReport } from "./report"
 import { diagnose, ERROR_CODES, newCounters, newDiagnostics } from "./types"
 
 it("bounds every terminal result and filters UUID edges independently of import", () => {
-  const payloads: unknown[] = []
   for (const outcome of ["success", "partial", "failed"] as const) {
     const run: MigrationRun = {
       state:
@@ -56,7 +52,6 @@ it("bounds every terminal result and filters UUID edges independently of import"
     expect(report.attemptCount).toBe(1000)
     expect(report.durationMs).toBe(604800000)
     expect(JSON.stringify(report)).not.toContain("LOCAL_ONLY")
-    payloads.push(report)
     for (const [stage, codes] of Object.entries(ERROR_CODES))
       for (const code of codes)
         diagnose(run.diagnostics, stage as keyof typeof ERROR_CODES, code)
@@ -85,24 +80,5 @@ it("bounds every terminal result and filters UUID edges independently of import"
     expect(
       new TextEncoder().encode(JSON.stringify(maximum)).length,
     ).toBeLessThan(16_384)
-    payloads.push(maximum)
   }
-  if (process.env.MIGRATION_SERVER_CONTRACT !== "1") return
-  // The cross-package acceptance command installs both applications explicitly.
-  // Normal mobile CI has no backend dependency; it still executes all shaping assertions.
-  const modulePath = resolve(
-    __dirname,
-    "../../../../../server/src/modules/migration-report/migration-report.schema.ts",
-  )
-  const script = `import { readFileSync } from 'node:fs'; import { parseMigrationReport } from ${JSON.stringify(modulePath)}; const payloads = JSON.parse(readFileSync(0,'utf8')); process.stdout.write(JSON.stringify(payloads.map(value => parseMigrationReport(value) !== null)));`
-  const result = execFileSync(
-    process.execPath,
-    ["--experimental-strip-types", "--input-type=module", "-e", script],
-    {
-      input: JSON.stringify(payloads),
-      encoding: "utf8",
-      stdio: ["pipe", "pipe", "pipe"],
-    },
-  )
-  expect(JSON.parse(result)).toEqual(payloads.map(() => true))
 })

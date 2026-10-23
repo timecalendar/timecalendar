@@ -7,6 +7,7 @@ import { CalendarSubject } from "modules/subject/models/calendar-subject.entity"
 import { CalendarNotificationSubscription } from "modules/notification-subscription/models/entities/calendar-notification-subscription.entity"
 import { FcmNotificationChannel } from "modules/notification-subscription/models/entities/fcm-notification-channel.entity"
 import { FeatureFlag } from "modules/feature-flag/models/entities/feature-flag.entity"
+import { MigrationReport } from "modules/migration-report/models/migration-report.entity"
 import { NotificationSubscription } from "modules/notification-subscription/models/entities/notification-subscription.entity"
 import { NotifyFanoutCursor } from "modules/notification-pipeline/models/entities/notify-fanout-cursor.entity"
 import { SubscriberCalendarLog } from "modules/notification-pipeline/models/entities/subscriber-calendar-log.entity"
@@ -29,6 +30,7 @@ export const testEntities = [
   CalendarSubject,
   FcmNotificationChannel,
   FeatureFlag,
+  MigrationReport,
   NotificationSubscription,
   NotifyFanoutCursor,
   SubscriberCalendarLog,

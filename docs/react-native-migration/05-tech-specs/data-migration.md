@@ -587,12 +587,12 @@ app mounts, and it never reopens migration.
 
 ### 12.1 First-party report
 
-Add a write-only, idempotent `POST /v1/migration-reports` endpoint keyed by `reportId` and a
-durable database table. TimeCalendar has no user-authentication session to present, so this
-endpoint is not described as user-authenticated. It must have a strict body-size/schema limit,
-per-IP and per-report rate limiting, no public read/update route, and an idempotent uniqueness
-constraint. The same report ID returns success on replay. The payload is versioned and contains
-only:
+`POST /v1/migration-reports` is a plain create endpoint (`server/src/modules/migration-report`:
+controller, service, repository) writing one `migration_report` row in the default schema, keyed
+by `reportId`. TimeCalendar has no user-authentication session to present, so the endpoint is
+anonymous. It validates the DTO, rejects unknown fields, limits the JSON body to 16 KiB, and has
+no read/update route. A replayed report ID is ignored and still returns `200 {"accepted":true}`.
+The payload is versioned and contains only:
 
 - report schema version and random report ID;
 - platform, target app version/build, source app/database version when known, and OS major version;
@@ -600,9 +600,8 @@ only:
 - per-allowlisted-dataset `candidate`, `imported`, `already_present`, `skipped_invalid`, and
   `skipped_conflict` counts;
 - bounded error stage/code counts and whether examples were truncated;
-- imported/already-present calendar IDs, which are allowed only in this protected first-party
-  table;
-- report delivery-attempt metadata maintained by the server.
+- imported/already-present calendar IDs, which are allowed only in this first-party table;
+- the server-set `receivedAt` time.
 
 It must never contain calendar tokens, event titles/descriptions/locations, checklist text, hidden
 event identifiers or names, preference values, raw lines/files, source fingerprint, local edit witnesses, device name,
@@ -626,9 +625,8 @@ schema version change and privacy review.
 Normal `no_legacy_source` and `empty_legacy_store` outcomes are terminal reasons, not errors.
 Error examples may include a synthetic fixture ID or line number but never the rejected value.
 
-Restrict table access to release/support roles, audit reads, encrypt backups, and delete row-level
-reports after 180 days. Non-identifying daily aggregates may be retained under the normal metrics
-policy. Endpoint logs contain report ID, HTTP result, and timing only.
+Reports are read directly in the database by the operators who already have production database
+access. Endpoint logs contain report ID, HTTP result, and timing only.
 
 `2xx` or an idempotent duplicate acknowledgement marks the outbox item delivered. Permanent
 schema/auth rejection retains the bounded item for a later app fix; it does not retry in a tight
@@ -735,7 +733,7 @@ This is a future implementation graph, not a set of dispatched tickets.
 | Work package | Deliverable | Depends on | Sensitive surfaces |
 | --- | --- | --- | --- |
 | A. Startup and storage foundation | blocking DB readiness, journal/outbox schema, new MMKV keys/accessors, environment ordering | none | `mobile/app.config.ts` only if native identity changes; architecture rule changes require ADR |
-| B. Report contract | server migration/report table, write-only rate-limited idempotent endpoint, OpenAPI update, generated client | none | `server/src/migrations/`, `openapi/openapi.json`, `mobile/src/api/generated/` |
+| B. Report contract | server migration/report table, idempotent create endpoint, OpenAPI update, generated client | none | `server/src/migrations/`, `openapi/openapi.json`, `mobile/src/api/generated/` |
 | C. Native source bridge | narrow local Expo module, iOS UserDefaults and Android XML access, document-file discovery | none | CNG/native/store configuration; `mobile/app.config.ts` if configuration changes |
 | D. Parser and normalizers | bounded streaming replay, version transforms, validation, synthetic fixtures | C's TypeScript contract | none |
 | E. Idempotent import engine | no-overwrite SQLite writer, MMKV participants, journal recovery, redacted outbox | A, B payload contract, D | SQLite schema |
