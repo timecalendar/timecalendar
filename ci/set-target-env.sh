@@ -14,6 +14,11 @@ if [[ $GITHUB_REF == 'refs/heads/main' ]]; then
   SERVER_IMAGES_WITH_TAG_TO_PUSH+=", $SERVER_IMAGE_NAME:main-$GITHUB_SHA"
   WEB_IMAGES_WITH_TAG_TO_PUSH+=", $WEB_IMAGE_NAME:main-$GITHUB_SHA"
 fi
+# Production hotfix tag, deliberately outside preprod image-updater's ^main- regex.
+if [[ $GITHUB_REF == 'refs/heads/hotfix/node-24.22.1' ]]; then
+  SERVER_IMAGES_WITH_TAG_TO_PUSH+=", $SERVER_IMAGE_NAME:hotfix-node24221-$GITHUB_SHA"
+  WEB_IMAGES_WITH_TAG_TO_PUSH+=", $WEB_IMAGE_NAME:hotfix-node24221-$GITHUB_SHA"
+fi
 
 echo "[server] Tags to push: $SERVER_IMAGES_WITH_TAG_TO_PUSH"
 echo "[web] Tags to push: $WEB_IMAGES_WITH_TAG_TO_PUSH"
