@@ -90,7 +90,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "commander": "^11.0.0",
-    "compression": "^1.7.4",
+    "compression": "^1.8.2",
     "crisp-api": "^8.0.1",
     "date-fns": "^2.30.0",
     "date-fns-tz": "^2.0.1",
