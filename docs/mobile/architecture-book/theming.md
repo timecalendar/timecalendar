@@ -261,7 +261,7 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
     (iOS Form `tint`, Compose `seedColor`).
 - **`src/components/icon.tsx`** — `Icon`, the only renderer of a symbol glyph (lint L9 bans
   `SymbolView` elsewhere, ADR [065](./decisions/065-icon-text-scaling.md)). iOS renders
-  `SymbolView`; Android draws the Material Symbols glyph from the closed `MATERIAL_GLYPHS` table
+  `SymbolView`; Android draws the Material Symbols glyph from the closed `MATERIAL_GLYPHS` table (`icon-glyphs.ts`)
   in a box sized by the required `scaling` (see [Accessibility → Icon
   scaling](./accessibility.md#icon-scaling--encoded-in-icon)). Callers pass the color token; the
   icon carries no tone of its own.

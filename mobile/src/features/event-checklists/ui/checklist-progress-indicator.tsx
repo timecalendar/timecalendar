@@ -1,7 +1,8 @@
+import type { SFSymbol } from "expo-symbols"
 import type { TFunction } from "i18next"
 import { StyleSheet, View } from "react-native"
 
-import { Icon } from "@/components/icon"
+import { Icon, type MaterialGlyph } from "@/components/icon"
 import { ThemedText } from "@/components/themed-text"
 import type { ChecklistProgress } from "@/features/event-checklists/data"
 import { Radii, Spacing, useTheme } from "@/theme"
@@ -19,6 +20,33 @@ export function checklistProgressLabel(
   })
 }
 
+type Density = "inline" | "compact" | "dense"
+
+const GLYPH_SIZE: Record<Density, number> = {
+  inline: 16,
+  compact: 11,
+  dense: 7,
+}
+
+const GLYPH: Record<
+  "complete" | "pending",
+  { ios: SFSymbol; android: MaterialGlyph }
+> = {
+  complete: { ios: "checkmark.square.fill", android: "check_box" },
+  pending: { ios: "square", android: "check_box_outline_blank" },
+}
+
+function densityOf(
+  variant: ChecklistProgressVariant,
+  bounds: { width: number; height: number } | undefined,
+): Density {
+  if (variant === "inline") return "inline"
+  if (bounds !== undefined && (bounds.width < 48 || bounds.height < 24)) {
+    return "dense"
+  }
+  return "compact"
+}
+
 export function ChecklistProgressIndicator({
   progress,
   variant = "inline",
@@ -32,9 +60,10 @@ export function ChecklistProgressIndicator({
   if (progress === undefined || progress.total === 0) return null
 
   const compact = variant === "compact"
-  const dense =
-    compact && bounds !== undefined && (bounds.width < 48 || bounds.height < 24)
+  const density = densityOf(variant, bounds)
+  const dense = density === "dense"
   const color = progress.isComplete ? theme.positive : theme.informational
+  const glyph = GLYPH[progress.isComplete ? "complete" : "pending"]
 
   return (
     <View
@@ -51,9 +80,9 @@ export function ChecklistProgressIndicator({
     >
       <Icon
         testID="checklist-progress-glyph"
-        ios={progress.isComplete ? "checkmark.square.fill" : "square"}
-        android={progress.isComplete ? "check_box" : "check_box_outline_blank"}
-        size={dense ? 7 : compact ? 11 : 16}
+        ios={glyph.ios}
+        android={glyph.android}
+        size={GLYPH_SIZE[density]}
         color={color}
         scaling="text"
       />

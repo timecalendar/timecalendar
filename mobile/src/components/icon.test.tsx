@@ -5,7 +5,8 @@ import { StyleSheet } from "react-native"
 
 import { usePlatform } from "@/test-support/platform"
 
-import { Icon, MATERIAL_GLYPHS } from "./icon"
+import { Icon } from "./icon"
+import { MATERIAL_GLYPHS } from "./icon-glyphs"
 
 let mockFontScale = 1
 jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({

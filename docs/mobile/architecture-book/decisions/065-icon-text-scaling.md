@@ -27,7 +27,7 @@ call sites rendered `SymbolView` directly, each with an implicit and unrecorded 
   `allowFontScaling={false}` (one line-level lint exemption: the glyph is drawn like an image and
   keeps its design size below the default text size too) and `"text"` passes the caller's cap.
   Before the font loads the box renders empty at its final size.
-- Android glyphs come from the closed `MATERIAL_GLYPHS` table (only the glyphs the app uses);
+- Android glyphs come from the closed `MATERIAL_GLYPHS` table in `src/components/icon-glyphs.ts` (only the glyphs the app uses);
   `icon.test.tsx` pins every codepoint against `expo-symbols`' `symbols.json`.
 - `Icon` is always decorative; the control that contains it owns the accessible name.
 - Lint L9 (`no-restricted-imports`, `importNames: ["SymbolView"]` on `expo-symbols`) applies
