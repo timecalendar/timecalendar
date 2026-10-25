@@ -16,6 +16,7 @@ import {
 import {
   accessibilityIdentifier,
   accessibilityLabel,
+  autocorrectionDisabled,
   disabled,
   font,
   frame,
@@ -26,6 +27,7 @@ import {
   presentationDragIndicator,
   scrollContentBackground,
   submitLabel as swiftSubmitLabel,
+  textInputAutocapitalization,
   tint,
 } from "@expo/ui/swift-ui/modifiers"
 
@@ -43,6 +45,7 @@ export function NativeTextEntryDialogIos({
   label,
   placeholder,
   message,
+  inputKind = "text",
   cancelLabel,
   submitLabel,
   pending,
@@ -138,6 +141,12 @@ export function NativeTextEntryDialogIos({
                       if (!saveDisabled) submit()
                     }),
                     disabled(pending),
+                    ...(inputKind === "code"
+                      ? [
+                          textInputAutocapitalization("never"),
+                          autocorrectionDisabled(),
+                        ]
+                      : []),
                   ]}
                 />
               </Section>

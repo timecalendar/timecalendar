@@ -123,6 +123,9 @@ describe.each(["ios", "android"] as const)(
       expect(screen.queryByTestId("developer-dev-import-dialog")).toBeNull()
       await press("developer-dev-import")
       expect(screen.getByTestId("developer-dev-import-dialog")).toBeTruthy()
+      const input = screen.getByTestId("developer-dev-import-input")
+      expect(input.props.autoCapitalize).toBe("none")
+      expect(input.props.autoCorrect).toBe(false)
       await type("  abc123 ")
       await press("developer-dev-import-submit")
       expect(mockPush).toHaveBeenCalledWith({

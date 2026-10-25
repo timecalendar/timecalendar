@@ -11,8 +11,13 @@
 - Lint: `EnvironmentSettingsControl` is banned outside `src/features/developer/**` and
   `src/features/environment/**`, from the feature barrel and from `@/features/environment/ui/**`
   (`banDeveloperTools`, `timecalendar/developer-tools-home`).
-- `/dev-import` reached in-app returns with `router.dismissTo("/calendar")` (the existing tabs);
-  a cold deep link with nothing to dismiss keeps `router.replace("/calendar")`.
+- `/dev-import` returns with `router.dismissTo("/calendar")`: the root Stack's
+  `initialRouteName: "(tabs)"` keeps the tabs beneath it, in-app and on a cold deep link alike.
+  `router.replace("/calendar")` is the fallback when nothing is beneath.
+- `NativeTextEntryDialog` takes `inputKind?: "text" | "code"`; `"code"` disables
+  auto-capitalization and autocorrect (SwiftUI `textInputAutocapitalization("never")` +
+  `autocorrectionDisabled()`, Compose `KeyboardOptions(capitalization = None,
+  autoCorrectEnabled = false)`). The developer page's token dialog uses it.
 - ADR [043](./decisions/043-backend-environment-reset.md) is amended: the non-production indicator
   lives on `/developer`, reached from Settings' single gated Developer row; its accessible-name
   requirement is unchanged.

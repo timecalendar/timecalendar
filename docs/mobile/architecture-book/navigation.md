@@ -52,8 +52,10 @@ is not `production`). It redirects to `/settings` when the capability is `produc
 three sections: Backend (the environment entry, the only place `EnvironmentSettingsControl` is
 mounted), Test data (import a calendar by token through the native text-entry dialog, which pushes
 `/dev-import?token=…`; rendered only on the development variant, where that screen acts; on
-success `/dev-import` returns with `dismissTo("/calendar")` when it can dismiss and `replace` on a
-cold deep link, so the root Stack never holds a second `(tabs)`), and
+success `/dev-import` returns with `dismissTo("/calendar")`, since the root Stack's
+`initialRouteName: "(tabs)"` puts the tabs beneath it in-app and on a cold deep link alike, and
+falls back to `replace` only when nothing is beneath, so the root Stack never holds a second
+`(tabs)`), and
 Design (the `/settings-gallery` entry). The environment control's home is enforced by the
 `banDeveloperTools` flag of `restrictedImports` and its `timecalendar/developer-tools-home` opt-out
 block in `mobile/eslint.config.js`.

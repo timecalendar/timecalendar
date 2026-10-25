@@ -25,6 +25,7 @@ export function NativeTextEntryDialogAndroid({
   placeholder,
   message,
   messageKind = "validation",
+  inputKind = "text",
   cancelLabel,
   submitLabel,
   pending,
@@ -76,6 +77,11 @@ export function NativeTextEntryDialogAndroid({
               autoFocus
               enabled={!pending}
               singleLine
+              keyboardOptions={
+                inputKind === "code"
+                  ? { capitalization: "none", autoCorrectEnabled: false }
+                  : {}
+              }
               isError={message !== null && messageKind === "validation"}
               onValueChange={onChange}
               modifiers={[fillMaxWidth(), testID(ids.input)]}

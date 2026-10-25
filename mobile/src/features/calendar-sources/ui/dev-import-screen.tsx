@@ -52,9 +52,9 @@ export function DevImportScreen() {
     }
   }, [])
 
-  // Pushed from the developer page, the root Stack already holds the tabs:
-  // REPLACE would swap only this route and stack a second (tabs) above
-  // /developer. A cold deep link has nothing to dismiss to.
+  // The root Stack's initialRouteName puts (tabs) beneath this route, in-app
+  // and on a cold deep link alike: REPLACE would stack a second (tabs).
+  // replace is the fallback for when nothing is beneath.
   const leaveToCalendar = useCallback(() => {
     if (router.canDismiss()) router.dismissTo("/calendar")
     else router.replace("/calendar")

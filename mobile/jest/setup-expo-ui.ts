@@ -202,6 +202,10 @@ jest.mock("@expo/ui/swift-ui/modifiers", () => {
     },
     tint: (value: unknown) => modifier("tint", value),
     keyboardType: (value: string) => modifier("keyboardType", value),
+    textInputAutocapitalization: (value: string) =>
+      modifier("textInputAutocapitalization", value),
+    autocorrectionDisabled: (value = true) =>
+      modifier("autocorrectionDisabled", value),
     submitLabel: (value: string) => modifier("submitLabel", value),
     buttonStyle: (value: string) => modifier("buttonStyle", value),
     disabled: (value = true) => modifier("disabled", value),
@@ -300,6 +304,15 @@ jest.mock("@expo/ui/swift-ui", () => {
       accessibilityLabel: modifierValue(props.modifiers, "accessibilityLabel"),
       keyboardType: modifierValue(props.modifiers, "keyboardType"),
       returnKeyType: modifierValue(props.modifiers, "submitLabel"),
+      autoCapitalize:
+        modifierValue(props.modifiers, "textInputAutocapitalization") ===
+        "never"
+          ? "none"
+          : undefined,
+      autoCorrect:
+        modifierValue(props.modifiers, "autocorrectionDisabled") === true
+          ? false
+          : undefined,
       onSubmitEditing: modifierValue(props.modifiers, "onSubmit"),
       onChangeText: (nextValue: string) => {
         props.text.set(nextValue)
@@ -577,7 +590,12 @@ jest.mock("@expo/ui/jetpack-compose", () => {
     onValueChange?: (value: string) => void
     modifiers?: { $type: string; value: unknown }[]
     children?: unknown
-    keyboardOptions?: { keyboardType?: string; imeAction?: string }
+    keyboardOptions?: {
+      keyboardType?: string
+      imeAction?: string
+      capitalization?: string
+      autoCorrectEnabled?: boolean
+    }
     keyboardActions?: { onDone?: (value: string) => void }
     isError?: boolean
   }) {
@@ -591,6 +609,8 @@ jest.mock("@expo/ui/jetpack-compose", () => {
         editable: props.enabled,
         keyboardType: props.keyboardOptions?.keyboardType,
         returnKeyType: props.keyboardOptions?.imeAction,
+        autoCapitalize: props.keyboardOptions?.capitalization,
+        autoCorrect: props.keyboardOptions?.autoCorrectEnabled,
         accessibilityState: { invalid: props.isError },
         onSubmitEditing: () =>
           props.keyboardActions?.onDone?.(props.value.get()),

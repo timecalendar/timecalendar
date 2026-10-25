@@ -48,8 +48,8 @@ relative to a production build. Only this consequence is superseded; Context and
 
 Amended 2026-10-25 (developer page): the environment entry, and with it the sole non-production
 indicator, lives on `/developer` (Backend section), reached from Settings through a single
-Developer row rendered only when the capability is not `production`. Settings itself no longer
-mounts the environment control. The entry must still expose the effective environment in its
+Developer row rendered only when the capability is not `production`; Settings mounts only that
+row. The entry must still expose the effective environment in its
 accessible name on both platforms, and the no-environment-chrome rule above is unchanged.
 
 The embedded capability changes SDK 56 fingerprints in all preview/production lanes; fresh native

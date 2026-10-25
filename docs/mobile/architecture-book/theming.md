@@ -185,7 +185,8 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
 - **`chrome/native-text-entry-dialog*`** — the narrow composed-control exception in ADR
   [056](./decisions/056-compose-native-dialog-behind-chrome.md). One stable contract privately
   adapts SwiftUI and Material 3 text fields, progress, native buttons, observable buffers, keyboard
-  insets, selectors, and explicit dismissal. Features keep validation, data, copy, and lifecycle;
+  insets, selectors, and explicit dismissal. `inputKind: "code"` disables auto-capitalization and
+  autocorrect on both platforms for case-sensitive strings (tokens). Features keep validation, data, copy, and lifecycle;
   ordinary controls remain thin re-exports. Native controls follow system appearance and typography.
 - **`chrome/native-settings.tsx`** — the bounded settings-composition exception in ADR
   [060](./decisions/060-platform-native-settings-composition.md). SwiftUI Form/Section and Material

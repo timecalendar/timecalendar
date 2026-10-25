@@ -112,6 +112,22 @@ describe("NativeTextEntryDialog on iOS", () => {
     expect(onSubmit).toHaveBeenCalledWith("Fast draft")
   })
 
+  it("disables auto-capitalization and autocorrect only for code input", async () => {
+    const view = await render(<NativeTextEntryDialog {...props} />)
+    expect(screen.getByTestId(props.ids.input).props.autoCapitalize).toBe(
+      undefined,
+    )
+    expect(screen.getByTestId(props.ids.input).props.autoCorrect).toBe(
+      undefined,
+    )
+
+    await view.rerender(<NativeTextEntryDialog {...props} inputKind="code" />)
+    expect(screen.getByTestId(props.ids.input).props.autoCapitalize).toBe(
+      "none",
+    )
+    expect(screen.getByTestId(props.ids.input).props.autoCorrect).toBe(false)
+  })
+
   it("exposes native selectors and cancels from the sheet header", async () => {
     await render(<NativeTextEntryDialog {...props} message="Too long" />)
     expect(screen.getByTestId(props.ids.input)).toBeTruthy()
@@ -177,6 +193,19 @@ describe("NativeTextEntryDialog on Android", () => {
     )
     await fireEvent.press(screen.getByTestId(props.ids.submit))
     expect(onSubmit).toHaveBeenCalledWith("Preserved name")
+  })
+
+  it("disables autocorrect only for code input", async () => {
+    const view = await render(<NativeTextEntryDialog {...props} />)
+    expect(screen.getByTestId(props.ids.input).props.autoCorrect).toBe(
+      undefined,
+    )
+
+    await view.rerender(<NativeTextEntryDialog {...props} inputKind="code" />)
+    expect(screen.getByTestId(props.ids.input).props.autoCapitalize).toBe(
+      "none",
+    )
+    expect(screen.getByTestId(props.ids.input).props.autoCorrect).toBe(false)
   })
 
   it("submits the current Compose buffer and keeps native actions while pending", async () => {
