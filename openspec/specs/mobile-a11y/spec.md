@@ -55,15 +55,15 @@ The unit test suite SHALL include a test that renders a component through the re
 - **THEN** querying the accessibility tree by the `header` role finds the title node
 
 ### Requirement: Runtime accessibility posture recorded where lint cannot enforce it
-The Architecture Book SHALL record, as prose, the accessibility concerns that cannot be encoded as a lint rule — Dynamic Type / font-scaling posture, touch-target minimums, meaningful-label review, manual screen-reader passes, reduced motion, and color contrast — each stating why it is not a lint rule and which step or artifact owns it.
+The Architecture Book SHALL record, as prose, the accessibility concerns that cannot be encoded as a lint rule — touch-target minimums, meaningful-label review, manual screen-reader passes, reduced motion, and color contrast at the call site — each stating why it is not a lint rule and which step or artifact owns it. Font scaling SHALL be listed with the lint-enforced rules: disabling it is a lint error, and the Book SHALL record that `maxFontSizeMultiplier` caps are allowed and where the existing caps live.
 
 #### Scenario: Book documents the non-encodable rules
 - **WHEN** a developer reads the Architecture Book a11y section
 - **THEN** it lists what the live lint rules enforce and where they bite, the heading-role component contract, and each non-encodable concern with its reason and owner
 
 #### Scenario: Font scaling is not disabled
-- **WHEN** a developer renders user-facing text
-- **THEN** `allowFontScaling` is left at its default (text scales with the OS font size); disabling it is contrary to the recorded posture
+- **WHEN** a developer renders user-facing text with `allowFontScaling={false}`
+- **THEN** lint fails, so text always scales with the OS font size
 
 ### Requirement: Small brand-colored text meets the AA body-text contrast floor
 
