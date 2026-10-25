@@ -4,13 +4,14 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react-native"
 import { router } from "expo-router"
 import { Platform, StyleSheet } from "react-native"
 
 import { useCalendarEvents, useSyncCalendars } from "@/features/calendar/data"
 import { useChecklistProgress } from "@/features/event-checklists"
-import { resolveResponsiveLayout } from "@/theme"
+import { Colors, resolveResponsiveLayout } from "@/theme"
 
 import { HomeScreen } from "./home-screen"
 
@@ -281,6 +282,9 @@ describe("HomeScreen", () => {
 
   it("opens Calendar on today from See all", async () => {
     await render(<HomeScreen />)
+    expect(
+      within(screen.getByLabelText("See all")).getByText("See all"),
+    ).toHaveStyle({ color: Colors.light.actionText })
     fireEvent.press(screen.getByLabelText("See all"))
     expect(mockPush).toHaveBeenCalledWith({
       pathname: "/calendar",

@@ -210,6 +210,12 @@ describe("Settings route structure", () => {
       }
     }
 
+    // iOS resolves a minimal back button's accessible label from the previous
+    // screen's title, which falls back to the route name "(tabs)" without one.
+    const tabsAnchor = registrations.find(({ name }) => name === "(tabs)")
+    expect(tabsAnchor?.props).toContain("headerShown: false")
+    expect(tabsAnchor?.props).toContain('title: t("common.back")')
+
     expect(route("../components/chrome/root-screen-options.ts")).toContain(
       'headerBackButtonDisplayMode: "minimal"',
     )

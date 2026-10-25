@@ -19,6 +19,11 @@ color, never brand pink. Screens never set `headerStyle`, `headerShadowVisible`,
 `headerTransparent`, or a tint on header items themselves; the onboarding Stack uses the same
 builder.
 
+iOS reads a minimal back button's accessible label from the previous screen's title, which falls
+back to the route name. The `(tabs)` registration therefore carries `title: t("common.back")`, so
+every sibling pushed from a tab announces "Back" / "Retour", never "(tabs)", while the chevron
+stays text-free. Enforced by `src/components/settings-route-structure.test.ts` (R-1).
+
 Under the transparent iOS bar every page must inset itself: scroll roots set
 `contentInsetAdjustmentBehavior="automatic"` and mark `RootPage scrollsUnderHeader`
 (`KeyboardSafeActionLayout` sets the inset on its own scroller); every other `RootPage` pads by

@@ -1,11 +1,11 @@
-import { act, fireEvent, render } from "@testing-library/react-native"
+import { act, fireEvent, render, within } from "@testing-library/react-native"
 import { router } from "expo-router"
 import * as WebBrowser from "expo-web-browser"
 import { StyleSheet } from "react-native"
 
 import { useImportDraft } from "@/features/onboarding/draft"
 import type { SchoolListItem } from "@/features/school-selection/data"
-import { resolveResponsiveLayout } from "@/theme"
+import { Colors, resolveResponsiveLayout } from "@/theme"
 
 import ConnectScreen from "./connect-screen"
 
@@ -186,6 +186,9 @@ describe("ConnectScreen", () => {
       const value = draftValue(makeDraft())
       mockUseImportDraft.mockReturnValue(value)
       const { getByTestId } = await render(<ConnectScreen />)
+      expect(
+        within(getByTestId("onboarding-connect-back")).getByText("Back"),
+      ).toHaveStyle({ color: Colors.light.actionText })
 
       await act(async () =>
         fireEvent.press(getByTestId("onboarding-connect-back")),

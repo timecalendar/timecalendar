@@ -58,7 +58,7 @@ export function PersonalEventActions({
           onPress={onDelete}
           style={[styles.action, { backgroundColor: theme.backgroundElement }]}
         >
-          <ThemedText type="smallBold" themeColor="primary">
+          <ThemedText type="smallBold" themeColor="destructive">
             {t("personalEvents.form.delete")}
           </ThemedText>
         </Pressable>

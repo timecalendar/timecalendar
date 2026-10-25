@@ -93,7 +93,7 @@ export function EventChecklist({ eventUid }: { eventUid: string }) {
         style={[styles.addButton, { borderColor: theme.primary }]}
         testID="checklist-add"
       >
-        <ThemedText type="smallBold" themeColor="primary">
+        <ThemedText type="smallBold" themeColor="actionText">
           {t("eventChecklist.add")}
         </ThemedText>
       </Pressable>

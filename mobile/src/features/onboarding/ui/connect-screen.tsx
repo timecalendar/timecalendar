@@ -100,7 +100,7 @@ export default function ConnectScreen() {
             onPress={() => router.back()}
             style={[styles.secondary, { borderColor: theme.primary }]}
           >
-            <ThemedText type="smallBold" themeColor="primary">
+            <ThemedText type="smallBold" themeColor="actionText">
               {t("common.back")}
             </ThemedText>
           </Pressable>

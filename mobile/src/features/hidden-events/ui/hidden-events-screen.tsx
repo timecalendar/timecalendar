@@ -176,7 +176,7 @@ function HiddenRow({
         onPress={onUnhide}
         style={styles.unhide}
       >
-        <ThemedText type="smallBold" themeColor="primary">
+        <ThemedText type="smallBold" themeColor="actionText">
           {t("hiddenEvents.unhide")}
         </ThemedText>
       </Pressable>

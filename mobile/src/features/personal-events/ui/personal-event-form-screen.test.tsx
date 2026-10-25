@@ -481,6 +481,9 @@ describe("PersonalEventFormScreen", () => {
     expect(mockStackScreen).toHaveBeenLastCalledWith(
       expect.objectContaining({ options: { title: "Edit event" } }),
     )
+    expect(
+      within(getByTestId("personal-event-delete")).getByText("Delete"),
+    ).toHaveStyle({ color: Colors.light.destructive })
     await fireEvent.press(getByTestId("personal-event-delete"))
 
     expect(mockAlert).toHaveBeenCalledWith(

@@ -4,12 +4,14 @@ import {
   render,
   screen,
   userEvent,
+  within,
 } from "@testing-library/react-native"
 import { StyleSheet } from "react-native"
 
 import { useSyncedEvents } from "@/features/calendar/data"
 import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
 import i18n from "@/i18n"
+import { Colors } from "@/theme"
 
 import { HiddenEventsScreen } from "./hidden-events-screen"
 
@@ -148,6 +150,9 @@ describe("HiddenEventsScreen", () => {
     await render(<HiddenEventsScreen />)
     expect(screen.getByText("Hidden by name")).toBeTruthy()
     expect(screen.getByText("Algorithms")).toBeTruthy()
+    expect(
+      within(screen.getByLabelText("Un-hide Algorithms")).getByText("Un-hide"),
+    ).toHaveStyle({ color: Colors.light.actionText })
 
     const user = userEvent.setup()
     await user.press(screen.getByLabelText("Un-hide Algorithms"))

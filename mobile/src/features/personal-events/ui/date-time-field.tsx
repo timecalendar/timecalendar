@@ -7,6 +7,8 @@ import { ThemedText } from "@/components/themed-text"
 import { type AppLocale, formatShortDateTime } from "@/features/calendar/data"
 import { Radii, Spacing, useTheme } from "@/theme"
 
+import { dateDialogValue, mergePickedDay } from "./wall-clock-day"
+
 // A compact, cross-platform date/time field over the @expo/ui DateTimePicker
 // (the @/components/chrome seam — ADR 012), used by the personal-event form.
 //
@@ -14,18 +16,24 @@ import { Radii, Spacing, useTheme } from "@/theme"
 // field, so the feature-owned field renders it inline as-is.
 //
 // Android: @expo/ui's inline picker (presentation="inline") renders a full
-// Material calendar that consumes the screen and pushes the form's other
-// controls (and the Save button) off the visible area. To bring Android in line
-// with iOS's compact tap-to-open behaviour, we render a small tappable field
-// showing the current value and open the native date dialog on demand. The
-// dialog opens on mount (the @expo/ui Android contract), so it is mounted only
-// while open and unmounted again on confirm/dismiss.
+// Material calendar that consumes the screen, and its dialog mode cannot pick a
+// date and a time together. The field is a small tappable row showing the
+// current value; a tap opens the native date dialog, then the native time
+// dialog, and the two commit together as one wall clock. Cancelling either
+// dialog leaves the value unchanged. Each dialog opens on mount (the @expo/ui
+// Android contract), so only the current step's picker is mounted, under its
+// own key so Compose never reuses the closed dialog.
 //
 // The picked wall clock is interpreted in the effective DISPLAY zone (timezone
 // design D6): the native picker only speaks device-local Dates, so the stored
 // instant round-trips through `toZonedTime` (instant → the zone's wall clock
 // for the picker) and `fromZonedTime` (the picked wall clock → instant). Under
 // the "system" preference both are identity — byte-for-byte today's behavior.
+
+type AndroidStep =
+  | { kind: "closed" }
+  | { kind: "date" }
+  | { kind: "time"; pending: Date }
 
 type DateTimeFieldProps = {
   testID?: string
@@ -45,7 +53,7 @@ export function DateTimeField({
   onChange,
 }: DateTimeFieldProps) {
   const theme = useTheme()
-  const [open, setOpen] = useState(false)
+  const [step, setStep] = useState<AndroidStep>({ kind: "closed" })
 
   if (Platform.OS !== "android") {
     return (
@@ -64,21 +72,37 @@ export function DateTimeField({
         testID={testID}
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
-        onPress={() => setOpen(true)}
+        onPress={() => setStep({ kind: "date" })}
         style={[styles.field, { backgroundColor: theme.backgroundElement }]}
       >
         <ThemedText>{formatShortDateTime(value, locale, zone)}</ThemedText>
       </Pressable>
-      {open && (
+      {step.kind === "date" && (
         <DateTimePicker
+          key="date"
           mode="date"
           presentation="dialog"
-          value={toZonedTime(value, zone)}
+          value={dateDialogValue(toZonedTime(value, zone))}
+          onValueChange={(_event, day) =>
+            setStep({
+              kind: "time",
+              pending: mergePickedDay(toZonedTime(value, zone), day),
+            })
+          }
+          onDismiss={() => setStep({ kind: "closed" })}
+        />
+      )}
+      {step.kind === "time" && (
+        <DateTimePicker
+          key="time"
+          mode="time"
+          presentation="dialog"
+          value={step.pending}
           onValueChange={(_event, date) => {
+            setStep({ kind: "closed" })
             onChange(fromZonedTime(date, zone))
-            setOpen(false)
           }}
-          onDismiss={() => setOpen(false)}
+          onDismiss={() => setStep({ kind: "closed" })}
         />
       )}
     </>

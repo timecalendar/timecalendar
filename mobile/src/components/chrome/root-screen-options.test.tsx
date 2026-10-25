@@ -48,6 +48,9 @@ describe("buildCompactRootScreenOptions", () => {
         headerTintColor: colors.text,
         headerBlurEffect,
       })
+      expect(buildCompactRootScreenOptions(colors)).not.toHaveProperty(
+        "headerBackTitle",
+      )
     },
   )
 
@@ -64,6 +67,9 @@ describe("buildCompactRootScreenOptions", () => {
         headerTintColor: colors.text,
         headerTitleStyle: { color: colors.text },
       })
+      expect(buildCompactRootScreenOptions(colors)).not.toHaveProperty(
+        "headerBackTitle",
+      )
     },
   )
 })

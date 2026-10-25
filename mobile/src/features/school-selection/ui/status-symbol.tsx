@@ -1,10 +1,21 @@
-import { type SFSymbol, SymbolView } from "expo-symbols"
-import { Platform } from "react-native"
+import { type AndroidSymbol, type SFSymbol, SymbolView } from "expo-symbols"
 
 import { useTheme } from "@/theme"
 
-export function StatusSymbol({ name }: { name: SFSymbol }) {
+export function StatusSymbol({
+  name,
+}: {
+  name: { ios: SFSymbol; android: AndroidSymbol }
+}) {
   const theme = useTheme()
-  if (Platform.OS !== "ios") return null
-  return <SymbolView name={name} size={40} tintColor={theme.textSecondary} />
+  return (
+    <SymbolView
+      name={name}
+      size={40}
+      tintColor={theme.textSecondary}
+      accessible={false}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    />
+  )
 }

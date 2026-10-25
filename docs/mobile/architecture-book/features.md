@@ -46,6 +46,10 @@ single effective-zone resolver continues to feed calendar, personal events, and 
 - `personal-events` uses a standard `RootPage` for its standalone list and a readable page for the
   editor, while giving list/create/edit titles to compact native Stack chrome. The editor's fields scroll independently while the shared keyboard owner
   pins the readable-lane Save/Delete region; CRUD hooks and selector families are unchanged.
+  On Android the date/time field opens the native date dialog, then the native time dialog; the
+  two commit together as one display-zone wall clock, and cancelling either leaves the value
+  unchanged (`ui/date-time-field.test.tsx`, `ui/wall-clock-day.test.ts`). The Delete label uses
+  `destructive`.
 - `onboarding/index` keeps its branded safe-area composition. Every ordinary pushed child uses
   compact native chrome and one shared page frame; form screens retain their keyboard/scroll owners,
   School retains its virtualized list and native search, and QR retains its full-bleed camera below
