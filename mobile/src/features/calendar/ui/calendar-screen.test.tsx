@@ -1,6 +1,5 @@
 import {
   act,
-  cleanup,
   fireEvent,
   render,
   renderHook,
@@ -38,7 +37,10 @@ import {
   SETTINGS_KEYS,
 } from "@/features/settings/prefs"
 import { remove } from "@/storage"
-import { recordAccessibilityProbeDiagnostic } from "@/test-support/owned-calendar/accessibility-probe"
+import {
+  ACCESSIBILITY_PROBE_ANCHOR,
+  recordAccessibilityProbeDiagnostic,
+} from "@/test-support/owned-calendar/accessibility-probe"
 import {
   flushUiThread,
   placeCalendarPager,
@@ -295,6 +297,7 @@ beforeEach(() => {
   remove(SETTINGS_KEYS.showWeekends)
   remove(SETTINGS_KEYS.calendarView)
   remove(SETTINGS_KEYS.calendarZoomPixelsPerHour)
+  remove(SETTINGS_KEYS.timezone)
 })
 
 describe("CalendarScreen owned shell", () => {
@@ -305,6 +308,8 @@ describe("CalendarScreen owned shell", () => {
       accessibilityProbe: "timed-events",
       focusDate: "2026-06-15",
     })
+    setTimezonePreference("UTC")
+    mockUseCalendarClock.mockReturnValue(ACCESSIBILITY_PROBE_ANCHOR)
 
     await render(<CalendarScreen />)
     await settleCalendarPager()
@@ -1393,14 +1398,6 @@ describe("CalendarScreen platform chrome", () => {
 })
 
 describe("CalendarScreen display-zone heading", () => {
-  afterEach(async () => {
-    try {
-      await cleanup()
-    } finally {
-      remove(SETTINGS_KEYS.timezone)
-    }
-  })
-
   it("formats the selected date in the effective display zone", async () => {
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-16" })
     setTimezonePreference("Asia/Kathmandu")

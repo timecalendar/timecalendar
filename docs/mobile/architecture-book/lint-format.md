@@ -4,7 +4,7 @@ The exact rules and their options live in `mobile/eslint.config.js` (named block
 `timecalendar/architecture`, `routes-not-importable`, `mutator-owns-fetch`,
 `generated-code`, `timecalendar/feature-boundaries`, `timecalendar/chrome-seams`,
 `timecalendar/activity-seam`, `timecalendar/export-guide-seam`,
-`timecalendar/calendar-sources-is-a-leaf`, `timecalendar/storage-seams`, and
+`timecalendar/color-scheme-seam`, `timecalendar/calendar-sources-is-a-leaf`, `timecalendar/storage-seams`, and
 `timecalendar/tests`). The config is the source of
 truth; this file carries the caveats the config can't (R-1).
 
@@ -168,6 +168,32 @@ truth; this file carries the caveats the config can't (R-1).
   `activityState` are banned as **named imports** from `@/db`, everywhere except
   `src/features/activity/data/**`. `@/db` itself stays freely importable. Same
   static-import-only caveat as raw-fetch. See [data.md](./data.md).
+- **L1 — the device color scheme only through the C1 seam** (`deviceColorSchemeImportPath`,
+  appended to `paths` by the `banDeviceColorScheme` flag of `restrictedImports`, so every block
+  that builds its config through `restrictedImports` carries it): `useColorScheme` and
+  `Appearance` are banned as named imports from `react-native` everywhere except
+  `src/hooks/use-color-scheme.ts`. Deep imports of
+  `react-native/Libraries/Utilities/Appearance*` and `…/useColorScheme*` are banned by the
+  `deviceColorSchemeDeepImportPattern` regex under the same flag. ESLint's `importNames` also reports
+  `import * as RN from "react-native"` and `export { … } from "react-native"`. The exemption is
+  the `timecalendar/color-scheme-seam` block, which re-calls
+  `restrictedImports([routeEntrypointImportPattern], { banDeviceColorScheme: false })`: the route
+  pattern is re-included because `routes-not-importable` also matches the seam file, and flat
+  config replacement would otherwise lift the `@/app` ban there. There is no test exemption; the
+  seam's own test drives the device scheme through a factory-held mock. Caveat:
+  `require("react-native").Appearance` and `jest.requireActual("react-native")` are not static
+  imports, so the same static-import-only caveat as raw-fetch applies. See
+  [theming.md](./theming.md).
+- **L8 — font scaling is never disabled** (`no-restricted-syntax` in
+  `timecalendar/architecture`, the `restrictedSyntax` constant): two selectors,
+  `JSXAttribute[name.name='allowFontScaling'][value.expression.value=false]` and
+  `Property[key.name='allowFontScaling'][value.value=false]`, so both
+  `allowFontScaling={false}` and the object/spread form (`{ allowFontScaling: false }`) fail.
+  The selectors are element-agnostic (`Text`, `TextInput`, any wrapper) and apply to every linted
+  file, tests included, with no exemption. `maxFontSizeMultiplier` is not banned. **Caveat (R-1):**
+  no other block sets `no-restricted-syntax`; a future block that does must spread
+  `restrictedSyntax`, because flat config replaces the options and would silently drop L8 for
+  its files. See [accessibility.md](./accessibility.md).
 - **Generated code** (`src/api/generated/`) is exempt from hand-written-code rules but
   still Prettier-formatted; Orval's `afterAllFilesWrite: prettier --write` keeps regen
   output aligned with the committed format.

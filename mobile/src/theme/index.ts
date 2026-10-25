@@ -10,5 +10,17 @@ export {
   ResponsiveContentWidths,
 } from "@/theme/responsive"
 export type { ThemeColor } from "@/theme/tokens"
-export { Colors, Fonts, MaxContentWidth, Radii, Spacing } from "@/theme/tokens"
+export {
+  Colors,
+  Elevation,
+  Fonts,
+  IconSize,
+  Layout,
+  MaxContentWidth,
+  MinTouchTarget,
+  Motion,
+  Radii,
+  Spacing,
+  StateOpacity,
+} from "@/theme/tokens"
 export { useTheme } from "@/theme/use-theme"

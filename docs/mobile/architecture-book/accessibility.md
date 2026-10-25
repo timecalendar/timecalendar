@@ -6,6 +6,8 @@ The lint half is a set of `react-native-a11y` + `i18next` rules (see [Lint & for
 
 - Four `react-native-a11y` rules run as **error**: `has-accessibility-props`, `has-valid-accessibility-descriptors`, `has-valid-accessibility-role`, `no-nested-touchables`. Every touchable/pressable must declare a role or a label+hint, and touchables may not nest.
 - `i18next/no-literal-string` covers `accessibilityLabel` / `accessibilityHint`, so a11y copy is translated too.
+- **Font scaling (L8, `no-restricted-syntax`):** RN `Text` scales with the OS font size by default, and `allowFontScaling={false}` is a lint error in both the JSX-attribute and the object-property (spread props) form, in every file, tests included. See [Lint & format](./lint-format.md).
+  - `maxFontSizeMultiplier` caps are allowed for dense UI sized to a cell. They live in calendar chrome and the owned renderer: the calendar view menu (1.3), the calendar screen header (1.75), the owned canvas (1.2) and the owned header (1 and 1.2). Whether the `maxFontSizeMultiplier={1}` header numerals stay is owned by the accessibility workstream.
 
 These rules guard real product touchables (interactive controls declare `accessibilityRole` + a translated `accessibilityLabel`).
 
@@ -56,14 +58,13 @@ These rules guard real product touchables (interactive controls declare `accessi
 
 None of these is a sound lint rule; each is recorded so the owning step/feature inherits it:
 
-- **Dynamic Type / font scaling** — RN `Text` scales with the OS font size by default; the posture is **never** pass `allowFontScaling={false}`. A `no-restricted-syntax` guard is deferred debt, added the day someone reaches for it.
 - **Touch-target minimums (44pt iOS / 48dp Android)** — a runtime layout property, not statically checkable. Owned by interactive controls and the [Definition of Done](./definition-of-done.md) (Accessibility axis).
 - **Meaningful labels** — lint guarantees a label _exists_ on a touchable, never that it's _meaningful_ or correctly translated; human review + the translated-copy rule cover semantics.
 - **Manual screen-reader passes (VoiceOver / TalkBack)** — focus order, grouping, announcement quality: runtime behavior no static tool can assert. Owned by the [Definition of Done](./definition-of-done.md) (Accessibility axis).
 - **Reduced motion** — **discharged by each animation owner**: Splash handles its own `AccessibilityInfo.isReduceMotionEnabled` branch ([features.md → Splash](./features.md#splash)). The shared `src/hooks/use-reduced-motion.ts` hook reads and subscribes to the live preference for onboarding and Calendar. Calendar pages directly under reduced motion; otherwise Today and deep links animate only the final page. Lint cannot know whether a runtime preference reaches every animation, so each animation owner retains this obligation.
-- **Color contrast** — a theme-token property, not lint-encodable; **discharged by theming**: the AA-verified token pairs are documented in `src/theme/tokens.ts` and the [Theming & native-chrome](./theming.md) file; the DoD's manual contrast review checks rendered screens against them. A runtime/CI checker stays deferred (its trigger is recorded there).
+- **Color contrast** — a theme-token property, not lint-encodable; **discharged by theming**: the AA token pairs are documented in `src/theme/tokens.ts` and computed against their floors in `src/theme/theme.test.tsx` (see [Theming & native-chrome](./theming.md)); the DoD's manual contrast review checks that rendered screens draw those pairs. A call-site checker stays deferred (its trigger is recorded there).
 
 ## Deferred (recorded debt — not built)
 
-- **No new lint rules for visual accessibility** — no Dynamic-Type override-guard rule, touch-target helper, or contrast check. Calendar and onboarding share the live reduced-motion hook.
+- **No touch-target or call-site contrast lint** — `MinTouchTarget` is a token, not a check. Calendar and onboarding share the live reduced-motion hook.
 - **No manual screen-reader DoD checklist** beyond the [Definition of Done](./definition-of-done.md) (Accessibility axis).

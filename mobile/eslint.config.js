@@ -135,8 +135,24 @@ const exportGuideClientImportPattern = {
     "Use the @/features/export-guides/data seam — the generated export-guide client is imported only inside src/features/export-guides/data/.",
 }
 
+// The single color-scheme seam (C1): @/hooks/use-color-scheme resolves the
+// Settings theme override, so reading the device scheme anywhere else renders the
+// wrong theme whenever the user has picked one.
+const deviceColorSchemeImportPath = {
+  name: "react-native",
+  importNames: ["useColorScheme", "Appearance"],
+  message:
+    "Read the color scheme through @/hooks/use-color-scheme — it resolves the Settings theme override (C1). react-native's useColorScheme/Appearance are imported only inside src/hooks/use-color-scheme.ts.",
+}
+
+const deviceColorSchemeDeepImportPattern = {
+  regex:
+    "^react-native/Libraries/Utilities/(Appearance|useColorScheme)($|[./])",
+  message: deviceColorSchemeImportPath.message,
+}
+
 // Route files are entrypoints, not modules. Named (rather than inlined in the
-// block that applies it) because two blocks now re-include it: any block that
+// block that applies it) because several blocks re-include it: any block that
 // re-sets `no-restricted-imports` for files under src/ has to carry it forward,
 // since flat-config options REPLACE rather than merge.
 const routeEntrypointImportPattern = {
@@ -171,6 +187,7 @@ const restrictedImports = (
     banChromeSeam = true,
     banActivitySeam = true,
     banExportGuideSeam = true,
+    banDeviceColorScheme = true,
   } = {},
 ) => [
   "error",
@@ -181,11 +198,13 @@ const restrictedImports = (
       ...(banChromeSeam ? chromeSeamImportPatterns : []),
       ...(banActivitySeam ? [activityClientImportPattern] : []),
       ...(banExportGuideSeam ? [exportGuideClientImportPattern] : []),
+      ...(banDeviceColorScheme ? [deviceColorSchemeDeepImportPattern] : []),
       ...extraPatterns,
     ],
     paths: [
       ...restrictedImportPaths,
       ...(banActivitySeam ? [dbActivityTablesImportPath] : []),
+      ...(banDeviceColorScheme ? [deviceColorSchemeImportPath] : []),
     ],
   },
 ]
@@ -197,6 +216,19 @@ const restrictedGlobals = [
       "All HTTP goes through the generated client; only src/api/mutator.ts may call fetch.",
   },
 ]
+
+// Font scaling is never disabled (accessibility.md → Font scaling). The property
+// selector covers spread props (`{...{ allowFontScaling: false }}`, shared
+// `textProps`). Flat config REPLACES a rule's options, so any later block that
+// sets `no-restricted-syntax` must spread this list or it silently drops the ban.
+const restrictedSyntax = [
+  "JSXAttribute[name.name='allowFontScaling'][value.expression.value=false]",
+  "Property[key.name='allowFontScaling'][value.value=false]",
+].map((selector) => ({
+  selector,
+  message:
+    "Text must follow the OS font size — do not disable allowFontScaling. Cap dense UI with maxFontSizeMultiplier instead (accessibility.md → Font scaling).",
+}))
 
 // Worklet safety (TIM-554). A worklet may only call functions that are
 // themselves workletized; a plain JS call throws on the UI thread at runtime and
@@ -268,6 +300,7 @@ module.exports = defineConfig([
       "react-native-a11y/no-nested-touchables": "error",
       "no-restricted-imports": restrictedImports(),
       "no-restricted-globals": ["error", ...restrictedGlobals],
+      "no-restricted-syntax": ["error", ...restrictedSyntax],
     },
   },
   {
@@ -343,6 +376,19 @@ module.exports = defineConfig([
       "no-restricted-imports": restrictedImports([], {
         banExportGuideSeam: false,
       }),
+    },
+  },
+  {
+    // The seam file is the one import site for the device scheme. It re-includes
+    // the route-entrypoint pattern because `routes-not-importable` also matches
+    // it, and flat config would otherwise drop the @/app ban here.
+    name: "timecalendar/color-scheme-seam",
+    files: ["src/hooks/use-color-scheme.ts"],
+    rules: {
+      "no-restricted-imports": restrictedImports(
+        [routeEntrypointImportPattern],
+        { banDeviceColorScheme: false },
+      ),
     },
   },
   {
