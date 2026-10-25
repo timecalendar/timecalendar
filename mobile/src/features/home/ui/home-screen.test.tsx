@@ -11,7 +11,7 @@ import { Platform, StyleSheet } from "react-native"
 
 import { useCalendarEvents, useSyncCalendars } from "@/features/calendar/data"
 import { useChecklistProgress } from "@/features/event-checklists"
-import { Colors, resolveResponsiveLayout } from "@/theme"
+import { Colors, resolveResponsiveLayout, TypeRamp } from "@/theme"
 
 import { HomeScreen } from "./home-screen"
 
@@ -164,10 +164,10 @@ describe("HomeScreen", () => {
     })
     expect(
       StyleSheet.flatten(screen.getByText("Up next").props.style),
-    ).toMatchObject({ fontSize: 32, lineHeight: 44, fontWeight: 600 })
+    ).toMatchObject(TypeRamp.sectionTitle.style)
     expect(
       StyleSheet.flatten(screen.getByText("Today").props.style),
-    ).toMatchObject({ fontSize: 32, lineHeight: 44, fontWeight: 600 })
+    ).toMatchObject(TypeRamp.sectionTitle.style)
     expect(screen.getByText("Nothing coming up for now.")).toBeTruthy()
     expect(screen.getByText("No events today")).toBeTruthy()
     expect(screen.getByText("Enjoy the open day.")).toBeTruthy()

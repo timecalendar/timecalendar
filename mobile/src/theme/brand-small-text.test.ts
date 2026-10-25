@@ -9,13 +9,13 @@ const { resolve } = jest.requireActual("node:path") as {
   resolve(...paths: string[]): string
 }
 
-const SMALL_BOLD = /\btype=\{?\s*["']smallBold["']/
+const LABEL = /\btype=\{?\s*["'](smallBold|label)["']/
 const PRIMARY = /\bthemeColor=\{?\s*["']primary["']/
 
-function smallBoldPrimaryElements(source: string): string[] {
+function labelPrimaryElements(source: string): string[] {
   return [...source.matchAll(/<[A-Z][\w.]*(?:=>|[^>])*>/g)]
     .map(([element]) => element)
-    .filter((element) => SMALL_BOLD.test(element) && PRIMARY.test(element))
+    .filter((element) => LABEL.test(element) && PRIMARY.test(element))
 }
 
 function sourceFiles(): string[] {
@@ -25,10 +25,10 @@ function sourceFiles(): string[] {
     .map((file) => resolve(root, file))
 }
 
-describe("brand-colored small text", () => {
+describe("brand-colored label text", () => {
   it("detects the forbidden pairing in any prop order or layout", () => {
     expect(
-      smallBoldPrimaryElements(`
+      labelPrimaryElements(`
         <ThemedText
           themeColor="primary"
           onPress={() => skip()}
@@ -36,15 +36,16 @@ describe("brand-colored small text", () => {
         >Skip</ThemedText>
         <ThemedText type="smallBold" themeColor="actionText">Back</ThemedText>
         <ThemedText themeColor="primary">T</ThemedText>
+        <ThemedText type="label" themeColor="primary">Go</ThemedText>
       `),
-    ).toHaveLength(1)
+    ).toHaveLength(2)
   })
 
-  it("never renders smallBold text in the primary tone", () => {
+  it("never renders label text in the primary tone", () => {
     const files = sourceFiles()
     expect(files.length).toBeGreaterThan(100)
     const offenders = files.flatMap((file) =>
-      smallBoldPrimaryElements(readFileSync(file, "utf8")).map(
+      labelPrimaryElements(readFileSync(file, "utf8")).map(
         (element) => `${file}: ${element}`,
       ),
     )

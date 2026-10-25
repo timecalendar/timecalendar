@@ -1,3 +1,20 @@
+## 2026-10-25 — Platform type ramp and ThemedText tone
+
+- `src/theme/typography.ts` defines `TypeRamp` (exported from `@/theme` with `TypeVariant` and
+  `TypeStep`): `largeTitle`, `title`, `title2`, `sectionTitle`, `headline`, `body`, `callout`,
+  `label`, `footnote`, `caption`, `captionSmall`, resolved per platform (iOS HIG with
+  `dynamicTypeRamp`, Android Material 3 with letter spacing; `caption` / `captionSmall` shared).
+  `src/theme/typography.test.ts` pins both platforms. ADR
+  [063](./decisions/063-platform-type-ramp.md).
+- `ThemedText` renders `TypeRamp` steps; `default` → `body`, `small` → `callout`, `smallBold` →
+  `label`, `subtitle` → `sectionTitle` resolve as aliases.
+- `ThemedText` takes a closed `tone` (`primary`, `secondary`, `action`, `destructive`,
+  `onPrimary`), exclusive with `themeColor`, with no brand or tertiary member.
+- The header role covers `largeTitle`, `title`, `title2`, `sectionTitle` and `subtitle`, declared
+  in an exhaustive typed record; `themed-text.test.tsx` proves the role per accepted `type`.
+- `brand-small-text.test.ts` also rejects `type="label"` with `themeColor="primary"`.
+- `accessibility.md`, `theming.md` and `decisions/README.md` follow.
+
 ## 2026-10-25 — Design-system tokens, color-scheme and font-scaling lint
 
 - `@/theme` exports `MinTouchTarget` (44 iOS / 48 elsewhere), `IconSize`, `StateOpacity`,

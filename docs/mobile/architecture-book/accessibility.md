@@ -7,13 +7,15 @@ The lint half is a set of `react-native-a11y` + `i18next` rules (see [Lint & for
 - Four `react-native-a11y` rules run as **error**: `has-accessibility-props`, `has-valid-accessibility-descriptors`, `has-valid-accessibility-role`, `no-nested-touchables`. Every touchable/pressable must declare a role or a label+hint, and touchables may not nest.
 - `i18next/no-literal-string` covers `accessibilityLabel` / `accessibilityHint`, so a11y copy is translated too.
 - **Font scaling (L8, `no-restricted-syntax`):** RN `Text` scales with the OS font size by default, and `allowFontScaling={false}` is a lint error in both the JSX-attribute and the object-property (spread props) form, in every file, tests included. See [Lint & format](./lint-format.md).
+  - On iOS every `ThemedText` ramp step except `caption` / `captionSmall` names its UIKit text style through `dynamicTypeRamp`, so it scales on Apple's per-style Dynamic Type curve (large titles grow less than body at accessibility sizes). `caption` / `captionSmall` scale linearly under their callers' `maxFontSizeMultiplier` caps. Android scales every step linearly with the font scale.
   - `maxFontSizeMultiplier` caps are allowed for dense UI sized to a cell. They live in calendar chrome and the owned renderer: the calendar view menu (1.3), the calendar screen header (1.75), the owned canvas (1.2) and the owned header (1 and 1.2). Whether the `maxFontSizeMultiplier={1}` header numerals stay is owned by the accessibility workstream.
 
 These rules guard real product touchables (interactive controls declare `accessibilityRole` + a translated `accessibilityLabel`).
 
 ## The heading-role contract — encoded in `ThemedText`
 
-- `ThemedText` maps `type="title"` and `type="subtitle"` to `accessibilityRole="header"`, so titles are exposed to VoiceOver/TalkBack as headings (rotor/heading navigation) without each call site declaring the role. A caller-supplied `accessibilityRole` **still wins** (the default applies only when unset; `{...rest}` spreads last). Body/default/small/link/code variants carry **no** role.
+- `ThemedText` maps the heading ramp steps `type="largeTitle"`, `"title"`, `"title2"` and `"sectionTitle"` (and the `subtitle` alias, which resolves to `sectionTitle`) to `accessibilityRole="header"`, so titles are exposed to VoiceOver/TalkBack as headings (rotor/heading navigation) without each call site declaring the role. `headline`, `body`, `callout`, `label`, `footnote`, `caption`, `captionSmall` and the `default` / `small` / `smallBold` aliases carry **no** role: `headline` is the row/card title style, and row titles exposed as headings would flood the rotor. A caller-supplied `accessibilityRole` **still wins** (the default applies only when unset; `{...rest}` spreads last).
+- The role per step is the exhaustive `headingRole: Record<TypeVariant, boolean>` in `themed-text.tsx`, so a `TypeVariant` added without a role decision is a `tsc` error. See ADR [063](./decisions/063-platform-type-ramp.md).
 - Encoded in the **component**, not a lint rule, because lint cannot know which `<Text>` is semantically a heading — that's authorial intent tied to the visual `type`, and the component already owns `type→style`, so it owns `type→role` too.
 
 ## Accessible async status
@@ -52,7 +54,7 @@ These rules guard real product touchables (interactive controls declare `accessi
 
 ## Proof in CI
 
-- `src/components/themed-text.test.tsx` renders title/subtitle through the real accessibility tree and asserts `getByRole("header")` finds the node — a _resolved semantic_, not merely that a prop was passed. It also covers the negative path (default variant has no header role) and explicit-role-wins. Gated by the `test-mobile` job (tsc + lint + Jest), R-1.
+- `src/components/themed-text.test.tsx` drives a typed `Record<ThemedTextType, { step; heading }>` table through `it.each`: per accepted `type` it renders through the real accessibility tree and asserts the `header` role is present or absent (a _resolved semantic_, not merely that a prop was passed), plus the rendered ramp style and iOS `dynamicTypeRamp`. It also covers explicit-role-wins. `src/theme/typography.test.ts` pins the ramp values on both platforms. Gated by the `test-mobile` job (tsc + lint + Jest), R-1.
 
 ## What lint can't encode → prose, each with reason + owner
 

@@ -1,85 +1,85 @@
-import { StyleSheet, Text, type TextProps } from "react-native"
+import { Text, type TextProps } from "react-native"
 
-import { ThemeColor, useTheme } from "@/theme"
+import { ThemeColor, TypeRamp, TypeVariant, useTheme } from "@/theme"
 
-export type ThemedTextProps = TextProps & {
-  type?:
-    | "default"
-    | "title"
-    | "small"
-    | "smallBold"
-    | "subtitle"
-    | "caption"
-    | "captionSmall"
-  themeColor?: ThemeColor
+type LegacyTypeAlias = "default" | "small" | "smallBold" | "subtitle"
+
+export type ThemedTextType = TypeVariant | LegacyTypeAlias
+
+/**
+ * Text color role. `primary` is the primary label color (UIKit `.label`), not
+ * brand pink; brand-colored text is `action`.
+ */
+export type TextTone =
+  | "primary"
+  | "secondary"
+  | "action"
+  | "destructive"
+  | "onPrimary"
+
+const legacyTypeAliases: Record<LegacyTypeAlias, TypeVariant> = {
+  default: "body",
+  small: "callout",
+  smallBold: "label",
+  subtitle: "sectionTitle",
+}
+
+const headingRole: Record<TypeVariant, boolean> = {
+  largeTitle: true,
+  title: true,
+  title2: true,
+  sectionTitle: true,
+  headline: false,
+  body: false,
+  callout: false,
+  label: false,
+  footnote: false,
+  caption: false,
+  captionSmall: false,
+}
+
+const toneColor: Record<TextTone, ThemeColor> = {
+  primary: "text",
+  secondary: "textSecondary",
+  action: "actionText",
+  destructive: "destructive",
+  onPrimary: "onPrimary",
+}
+
+type ColorProps =
+  | { tone?: TextTone; themeColor?: never }
+  | { tone?: never; themeColor?: ThemeColor }
+
+export type ThemedTextProps = TextProps & { type?: ThemedTextType } & ColorProps
+
+function isLegacyTypeAlias(type: ThemedTextType): type is LegacyTypeAlias {
+  return Object.hasOwn(legacyTypeAliases, type)
+}
+
+function resolveStep(type: ThemedTextType): TypeVariant {
+  return isLegacyTypeAlias(type) ? legacyTypeAliases[type] : type
 }
 
 export function ThemedText({
   style,
-  type = "default",
+  type = "body",
+  tone,
   themeColor,
   ...rest
 }: ThemedTextProps) {
   const theme = useTheme()
-  const isHeading = type === "title" || type === "subtitle"
+  const step = resolveStep(type)
 
   return (
     <Text
-      accessibilityRole={isHeading ? "header" : undefined}
+      accessibilityRole={headingRole[step] ? "header" : undefined}
+      dynamicTypeRamp={TypeRamp[step].dynamicTypeRamp}
       style={[
-        { color: theme[themeColor ?? "text"] },
-        type === "default" && styles.default,
-        type === "title" && styles.title,
-        type === "small" && styles.small,
-        type === "smallBold" && styles.smallBold,
-        type === "caption" && styles.caption,
-        type === "captionSmall" && styles.captionSmall,
-        type === "subtitle" && styles.subtitle,
+        { color: theme[themeColor ?? toneColor[tone ?? "primary"]] },
+        TypeRamp[step].style,
         style,
       ]}
       {...rest}
     />
   )
 }
-
-const styles = StyleSheet.create({
-  small: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: 500,
-  },
-  smallBold: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: 700,
-  },
-  // Dense-tile text a step below `small`: a compact semibold title (`caption`)
-  // over a lighter, smaller secondary line (`captionSmall`) — the readable
-  // hierarchy for the calendar grid's narrow event tiles. Tight line heights so
-  // wrapped titles fit before the tile clips.
-  caption: {
-    fontSize: 12,
-    lineHeight: 14,
-    fontWeight: 600,
-  },
-  captionSmall: {
-    fontSize: 11,
-    lineHeight: 13,
-    fontWeight: 400,
-  },
-  default: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: 500,
-  },
-  title: {
-    fontSize: 48,
-    fontWeight: 600,
-    lineHeight: 52,
-  },
-  subtitle: {
-    fontSize: 32,
-    lineHeight: 44,
-    fontWeight: 600,
-  },
-})
