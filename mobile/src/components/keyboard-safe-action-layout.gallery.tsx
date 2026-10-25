@@ -46,11 +46,7 @@ function Submit({ label }: { label: string }) {
 function FormFixture({ fillsViewport = false }: { fillsViewport?: boolean }) {
   const { t } = useTranslation()
   return (
-    <RootPage
-      scrollsUnderHeader={!fillsViewport}
-      lane={fillsViewport ? "readable" : "standard"}
-      {...(fillsViewport ? { style: styles.fill } : {})}
-    >
+    <RootPage scrollsUnderHeader={!fillsViewport}>
       {() => (
         <KeyboardSafeActionLayout
           scrollsUnderHeader={!fillsViewport}
@@ -106,7 +102,6 @@ function LongStringsFixture() {
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
   content: { gap: Spacing.three },
   centered: { flexGrow: 1, justifyContent: "center" },
   actions: {

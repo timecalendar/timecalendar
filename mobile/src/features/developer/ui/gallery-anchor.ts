@@ -15,7 +15,9 @@ export function withGalleryIndexBeneath<State extends StackState>(
   const { index, routes } = state
   const story = routes[index]
   if (story?.name !== STORY_ROUTE) return undefined
-  if (routes[index - 1]?.name === INDEX_ROUTE) return undefined
+  if (routes.slice(0, index).some(({ name }) => name === INDEX_ROUTE)) {
+    return undefined
+  }
   return {
     ...state,
     index: index + 1,

@@ -54,6 +54,13 @@ describe("withGalleryIndexBeneath", () => {
     expect(withGalleryIndexBeneath(stack([tabs, index, story]))).toBeUndefined()
   })
 
+  it("leaves a story linked above another story alone when the index is below", () => {
+    const next = { name: "developer/gallery/[story]", key: "story-2" }
+    expect(
+      withGalleryIndexBeneath(stack([tabs, index, story, next])),
+    ).toBeUndefined()
+  })
+
   it("leaves a stack whose focused route is not a story alone", () => {
     expect(withGalleryIndexBeneath(stack([tabs, story, about]))).toBeUndefined()
     expect(withGalleryIndexBeneath(stack([tabs, story], 0))).toBeUndefined()

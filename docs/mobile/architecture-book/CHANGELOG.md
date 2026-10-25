@@ -17,7 +17,8 @@
 - The `@expo/ui/community/menu` mock wraps the trigger as a button on iOS and, on Android, as a
   `Pressable` with `accessible={false}` that opens the menu on press; the date-time picker mock
   forwards its props and maps `disabled`. The gallery accessibility check skips an
-  `accessible={false}` element and checks its descendants ([accessibility.md](./accessibility.md)).
+  `accessible={false}` control only when a descendant control carries the role and name, and
+  reports it otherwise ([accessibility.md](./accessibility.md)).
 
 ## 2026-10-25 — Accessibility device findings
 
