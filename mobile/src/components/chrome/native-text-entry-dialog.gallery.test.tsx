@@ -1,15 +1,11 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
-import type { ReactElement } from "react"
 
+import { renderStory } from "@/test-support/gallery"
 import { usePlatform } from "@/test-support/platform"
 
 import * as fixture from "./native-text-entry-dialog.gallery"
 
 const PENDING_MS = 3000
-
-function renderStory(story: { render?: (args: object) => ReactElement }) {
-  return render(story.render!({}))
-}
 
 describe.each(["ios", "android"] as const)(
   "text entry dialog stories on %s",

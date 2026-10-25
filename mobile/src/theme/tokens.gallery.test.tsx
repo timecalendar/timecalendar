@@ -1,13 +1,7 @@
-import { render } from "@testing-library/react-native"
-import type { ReactElement } from "react"
-
 import i18n from "@/i18n"
+import { renderStory } from "@/test-support/gallery"
 
 import * as fixture from "./tokens.gallery"
-
-function renderStory(story: { render?: (args: object) => ReactElement }) {
-  return render(story.render!({}))
-}
 
 afterEach(async () => {
   await i18n.changeLanguage("en")

@@ -1,13 +1,9 @@
-import { fireEvent, render } from "@testing-library/react-native"
-import type { ReactElement } from "react"
+import { fireEvent } from "@testing-library/react-native"
 
+import { renderStory } from "@/test-support/gallery"
 import { usePlatform } from "@/test-support/platform"
 
 import * as fixture from "./menu-view.gallery"
-
-function renderStory(story: { render?: (args: object) => ReactElement }) {
-  return render(story.render!({}))
-}
 
 describe.each(["ios", "android"] as const)("menu stories on %s", (platform) => {
   usePlatform(platform)

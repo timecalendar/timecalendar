@@ -1,11 +1,8 @@
-import { fireEvent, render } from "@testing-library/react-native"
-import type { ReactElement } from "react"
+import { fireEvent } from "@testing-library/react-native"
+
+import { renderStory } from "@/test-support/gallery"
 
 import * as fixture from "./error-surfaces.gallery"
-
-function renderStory(story: { render?: (args: object) => ReactElement }) {
-  return render(story.render!({}))
-}
 
 const count = (view: Awaited<ReturnType<typeof renderStory>>) =>
   view.getByTestId("gallery-error-surfaces-count")

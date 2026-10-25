@@ -1,6 +1,7 @@
 import { fireEvent, render } from "@testing-library/react-native"
-import type { ReactElement, ReactNode } from "react"
+import type { ReactNode } from "react"
 
+import { renderStory } from "@/test-support/gallery"
 import { usePlatform } from "@/test-support/platform"
 
 import * as fixture from "./native-settings.gallery"
@@ -9,10 +10,6 @@ jest.mock("expo-router", () => ({
   router: { push: jest.fn() },
   Stack: { Screen: (): ReactNode => null },
 }))
-
-function renderStory(story: { render?: (args: object) => ReactElement }) {
-  return render(story.render!({}))
-}
 
 const checked = (view: Awaited<ReturnType<typeof render>>, testID: string) =>
   view.getByTestId(testID).props.accessibilityState.checked

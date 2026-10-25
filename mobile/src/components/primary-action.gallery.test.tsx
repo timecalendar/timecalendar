@@ -1,11 +1,8 @@
-import { fireEvent, render } from "@testing-library/react-native"
-import type { ReactElement } from "react"
+import { fireEvent } from "@testing-library/react-native"
+
+import { renderStory } from "@/test-support/gallery"
 
 import * as fixture from "./primary-action.gallery"
-
-function renderStory(story: { render?: (args: object) => ReactElement }) {
-  return render(story.render!({}))
-}
 
 it("counts presses on the default story", async () => {
   const view = await renderStory(fixture.Default)

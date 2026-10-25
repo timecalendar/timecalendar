@@ -1,11 +1,8 @@
-import { fireEvent, render } from "@testing-library/react-native"
-import type { ReactElement } from "react"
+import { fireEvent } from "@testing-library/react-native"
+
+import { renderStory } from "@/test-support/gallery"
 
 import * as fixture from "./keyboard-safe-action-layout.gallery"
-
-function renderStory(story: { render?: (args: object) => ReactElement }) {
-  return render(story.render!({}))
-}
 
 it.each([
   ["Default", fixture.Default],

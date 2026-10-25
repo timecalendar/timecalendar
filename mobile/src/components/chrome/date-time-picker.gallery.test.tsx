@@ -1,15 +1,11 @@
-import { fireEvent, render } from "@testing-library/react-native"
-import type { ReactElement } from "react"
+import { fireEvent } from "@testing-library/react-native"
 
+import { renderStory } from "@/test-support/gallery"
 import { usePlatform } from "@/test-support/platform"
 
 import * as fixture from "./date-time-picker.gallery"
 
 const PICKED = new Date("2030-01-02T03:04:00.000Z")
-
-function renderStory(story: { render?: (args: object) => ReactElement }) {
-  return render(story.render!({}))
-}
 
 const format = (date: Date, options: Intl.DateTimeFormatOptions) =>
   new Intl.DateTimeFormat("en", options).format(date)
