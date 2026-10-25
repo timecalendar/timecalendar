@@ -1,6 +1,7 @@
 # mobile-root-page-primitives Specification
 
 ## Purpose
+
 TBD - created by archiving change establish-mobile-root-page-primitives. Update Purpose after archive.
 
 ## Requirements
