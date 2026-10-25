@@ -13,8 +13,8 @@ Sizing: **S** ≈ one PR, < 1 day; **M** ≈ one PR, 1–3 days; **L** ≈ 2–3
 
 ## Phase 0 — Audit (this PR)
 
-Docs only. Owner approves the proposal, answers the open questions in [README.md](./README.md),
-and the ADRs below are scheduled.
+Docs only. Owner decisions are recorded in [README.md](./README.md#owner-decisions-2026-10-25);
+the ADRs below are scheduled.
 
 ## Phase 1 — Defects and tokens (no visual redesign)
 
@@ -33,8 +33,9 @@ Fix what is broken before building on it; these do not wait for the DS.
 
 | Slice | Size | Content | Proof |
 | --- | --- | --- | --- |
-| 2.1 Gallery shell | M | `src/gallery/{types,registry}.ts`, `features/gallery/ui`, `/gallery` + `/gallery/[story]` routes; `/settings-gallery` redirects; existing native-settings fixtures move to `native-settings.gallery.tsx` ([storybook-options.md wiring](./storybook-options.md#wiring-sketch)) | Registry orphan test; light/dark render test; production redirect test; no-Storybook-dependency contract test; unchanged fingerprint for four lanes recorded |
-| 2.2 Fixtures for existing primitives | M | `RootPage`/`PageIntro`, `EmptyState`, error surfaces, `PrimaryAction`, `KeyboardSafeActionLayout`, numeric editor, text-entry dialog, `GlassSurface`, `MenuView`, `DateTimePicker`, typography ramp page, color/token swatch page | L10 contract test starts enforcing for `components/**` |
+| 2.1 Developer page | S | `features/developer/ui` + `/developer` route, gated on backend capability `!== "production"` (dev and preview builds); hosts the environment switch and dev import, moved out of Settings; Settings keeps one row opening `/developer`; FR/EN strings | Production redirect test; route-structure test updated; device pass on a preview-capability build |
+| 2.2 Gallery shell | M | `src/design/gallery/{types,registry}.ts`, `/developer/gallery` + `/developer/gallery/[story]` routes; `/settings-gallery` removed; native-settings fixtures move to `native-settings.gallery.tsx`; `gallery.*` FR/EN namespace ([storybook-options.md wiring](./storybook-options.md#wiring-sketch)) | Registry orphan test; light/dark render test; production redirect test; no-Storybook-dependency contract test; FR/EN parity; unchanged fingerprint for four lanes recorded |
+| 2.3 Fixtures for existing primitives | M | `RootPage`/`PageIntro`, `EmptyState`, error surfaces, `PrimaryAction`, `KeyboardSafeActionLayout`, numeric editor, text-entry dialog, `GlassSurface`, `MenuView`, `DateTimePicker`, typography ramp page, color/token swatch page | L10 contract test starts enforcing for `design/**` |
 
 ## Phase 3 — Primitives (each: component + fixture + test + Book entry)
 
@@ -82,7 +83,8 @@ selectors if any changed.
 | 5.10 | Calendar **screen chrome only** | Header icons via `HeaderAction` (not pink), FAB, custom `Modal` chooser → native menu/sheet, status views. **Renderer untouched** (ADR 033 boundary) | M |
 | 5.11 | Calendar renderer tiles (optional) | Only `EventSurface` color resolution if the ADR decides agenda/grid share it; worklet rules apply; separate review | M |
 
-Paging spike: out of scope; delete or keep as-is (owner call), excluded from the ratchet.
+Paging spike: deleted in its own slice (route, feature code, tests, route-inventory entry) before
+phase 4, so the ratchet never allowlists it.
 
 ## Phase 6 — Close-out
 
@@ -95,10 +97,9 @@ Paging spike: out of scope; delete or keep as-is (owner call), excluded from the
 
 | # | Title | Phase | Why it is ADR-worthy |
 | --- | --- | --- | --- |
-| A | Design-system layer: `components/` barrel as the single primitive home, `chrome/` boundary rule, gallery as the catalog | 0/2 | Sets where every future UI part lives; reverses nothing but is costly to move later |
+| A | Design-system layer: `src/design/` behind the `@/design` barrel as the single primitive home, `chrome/` boundary rule, gallery as the catalog | 0/2 | Sets where every future UI part lives; reverses nothing but is costly to move later |
 | B | Platform-resolved type ramp in `theme/typography.ts` | 1 | Changes every text style; amends accessibility.md heading contract |
-| C | In-house CSF3-shaped gallery instead of Storybook (gate choice, i18n exemption, Storybook revisit triggers) | 2 | Rejects a dependency with native/fingerprint impact; records triggers |
+| C | In-house CSF3-shaped gallery on the `/developer` page instead of Storybook (capability gate, translated strings, Storybook revisit triggers) | 2 | Rejects a dependency with native/fingerprint impact; records triggers |
 | D | Rename native-settings seam to `NativeList*` and retire `SettingsRow` adapters | 3 | Amends ADR 060 |
 | E | Visual-style lint ratchet (`local/no-style-literals`, raw-primitive bans) | 4 | New repo-wide gate with allowlist mechanics |
 | F | Event-color surface vocabulary (agenda rail vs wash; text on data colors) | 3.9 | Product-visual decision that theming.md currently forbids in part |
-| G (optional) | Visual regression lane (Maestro `assertScreenshot` over gallery deep links) | after 2 | Amends ADR 057 three-journey budget |

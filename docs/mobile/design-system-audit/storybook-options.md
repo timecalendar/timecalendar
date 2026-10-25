@@ -361,53 +361,49 @@ publishes an SDK 56/57 support statement and makes `react-native-svg` optional.
 
 Files to add or change (all under `mobile/`):
 
-1. `src/gallery/types.ts`, a local CSF3-compatible type with no Storybook import:
+1. `src/design/gallery/types.ts`, a local CSF3-compatible type with no Storybook import:
    ```ts
    export type GalleryMeta<P> = { title: string; component: React.ComponentType<P> }
    export type GalleryStory<P> = { name?: string; args?: Partial<P>; render?: (args: P) => React.ReactElement }
    ```
 2. Fixtures colocated as `*.gallery.tsx` next to each primitive, for example
-   `src/components/chrome/native-settings.gallery.tsx`, `src/components/empty-state.gallery.tsx`,
-   `src/components/error-surfaces.gallery.tsx`. Move today's `SettingsGalleryScreen` content into
+   `src/components/chrome/native-settings.gallery.tsx`, `src/design/status-view/empty-state.gallery.tsx`,
+   `src/design/status-view/error-surfaces.gallery.tsx`. Move today's `SettingsGalleryScreen` content into
    the first one.
-3. `src/gallery/registry.ts`, an explicit array of `import * as x from "…gallery"` modules.
+3. `src/design/gallery/registry.ts`, an explicit array of `import * as x from "…gallery"` modules.
    Constraint 5 means everything here ships, so keep it explicit and reviewable rather than using
    `require.context`.
-4. `src/features/gallery/ui/gallery-screen.tsx` (index list, then story detail) and
-   `src/app/gallery.tsx` as a thin re-export, plus `gallery/[story].tsx` for deep links such as
-   `timecalendar-dev://gallery/native-settings--switches` that Maestro can open.
-   `src/app/settings-gallery.tsx` becomes a redirect to `/gallery`, or is removed with its
-   `settings-route-structure.test.ts` assertion updated.
-5. Gating: keep the existing backend-capability gate (`!== "production"` redirects), so preview
-   testers keep the device check. Gate the deep-link entry on `isDevVariant()`, matching
-   `dev-paging-spike`.
+4. A developer page, `src/features/developer/ui/developer-screen.tsx` behind a thin
+   `src/app/developer.tsx`, hosting the gallery entry and the existing dev tools (environment
+   switch, dev import). The gallery itself is `src/features/developer/ui/gallery-screen.tsx`
+   (index list, then story detail) at `src/app/developer/gallery.tsx`, plus
+   `developer/gallery/[story].tsx` for deep links such as
+   `timecalendar-dev://developer/gallery/native-settings--switches` that Maestro can open.
+   `src/app/settings-gallery.tsx` is removed with its `settings-route-structure.test.ts`
+   assertion updated; Settings keeps one row that opens `/developer`.
+5. Gating: the backend-capability gate (`!== "production"` redirects) covers the whole
+   `/developer` subtree, so development and preview builds show it and production hides it
+   (`mobile/eas.json:10-12`, `:25-26`, `:36-37`).
 6. No change to `metro.config.js`, `babel.config.js`, `app.config.ts`, `eas.json`, `.gitignore`
    or `package.json` `scripts`.
 
 CI checks (proof the gallery is inert and does not move native config):
 
-- **Jest** `src/gallery/registry.test.ts`:
+- **Jest** `src/design/gallery/registry.test.ts`:
   - globs `src/**/*.gallery.tsx` with `fs` and asserts each is in the registry (no orphan fixtures);
   - asserts unique `title`s;
   - renders every story in light and dark under the existing mocks (a smoke test that also covers
     fixture code for the 70% floor).
-- **Jest** gate test: with capability `production`, `/gallery` and `/gallery/[story]` redirect.
+- **Jest** gate test: with capability `production`, `/developer`, `/developer/gallery` and
+  `/developer/gallery/[story]` redirect.
   Mirrors the existing `settings-gallery-screen.test.tsx`.
 - **Contract test** (in the style of `calendar-owned-shell.contract.test.ts`): `package.json` has no
   `storybook` / `@storybook/*` / `react-native-web` dependency, and no `.rnstorybook` or `.storybook`
   directory exists. This keeps an accidental Option 1 or 2 from landing without an ADR.
 - **Fingerprint evidence**: in the PR, record unchanged
   `runtimeversion:resolve` outputs for the four lanes (`eas.md:123-157` procedure).
-- **Lint**: decide on a scoped `i18next/no-literal-string` exemption for `**/*.gallery.tsx`, with a
-  rule-rationale comment (open question 1).
-
-Optional visual lane, after an ADR amendment:
-
-- `mobile/.maestro/gallery/visual.yaml` runs `openLink` for each gallery deep link, then
-  `assertScreenshot` with `cropOn: { id: "gallery-story" }`. Baselines are committed per platform
-  and per pinned simulator or emulator image. It runs in `ci-mobile-e2e.yml` on manual dispatch
-  only, against the existing release-config dev-variant build, and uploads the diff PNGs as
-  artifacts.
+- **i18n**: gallery and fixture strings are translated under a `gallery.*` namespace (FR/EN
+  parity test applies); no lint exemption.
 
 If Option 1 is later adopted, the same pieces carry over. Keep the fixtures and add
 `@storybook/react-native` + `@storybook/react-native-ui-lite` + actions/backgrounds (no controls).
@@ -432,19 +428,16 @@ then grep for `@storybook` and story titles and fail on any hit. Record the fing
 - **Option 1 later.** Autolinking exclusion effectiveness, ESM transform upkeep and the v10 to v11
   migration are the main costs (unverified details listed above).
 
+## Decided (owner, 2026-10-25)
+
+- Gallery strings are translated (`gallery.*` namespace, FR/EN parity); no lint exemption.
+- Gate: backend capability `!== "production"`, so development and preview builds show the
+  `/developer` page and gallery; production hides them.
+- No pixel-diff lane for now.
+
 ## Open questions
 
-1. Should `*.gallery.tsx` be exempt from `i18next/no-literal-string`? The strings never reach a
-   production user, but they do ship. The alternative is one `gallery.*` catalog namespace with FR/EN
-   parity cost.
-2. Gate choice for the general gallery: backend capability (shows on preview store builds) or
-   `isDevVariant()` (dev builds only)?
-3. Is a pixel-diff lane wanted at all, given that `testing.md` assigns rendering, Dynamic Type and
-   screen-reader quality to owner device evidence? If yes, should it be an ADR 057 amendment or a
-   separate ADR?
-4. Does Maestro 2.6.1 (local host) support `assertScreenshot`, or does the host need 2.8.0 to match
-   CI? (unverified)
-5. If Option 1 is revisited: does a `react-native.config.js` exclusion of `react-native-svg`
+1. If Option 1 is revisited: does a `react-native.config.js` exclusion of `react-native-svg`
    restore the pre-Storybook fingerprint for all four lanes? Measure it, don't assume it.
-6. Chromatic RN pricing and whether its cloud-built artifacts are acceptable under ADR 040's
+2. Chromatic RN pricing and whether its cloud-built artifacts are acceptable under ADR 040's
    local-build rule.

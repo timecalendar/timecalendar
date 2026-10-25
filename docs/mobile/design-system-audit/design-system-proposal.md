@@ -118,24 +118,24 @@ Conventions for every primitive (from the expo-design-system contract, adapted t
 
 | Primitive | Lives in | API sketch | Replaces |
 | --- | --- | --- | --- |
-| `ThemedText` | `components/` | `variant: TypeVariant`, `tone?: "primary" \| "secondary" \| "tertiary" \| "action" \| "destructive" \| "onPrimary"` | 5 ad-hoc type scales; `themeColor="primary"` on text (8 AA failures: `action` maps to `actionText`) |
-| `Button` | `components/` | `variant: "filled" \| "tonal" \| "outlined" \| "text" \| "destructive"`, `size`, `label`, `icon?: IconName`, `busy`, `disabled`, `onPress` | `PrimaryAction` (kept as `Button variant="filled"` alias), A1–A4: welcome/connect/manual-import/changelog CTAs, `QrActionButton`, outlined Back/Intranet buttons, neutral fills, Skip/Next/See all/Unhide text buttons, Delete |
+| `ThemedText` | `design/` | `variant: TypeVariant`, `tone?: "primary" \| "secondary" \| "tertiary" \| "action" \| "destructive" \| "onPrimary"` | 5 ad-hoc type scales; `themeColor="primary"` on text (8 AA failures: `action` maps to `actionText`) |
+| `Button` | `design/` | `variant: "filled" \| "tonal" \| "outlined" \| "text" \| "destructive"`, `size`, `label`, `icon?: IconName`, `busy`, `disabled`, `onPress` | `PrimaryAction` (kept as `Button variant="filled"` alias), A1–A4: welcome/connect/manual-import/changelog CTAs, `QrActionButton`, outlined Back/Intranet buttons, neutral fills, Skip/Next/See all/Unhide text buttons, Delete |
 | `HeaderAction` | `chrome/` (wraps `unstable_headerRightItems` / `Stack.Toolbar`) | `items: { icon, label, onPress, menu? }[]`, `side` | 3 header mechanisms (A5) incl. pink calendar icons; text "Close" buttons |
 | `FloatingAction` | `chrome/` (generalize `NativeSettingsFloatingAction`) | `icon`, `label`, `onPress`; renders `null` on iOS | `HomeAddFab`, `CalendarAddFab` (text-glyph "+", duplicated shadow) |
 | `NativeList`, `NativeListSection`, `NativeListRow`, `NativeListSwitchRow`, `NativeListChoiceRow`, `NativeListRadioDialog`, `NativeListAlert` | `chrome/` (rename of `native-settings.tsx` exports; `NativeSettings*` aliases kept) | unchanged contract | `SettingsRow`/`SettingsSection` adapters (delete after about + environment move over) |
-| `ListRow` (+ `ListSection`) | `components/` | `title`, `subtitle?`, `leading?: ReactNode` (icon / dot / logo), `trailing?: "chevron" \| "check" \| ReactNode`, `onPress` / `href`, `selected`, `destructive`; platform-adaptive geometry mirroring the seam (iOS inset-grouped with separators; Android M3 segment surfaces, no chevrons) | For virtualized or custom lists where SwiftUI/Compose lists cannot go (FlatList owners): timezone chooser rows, `SchoolRow`, `HiddenRow`, `ActivityItemRow`, personal-event `EventRow`, provider rows, `GroupNode` |
-| `Separator` | `components/` | `inset?: "none" \| "leading" \| number` | `RowSeparator`, hairline row borders (A10) |
-| `TextField` | `components/` | `label`, `value`, `onChangeText`, `error?`, `helper?`, `multiline?`, `secureTextEntry?`, all `TextInputProps` passthrough | `stepStyles.input`, feedback, iCal URL, personal-event fields, checklist input (A12); wires `FieldError` and `outline` |
-| `DateTimeField` | `components/` (promoted from personal-events, fixed) | `value`, `mode: "date" \| "time" \| "datetime"`, `zone`, `locale` | personal-events copy; Android chains date then time dialogs so `datetime` works |
-| `StatusView` | `components/` | `kind: "loading" \| "empty" \| "error"`, `presentation: "screen" \| "section" \| "inline"`, `title`, `caption?`, `action?`, `artwork?` | `EmptyState`, `ErrorState` (kept as thin aliases), `ListStatus`, `StatusSymbol`, `GuideLoading`, `ImportProgressView`, event-details status, plain-text empty states (A11). One spinner color rule: `textSecondary` for page/section, `onPrimary` inside filled buttons |
-| `ErrorNotice`, `FieldError` | `components/` | unchanged | — |
-| `Badge` | `components/` | `tone: "brand" \| "neutral" \| "positive" \| "informational" \| "destructive"`, `label`, `size` | header caption pill, checklist progress pill, calendar view pill (A14). `SwiftBadge` stays native |
-| `Icon` | `components/` | `name: IconName` where `IconName` keys a table of `{ sf: SFSymbol, material: MaterialSymbol }` (extends `chrome/native-settings-icons.ts`), `size: keyof IconSize`, `tone` | raw `SymbolView` in 11 files, unicode ↑ ↓ ×, "+" glyph, CSS-border chevron (A16); fixes Android icon gaps |
-| `ColorDot` | `components/` | `color: EventColor`, `size: "small" \| "medium" \| "large"`, decorative (hidden from a11y) | 5 dot/swatch implementations (A15) |
-| `EventSurface` | `components/` | `variant: "dot" \| "wash" \| "block"`, `eventColor`, children; resolves foreground via `onEventColor` | Home wash cards, agenda tiles, event-details swatch, `TagBubble` (A8). Owner decides whether agenda keeps a "block" rail |
+| `ListRow` (+ `ListSection`) | `design/` | `title`, `subtitle?`, `leading?: ReactNode` (icon / dot / logo), `trailing?: "chevron" \| "check" \| ReactNode`, `onPress` / `href`, `selected`, `destructive`; platform-adaptive geometry mirroring the seam (iOS inset-grouped with separators; Android M3 segment surfaces, no chevrons) | For virtualized or custom lists where SwiftUI/Compose lists cannot go (FlatList owners): timezone chooser rows, `SchoolRow`, `HiddenRow`, `ActivityItemRow`, personal-event `EventRow`, provider rows, `GroupNode` |
+| `Separator` | `design/` | `inset?: "none" \| "leading" \| number` | `RowSeparator`, hairline row borders (A10) |
+| `TextField` | `design/` | `label`, `value`, `onChangeText`, `error?`, `helper?`, `multiline?`, `secureTextEntry?`, all `TextInputProps` passthrough | `stepStyles.input`, feedback, iCal URL, personal-event fields, checklist input (A12); wires `FieldError` and `outline` |
+| `DateTimeField` | `design/` (promoted from personal-events, fixed) | `value`, `mode: "date" \| "time" \| "datetime"`, `zone`, `locale` | personal-events copy; Android chains date then time dialogs so `datetime` works |
+| `StatusView` | `design/` | `kind: "loading" \| "empty" \| "error"`, `presentation: "screen" \| "section" \| "inline"`, `title`, `caption?`, `action?`, `artwork?` | `EmptyState`, `ErrorState` (kept as thin aliases), `ListStatus`, `StatusSymbol`, `GuideLoading`, `ImportProgressView`, event-details status, plain-text empty states (A11). One spinner color rule: `textSecondary` for page/section, `onPrimary` inside filled buttons |
+| `ErrorNotice`, `FieldError` | `design/` | unchanged | — |
+| `Badge` | `design/` | `tone: "brand" \| "neutral" \| "positive" \| "informational" \| "destructive"`, `label`, `size` | header caption pill, checklist progress pill, calendar view pill (A14). `SwiftBadge` stays native |
+| `Icon` | `design/` | `name: IconName` where `IconName` keys a table of `{ sf: SFSymbol, material: MaterialSymbol }` (extends `chrome/native-settings-icons.ts`), `size: keyof IconSize`, `tone` | raw `SymbolView` in 11 files, unicode ↑ ↓ ×, "+" glyph, CSS-border chevron (A16); fixes Android icon gaps |
+| `ColorDot` | `design/` | `color: EventColor`, `size: "small" \| "medium" \| "large"`, decorative (hidden from a11y) | 5 dot/swatch implementations (A15) |
+| `EventSurface` | `design/` | `variant: "dot" \| "wash" \| "block"`, `eventColor`, children; resolves foreground via `onEventColor` | Home wash cards, agenda tiles, event-details swatch, `TagBubble` (A8). Owner decides whether agenda keeps a "block" rail |
 | `Card` | — | **Not proposed.** Grouped lists cover most uses ("Everything's a Card" slop tell). Re-evaluate only if `EventSurface` leaves a real second consumer. | — |
 | `Sheet` / chooser | — | **Not a component.** Pattern: Router `formSheet` (iOS) / `fullScreenModal` or native menu (Android), or `MenuView`. Lint bans RN `Modal` in feature UI. | `owned-calendar-chooser.tsx` custom Modal; environment 4-button `Alert` |
-| Page layout | `components/` (unchanged) | `RootPage`, `PageIntro`, `KeyboardSafeActionLayout`, `AdaptiveContent` | — |
+| Page layout | `design/layout/` | `RootPage`, `PageIntro`, `KeyboardSafeActionLayout`, `AdaptiveContent` | — |
 
 Not wrapped, used directly from chrome or RN: `Switch` (via `NativeListSwitchRow`),
 `DateTimePicker`, `Picker`, `MenuView`, `NativeTextEntryDialog`, `GlassSurface`, `NativeTabs`.
@@ -143,24 +143,31 @@ Not wrapped, used directly from chrome or RN: `Switch` (via `NativeListSwitchRow
 ## 3. Where it lives
 
 ```
-src/theme/                tokens.ts, typography.ts (new), responsive.ts, nav-theme.ts, use-theme.ts, index.ts
+src/theme/                tokens.ts, typography.ts (new), responsive.ts, nav-theme.ts, use-theme.ts, index.ts  (unchanged home, `@/theme`)
 src/components/chrome/    native/alpha-API seam: thin wrappers + composed native controls (ADR 010/056/060)
-src/components/           RN-built primitives + page layout, ONE public barrel: src/components/index.ts
-src/components/<name>/    a primitive that needs >1 file (e.g. status-view/, list-row/) keeps its *.gallery.tsx + test beside it
-src/gallery/              CSF3-shaped fixture types + explicit registry (see storybook-options.md)
+src/design/               the design system, ONE public barrel `@/design`
+src/design/<primitive>/   button/, text/, list-row/, text-field/, status-view/, icon/, badge/, color-dot/, event-surface/, separator/
+                          each: component, *.gallery.tsx fixture, *.test.tsx
+src/design/layout/        RootPage, PageIntro, KeyboardSafeActionLayout, AdaptiveContent (moved from components/)
+src/design/gallery/       CSF3-shaped fixture types + explicit registry (see storybook-options.md)
+src/components/           app shell only (app-tabs, route-structure test); shrinks as primitives move to design/
+src/features/developer/ui developer page (/developer): gallery entry + dev tools, dev and preview builds only
 src/features/<x>/ui/      product compositions only; no generic primitives
 ```
 
-Rejected: a new `src/design-system/` or `src/components/ds/` tree. It would create a second
-"shared UI" home next to `components/` that the golden path already names ("Put reusable
-primitives in `src/components/`"), forcing every existing import to move for no boundary gain.
-The barrel plus lint gives the same enforcement.
+The design system gets a dedicated `src/design/` folder (owner decision). Existing shared
+primitives (`ThemedText`, `PrimaryAction`, `EmptyState`, error surfaces, root-page layout) move
+there in phase 2 with `@/components/*` re-export shims removed once imports are migrated. Tokens
+stay in `src/theme/` because 300+ call sites and the nav-theme/scheme seams already import
+`@/theme`; `@/design` may re-export them for convenience. Native wrappers stay in
+`src/components/chrome/` because the chrome lint seam is path-scoped to that directory; design
+primitives consume chrome, never the alpha packages directly.
 
 Rule for the boundary (to write into theming.md):
 
 - Imports an alpha or native-UI API (SwiftUI/Compose via `@expo/ui`, native tabs, glass,
   `unstable_header*Items`) → `chrome/`.
-- Pure React Native, no product nouns, ≥ 2 consumers or about to have them → `components/`.
+- Pure React Native, no product nouns, ≥ 2 consumers or about to have them → `design/`.
 - Product nouns (school, checklist, changelog) → feature `ui/`, exported through the feature barrel
   when another feature consumes it.
 
@@ -172,7 +179,7 @@ Each item is a gate, not prose. Blocks follow the existing `eslint.config.js` sh
 | # | Gate | Mechanism | Scope / exemptions |
 | --- | --- | --- | --- |
 | L1 | `useColorScheme` and `Appearance` from `react-native` banned | `no-restricted-imports` `paths` + `importNames` | Exempt `src/hooks/use-color-scheme.ts` |
-| L2 | Features import shared UI only through `@/components` and `@/components/chrome` barrels | `no-restricted-imports` pattern `@/components/*` except `chrome` | `src/components/**` itself |
+| L2 | Features import shared UI only through the `@/design` and `@/components/chrome` barrels | `no-restricted-imports` patterns `@/design/*`, `@/components/*` except `chrome` | `src/design/**`, `src/components/**` |
 | L3 | Raw `TextInput`, `ActivityIndicator`, `Modal`, `TouchableOpacity`, `TouchableHighlight`, `Button`, `Text` from `react-native` banned in `src/features/*/ui/**` | `no-restricted-imports` `importNames` with messages naming the primitive | Ratchet allowlist of not-yet-migrated files (see below); `calendar/renderer/**` exempt (owned renderer) |
 | L4 | `SymbolView` / `expo-symbols` only in `components/icon*` and `chrome/` | `no-restricted-imports` | Same ratchet |
 | L5 | No color literals in styles | `local/no-style-literals` (new rule in `mobile/tools/eslint-rules/`): hex/`rgb()`/`hsl()`/named colors in `style`, `color`, `tintColor`, `*Color` props | Exempt `src/theme/**`, `color-swatch-presets.ts`, data fallback constants, `paging-spike/**` |
@@ -180,8 +187,8 @@ Each item is a gate, not prose. Blocks follow the existing `eslint.config.js` sh
 | L7 | No legacy `shadow*`/`elevation`; spacing/radius literals other than 0, 1, `hairlineWidth` | same rule, options | Ratchet |
 | L8 | `allowFontScaling={false}` banned | `no-restricted-syntax` (accessibility.md lists it as deferred debt; this discharges it) | none |
 | L9 | No `themeColor="primary"` / `tone` on text below large size | Type: `ThemedText` `tone` union has no `"brand"`; brand text is `tone="action"` | type-level, no exemption |
-| L10 | Every `components/**` primitive has a gallery fixture and a test | Jest contract test that globs `src/components/**/*.tsx` exports and asserts a matching `*.gallery.tsx` (CSF3-shaped, see [storybook-options.md](./storybook-options.md#recommendation)) and `*.test.tsx` | Helpers listed explicitly |
-| L11 | Every fixture renders in light + dark on iOS + Android without errors | `src/gallery/registry.test.ts` renders every registered story under each scheme and `Platform.OS` | — |
+| L10 | Every `design/**` primitive has a gallery fixture and a test | Jest contract test that globs `src/design/**/*.tsx` exports and asserts a matching `*.gallery.tsx` (CSF3-shaped, see [storybook-options.md](./storybook-options.md#recommendation)) and `*.test.tsx` | Helpers listed explicitly |
+| L11 | Every fixture renders in light + dark on iOS + Android without errors | `src/design/gallery/registry.test.ts` renders every registered story under each scheme and `Platform.OS` | — |
 
 **Ratchet, not big bang.** L3/L4/L7 start as `error` with an explicit per-file allowlist array in
 `eslint.config.js` (the not-yet-migrated files, generated once). A test asserts the list only
