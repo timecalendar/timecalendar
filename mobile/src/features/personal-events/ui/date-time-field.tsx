@@ -1,4 +1,5 @@
 import { fromZonedTime, toZonedTime } from "date-fns-tz"
+import { useCalendars } from "expo-localization"
 import { useState } from "react"
 import { Platform, Pressable, StyleSheet } from "react-native"
 
@@ -20,7 +21,8 @@ import { dateDialogValue, mergePickedDay } from "./wall-clock-day"
 // date and a time together. The field is a small tappable row showing the
 // current value; a tap opens the native date dialog, then the native time
 // dialog, and the two commit together as one wall clock. Cancelling either
-// dialog leaves the value unchanged. Each dialog opens on mount (the @expo/ui
+// dialog leaves the value unchanged. The time dialog follows the device's
+// 12/24-hour setting. Each dialog opens on mount (the @expo/ui
 // Android contract), so only the current step's picker is mounted, under its
 // own key so Compose never reuses the closed dialog.
 //
@@ -55,6 +57,7 @@ export function DateTimeField({
   const theme = useTheme()
   const [step, setStep] = useState<AndroidStep>({ kind: "closed" })
   const wallClock = toZonedTime(value, zone)
+  const is24Hour = useCalendars()[0]?.uses24hourClock ?? undefined
 
   if (Platform.OS !== "android") {
     return (
@@ -85,10 +88,11 @@ export function DateTimeField({
           presentation="dialog"
           value={dateDialogValue(wallClock)}
           onValueChange={(_event, day) =>
-            setStep({
-              kind: "time",
-              pending: mergePickedDay(wallClock, day),
-            })
+            setStep(
+              isPickedDate(day)
+                ? { kind: "time", pending: mergePickedDay(wallClock, day) }
+                : { kind: "closed" },
+            )
           }
           onDismiss={() => setStep({ kind: "closed" })}
         />
@@ -99,15 +103,23 @@ export function DateTimeField({
           mode="time"
           presentation="dialog"
           value={step.pending}
+          {...(is24Hour !== undefined ? { is24Hour } : {})}
           onValueChange={(_event, date) => {
             setStep({ kind: "closed" })
-            onChange(fromZonedTime(date, zone))
+            if (isPickedDate(date)) onChange(fromZonedTime(date, zone))
           }}
           onDismiss={() => setStep({ kind: "closed" })}
         />
       )}
     </>
   )
+}
+
+// The Compose dialogs can confirm with no selection, surfacing an invalid or
+// epoch Date; treat that as a cancel rather than committing 1970.
+function isPickedDate(date: Date): boolean {
+  const time = date.getTime()
+  return Number.isFinite(time) && time !== 0
 }
 
 const styles = StyleSheet.create({

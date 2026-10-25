@@ -34,10 +34,16 @@ describe.each(["ios", "android"] as const)("StatusSymbol on %s", (os) => {
       name: { ios: "magnifyingglass", android: "search" },
       size: 40,
       tintColor: Colors.light.textSecondary,
+    })
+    const wrapper = screen.getByTestId("status-symbol", {
+      includeHiddenElements: true,
+    })
+    expect(wrapper.props).toMatchObject({
       accessible: false,
       accessibilityElementsHidden: true,
       importantForAccessibility: "no-hide-descendants",
     })
+    expect(screen.queryByTestId("status-symbol")).toBeNull()
     expect(screen.getByText("No schools match")).toBeTruthy()
   })
 })

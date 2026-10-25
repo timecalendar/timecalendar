@@ -15,6 +15,7 @@ fail per line in the PR or below.
      **and** time.
    - Cancel in the date dialog: the field is unchanged.
    - Pick a day, then Cancel in the time dialog: the field is unchanged (the day did **not** change).
+   - With the device set to 12-hour time, the time dialog shows AM/PM; with 24-hour, it does not.
    - Settings → Time zone → pick a zone far from the device (for example Pacific/Noumea). Repeat
      the commit. The field shows the picked day and time in that zone, and the saved event appears
      at that time in Calendar.
@@ -33,6 +34,17 @@ fail per line in the PR or below.
    details opened from Calendar). Focus the back button with VoiceOver: it reads "Back" (EN) /
    "Retour" (FR), never "(tabs)". The chevron shows no text. A long press on the back button lists
    "Back" / "Retour".
+
+## Follow-ups outside this change
+
+- **Onboarding back label likely reads "index".** `mobile/src/app/onboarding/_layout.tsx:28`
+  registers the nested `index` screen without a `title`. With the minimal back display, VoiceOver
+  probably reads the School screen's back button as "index". Same fix shape as the `(tabs)`
+  anchor (`title: t("common.back")`), with its own route-structure assertion.
+- **DST-dependent Calendar test.** `calendar-screen.test.tsx › runs the deterministic
+accessibility fixture only on the development route` fails under `TZ=Europe/Paris` on the
+  DST-end day 2026-10-25 and passes under `TZ=UTC`. The test should pin its clock and zone so it
+  does not depend on the machine date.
 
 ## Why
 

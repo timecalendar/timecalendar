@@ -1,5 +1,6 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
 import { fromZonedTime, toZonedTime } from "date-fns-tz"
+import * as Localization from "expo-localization"
 
 import { formatShortDateTime } from "@/features/calendar/data"
 import { usePlatform } from "@/test-support/platform"
@@ -33,8 +34,9 @@ jest.mock("@expo/ui/community/datetime-picker", () => {
     value: Date
     onValueChange?: (event: unknown, date: Date) => void
     onDismiss?: () => void
+    is24Hour?: boolean
   }) {
-    const { testID, mode, value, onValueChange, onDismiss } = props
+    const { testID, mode, value, onValueChange, onDismiss, is24Hour } = props
     return React.createElement(
       View,
       null,
@@ -54,6 +56,27 @@ jest.mock("@expo/ui/community/datetime-picker", () => {
         testID: `${mode}-dismiss`,
         onPress: () => onDismiss?.(),
       }),
+      React.createElement(Pressable, {
+        testID: `${mode}-confirm-invalid`,
+        onPress: () =>
+          onValueChange?.(
+            { nativeEvent: { timestamp: 0, utcOffset: 0 } },
+            new Date(NaN),
+          ),
+      }),
+      React.createElement(Pressable, {
+        testID: `${mode}-confirm-epoch`,
+        onPress: () =>
+          onValueChange?.(
+            { nativeEvent: { timestamp: 0, utcOffset: 0 } },
+            new Date(0),
+          ),
+      }),
+      React.createElement(
+        Text,
+        { testID: `${mode}-is24Hour` },
+        String(is24Hour),
+      ),
     )
   }
 
@@ -64,6 +87,16 @@ const FIXED = new Date("2030-01-02T03:04:00.000Z")
 const INITIAL = new Date("2026-01-01T00:00:00.000Z")
 const DEVICE_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone
 const NOUMEA = "Pacific/Noumea"
+
+const mockUseCalendars = jest.spyOn(Localization, "useCalendars")
+
+function deviceClock(uses24hourClock: boolean | null) {
+  mockUseCalendars.mockReturnValue([
+    { calendar: "gregory", uses24hourClock, firstWeekday: 1, timeZone: null },
+  ] as unknown as ReturnType<typeof Localization.useCalendars>)
+}
+
+beforeEach(() => deviceClock(true))
 
 describe("feature-owned DateTimeField", () => {
   it("renders the inline picker on iOS and reports its change (identity under the device zone)", async () => {
@@ -174,6 +207,46 @@ describe("feature-owned DateTimeField", () => {
       )
       expectClosed(queryByTestId)
     })
+
+    it.each([
+      ["date", "invalid"],
+      ["date", "epoch"],
+      ["time", "invalid"],
+      ["time", "epoch"],
+    ])(
+      "ignores an %s dialog confirming an %s date",
+      async (emptyStep, kind) => {
+        const { getByTestId, queryByTestId, onChange, press } =
+          await renderField()
+
+        await press("field")
+        if (emptyStep === "time") await press("date-confirm")
+        await press(`${emptyStep}-confirm-${kind}`)
+
+        expect(onChange).not.toHaveBeenCalled()
+        expectClosed(queryByTestId)
+
+        await press("field")
+        expect(getByTestId("date-confirm")).toBeTruthy()
+      },
+    )
+
+    it.each([
+      [true, "true"],
+      [false, "false"],
+      [null, "undefined"],
+    ])(
+      "opens the time dialog with the device clock (uses24hourClock %s)",
+      async (uses24hourClock, expected) => {
+        deviceClock(uses24hourClock)
+        const { getByTestId, press } = await renderField()
+
+        await press("field")
+        await press("date-confirm")
+
+        expect(getByTestId("time-is24Hour")).toHaveTextContent(expected)
+      },
+    )
 
     it.each(["date", "time"])(
       "cancelling at the %s step leaves the value unchanged and reopens",

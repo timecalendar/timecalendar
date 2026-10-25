@@ -39,6 +39,13 @@
 - [ ] 7.4 Owner Android device checks: the two-step date/time flow (commit, cancel at each step, a non-device display zone), the school-picker glyphs, the environment radio dialog with the development capability, and the Calendar header tint in both schemes. (HUMAN: see inbox/2026-10-25-mobile-ui-defect-fixes-device-checks.md)
 - [ ] 7.5 Owner VoiceOver check on physical iPhone of the tab-pushed back-button label (only if 5.3 could not run on a simulator; otherwise check with the simulator result noted). (HUMAN: see inbox/2026-10-25-mobile-ui-defect-fixes-device-checks.md)
 
+## 7b. Review round 1 fixes
+
+- [x] 7b.1 Wrap the decorative `SymbolView` in `StatusSymbol` and `ErrorState` in a host `View` carrying `accessible={false}`, `accessibilityElementsHidden` and `importantForAccessibility="no-hide-descendants"` (expo-symbols' Android fallback drops those props); assert them on the rendered wrapper in `status-symbol.test.tsx`.
+- [x] 7b.2 Add `src/theme/brand-small-text.test.ts`, a source scan failing on any non-test element under `mobile/src/` pairing `type="smallBold"` with `themeColor="primary"`; link it from `theming.md` and the CHANGELOG entry.
+- [x] 7b.3 Android `DateTimeField`: pass the device `uses24hourClock` to the time dialog and treat an invalid or epoch dialog result as a cancel; test both.
+- [x] 7b.4 Record the onboarding `index` back-label and the DST-dependent Calendar test follow-ups in the inbox note.
+
 ## 8. Local verification and CI proof
 
 - [x] 8.1 In `mobile/`: run `npm test -- --coverage` (the CI per-file 90% branch gate, not plain `npm test`), `npx tsc --noEmit` and `npm run lint`. All must pass with zero warnings. Do not lower any coverage threshold.
