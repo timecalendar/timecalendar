@@ -2,7 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change add-mobile-onboarding-flow. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: A native-default brand/welcome surface is the onboarding entry, in its own presentation-only feature folder
 The app SHALL provide a three-page native onboarding carousel as the entry of the onboarding flow, implemented as focused modules in the presentation-only `mobile/src/features/onboarding/ui/` sublayer with no `data/`, `store/`, or `form/` sublayer. No welcome-screen component SHALL materially exceed 200 lines. Pages SHALL appear in the fixed order welcome → agenda → notifications and render the approved localized title/body plus mapped decorative illustration. The screen SHALL use React Native/shared components, `@/theme`, `expo-router`, `expo-image`, `expo-symbols`, `react-native-pager-view`, Reanimated, and i18n without importing school-selection internals or its own feature barrel.
 
@@ -359,3 +361,21 @@ needed to reach them.
 - **THEN** no calendar create action is enabled from that history
 - **AND** recovery starts at School because the ephemeral draft and completion no longer exist
 
+### Requirement: Welcome pages never clip their copy
+
+Each onboarding welcome page SHALL let its content size itself: the content SHALL be centered when it fits the page and SHALL scroll vertically when it does not, without blocking horizontal paging. At accessibility text sizes the decorative illustration SHALL take half its default height. Page titles SHALL cap their font scale with the shared brand-text cap, so the brand word never breaks off a character.
+
+#### Scenario: Copy taller than the page scrolls
+
+- **WHEN** a welcome page renders at iOS AX5
+- **THEN** its title and body are inside a vertical scroll container and no text is clipped by the page height
+
+#### Scenario: The illustration yields at accessibility sizes
+
+- **WHEN** the welcome screen renders at an accessibility text size
+- **THEN** each page's illustration height is half the height it has at the default text size
+
+#### Scenario: Titles cap their scale
+
+- **WHEN** any welcome page title renders
+- **THEN** its font scale multiplier is capped by the shared brand-text cap
