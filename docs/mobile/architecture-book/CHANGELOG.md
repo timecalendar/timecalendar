@@ -10,8 +10,7 @@
   its Backend section and the dialog after the native host, proven on Android by
   `features/developer/ui/developer-screen.test.tsx`.
 - `lint-format.md`, `navigation.md`: the `banDeveloperTools` lint ban names those three exports,
-  so only `src/features/developer/**` (and the environment feature) mounts the selector. The Android personal-event date/time
-  field's accessible name is "label, value".
+  so only `src/features/developer/**` (and the environment feature) mounts the selector.
 - `accessibility.md`: Home's section titles are `sectionTitle` headers in the populated and empty
   states; the Android date/time field announces its label and value.
 
