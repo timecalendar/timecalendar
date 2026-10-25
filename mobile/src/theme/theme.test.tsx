@@ -110,141 +110,53 @@ function contrastRatio(foreground: string, background: string) {
   return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
 }
 
-type ContrastPair = {
-  scheme: keyof typeof Colors
-  foreground: ThemeColor
-  background: ThemeColor
-  floor: "body" | "ui"
+type Floor = "body" | "ui"
+type Pair = [foreground: ThemeColor, background: ThemeColor, floor: Floor]
+
+const bothSchemes: Pair[] = [
+  ["text", "background", "body"],
+  ["text", "backgroundElement", "body"],
+  ["text", "backgroundSelected", "body"],
+  ["textSecondary", "background", "body"],
+  ["textSecondary", "backgroundElement", "body"],
+  ["text", "homeHero", "body"],
+  ["homeHeroDate", "homeHero", "body"],
+  ["onPrimary", "primaryStrong", "body"],
+  ["primaryStrong", "background", "ui"],
+  ["actionText", "background", "body"],
+  ["error", "background", "body"],
+  ["error", "backgroundElement", "body"],
+  ["destructive", "backgroundElement", "ui"],
+  ["positive", "background", "body"],
+  ["positive", "backgroundElement", "body"],
+  ["informational", "background", "body"],
+  ["informational", "backgroundElement", "body"],
+  ["outline", "background", "ui"],
+  ["outline", "backgroundElement", "ui"],
+  ["outline", "backgroundSelected", "ui"],
+]
+
+const perScheme: Record<keyof typeof Colors, Pair[]> = {
+  light: [
+    ["primary", "background", "ui"],
+    ["onPrimary", "primary", "ui"],
+  ],
+  dark: [
+    ["primary", "background", "body"],
+    ["logoSurface", "background", "ui"],
+  ],
 }
 
-const documentedPairs: ContrastPair[] = [
-  ...(["light", "dark"] as const).flatMap((scheme): ContrastPair[] => [
-    { scheme, foreground: "text", background: "background", floor: "body" },
-    {
+const documentedPairs = (["light", "dark"] as const).flatMap((scheme) =>
+  [...bothSchemes, ...perScheme[scheme]].map(
+    ([foreground, background, floor]) => ({
       scheme,
-      foreground: "text",
-      background: "backgroundElement",
-      floor: "body",
-    },
-    {
-      scheme,
-      foreground: "text",
-      background: "backgroundSelected",
-      floor: "body",
-    },
-    {
-      scheme,
-      foreground: "textSecondary",
-      background: "background",
-      floor: "body",
-    },
-    {
-      scheme,
-      foreground: "textSecondary",
-      background: "backgroundElement",
-      floor: "body",
-    },
-    { scheme, foreground: "text", background: "homeHero", floor: "body" },
-    {
-      scheme,
-      foreground: "homeHeroDate",
-      background: "homeHero",
-      floor: "body",
-    },
-    {
-      scheme,
-      foreground: "onPrimary",
-      background: "primaryStrong",
-      floor: "body",
-    },
-    {
-      scheme,
-      foreground: "primaryStrong",
-      background: "background",
-      floor: "ui",
-    },
-    {
-      scheme,
-      foreground: "actionText",
-      background: "background",
-      floor: "body",
-    },
-    { scheme, foreground: "error", background: "background", floor: "body" },
-    {
-      scheme,
-      foreground: "error",
-      background: "backgroundElement",
-      floor: "body",
-    },
-    {
-      scheme,
-      foreground: "destructive",
-      background: "backgroundElement",
-      floor: "ui",
-    },
-    {
-      scheme,
-      foreground: "positive",
-      background: "background",
-      floor: "body",
-    },
-    {
-      scheme,
-      foreground: "positive",
-      background: "backgroundElement",
-      floor: "body",
-    },
-    {
-      scheme,
-      foreground: "informational",
-      background: "background",
-      floor: "body",
-    },
-    {
-      scheme,
-      foreground: "informational",
-      background: "backgroundElement",
-      floor: "body",
-    },
-    { scheme, foreground: "outline", background: "background", floor: "ui" },
-    {
-      scheme,
-      foreground: "outline",
-      background: "backgroundElement",
-      floor: "ui",
-    },
-    {
-      scheme,
-      foreground: "outline",
-      background: "backgroundSelected",
-      floor: "ui",
-    },
-  ]),
-  {
-    scheme: "light",
-    foreground: "primary",
-    background: "background",
-    floor: "ui",
-  },
-  {
-    scheme: "light",
-    foreground: "onPrimary",
-    background: "primary",
-    floor: "ui",
-  },
-  {
-    scheme: "dark",
-    foreground: "primary",
-    background: "background",
-    floor: "body",
-  },
-  {
-    scheme: "dark",
-    foreground: "logoSurface",
-    background: "background",
-    floor: "ui",
-  },
-]
+      foreground,
+      background,
+      floor,
+    }),
+  ),
+)
 
 const floorRatio = { body: 4.5, ui: 3 } as const
 
