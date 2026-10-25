@@ -15,6 +15,8 @@ import {
   useEnvironmentSelector,
 } from "@/features/environment"
 
+import { isDeveloperSurfaceEnabled } from "./developer-access"
+
 // Static declarations keep the selectors discoverable by the Maestro source
 // guard while the chrome contract passes them to either native toolkit.
 const devImportDialogSelectors = {
@@ -39,9 +41,7 @@ export function DeveloperScreen() {
   const [token, setToken] = useState("")
   const environmentSelector = useEnvironmentSelector()
 
-  if (environmentSelector.capability === "production") {
-    return <Redirect href="/settings" />
-  }
+  if (!isDeveloperSurfaceEnabled()) return <Redirect href="/settings" />
 
   const openImport = () => {
     setToken("")
@@ -86,7 +86,7 @@ export function DeveloperScreen() {
         >
           <NativeSettingsRow
             kind="navigation"
-            href="/settings-gallery"
+            href="/developer/gallery"
             label={t("developer.gallery.label")}
             hint={t("developer.gallery.hint")}
             icon={{ ios: "square.grid.2x2", android: "grid_view" }}

@@ -76,15 +76,6 @@ describe("Settings route structure", () => {
     expect(layout).toContain('title: t("settingsHub.title")')
   })
 
-  it("keeps the dev-only Settings gallery as a thin root destination", () => {
-    expect(route("settings-gallery.tsx").trim()).toBe(
-      'export { SettingsGalleryScreen as default } from "@/features/settings/ui"',
-    )
-    expect(route("_layout.tsx")).toContain(
-      '<Stack.Screen name="settings-gallery" />',
-    )
-  })
-
   it("keeps the developer page as a thin titled root destination", () => {
     expect(route("developer.tsx").trim()).toBe(
       'export { DeveloperScreen as default } from "@/features/developer/ui"',
@@ -93,6 +84,36 @@ describe("Settings route structure", () => {
     expect(route("../features/developer/ui/developer-screen.tsx")).toContain(
       'title: t("developer.title")',
     )
+  })
+
+  it("keeps the component gallery as layout-less thin root destinations", () => {
+    expect(route("developer/gallery.tsx").trim()).toBe(
+      'export { GalleryIndexScreen as default } from "@/features/developer/ui"',
+    )
+    expect(route("developer/gallery/[story].tsx").trim()).toBe(
+      'export { GalleryStoryScreen as default } from "@/features/developer/ui"',
+    )
+    const rootLayout = route("_layout.tsx")
+    expect(rootLayout).toContain('<Stack.Screen name="developer/gallery" />')
+    expect(rootLayout).toContain(
+      '<Stack.Screen name="developer/gallery/[story]" />',
+    )
+    expect(
+      route("../features/developer/ui/gallery-index-screen.tsx"),
+    ).toContain('title: t("gallery.title")')
+    expect(
+      route("../features/developer/ui/gallery-story-screen.tsx"),
+    ).toContain("title: t(entry.name)")
+    const developerEntries = readdirSync(
+      resolve(process.cwd(), "src/app/developer"),
+      { withFileTypes: true },
+    ).map((entry) => entry.name)
+    expect(developerEntries).not.toContain("_layout.tsx")
+    const galleryEntries = readdirSync(
+      resolve(process.cwd(), "src/app/developer/gallery"),
+      { withFileTypes: true },
+    ).map((entry) => entry.name)
+    expect(galleryEntries).toEqual(["[story].tsx"])
   })
 
   it("redirects legacy Profile and More routes to canonical Settings", () => {

@@ -584,6 +584,25 @@ jest.mock("@expo/ui/jetpack-compose", () => {
     DismissButton: Slot,
     Icon: Slot,
   })
+  function TextFieldLabel({ children }: { children?: unknown }) {
+    return React.createElement(React.Fragment, null, children)
+  }
+  const textOf = (node: unknown): string => {
+    if (typeof node === "string") return node
+    if (Array.isArray(node)) return node.map(textOf).join("")
+    return React.isValidElement(node)
+      ? textOf((node as { props: { children?: unknown } }).props.children)
+      : ""
+  }
+  // Compose announces the Label slot as the field's name.
+  const fieldLabel = (children: unknown) =>
+    textOf(
+      React.Children.toArray(children).filter(
+        (child: unknown) =>
+          React.isValidElement(child) &&
+          (child as { type: unknown }).type === TextFieldLabel,
+      ),
+    ) || undefined
   function OutlinedTextField(props: {
     value: { get: () => string; set: (value: string) => void }
     enabled?: boolean
@@ -606,6 +625,7 @@ jest.mock("@expo/ui/jetpack-compose", () => {
       React.createElement(TextInput, {
         testID: testID(props.modifiers),
         value,
+        accessibilityLabel: fieldLabel(props.children),
         editable: props.enabled,
         keyboardType: props.keyboardOptions?.keyboardType,
         returnKeyType: props.keyboardOptions?.imeAction,
@@ -624,7 +644,7 @@ jest.mock("@expo/ui/jetpack-compose", () => {
     )
   }
   Object.assign(OutlinedTextField, {
-    Label: Slot,
+    Label: TextFieldLabel,
     Placeholder: Slot,
     LeadingIcon: Slot,
     TrailingIcon: Slot,
@@ -693,14 +713,18 @@ jest.mock("@expo/ui/jetpack-compose", () => {
       padding: modifierOf(modifiers, "padding"),
     }
   }
+  // A Compose node without a click/select/toggle modifier is not a control,
+  // so it renders as a plain View rather than an activatable Pressable.
+  const hostFor = (onPress: unknown) => (onPress ? Pressable : View)
   function Row(props: {
     children?: unknown
     modifiers?: { $type: string; value: unknown }[]
   }) {
+    const semantics = selectableProps(props.modifiers)
     return React.createElement(
-      Pressable,
+      hostFor(semantics.onPress),
       {
-        ...selectableProps(props.modifiers),
+        ...semantics,
         minSize: modifierOf(props.modifiers, "defaultMinSize"),
       },
       props.children,
@@ -758,9 +782,10 @@ jest.mock("@expo/ui/jetpack-compose", () => {
     colors?: unknown
     modifiers?: { $type: string; value: unknown }[]
   }) {
+    const semantics = selectableProps(props.modifiers)
     return React.createElement(
-      Pressable,
-      { ...selectableProps(props.modifiers), colors: props.colors },
+      hostFor(semantics.onPress),
+      { ...semantics, colors: props.colors },
       props.children,
     )
   }

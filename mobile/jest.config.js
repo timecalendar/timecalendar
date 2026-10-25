@@ -128,5 +128,6 @@ module.exports = {
     "src/i18n/**": { lines: 90, branches: 90 },
     "src/firebase/**": { lines: 90, branches: 90 },
     "src/theme/**": { lines: 90, branches: 90 },
+    "src/design/gallery/*.ts": { lines: 90, branches: 90 },
   },
 }

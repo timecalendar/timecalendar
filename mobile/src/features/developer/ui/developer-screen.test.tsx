@@ -117,10 +117,10 @@ describe.each(["ios", "android"] as const)(
       expect(screen.getByTestId("developer-gallery")).toBeOnTheScreen()
     })
 
-    it("opens the settings gallery", async () => {
+    it("opens the component gallery", async () => {
       await render(<DeveloperScreen />)
       await press("developer-gallery")
-      expect(mockPush).toHaveBeenCalledWith("/settings-gallery")
+      expect(mockPush).toHaveBeenCalledWith("/developer/gallery")
     })
 
     it("imports a trimmed token and closes the dialog", async () => {

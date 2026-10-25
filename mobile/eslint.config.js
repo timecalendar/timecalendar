@@ -174,6 +174,12 @@ const developerToolsDeepImportPattern = {
   message: developerToolsImportPath.message,
 }
 
+const designDeepImportPattern = {
+  regex: "^@/design/",
+  message:
+    "Import the design system through the @/design barrel (design-system-proposal §3, lint-format.md → Design layer).",
+}
+
 // Route files are entrypoints, not modules. Named (rather than inlined in the
 // block that applies it) because several blocks re-include it: any block that
 // re-sets `no-restricted-imports` for files under src/ has to carry it forward,
@@ -212,6 +218,7 @@ const restrictedImports = (
     banExportGuideSeam = true,
     banDeviceColorScheme = true,
     banDeveloperTools = true,
+    banDesignDeepImports = true,
   } = {},
 ) => [
   "error",
@@ -224,6 +231,7 @@ const restrictedImports = (
       ...(banExportGuideSeam ? [exportGuideClientImportPattern] : []),
       ...(banDeviceColorScheme ? [deviceColorSchemeDeepImportPattern] : []),
       ...(banDeveloperTools ? [developerToolsDeepImportPattern] : []),
+      ...(banDesignDeepImports ? [designDeepImportPattern] : []),
       ...extraPatterns,
     ],
     paths: [
@@ -349,6 +357,17 @@ module.exports = defineConfig([
       "no-restricted-imports": restrictedImports(
         [routeEntrypointImportPattern],
         { banDeveloperTools: false },
+      ),
+    },
+  },
+  {
+    // Re-includes the route-entrypoint pattern for the same reason as above.
+    name: "timecalendar/design-home",
+    files: ["src/design/**"],
+    rules: {
+      "no-restricted-imports": restrictedImports(
+        [routeEntrypointImportPattern],
+        { banDesignDeepImports: false },
       ),
     },
   },
@@ -523,6 +542,7 @@ module.exports = defineConfig([
         { type: "db-seam", pattern: "src/db", mode: "folder" },
         { type: "route", pattern: "src/app", mode: "folder" },
         { type: "component", pattern: "src/components", mode: "folder" },
+        { type: "design", pattern: "src/design", mode: "folder" },
         {
           type: "infra-color-scheme",
           pattern: "src/hooks/use-color-scheme.*",
@@ -574,6 +594,23 @@ module.exports = defineConfig([
               // (db/index — operators / tables / useLiveQuery), which stays B-3-banned.
               from: { type: "route" },
               allow: { to: { type: "db-seam", internalPath: "migrate.*" } },
+            },
+            {
+              // B-7: the design layer never knows a product feature or a route.
+              from: { type: "design" },
+              disallow: {
+                to: {
+                  type: [
+                    "feature-sublayer",
+                    "feature-barrel",
+                    "route",
+                    "generated-api",
+                    "db-seam",
+                  ],
+                },
+              },
+              message:
+                "B-7: src/design/ may not import features, routes, @/api/generated or @/db — it consumes @/theme, @/components/chrome, @/i18n and @/hooks only (lint-format.md → Design layer).",
             },
             {
               // B-2 (no cycle): a sublayer may not import ITS OWN feature barrel.

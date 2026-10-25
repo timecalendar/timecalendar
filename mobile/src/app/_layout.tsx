@@ -152,8 +152,9 @@ export default function RootLayout() {
                   />
                   <Stack.Screen name="appearance-settings" />
                   <Stack.Screen name="language-settings" />
-                  <Stack.Screen name="settings-gallery" />
                   <Stack.Screen name="developer" />
+                  <Stack.Screen name="developer/gallery" />
+                  <Stack.Screen name="developer/gallery/[story]" />
                   <Stack.Screen name="about" />
                   <Stack.Screen name="changelog" />
                   <Stack.Screen
