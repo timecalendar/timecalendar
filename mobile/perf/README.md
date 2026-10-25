@@ -144,8 +144,8 @@ and package paths that the disclosure scan rejects.
 - `main-40eb2241`: the same Calendar and data at 40eb2241 with the 30° diagonal starting from rest.
   Its probe found no label; `main-40eb2241-landing` repeats the swipe scenarios with
   `--probe owned-calendar-canvas` for the landed weeks.
-- `spike-d5038fad-snap`, `spike-d5038fad-paging`, `spike-d5038fad-small-k`: the dev-only paging
-  spike (`/dev-paging-spike`, fixture weeks) with Android `snapToInterval`, with `pagingEnabled`,
+- `spike-d5038fad-snap`, `spike-d5038fad-paging`, `spike-d5038fad-small-k`: captured from the E02
+  paging spike at `d5038fad` over fixture weeks, with Android `snapToInterval`, with `pagingEnabled`,
   and with ±8 pages of content so swipe chains re-base. Read with
   `docs/perf/E02-spike-evidence.md`.
 - `t08-d569f309`: the production Calendar on the windowed native ScrollView (E04 T08), same
