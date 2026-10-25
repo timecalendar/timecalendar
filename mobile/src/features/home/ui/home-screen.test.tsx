@@ -11,7 +11,12 @@ import { Platform, StyleSheet } from "react-native"
 
 import { useCalendarEvents, useSyncCalendars } from "@/features/calendar/data"
 import { useChecklistProgress } from "@/features/event-checklists"
-import { Colors, resolveResponsiveLayout, TypeRamp } from "@/theme"
+import {
+  Colors,
+  resolveResponsiveLayout,
+  TypeRamp,
+  WordmarkMaxFontScale,
+} from "@/theme"
 
 import { HomeScreen } from "./home-screen"
 
@@ -149,7 +154,13 @@ describe("HomeScreen", () => {
 
   it("renders the app-name heading and the empty-day state when there are no events", async () => {
     await render(<HomeScreen />)
-    expect(screen.getByText("TimeCalendar")).toBeTruthy()
+    const appName = screen.getByRole("header", { name: "TimeCalendar" })
+    expect(appName.props.numberOfLines).toBe(1)
+    expect(appName.props.maxFontSizeMultiplier).toBe(WordmarkMaxFontScale)
+    expect(WordmarkMaxFontScale).toBe(1.5)
+    const appNameStyle = StyleSheet.flatten(appName.props.style)
+    expect(appNameStyle).toMatchObject(TypeRamp.title2.style)
+    expect(appNameStyle.fontSize).not.toBe(21)
     const upcoming = screen.getByTestId("home-upcoming-empty")
     const today = screen.getByTestId("home-today-empty")
     expect(upcoming.props.accessibilityLiveRegion).toBe("polite")

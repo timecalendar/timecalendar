@@ -1,8 +1,8 @@
-import { SymbolView } from "expo-symbols"
 import { useTranslation } from "react-i18next"
 import { Platform, Pressable, StyleSheet } from "react-native"
 
 import { AdaptiveContent } from "@/components/adaptive-content"
+import { Icon } from "@/components/icon"
 import { ThemedText } from "@/components/themed-text"
 import { Radii, Spacing, useTheme } from "@/theme"
 
@@ -78,15 +78,12 @@ export function WelcomeFooter({
           <ThemedText type="smallBold" themeColor="actionText">
             {t("onboarding.next")}
           </ThemedText>
-          <SymbolView
-            name={{
-              ios: "arrow.forward",
-              android: "arrow_forward",
-              web: "arrow_forward",
-            }}
-            tintColor={theme.primary}
+          <Icon
+            ios="arrow.forward"
+            android="arrow_forward"
+            color={theme.primary}
             size={20}
-            accessible={false}
+            scaling="text"
           />
         </Pressable>
       )}

@@ -16,12 +16,6 @@ jest.mock("expo-router", () => ({
   router: { dismiss: jest.fn() },
   Stack: { Screen: jest.fn(() => null) },
 }))
-jest.mock("expo-symbols", () => ({
-  SymbolView: ({ name }: { name: unknown }) => {
-    const { View } = jest.requireActual("react-native")
-    return <View testID={`symbol-${JSON.stringify(name)}`} />
-  },
-}))
 jest.mock("@/features/changelog/store", () => ({
   getChangelogSeenVersion: jest.fn(),
   setChangelogSeenVersion: jest.fn(),

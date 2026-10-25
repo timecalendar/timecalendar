@@ -1,10 +1,10 @@
 import { Image } from "expo-image"
 import { useTranslation } from "react-i18next"
-import { StyleSheet, View } from "react-native"
+import { ScrollView, StyleSheet, View } from "react-native"
 
 import { AdaptiveContent } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
-import { Radii, Spacing } from "@/theme"
+import { Radii, Spacing, WordmarkMaxFontScale } from "@/theme"
 
 import { type WelcomePageDescriptor } from "./welcome-page-catalog"
 
@@ -23,39 +23,49 @@ export function WelcomePage({
 
   return (
     <View collapsable={false} style={styles.page}>
-      <AdaptiveContent
-        testID={`onboarding-page-content-${page.id}`}
-        lane="readable"
-        contentContainerStyle={styles.pageContent}
+      <ScrollView
+        testID={`onboarding-page-scroll-${page.id}`}
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
       >
-        <View
-          accessible={false}
-          importantForAccessibility="no-hide-descendants"
-          style={[
-            styles.illustrationCard,
-            {
-              backgroundColor: illustrationBackgroundColor,
-              height: illustrationHeight,
-            },
-          ]}
+        <AdaptiveContent
+          testID={`onboarding-page-content-${page.id}`}
+          lane="readable"
+          contentContainerStyle={styles.pageContent}
         >
-          <Image
-            testID={`onboarding-illustration-${page.id}`}
-            source={page.source}
-            contentFit="contain"
+          <View
             accessible={false}
-            style={styles.illustration}
-          />
-        </View>
-        <View style={styles.copy}>
-          <ThemedText type="title" style={styles.centeredText}>
-            {t(page.titleKey)}
-          </ThemedText>
-          <ThemedText themeColor="textSecondary" style={styles.centeredText}>
-            {t(page.bodyKey)}
-          </ThemedText>
-        </View>
-      </AdaptiveContent>
+            importantForAccessibility="no-hide-descendants"
+            style={[
+              styles.illustrationCard,
+              {
+                backgroundColor: illustrationBackgroundColor,
+                height: illustrationHeight,
+              },
+            ]}
+          >
+            <Image
+              testID={`onboarding-illustration-${page.id}`}
+              source={page.source}
+              contentFit="contain"
+              accessible={false}
+              style={styles.illustration}
+            />
+          </View>
+          <View style={styles.copy}>
+            <ThemedText
+              type="title"
+              maxFontSizeMultiplier={WordmarkMaxFontScale}
+              style={styles.centeredText}
+            >
+              {t(page.titleKey)}
+            </ThemedText>
+            <ThemedText themeColor="textSecondary" style={styles.centeredText}>
+              {t(page.bodyKey)}
+            </ThemedText>
+          </View>
+        </AdaptiveContent>
+      </ScrollView>
     </View>
   )
 }
@@ -64,6 +74,10 @@ const styles = StyleSheet.create({
   page: {
     width: "100%",
     height: "100%",
+  },
+  scroll: { flex: 1 },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: "center",
   },
   pageContent: {

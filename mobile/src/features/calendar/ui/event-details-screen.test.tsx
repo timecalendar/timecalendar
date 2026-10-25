@@ -12,7 +12,7 @@ import { type EventDetails, useEventDetails } from "@/features/calendar/data"
 import { useUserCalendars } from "@/features/calendar-sources"
 import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
 import { useDisplayZone } from "@/features/settings/prefs"
-import { resolveResponsiveLayout, Spacing } from "@/theme"
+import { resolveResponsiveLayout, Spacing, TypeRamp } from "@/theme"
 
 import { EventDetailsScreen } from "./event-details-screen"
 
@@ -216,9 +216,32 @@ describe("EventDetailsScreen", () => {
     expect(screen.getByText("Monday, May 25th, 2026")).toBeTruthy()
   })
 
-  it("labels the color swatch accessibly", async () => {
+  it("aligns the decorative color dot to the first title line", async () => {
     await render(<EventDetailsScreen />)
-    expect(screen.getByLabelText("Event color")).toBeTruthy()
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("event-details-title-row").props.style,
+      ),
+    ).toMatchObject({ alignItems: "flex-start" })
+    const strut = screen.getByTestId("event-details-color-strut", {
+      includeHiddenElements: true,
+    })
+    expect(strut.props).toMatchObject({
+      accessible: false,
+      accessibilityElementsHidden: true,
+      importantForAccessibility: "no-hide-descendants",
+    })
+    expect(screen.queryByTestId("event-details-color-strut")).toBeNull()
+    const [line] = strut.children
+    if (line === undefined || typeof line === "string") {
+      throw new Error("expected the strut line")
+    }
+    expect(StyleSheet.flatten(line.props.style)).toMatchObject({
+      lineHeight: TypeRamp.title.style.lineHeight,
+      width: 0,
+    })
+    expect(screen.queryByLabelText("Event color")).toBeNull()
   })
 
   it("renders the tag bubbles", async () => {

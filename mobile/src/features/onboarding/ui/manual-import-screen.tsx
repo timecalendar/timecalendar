@@ -1,8 +1,8 @@
 import { router, Stack } from "expo-router"
-import { SymbolView } from "expo-symbols"
 import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet } from "react-native"
 
+import { Icon } from "@/components/icon"
 import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import {
@@ -55,11 +55,12 @@ export default function ManualImportScreen() {
           }}
           style={[styles.primary, { backgroundColor: theme.primaryStrong }]}
         >
-          <SymbolView
-            name={{ ios: "qrcode.viewfinder", android: "qr_code_scanner" }}
+          <Icon
+            ios="qrcode.viewfinder"
+            android="qr_code_scanner"
             size={20}
-            tintColor={theme.onPrimary}
-            accessible={false}
+            color={theme.onPrimary}
+            scaling="text"
           />
           <ThemedText type="smallBold" themeColor="onPrimary">
             {t("onboarding.import.qr")}
@@ -84,11 +85,12 @@ export default function ManualImportScreen() {
             },
           ]}
         >
-          <SymbolView
-            name={{ ios: "link", android: "link" }}
+          <Icon
+            ios="link"
+            android="link"
             size={20}
-            tintColor={theme.primary}
-            accessible={false}
+            color={theme.primary}
+            scaling="text"
           />
           <ThemedText type="smallBold">{t("onboarding.import.url")}</ThemedText>
         </Pressable>

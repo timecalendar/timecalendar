@@ -264,8 +264,17 @@ jest.mock("@expo/ui/swift-ui", () => {
       children,
     )
   }
-  function Stack({ children, ...props }: { children?: unknown }) {
+  function Stack({
+    children,
+    ...props
+  }: {
+    children?: unknown
+    testID?: string
+  }) {
     return React.createElement(View, props, children)
+  }
+  function VStack(props: { children?: unknown }) {
+    return Stack({ testID: "swiftui-vstack", ...props })
   }
   function Text({
     children,
@@ -394,7 +403,9 @@ jest.mock("@expo/ui/swift-ui", () => {
       View,
       {
         testID: modifierValue(props.modifiers, "accessibilityIdentifier"),
-        accessibilityLabel: props.label,
+        accessibilityLabel:
+          modifierValue(props.modifiers, "accessibilityLabel") ??
+          (typeof props.label === "string" ? props.label : undefined),
         accessibilityValue: {
           text: modifierValue(props.modifiers, "accessibilityValue"),
         },
@@ -491,7 +502,7 @@ jest.mock("@expo/ui/swift-ui", () => {
     TextField,
     Toggle,
     useNativeState,
-    VStack: Stack,
+    VStack,
   }
 })
 

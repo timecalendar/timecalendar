@@ -1,7 +1,8 @@
-import { type SFSymbol, SymbolView } from "expo-symbols"
+import type { SFSymbol } from "expo-symbols"
 import { useTranslation } from "react-i18next"
 import { Platform, Pressable, StyleSheet, View } from "react-native"
 
+import { Icon } from "@/components/icon"
 import { ThemedText } from "@/components/themed-text"
 import { Radii, Spacing, useTheme } from "@/theme"
 
@@ -62,10 +63,12 @@ function HeaderIconAction({
       }
       style={styles.headerAction}
     >
-      <SymbolView
-        name={Platform.OS === "ios" ? symbol : { android: "today" }}
+      <Icon
+        ios={symbol}
+        android="today"
         size={HEADER_ICON_SIZE}
-        tintColor={theme.text}
+        color={theme.text}
+        scaling="fixed"
       />
     </Pressable>
   )

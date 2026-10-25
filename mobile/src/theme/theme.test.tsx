@@ -13,6 +13,7 @@ import {
   StateOpacity,
   type ThemeColor,
   useTheme,
+  WordmarkMaxFontScale,
 } from "@/theme"
 
 // Drive the device color scheme the token layer resolves through.
@@ -209,6 +210,7 @@ describe("design tokens", () => {
     expect(StateOpacity).toEqual({ pressed: 0.65, disabled: 0.55 })
     expect(Motion).toEqual({ fast: 150, base: 250, slow: 400 })
     expect(Layout.fabClearance).toBe(96)
+    expect(WordmarkMaxFontScale).toBe(1.5)
   })
 
   it("gives each scheme its own raised boxShadow", () => {

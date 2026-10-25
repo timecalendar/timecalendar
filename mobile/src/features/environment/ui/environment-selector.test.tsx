@@ -17,8 +17,6 @@ jest.mock("@/features/environment/data", () => ({
   switchBackendEnvironment: (...args: unknown[]) => mockSwitch(...args),
 }))
 
-jest.mock("expo-symbols", () => ({ SymbolView: () => null }))
-
 function EnvironmentSelectorHarness() {
   const selector = useEnvironmentSelector()
   return (

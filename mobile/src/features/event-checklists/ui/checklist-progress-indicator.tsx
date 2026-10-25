@@ -1,7 +1,7 @@
-import { SymbolView } from "expo-symbols"
 import type { TFunction } from "i18next"
-import { Platform, StyleSheet, View } from "react-native"
+import { StyleSheet, View } from "react-native"
 
+import { Icon } from "@/components/icon"
 import { ThemedText } from "@/components/themed-text"
 import type { ChecklistProgress } from "@/features/event-checklists/data"
 import { Radii, Spacing, useTheme } from "@/theme"
@@ -49,22 +49,13 @@ export function ChecklistProgressIndicator({
         { borderColor: color },
       ]}
     >
-      <SymbolView
+      <Icon
         testID="checklist-progress-glyph"
-        name={
-          Platform.OS === "ios"
-            ? progress.isComplete
-              ? "checkmark.square.fill"
-              : "square"
-            : {
-                android: progress.isComplete
-                  ? "check_box"
-                  : "check_box_outline_blank",
-              }
-        }
+        ios={progress.isComplete ? "checkmark.square.fill" : "square"}
+        android={progress.isComplete ? "check_box" : "check_box_outline_blank"}
         size={dense ? 7 : compact ? 11 : 16}
-        tintColor={color}
-        style={styles.glyph}
+        color={color}
+        scaling="text"
       />
       <ThemedText
         testID="checklist-progress-count"
@@ -107,6 +98,5 @@ const styles = StyleSheet.create({
     fontSize: 8,
     lineHeight: 9,
   },
-  glyph: { flexShrink: 0 },
   count: { flexShrink: 1, fontVariant: ["tabular-nums"] },
 })

@@ -9,6 +9,11 @@ export {
   ResponsiveBreakpoints,
   ResponsiveContentWidths,
 } from "@/theme/responsive"
+export {
+  AccessibilityFontScale,
+  isAccessibilityTextSize,
+  useIsAccessibilityTextSize,
+} from "@/theme/text-scale"
 export type { ThemeColor } from "@/theme/tokens"
 export {
   Colors,
@@ -22,6 +27,7 @@ export {
   Radii,
   Spacing,
   StateOpacity,
+  WordmarkMaxFontScale,
 } from "@/theme/tokens"
 export type { TypeStep, TypeVariant } from "@/theme/typography"
 export { TypeRamp } from "@/theme/typography"

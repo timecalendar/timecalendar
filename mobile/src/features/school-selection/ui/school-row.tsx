@@ -1,8 +1,8 @@
 import { router } from "expo-router"
-import { SymbolView } from "expo-symbols"
 import { useTranslation } from "react-i18next"
 import { Platform, Pressable, StyleSheet } from "react-native"
 
+import { Icon } from "@/components/icon"
 import { ThemedText } from "@/components/themed-text"
 import { emitExportGuideEvent } from "@/features/export-guides/ui"
 import { decideIntranetUrl, useImportDraft } from "@/features/onboarding"
@@ -65,11 +65,12 @@ export function SchoolRow({ school }: { school: SchoolListItem }) {
       />
       <ThemedText style={styles.rowName}>{school.name}</ThemedText>
       {Platform.OS === "ios" && (
-        <SymbolView
-          name="chevron.forward"
+        <Icon
+          ios="chevron.forward"
           size={14}
-          weight="semibold"
-          tintColor={theme.textTertiary}
+          iosWeight="semibold"
+          color={theme.textTertiary}
+          scaling="text"
         />
       )}
     </Pressable>

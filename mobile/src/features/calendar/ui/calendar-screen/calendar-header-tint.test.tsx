@@ -10,15 +10,15 @@ import {
 } from "./calendar-screen-actions"
 import { CalendarViewMenu } from "./calendar-view-menu"
 
-const mockSymbolView = jest.fn()
-jest.mock("expo-symbols", () => ({
-  SymbolView: (props: unknown) => {
-    mockSymbolView(props)
+const mockIcon = jest.fn()
+jest.mock("@/components/icon", () => ({
+  Icon: (props: unknown) => {
+    mockIcon(props)
     return null
   },
 }))
 
-beforeEach(() => mockSymbolView.mockClear())
+beforeEach(() => mockIcon.mockClear())
 
 describe.each(["ios", "android"] as const)("Calendar header on %s", (os) => {
   usePlatform(os)
@@ -31,10 +31,13 @@ describe.each(["ios", "android"] as const)("Calendar header on %s", (os) => {
       </>,
     )
 
-    expect(mockSymbolView).toHaveBeenCalled()
-    for (const [props] of mockSymbolView.mock.calls) {
+    expect(mockIcon).toHaveBeenCalled()
+    for (const [props] of mockIcon.mock.calls) {
       expect(props).toEqual(
-        expect.objectContaining({ tintColor: Colors.light.text }),
+        expect.objectContaining({
+          color: Colors.light.text,
+          scaling: "fixed",
+        }),
       )
     }
     expect(

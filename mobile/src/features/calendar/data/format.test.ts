@@ -13,6 +13,7 @@ import {
   formatTime,
   formatTimeRange,
   resolveLocale,
+  toPickerLocale,
 } from "./format"
 
 describe("formatClockTime", () => {
@@ -336,16 +337,56 @@ describe("formatMonthYear", () => {
 })
 
 describe("formatShortDateTime", () => {
-  it("shows a compact date + time in the display zone", () => {
-    const date = new Date("2026-06-15T07:30:00.000Z")
-    expect(formatShortDateTime(date, "en", "Europe/Paris")).toBe("15 Jun 09:30")
-    expect(formatShortDateTime(date, "fr", "Europe/Paris")).toBe(
-      "15 juin 09:30",
+  const date = new Date("2026-06-15T07:30:00.000Z")
+
+  it.each([true, null] as const)(
+    "shows a 24-hour compact date + time in the display zone for %s",
+    (uses24HourClock) => {
+      expect(
+        formatShortDateTime(date, "en", "Europe/Paris", uses24HourClock),
+      ).toBe("15 Jun 09:30")
+      expect(
+        formatShortDateTime(date, "fr", "Europe/Paris", uses24HourClock),
+      ).toBe("15 juin 09:30")
+      expect(
+        formatShortDateTime(date, "en", "Pacific/Noumea", uses24HourClock),
+      ).toBe("15 Jun 18:30")
+      expect(
+        formatShortDateTime(date, "fr", "Pacific/Noumea", uses24HourClock),
+      ).toBe("15 juin 18:30")
+    },
+  )
+
+  it("shows a 12-hour time on a 12-hour device", () => {
+    expect(formatShortDateTime(date, "en", "Europe/Paris", false)).toBe(
+      "15 Jun 9:30 AM",
     )
-    expect(formatShortDateTime(date, "en", "Pacific/Noumea")).toBe(
-      "15 Jun 18:30",
+    expect(formatShortDateTime(date, "fr", "Europe/Paris", false)).toBe(
+      "15 juin 9:30 AM",
+    )
+    expect(formatShortDateTime(date, "en", "Pacific/Noumea", false)).toBe(
+      "15 Jun 6:30 PM",
+    )
+    expect(formatShortDateTime(date, "fr", "Pacific/Noumea", false)).toBe(
+      "15 juin 6:30 PM",
     )
   })
+})
+
+describe("toPickerLocale", () => {
+  it.each([
+    ["en", "US", false, "en_US@hours=h12"],
+    ["en", "GB", true, "en_GB@hours=h23"],
+    ["en", null, null, "en_US@hours=h23"],
+    ["fr", "FR", false, "fr_FR@hours=h12"],
+    ["fr", "BE", null, "fr_BE@hours=h23"],
+    ["fr", null, true, "fr_FR@hours=h23"],
+  ] as const)(
+    "maps %s with region %s and 24-hour %s to %s",
+    (locale, region, uses24HourClock, expected) => {
+      expect(toPickerLocale(locale, region, uses24HourClock)).toBe(expected)
+    },
+  )
 })
 
 describe("resolveLocale", () => {

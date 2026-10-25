@@ -6,20 +6,20 @@ import { Colors } from "@/theme"
 import { ListStatus } from "./list-status"
 import { StatusSymbol } from "./status-symbol"
 
-const mockSymbolView = jest.fn()
-jest.mock("expo-symbols", () => ({
-  SymbolView: (props: unknown) => {
-    mockSymbolView(props)
+const mockIcon = jest.fn()
+jest.mock("@/components/icon", () => ({
+  Icon: (props: unknown) => {
+    mockIcon(props)
     return null
   },
 }))
 
-beforeEach(() => mockSymbolView.mockClear())
+beforeEach(() => mockIcon.mockClear())
 
 describe.each(["ios", "android"] as const)("StatusSymbol on %s", (os) => {
   usePlatform(os)
 
-  it("renders a decorative platform glyph beside the status text", async () => {
+  it("renders a fixed-size platform glyph beside the status text", async () => {
     await render(
       <ListStatus
         media={
@@ -30,20 +30,14 @@ describe.each(["ios", "android"] as const)("StatusSymbol on %s", (os) => {
       />,
     )
 
-    expect(mockSymbolView).toHaveBeenCalledWith({
-      name: { ios: "magnifyingglass", android: "search" },
+    expect(mockIcon).toHaveBeenCalledWith({
+      testID: "status-symbol",
+      ios: "magnifyingglass",
+      android: "search",
       size: 40,
-      tintColor: Colors.light.textSecondary,
+      color: Colors.light.textSecondary,
+      scaling: "fixed",
     })
-    const wrapper = screen.getByTestId("status-symbol", {
-      includeHiddenElements: true,
-    })
-    expect(wrapper.props).toMatchObject({
-      accessible: false,
-      accessibilityElementsHidden: true,
-      importantForAccessibility: "no-hide-descendants",
-    })
-    expect(screen.queryByTestId("status-symbol")).toBeNull()
     expect(screen.getByText("No schools match")).toBeTruthy()
   })
 })

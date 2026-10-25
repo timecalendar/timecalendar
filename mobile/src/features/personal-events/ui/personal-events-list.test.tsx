@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render } from "@testing-library/react-native"
 import { fromZonedTime } from "date-fns-tz"
+import * as Localization from "expo-localization"
 import { StyleSheet } from "react-native"
 
 import { usePersonalEvents } from "@/features/personal-events/data"
@@ -116,5 +117,38 @@ describe("PersonalEventsList", () => {
     const { getByText } = await render(<PersonalEventsList />)
 
     expect(getByText("1 Jan 14:00 – 1 Jan 15:00")).toBeTruthy()
+  })
+
+  it("renders 12-hour ranges on a 12-hour device", async () => {
+    const spy = jest.spyOn(Localization, "useCalendars").mockReturnValue([
+      {
+        calendar: "gregory",
+        uses24hourClock: false,
+        firstWeekday: 1,
+        timeZone: null,
+      },
+    ] as unknown as ReturnType<typeof Localization.useCalendars>)
+    try {
+      setTimezonePreference("Asia/Kathmandu")
+      const startsAt = fromZonedTime("2030-01-01T14:00:00", "Asia/Kathmandu")
+      const endsAt = fromZonedTime("2030-01-01T15:00:00", "Asia/Kathmandu")
+      mockUsePersonalEvents.mockReturnValue([
+        {
+          uid: "u1",
+          title: "Lunch",
+          color: "#E91E63",
+          startsAt,
+          endsAt,
+          exportedAt: startsAt,
+          location: undefined,
+          description: undefined,
+        },
+      ])
+      const { getByText } = await render(<PersonalEventsList />)
+
+      expect(getByText("1 Jan 2:00 PM – 1 Jan 3:00 PM")).toBeTruthy()
+    } finally {
+      spy.mockRestore()
+    }
   })
 })

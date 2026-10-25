@@ -219,15 +219,32 @@ export function formatCompactMonthYear(
   return formatInTimeZone(day, zone, "LLL yyyy", { locale: LOCALES[locale] })
 }
 
-// A compact date + time ("15 juin 08:30" / "15 Jun 08:30") for dense rows — the
-// personal-events list and the Android date-time field echo (the two former
-// `toLocaleString` seam-bypass sites).
+// A compact date + time ("15 juin 08:30" / "15 Jun 08:30", or "15 Jun 8:30 AM"
+// on a 12-hour device) for dense rows — the personal-events list and the
+// Android date-time field echo.
 export function formatShortDateTime(
   date: Date,
   locale: AppLocale,
   zone: string,
+  uses24HourClock: boolean | null,
 ): string {
-  return formatInTimeZone(date, zone, "d MMM HH:mm", {
-    locale: LOCALES[locale],
-  })
+  const opts = { locale: LOCALES[locale] }
+  if (uses24HourClock !== false) {
+    return formatInTimeZone(date, zone, "d MMM HH:mm", opts)
+  }
+  return `${formatInTimeZone(date, zone, "d MMM", opts)} ${hour12Formatter(locale, zone, true).format(date)}`
+}
+
+const DEFAULT_PICKER_REGIONS: Record<AppLocale, string> = { fr: "FR", en: "US" }
+
+// The iOS picker's locale: the app language with the device region and hour
+// cycle, so it reads in the app language and keeps the device clock setting.
+export function toPickerLocale(
+  locale: AppLocale,
+  regionCode: string | null,
+  uses24HourClock: boolean | null,
+): string {
+  const region = regionCode ?? DEFAULT_PICKER_REGIONS[locale]
+  const hours = uses24HourClock === false ? "h12" : "h23"
+  return `${locale}_${region}@hours=${hours}`
 }

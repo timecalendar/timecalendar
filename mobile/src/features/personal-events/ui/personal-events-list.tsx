@@ -1,3 +1,4 @@
+import { useCalendars } from "expo-localization"
 import { Link, Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
 import { FlatList, Pressable, StyleSheet, View } from "react-native"
@@ -83,7 +84,8 @@ function EventRow({ event }: { event: PersonalEvent }) {
   const theme = useTheme()
   const locale = resolveLocale(i18n.language)
   const displayZone = useDisplayZone()
-  const range = `${formatShortDateTime(event.startsAt, locale, displayZone)} – ${formatShortDateTime(event.endsAt, locale, displayZone)}`
+  const uses24HourClock = useCalendars()[0]?.uses24hourClock ?? null
+  const range = `${formatShortDateTime(event.startsAt, locale, displayZone, uses24HourClock)} – ${formatShortDateTime(event.endsAt, locale, displayZone, uses24HourClock)}`
 
   return (
     <Link href={`/personal-event-form?uid=${event.uid}`} asChild>

@@ -180,6 +180,15 @@ const designDeepImportPattern = {
     "Import the design system through the @/design barrel (design-system-proposal §3, lint-format.md → Design layer).",
 }
 
+// L9: every symbol icon declares its text scaling through the Icon primitive
+// (accessibility.md → Icon scaling, ADR 064). Type imports stay allowed.
+const symbolViewImportPath = {
+  name: "expo-symbols",
+  importNames: ["SymbolView"],
+  message:
+    "Render icons through @/components/icon (accessibility.md → Icon scaling).",
+}
+
 // Route files are entrypoints, not modules. Named (rather than inlined in the
 // block that applies it) because several blocks re-include it: any block that
 // re-sets `no-restricted-imports` for files under src/ has to carry it forward,
@@ -219,6 +228,7 @@ const restrictedImports = (
     banDeviceColorScheme = true,
     banDeveloperTools = true,
     banDesignDeepImports = true,
+    banSymbolView = true,
   } = {},
 ) => [
   "error",
@@ -239,6 +249,7 @@ const restrictedImports = (
       ...(banActivitySeam ? [dbActivityTablesImportPath] : []),
       ...(banDeviceColorScheme ? [deviceColorSchemeImportPath] : []),
       ...(banDeveloperTools ? [developerToolsImportPath] : []),
+      ...(banSymbolView ? [symbolViewImportPath] : []),
     ],
   },
 ]
@@ -445,6 +456,18 @@ module.exports = defineConfig([
       "no-restricted-imports": restrictedImports(
         [routeEntrypointImportPattern],
         { banDeviceColorScheme: false },
+      ),
+    },
+  },
+  {
+    // The Icon primitive is the one SymbolView renderer (L9). It re-includes the
+    // route-entrypoint pattern for the same reason as color-scheme-seam.
+    name: "timecalendar/icon-seam",
+    files: ["src/components/icon.tsx", "src/components/icon.test.tsx"],
+    rules: {
+      "no-restricted-imports": restrictedImports(
+        [routeEntrypointImportPattern],
+        { banSymbolView: false },
       ),
     },
   },

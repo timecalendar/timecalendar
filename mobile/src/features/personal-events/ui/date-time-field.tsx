@@ -1,12 +1,16 @@
 import { fromZonedTime, toZonedTime } from "date-fns-tz"
-import { useCalendars } from "expo-localization"
+import { getLocales, useCalendars } from "expo-localization"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Platform, Pressable, StyleSheet } from "react-native"
 
 import { DateTimePicker } from "@/components/chrome"
 import { ThemedText } from "@/components/themed-text"
-import { type AppLocale, formatShortDateTime } from "@/features/calendar/data"
+import {
+  type AppLocale,
+  formatShortDateTime,
+  toPickerLocale,
+} from "@/features/calendar/data"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 import { dateDialogValue, mergePickedDay } from "./wall-clock-day"
@@ -59,13 +63,18 @@ export function DateTimeField({
   const theme = useTheme()
   const [step, setStep] = useState<AndroidStep>({ kind: "closed" })
   const wallClock = toZonedTime(value, zone)
-  const is24Hour = useCalendars()[0]?.uses24hourClock ?? undefined
+  const uses24HourClock = useCalendars()[0]?.uses24hourClock ?? null
 
   if (Platform.OS !== "android") {
     return (
       <DateTimePicker
         {...(testID !== undefined ? { testID } : {})}
         mode="datetime"
+        locale={toPickerLocale(
+          locale,
+          getLocales()[0]?.regionCode ?? null,
+          uses24HourClock,
+        )}
         value={wallClock}
         onValueChange={(_event, date) => onChange(fromZonedTime(date, zone))}
       />
@@ -74,7 +83,7 @@ export function DateTimeField({
 
   // TalkBack reads a focusable node's contentDescription instead of its
   // descendant text, so the label alone would hide the value.
-  const display = formatShortDateTime(value, locale, zone)
+  const display = formatShortDateTime(value, locale, zone, uses24HourClock)
   return (
     <>
       <Pressable
@@ -115,7 +124,7 @@ export function DateTimeField({
           mode="time"
           presentation="dialog"
           value={step.pending}
-          {...(is24Hour !== undefined ? { is24Hour } : {})}
+          {...(uses24HourClock !== null ? { is24Hour: uses24HourClock } : {})}
           onValueChange={(_event, date) => {
             setStep({ kind: "closed" })
             if (isPickedDate(date)) onChange(fromZonedTime(date, zone))

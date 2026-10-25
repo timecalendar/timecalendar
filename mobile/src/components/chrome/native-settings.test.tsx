@@ -16,6 +16,20 @@ import {
 } from "./native-settings"
 
 jest.mock("expo-router", () => ({ router: { push: jest.fn() } }))
+
+let mockFontScale = 2
+jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({
+  __esModule: true,
+  default: () => ({
+    width: 390,
+    height: 844,
+    scale: 3,
+    fontScale: mockFontScale,
+  }),
+}))
+afterEach(() => {
+  mockFontScale = 2
+})
 jest.mock("@/hooks/use-color-scheme", () => ({
   useColorScheme: () => "dark",
 }))
@@ -706,3 +720,125 @@ describe.each(["ios", "android"] as const)(
     })
   },
 )
+
+describe("iOS settings rows at accessibility text sizes", () => {
+  usePlatform("ios")
+
+  async function renderRows(fontScale: number) {
+    mockFontScale = fontScale
+    return render(
+      <NativeSettingsHost>
+        <NativeSettingsSection>
+          <NativeSettingsRow
+            kind="navigation"
+            label="Environment"
+            value="Production"
+            badge="1"
+            href="/developer"
+            testID="nav"
+          />
+          <NativeSettingsRow
+            kind="action"
+            label="Language"
+            value="English"
+            onPress={jest.fn()}
+            testID="action"
+          />
+          <NativeSettingsRow
+            kind="value"
+            label="Version"
+            value="4.0.0"
+            testID="value"
+          />
+          <NativeSettingsRow
+            kind="navigation"
+            label="About"
+            href="/about"
+            testID="plain"
+          />
+        </NativeSettingsSection>
+      </NativeSettingsHost>,
+    )
+  }
+
+  it("stacks the label above the value and keeps the chevron trailing", async () => {
+    const view = await renderRows(3.571)
+
+    const nav = view.getByTestId("nav")
+    const [column] = within(nav).getAllByTestId("swiftui-vstack")
+    expect(within(column!).getByText("Environment")).toBeTruthy()
+    expect(within(column!).getByText("Production")).toBeTruthy()
+    expect(within(column!).getByText("1")).toBeTruthy()
+    const row = column!.parent!
+    const chevron = within(nav).getByTestId("swiftui-image-chevron.forward", {
+      includeHiddenElements: true,
+    })
+    expect(row.children.indexOf(chevron)).toBeGreaterThan(
+      row.children.indexOf(column!),
+    )
+    expect(
+      within(column!).queryByTestId("swiftui-image-chevron.forward", {
+        includeHiddenElements: true,
+      }),
+    ).toBeNull()
+
+    const action = within(view.getByTestId("action"))
+    expect(
+      within(action.getByTestId("swiftui-vstack")).getByText("English"),
+    ).toBeTruthy()
+
+    const value = view.getByTestId("value")
+    const valueColumn = within(value).getByTestId("swiftui-vstack")
+    expect(within(valueColumn).getByText("Version")).toBeTruthy()
+    expect(within(valueColumn).getByText("4.0.0")).toBeTruthy()
+    expect(within(value).getAllByText("4.0.0")).toHaveLength(1)
+
+    expect(
+      within(view.getByTestId("plain")).queryByTestId("swiftui-vstack"),
+    ).toBeNull()
+  })
+
+  it("keeps the label and value side by side at the default size", async () => {
+    const view = await renderRows(1)
+
+    for (const id of ["nav", "action", "value", "plain"]) {
+      expect(
+        within(view.getByTestId(id)).queryByTestId("swiftui-vstack"),
+      ).toBeNull()
+    }
+    expect(within(view.getByTestId("value")).getByText("4.0.0")).toBeTruthy()
+  })
+
+  it("exposes the same accessibility at both sizes", async () => {
+    const semantics = async (fontScale: number) => {
+      const view = await renderRows(fontScale)
+      const result = ["nav", "action", "value"].map((id) => {
+        const { accessibilityLabel, accessibilityValue } =
+          view.getByTestId(id).props
+        return { id, accessibilityLabel, accessibilityValue }
+      })
+      view.unmount()
+      return result
+    }
+
+    const large = await semantics(3.571)
+    expect(large).toEqual(await semantics(1))
+    expect(large).toEqual([
+      {
+        id: "nav",
+        accessibilityLabel: "Environment",
+        accessibilityValue: { text: "Production" },
+      },
+      {
+        id: "action",
+        accessibilityLabel: "Language",
+        accessibilityValue: { text: "English" },
+      },
+      {
+        id: "value",
+        accessibilityLabel: "Version",
+        accessibilityValue: { text: "4.0.0" },
+      },
+    ])
+  })
+})
