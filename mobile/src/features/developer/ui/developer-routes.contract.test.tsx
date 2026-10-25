@@ -29,7 +29,9 @@ jest.mock("expo-router", () => {
 
 jest.mock("@/features/environment", () => ({
   getBackendEnvironmentCapability: () => "production",
-  EnvironmentSettingsControl: () => null,
+  useEnvironmentSelector: () => ({ capability: "production" }),
+  EnvironmentSettingsRow: () => null,
+  EnvironmentSelectorDialog: () => null,
 }))
 
 const appRoot = resolve(process.cwd(), "src/app")
