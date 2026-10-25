@@ -224,7 +224,7 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
     (`chrome/native-settings-host-context.ts`), and each of the three throws on its first render
     inside it, whatever file the misplaced call sits in. A screen whose row lives in a section and
     whose dialog follows the host shares one controller hook between them (`useEnvironmentSelector`
-    in Settings). Enforced by `native-settings.test.tsx`, `native-settings-numeric-editor.test.tsx`
+    on the developer page). Enforced by `native-settings.test.tsx`, `native-settings-numeric-editor.test.tsx`
     and `native-text-entry-dialog.test.tsx`.
   - **Help copy** lives in section footers, never as text rows inside a group: one setting per
     section when each needs its own explanation.
@@ -276,7 +276,7 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
   the placement cases in `native-settings-numeric-editor.test.tsx` and
   `native-text-entry-dialog.test.tsx`) asserts that each standalone dialog rejects rendering inside
   `NativeSettingsHost` on both platforms, a closed radio dialog included, and renders as a sibling
-  after it. `features/settings/ui/settings-screen.test.tsx` renders the real environment row and
+  after it. `features/developer/ui/developer-screen.test.tsx` renders the real environment row and
   dialog through the real host on Android.
 - CI **cannot** prove and is therefore **manual** (DoD / splash visual pass): that Liquid Glass renders on iOS 26+, that the fallback looks right on iOS 16.4–25 / Android, that the contrast pairs read correctly on-device, and that each call site draws a documented pair.
 

@@ -6,8 +6,11 @@
   `src/components/chrome/native-settings.test.tsx`, `native-settings-numeric-editor.test.tsx` and
   `native-text-entry-dialog.test.tsx`, listed under "What CI proves".
 - `features.md`: the `environment` feature exposes `useEnvironmentSelector`,
-  `EnvironmentSettingsRow` and `EnvironmentSelectorDialog`; Settings places the row in its
-  environment section and the dialog after the native host. The Android personal-event date/time
+  `EnvironmentSettingsRow` and `EnvironmentSelectorDialog`; the developer page places the row in
+  its Backend section and the dialog after the native host, proven on Android by
+  `features/developer/ui/developer-screen.test.tsx`.
+- `lint-format.md`, `navigation.md`: the `banDeveloperTools` lint ban names those three exports,
+  so only `src/features/developer/**` (and the environment feature) mounts the selector. The Android personal-event date/time
   field's accessible name is "label, value".
 - `accessibility.md`: Home's section titles are `sectionTitle` headers in the populated and empty
   states; the Android date/time field announces its label and value.
@@ -31,7 +34,7 @@
 - `NativeTextEntryDialog` takes `inputKind?: "text" | "code"`; `"code"` disables
   auto-capitalization and autocorrect (SwiftUI `textInputAutocapitalization("never")` +
   `autocorrectionDisabled()`, Compose `KeyboardOptions(capitalization = None,
-  autoCorrectEnabled = false)`). The developer page's token dialog uses it.
+autoCorrectEnabled = false)`). The developer page's token dialog uses it.
 - ADR [043](./decisions/043-backend-environment-reset.md) is amended: the non-production indicator
   lives on `/developer`, reached from Settings' single gated Developer row; its accessible-name
   requirement is unchanged.

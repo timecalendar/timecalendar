@@ -12,10 +12,12 @@ else.
 
 - **Environment picker orphaned dialog (severe).** `EnvironmentSettingsControl` renders its
   `NativeSettingsRadioDialog` as a sibling of its row. That puts the dialog's own Compose host
-  inside the Settings `NativeSettingsHost` LazyColumn. Every other radio dialog in the app renders
+  inside the `NativeSettingsHost` LazyColumn of the page that mounts the control, the developer
+  page (`/developer`). Every other radio dialog in the app renders
   after `</NativeSettingsHost>` and works. The control is split into a selector hook plus a row
-  and a dialog. `settings-screen.tsx` places the row in the environment section and the dialog
-  after `</NativeSettingsHost>`. The selection, confirmation, single-flight and production-gate
+  and a dialog. `developer-screen.tsx` places the row in its backend section and the dialog
+  after `</NativeSettingsHost>`, next to the token `NativeTextEntryDialog`. The lint ban that keeps
+  the environment switch on the developer page names the three new exports. The selection, confirmation, single-flight and production-gate
   behavior does not change.
 - **Placement invariant (R-1).** `NativeSettingsHost` provides a context. The standalone
   Compose-dialog primitives (`NativeSettingsRadioDialog`, `NativeSettingsNumericEditor`,
@@ -45,8 +47,9 @@ None.
 
 ### Modified Capabilities
 
-- `mobile-settings-hub`: standalone native dialogs never render inside a native settings host,
-  and the Settings environment selector dismisses cleanly without leaving a window behind.
+- `mobile-settings-hub`: standalone native dialogs never render inside a native settings host.
+- `mobile-developer-page`: the developer page's environment selector dismisses cleanly without
+  leaving a window behind, and only the developer feature mounts the selector.
 - `mobile-home`: populated Home section titles are headings on the same ramp step as their empty
   state.
 - `mobile-personal-events-ui`: the Android date/time field's accessible name includes its current
@@ -58,7 +61,8 @@ None.
 
 - Code: `mobile/src/components/chrome/{native-settings,native-settings-numeric-editor,native-text-entry-dialog}.tsx`;
   `mobile/src/features/environment/ui/*` (selector hook, row, dialog, barrel);
-  `mobile/src/features/settings/ui/settings-screen.tsx`;
+  `mobile/src/features/developer/ui/developer-screen.tsx`; `mobile/eslint.config.js`
+  (`banDeveloperTools` names the selector exports);
   `mobile/src/features/home/ui/home-screen/{upcoming-section,today-section}.tsx`;
   `mobile/src/features/personal-events/ui/date-time-field.tsx`;
   `mobile/src/features/school-selection/ui/school-picker-screen.tsx`; FR/EN catalogs (one key);
@@ -66,9 +70,8 @@ None.
 - No new dependency, token, route, lint rule, native configuration or ADR. Nothing changes in
   OpenAPI, the generated client, the server or the Flutter `app/`.
 - Book: `theming.md` (dialog placement rule), `features.md` (environment selector placement,
-  Android date field label), `accessibility.md` (Home section headings, Android field label), and
+  Android date field label), `navigation.md` and `lint-format.md` (the selector exports), `accessibility.md` (Home section headings, Android field label), and
   a dated `CHANGELOG.md` entry.
 - Out of scope, and recorded in the inbox note: the expo-symbols Android glyph clipping and icon
   scaling policy, the 12/24h field format, Android `Alert` styling, the event-details dot
-  alignment, multi-day week rendering, and moving the environment switch to a `/developer` page
-  (design-system roadmap slice 2.1).
+  alignment and multi-day week rendering.

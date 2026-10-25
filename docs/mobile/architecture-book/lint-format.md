@@ -185,9 +185,10 @@ truth; this file carries the caveats the config can't (R-1).
   `require("react-native").Appearance` and `jest.requireActual("react-native")` are not static
   imports, so the same static-import-only caveat as raw-fetch applies. See
   [theming.md](./theming.md).
-- **The environment control lives on the developer page** (`developerToolsImportPath` and
+- **The environment selector lives on the developer page** (`developerToolsImportPath` and
   `developerToolsDeepImportPattern`, both under the `banDeveloperTools` flag of
-  `restrictedImports`): `EnvironmentSettingsControl` is banned as a named import from
+  `restrictedImports`): `useEnvironmentSelector`, `EnvironmentSettingsRow` and
+  `EnvironmentSelectorDialog` are banned as named imports from
   `@/features/environment` and, by pattern, from `@/features/environment/ui` or any file under it,
   everywhere except `src/features/developer/**` and `src/features/environment/**`. The
   exemption is the `timecalendar/developer-tools-home` block, which re-calls

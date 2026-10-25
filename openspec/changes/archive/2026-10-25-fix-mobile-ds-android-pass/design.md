@@ -12,12 +12,12 @@ the approach:
 - Every current call site of those three primitives renders them after `</NativeSettingsHost>`
   (appearance, notification settings, settings gallery, user calendar detail), except
   `EnvironmentSettingsControl`. That control is mounted inside a `NativeSettingsSection` in
-  `settings-screen.tsx` and returns `<>row + dialog</>`. On device, only the nested dialog
+  `developer-screen.tsx` and returns `<>row + dialog</>`. On device, only the nested dialog
   misbehaves: Cancel does nothing, input is dead, and its window outlives a JS reload.
 - React context crosses `@expo/ui` hosts, because the hosts are ordinary React components that
   render their children. A provider in `NativeSettingsHost` is therefore visible to anything in its
   subtree, including a feature component that sits several files away.
-- `settings-screen.test.tsx` mocks `EnvironmentSettingsControl` to `null`. That is why no test
+- `developer-screen.test.tsx` mocks `EnvironmentSettingsControl` to a stub. That is why no test
   rendered the bad nesting.
 - `ThemedText` sets `accessibilityRole="header"` from the ramp step (`headingRole`), so a local
   `style` with `fontSize`/`fontWeight` gives no role. `EmptyState` titles use `type="subtitle"`,
@@ -40,8 +40,6 @@ the approach:
 
 **Non-Goals:**
 
-- No move of the environment switch to a `/developer` page. That is design-system roadmap slice
-  2.1.
 - No icon-scaling policy, 12/24h field format, `Alert` restyling or event-details layout change.
   These are recorded in the inbox.
 - No type-ramp or ADR 063 change. The device pass confirmed the Android weights.
@@ -57,10 +55,13 @@ the approach:
 Alert. It also exports two presentational components that take that controller:
 `EnvironmentSettingsRow` (the existing `SettingsRow`) and `EnvironmentSelectorDialog` (the existing
 `NativeSettingsRadioDialog` props). Both return `null` for the production capability.
-`SettingsScreen` calls the hook once. It renders the row in the environment section and the dialog
-as a sibling after `</NativeSettingsHost>`, which is the same shape as
+`DeveloperScreen` calls the hook once and takes its production redirect from the controller's
+`capability`. It renders the row in the backend section and the dialog as a sibling after
+`</NativeSettingsHost>`, next to the token `NativeTextEntryDialog`, which is the same shape as
 `appearance-settings-screen.tsx` and `notification-settings-screen.tsx`.
-`EnvironmentSettingsControl` is deleted, and the barrel exports the three new names.
+`EnvironmentSettingsControl` is deleted, and the barrel exports the three new names. The
+`banDeveloperTools` lint ban (`eslint.config.js`) names the three exports, so the selector stays
+mountable only from `src/features/developer/**` and `src/features/environment/**`.
 
 Alternatives considered:
 
@@ -95,7 +96,7 @@ The throw is unconditional, not wrapped in `__DEV__`:
 Alternatives considered:
 
 - _An ESLint rule_: lint sees one file at a time. The faulty nesting crossed a component boundary
-  (`settings-screen.tsx` → `environment-settings-control.tsx`), so a JSX-nesting rule would not
+  (`developer-screen.tsx` → `environment-settings-control.tsx`), so a JSX-nesting rule would not
   have caught it.
 - _A `console.error` in `__DEV__`_: Jest does not fail on console output in this harness, so the
   gate would be advisory.
@@ -142,10 +143,10 @@ both schemes.
 - [The context invariant could catch a legitimate future nesting] → None exists: every primitive
   that calls the hook mounts its own native host. If a future primitive is designed to live inside
   the host, it does not call the hook.
-- [The throw takes down the Settings screen in dev if a contributor misplaces a dialog] → That is
+- [The throw takes down the developer page in dev if a contributor misplaces a dialog] → That is
   the intent. The message names the fix, and Jest catches it first.
 - [Jest cannot reproduce the orphaned Compose window] → The proof is structural: the invariant
-  test plus a Settings test that renders the real environment row and dialog through the real
+  test plus a developer page test that renders the real environment row and dialog through the real
   host. The owner Android re-check is in the inbox.
 - [The combined label repeats "Starts" after the visible "Starts" label] → This is accepted. The
   visible label is a separate, non-focusable text node, and the button's own name must stand alone
