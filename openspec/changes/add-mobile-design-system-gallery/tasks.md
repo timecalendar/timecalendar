@@ -7,7 +7,7 @@ unless a split helps review.
 
 ## 1. Strings
 
-- [ ] 1.1 In `src/i18n/locales/en.json` and `fr.json` (D6, D10): add `gallery.title`,
+- [x] 1.1 In `src/i18n/locales/en.json` and `fr.json` (D6, D10): add `gallery.title`,
       `gallery.nativeSettings.title`, `gallery.nativeSettings.story.{rows,destructive,switches,choices,headerAndAlert,floatingAction,radioDialog,longStrings}`,
       every `gallery.nativeSettings.*` copy key carrying today's `settingsGallery.*` values
       verbatim (same suffixes, e.g. `settingsGallery.switch.on` → `gallery.nativeSettings.switch.on`),
@@ -20,36 +20,36 @@ unless a split helps review.
 
 ## 2. `@/design` layer and gallery core
 
-- [ ] 2.1 Create `src/design/gallery/types.ts` per D3 (`GalleryKey`, `GalleryMeta<P>` with `id`,
+- [x] 2.1 Create `src/design/gallery/types.ts` per D3 (`GalleryKey`, `GalleryMeta<P>` with `id`,
       `title`, `component`; `GalleryStory<P>` with required `name`, optional `args`, `render`;
       `GalleryModule`), importing `en` with `import type` and nothing from Storybook. Verify:
       `npx tsc --noEmit`; a scratch `const s: GalleryStory<object> = { name: "developer.title" }`
       fails to compile (delete it).
-- [ ] 2.2 Create `src/design/gallery/stories.ts` per D4: `toStoryId(metaId, exportName)`
+- [x] 2.2 Create `src/design/gallery/stories.ts` per D4: `toStoryId(metaId, exportName)`
       (camelCase/PascalCase export → kebab, `"<metaId>--<kebab>"`), `buildGalleryEntries(modules)`
       (registry order then export order, skips `default`) and `findGalleryEntry(entries, id)`
       (returns `undefined` when absent). Verify: §2.3 passes.
-- [ ] 2.3 Create `src/design/gallery/stories.test.ts` with synthetic modules covering every
+- [x] 2.3 Create `src/design/gallery/stories.test.ts` with synthetic modules covering every
       branch: single-word and multi-word export names, an args-only story, the `default` skip,
       ordering, found and not-found lookup. Verify:
       `npx jest src/design/gallery/stories.test.ts --coverage --collectCoverageFrom='src/design/gallery/*.ts'`
       reports 100% branches on `stories.ts`.
-- [ ] 2.4 Create `src/design/gallery/story-content.tsx`: `GalleryStoryContent({ entry })` renders
+- [x] 2.4 Create `src/design/gallery/story-content.tsx`: `GalleryStoryContent({ entry })` renders
       `entry.story.render(args)` when present, else `<entry.component {...entry.story.args} />`,
       inside a `View` with `StyleSheet` `flex: 1`. No literals, no `allowFontScaling`. Verify:
       `npx tsc --noEmit`.
-- [ ] 2.5 Create `src/design/gallery/registry.ts` (`galleryModules` array of
+- [x] 2.5 Create `src/design/gallery/registry.ts` (`galleryModules` array of
       `import * as nativeSettings from "@/components/chrome/native-settings.gallery"` and
       `import * as nativeTextEntryDialog from "@/components/chrome/native-text-entry-dialog.gallery"`;
       no `require.context`) and `src/design/index.ts` exporting the types (`export type`),
       `galleryEntries`, `findGalleryEntry(id)` bound to them, and `GalleryStoryContent`. Verify:
       `npx tsc --noEmit` (after §3).
-- [ ] 2.6 In `jest.config.js` add `"src/design/gallery/*.ts": { lines: 90, branches: 90 }` to
+- [x] 2.6 In `jest.config.js` add `"src/design/gallery/*.ts": { lines: 90, branches: 90 }` to
       `coverageThreshold` (D9). Verify: `npx jest jest.config.test.ts` passes and §8.3 enforces it.
 
 ## 3. Fixtures
 
-- [ ] 3.1 Create `src/components/chrome/native-settings.gallery.tsx` per D6: default meta
+- [x] 3.1 Create `src/components/chrome/native-settings.gallery.tsx` per D6: default meta
       `{ id: "native-settings", title: "gallery.nativeSettings.title", component: NativeSettingsRow }`
       and the eight named stories (`Rows`, `Destructive`, `Switches`, `Choices`, `HeaderAndAlert`,
       `FloatingAction`, `RadioDialog`, `LongStrings`), each with a `gallery.nativeSettings.story.*`
@@ -60,13 +60,13 @@ unless a split helps review.
       `gallery-native-settings-*`. Import components from `@/components/chrome` and types with
       `import type { … } from "@/design"`. Do NOT export the fixture from the chrome barrel. Verify:
       `npx tsc --noEmit`; `npx eslint src/components/chrome/native-settings.gallery.tsx` clean.
-- [ ] 3.2 Create `src/components/chrome/native-text-entry-dialog.gallery.tsx` per D7: meta
+- [x] 3.2 Create `src/components/chrome/native-text-entry-dialog.gallery.tsx` per D7: meta
       `{ id: "native-text-entry-dialog", title: "gallery.textEntryDialog.title", component: NativeTextEntryDialog }`,
       stories `Default`, `SubmitDisabled`, `Pending`, each a named fixture component rendering an
       empty `NativeSettingsHost` and the open dialog with a static `ids` object
       (`gallery-text-entry-*` testIDs), `gallery.textEntryDialog.*` copy, `inputKind="text"`.
       Verify: `npx tsc --noEmit`; eslint clean on the file.
-- [ ] 3.3 Create `src/components/chrome/native-settings.gallery.test.tsx` porting the behavioral
+- [x] 3.3 Create `src/components/chrome/native-settings.gallery.test.tsx` porting the behavioral
       assertions of `settings-gallery-screen.test.tsx` to the stories (render each story's
       `render()` on both platforms: retry → caption `Version 1.0 · 1`; switch toggles flip
       `accessibilityState.checked`; choice selects; destructive and FAB counters; Android radio
@@ -76,21 +76,21 @@ unless a split helps review.
 
 ## 4. Gallery screens and routes
 
-- [ ] 4.1 Create `src/features/developer/ui/developer-access.ts` (`isDeveloperSurfaceEnabled()`,
+- [x] 4.1 Create `src/features/developer/ui/developer-access.ts` (`isDeveloperSurfaceEnabled()`,
       D2) and make `DeveloperScreen` use it instead of its inline capability check. Change its
       Design row `href` to `"/developer/gallery"`. Verify: `npx tsc --noEmit`.
-- [ ] 4.2 Create `src/features/developer/ui/gallery-index-screen.tsx` (`GalleryIndexScreen`):
+- [x] 4.2 Create `src/features/developer/ui/gallery-index-screen.tsx` (`GalleryIndexScreen`):
       gate first (redirect `/settings`); `<Stack.Screen options={{ title: t("gallery.title") }} />`;
       `NativeSettingsHost` with one `NativeSettingsSection` per fixture (title `t(meta.title)`,
       testID `gallery-section-<metaId>`) and one `kind="navigation"` row per story (label
       `t(entry.name)`, `href={{ pathname: "/developer/gallery/[story]", params: { story: entry.id } }}`,
       testID `gallery-story-<id>`). Group from `galleryEntries` in order. Verify: `npx tsc --noEmit`.
-- [ ] 4.3 Create `src/features/developer/ui/gallery-story-screen.tsx` (`GalleryStoryScreen`): gate
+- [x] 4.3 Create `src/features/developer/ui/gallery-story-screen.tsx` (`GalleryStoryScreen`): gate
       first; read `story` with `useLocalSearchParams<{ story: string }>()`; unknown id →
       `<Redirect href="/developer/gallery" />`; else
       `<Stack.Screen options={{ title: t(entry.name) }} />` and `<GalleryStoryContent entry />`. No
       other chrome (spec: a story renders as a real screen). Verify: `npx tsc --noEmit`.
-- [ ] 4.4 Export both screens from `src/features/developer/ui/index.ts`. Create
+- [x] 4.4 Export both screens from `src/features/developer/ui/index.ts`. Create
       `src/app/developer/gallery.tsx` =
       `export { GalleryIndexScreen as default } from "@/features/developer/ui"` and
       `src/app/developer/gallery/[story].tsx` =
@@ -98,7 +98,7 @@ unless a split helps review.
       `developer/_layout.tsx` or `developer/gallery/index.tsx` (D1). In `src/app/_layout.tsx` register
       `<Stack.Screen name="developer/gallery" />` and `<Stack.Screen name="developer/gallery/[story]" />`
       directly after `developer`. Verify: §6.3 passes.
-- [ ] 4.5 Delete `src/app/settings-gallery.tsx`, `src/features/settings/ui/settings-gallery-screen.tsx`,
+- [x] 4.5 Delete `src/app/settings-gallery.tsx`, `src/features/settings/ui/settings-gallery-screen.tsx`,
       `settings-gallery-screen.test.tsx`, the `SettingsGalleryScreen` export from
       `src/features/settings/ui/index.ts`, and `<Stack.Screen name="settings-gallery" />`. Verify:
       `grep -rn "settings-gallery\|SettingsGallery" src` returns only the absence assertion in
@@ -106,7 +106,7 @@ unless a split helps review.
 
 ## 5. Lint gate for `@/design` (D5)
 
-- [ ] 5.1 In `eslint.config.js`: add `designDeepImportPattern` (`regex: "^@/design/"`, message
+- [x] 5.1 In `eslint.config.js`: add `designDeepImportPattern` (`regex: "^@/design/"`, message
       "Import the design system through the @/design barrel (design-system-proposal §3,
       lint-format.md → Design layer).") behind `banDesignDeepImports = true` in `restrictedImports`;
       add block `timecalendar/design-home` (`files: ["src/design/**"]`,
@@ -116,7 +116,7 @@ unless a split helps review.
       `boundaries/elements` and a B-7 disallow `from: { type: "design" }` →
       `["feature-sublayer", "feature-barrel", "route", "generated-api", "db-seam"]` with a B-7
       message. Verify: `npm run lint` clean with zero warnings.
-- [ ] 5.2 Inject-and-revert, recording commands and trimmed outputs in
+- [x] 5.2 Inject-and-revert, recording commands and trimmed outputs in
       `openspec/changes/add-mobile-design-system-gallery/evidence.md`: (a)
       `import { galleryModules } from "@/design/gallery/registry"` in `gallery-index-screen.tsx` →
       `no-restricted-imports` with the D5 message; (b) the same import inside
@@ -126,7 +126,7 @@ unless a split helps review.
 
 ## 6. Tests
 
-- [ ] 6.1 Create `src/design/gallery/registry.test.ts` per D8: orphan check (fs walk of `src/**`
+- [x] 6.1 Create `src/design/gallery/registry.test.ts` per D8: orphan check (fs walk of `src/**`
       for `*.gallery.tsx` vs the registry's imports, both directions), unique meta ids, titles and
       story ids, every story has `render` or `args`; render matrix
       `describe.each(["ios","android"])` × `describe.each(["light","dark"])` (mutable
@@ -139,17 +139,17 @@ unless a split helps review.
       evidence.md): (a) an unregistered `src/components/chrome/scratch.gallery.tsx` → orphan
       failure; (b) duplicate a story id → uniqueness failure; (c) an unlabeled `Pressable` in one
       fixture → accessibility failure. Revert all.
-- [ ] 6.2 Create `src/design/gallery/no-storybook.contract.test.ts` per D11. Verify: it passes;
+- [x] 6.2 Create `src/design/gallery/no-storybook.contract.test.ts` per D11. Verify: it passes;
       temporarily add `"@storybook/react-native": "10.0.0"` to `package.json` `devDependencies`
       (no install) → it fails naming the package; revert and record in evidence.md.
-- [ ] 6.3 In `src/components/settings-route-structure.test.ts`: delete the settings-gallery test;
+- [x] 6.3 In `src/components/settings-route-structure.test.ts`: delete the settings-gallery test;
       extend the developer test to assert `developer/gallery.tsx` and `developer/gallery/[story].tsx`
       are the thin re-exports of §4.4, both are registered on the root Stack, the index screen
       contains `title: t("gallery.title")` and the story screen `title: t(entry.name)`, and
       `developer/_layout.tsx` and `developer/gallery/index.tsx` do not exist. Verify:
       `npx jest src/components/settings-route-structure.test.ts` passes, including
       "classifies every root route".
-- [ ] 6.4 Create `src/features/developer/ui/developer-routes.contract.test.tsx` per D2: discover
+- [x] 6.4 Create `src/features/developer/ui/developer-routes.contract.test.tsx` per D2: discover
       `src/app/developer.tsx` and every `.tsx` under `src/app/developer/`, assert each is one
       `export { X as default } from "@/features/developer/ui"` line, render each `X` from the `ui`
       barrel with capability `production` (mutable `@/features/environment` mock, `expo-router`
@@ -157,21 +157,21 @@ unless a split helps review.
       and assert the redirect `/settings` and no `gallery-*` / `developer-*` testID. Verify: passes;
       inject-and-revert: remove the gate from `GalleryStoryScreen` → fails naming the route; record
       in evidence.md.
-- [ ] 6.5 Create `src/features/developer/ui/gallery-index-screen.test.tsx` and
+- [x] 6.5 Create `src/features/developer/ui/gallery-index-screen.test.tsx` and
       `gallery-story-screen.test.tsx` (both platforms): index renders one section per fixture in
       registry order and one row per story; pressing `gallery-story-native-settings--switches`
       pushes `{ pathname: "/developer/gallery/[story]", params: { story: "native-settings--switches" } }`
       (or the equivalent `router.push` the row issues); story screen renders the requested story's
       content testID and sets the title; unknown id redirects to `/developer/gallery`; preview
       capability renders both. Verify: `npx jest src/features/developer` passes.
-- [ ] 6.6 In `developer-screen.test.tsx`: the gallery row pushes `/developer/gallery`; keep the
+- [x] 6.6 In `developer-screen.test.tsx`: the gallery row pushes `/developer/gallery`; keep the
       production and preview cases. Verify: `npx jest src/features/developer/ui/developer-screen.test.tsx`.
-- [ ] 6.7 Confirm Maestro is unaffected: `grep -rn "settings-gallery" .maestro e2e` returns nothing
+- [x] 6.7 Confirm Maestro is unaffected: `grep -rn "settings-gallery" .maestro e2e` returns nothing
       and `npx jest e2e/maestro-selectors.test.ts` passes.
 
 ## 7. Architecture Book and ADR
 
-- [ ] 7.1 Write `docs/mobile/architecture-book/decisions/064-in-house-component-gallery.md` from
+- [x] 7.1 Write `docs/mobile/architecture-book/decisions/064-in-house-component-gallery.md` from
       `TEMPLATE.md` with the design.md "Decision (ADR 064)" content: Context (component review
       needs per owner decision 8; audit in `docs/mobile/design-system-audit/storybook-options.md`),
       Decision (in-house CSF3-shaped gallery, frozen scope: index + story route, no controls, no
@@ -180,7 +180,7 @@ unless a split helps review.
       native-dependency or fingerprint cost. Re-check `gh pr list` for an open PR adding `064` first.
       Add the index row in `decisions/README.md` ("Review components in an in-house on-device
       gallery, not Storybook"). Verify: the link resolves.
-- [ ] 7.2 `accessibility.md`: add "## Device accessibility recipe" (before "Proof in CI"): open a
+- [x] 7.2 `accessibility.md`: add "## Device accessibility recipe" (before "Proof in CI"): open a
       story by deep link (`xcrun simctl openurl <udid> timecalendar-dev://developer/gallery/<id>`;
       `adb shell am start -a android.intent.action.VIEW -d timecalendar-dev://developer/gallery/<id>`;
       `timecalendar://…` on preview builds); set conditions with
@@ -191,22 +191,22 @@ unless a split helps review.
       `font_scale 1.0`, `cmd uimode night no`). Android runs on the Windows host. Add to "Proof in
       CI" the registry test's role + label matrix (pointer to `src/design/gallery/registry.test.ts`,
       noting it reads the native mocks).
-- [ ] 7.3 `navigation.md`: Developer page paragraph — Design opens `/developer/gallery`; replace the
+- [x] 7.3 `navigation.md`: Developer page paragraph — Design opens `/developer/gallery`; replace the
       `/settings-gallery` paragraph with the gallery routes (layout-less siblings, D1), deep link
       format, unknown id → index, and the one subtree gate proven by
       `developer-routes.contract.test.tsx`.
-- [ ] 7.4 `features.md`: `developer` row hosts the component gallery (`/developer/gallery`,
+- [x] 7.4 `features.md`: `developer` row hosts the component gallery (`/developer/gallery`,
       `/developer/gallery/[story]`), links `/dev-import` and the gallery; add a "Design system
       gallery" entry pointing at `src/design/gallery/` and ADR 064.
-- [ ] 7.5 `testing.md`: add a "Gallery fixtures" bullet (registry orphan/uniqueness, light/dark ×
+- [x] 7.5 `testing.md`: add a "Gallery fixtures" bullet (registry orphan/uniqueness, light/dark ×
       iOS/Android render matrix, accessible-control check, no-Storybook contract, the
       `src/design/gallery/*.ts` 90% tier) next to the native settings chrome bullet.
-- [ ] 7.6 `lint-format.md`: add the `@/design` barrel ban (`banDesignDeepImports`,
+- [x] 7.6 `lint-format.md`: add the `@/design` barrel ban (`banDesignDeepImports`,
       `timecalendar/design-home`) to the restricted-imports inventory and B-7 to the boundaries list.
       `theming.md`: the native-settings geometry device evidence is checked through
       `/developer/gallery`. `architecture.md` Structure: add "Design-system primitives, fixtures and
       the gallery registry live in `src/design/` behind the `@/design` barrel."
-- [ ] 7.7 `CHANGELOG.md`: top entry `## 2026-10-25 — Design-system gallery` listing the routes and
+- [x] 7.7 `CHANGELOG.md`: top entry `## 2026-10-25 — Design-system gallery` listing the routes and
       deep links, the gate, CSF3 fixtures + explicit registry, removed `/settings-gallery`,
       `gallery.*` strings, the new tests, lint and coverage tier, ADR 064 and the accessibility
       recipe. Current state only, no history wording, in every touched doc. Verify:
@@ -216,9 +216,9 @@ unless a split helps review.
 
 ## 8. Local verification
 
-- [ ] 8.1 `npx tsc --noEmit` passes.
-- [ ] 8.2 `npm run lint` passes with zero warnings.
-- [ ] 8.3 `npm test -- --coverage` passes, including the 90% tier on `src/design/gallery/*.ts`, the
+- [x] 8.1 `npx tsc --noEmit` passes.
+- [x] 8.2 `npm run lint` passes with zero warnings.
+- [x] 8.3 `npm test -- --coverage` passes, including the 90% tier on `src/design/gallery/*.ts`, the
       70% global floor, and the per-file branch gate for every touched file.
 - [ ] 8.4 iOS simulator smoke (Mac): on a development build, open
       `timecalendar-dev://developer/gallery/native-settings--long-strings` and

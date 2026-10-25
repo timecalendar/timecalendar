@@ -56,14 +56,28 @@ success `/dev-import` returns with `dismissTo("/calendar")`, since the root Stac
 `initialRouteName: "(tabs)"` puts the tabs beneath it in-app and on a cold deep link alike, and
 falls back to `replace` only when nothing is beneath, so the root Stack never holds a second
 `(tabs)`), and
-Design (the `/settings-gallery` entry). The environment selector's home is enforced by the
+Design (the component gallery entry, `/developer/gallery`). The environment selector's home is enforced by the
 `banDeveloperTools` flag of `restrictedImports` and its `timecalendar/developer-tools-home` opt-out
 block in `mobile/eslint.config.js`.
 
-`/settings-gallery` is a dev-only root sibling reached from the developer page.
-It renders every `native-settings` primitive for a one-pass device check in both schemes and
-redirects to `/settings` when the backend capability is `production`, matching the environment
-control's gate.
+**Component gallery.** `/developer/gallery` (`src/app/developer/gallery.tsx`) lists every
+registered fixture as a native settings section with one navigation row per story.
+`/developer/gallery/[story]` (`src/app/developer/gallery/[story].tsx`) renders one story as the
+whole screen under the compact native header titled with the story's translated name, with no
+gallery chrome around it, so focus order and Back are what ships. Story ids are
+`<meta id>--<kebab-case export name>` and deep-link as
+`timecalendar-dev://developer/gallery/<id>` (`timecalendar://…` on preview builds); an unknown id
+redirects to the index. A cold deep link puts `(tabs)` beneath the story, so Back returns to the
+tabs. Both routes are layout-less root Stack siblings of `developer.tsx`, the `user-calendars`
+shape: never add `developer/_layout.tsx` or `developer/gallery/index.tsx`.
+
+**One gate for the `/developer` subtree.** Every screen of the subtree starts with
+`isDeveloperSurfaceEnabled()` (`src/features/developer/ui/developer-access.ts`, capability not
+`production`) and redirects to `/settings` otherwise.
+`src/features/developer/ui/developer-routes.contract.test.tsx` discovers `developer.tsx` and every
+route under `src/app/developer/`, requires each to be a thin re-export from
+`@/features/developer/ui`, and renders each with the `production` capability expecting the
+redirect and no content. See ADR [064](./decisions/064-in-house-component-gallery.md).
 
 Settings pages are the native-list exception defined by ADR
 [060](./decisions/060-platform-native-settings-composition.md): Expo Router still owns the root

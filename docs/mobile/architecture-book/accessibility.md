@@ -56,9 +56,31 @@ These rules guard real product touchables (interactive controls declare `accessi
   list so the app name keeps the `ThemedText` heading role and all copy follows the OS font scale;
   the app icon is hidden from assistive technology.
 
+## Device accessibility recipe
+
+Every fixture state in the component gallery is one deep-linkable screen. To review one:
+
+1. Open the story: `xcrun simctl openurl <udid> timecalendar-dev://developer/gallery/<id>` on iOS,
+   `adb shell am start -a android.intent.action.VIEW -d timecalendar-dev://developer/gallery/<id>`
+   on Android. Preview builds use `timecalendar://`. The index at `/developer/gallery` lists every
+   id.
+2. Set the conditions. iOS:
+   `xcrun simctl ui <udid> content_size accessibility-extra-extra-extra-large` and
+   `xcrun simctl ui <udid> appearance dark`. Android: `adb shell settings put system font_scale 2.0`
+   and `adb shell cmd uimode night yes`.
+3. Take a screenshot and read the accessibility tree; check that copy wraps instead of clipping and
+   that every control exposes a role and a meaningful label.
+4. Swipe through with VoiceOver and TalkBack: the header (Back, then the story title) comes first,
+   then the fixture's own content, one focus stop per row.
+5. Reset: `content_size large` and `appearance light` on iOS, `font_scale 1.0` and
+   `cmd uimode night no` on Android.
+
+Android emulators run on the Windows host, not the Mac.
+
 ## Proof in CI
 
 - `src/components/themed-text.test.tsx` drives a typed `Record<ThemedTextType, { step; heading }>` table through `it.each`: per accepted `type` it renders through the real accessibility tree and asserts the `header` role is present or absent (a _resolved semantic_, not merely that a prop was passed), plus the rendered ramp style and iOS `dynamicTypeRamp`. It also covers explicit-role-wins. `src/theme/typography.test.ts` pins the ramp values on both platforms. Gated by the `test-mobile` job (tsc + lint + Jest), R-1.
+- `src/design/gallery/registry.test.ts` renders every gallery story on the iOS and Android branches in light and dark, and fails when an interactive host element lacks an accessibility role or a non-empty accessible name (its label, else its merged descendant text or labels), or a text input lacks a label, naming the story, platform and `testID`. A control nested in another control counts as part of the outer node. The check reads what the suite-wide native mocks in `jest/setup-expo-ui.ts` project, so a mock that drops a real modifier is fixed in the mock, never exempted per story; it proves declared semantics, not announcement quality.
 
 ## What lint can't encode → prose, each with reason + owner
 

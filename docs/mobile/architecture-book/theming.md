@@ -271,7 +271,7 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
   SwiftUI and Material hosts, that each platform composition contains one native scroll owner, that
   the brand reaches the iOS Form tint and every Compose `seedColor`, and that icons, footers, segment
   positions, Material text roles, and the radio-dialog structure are wired. Rendered geometry stays
-  device evidence, checked through the dev-only `/settings-gallery`.
+  device evidence, checked through the native settings stories of `/developer/gallery`.
 - The placement invariant ("native settings dialog placement" in `native-settings.test.tsx`, and
   the placement cases in `native-settings-numeric-editor.test.tsx` and
   `native-text-entry-dialog.test.tsx`) asserts that each standalone dialog rejects rendering inside

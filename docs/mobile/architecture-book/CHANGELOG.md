@@ -1,3 +1,29 @@
+## 2026-10-25 — Design-system gallery
+
+- `/developer/gallery` lists every registered fixture as a native settings section with one row
+  per story; `/developer/gallery/[story]` renders one story as the screen under the compact native
+  header. Stories deep-link as `timecalendar-dev://developer/gallery/<meta id>--<export>`; an
+  unknown id redirects to the index. Both routes are layout-less root Stack siblings of
+  `developer.tsx` ([navigation.md](./navigation.md) → Component gallery).
+- The whole `/developer` subtree shares `isDeveloperSurfaceEnabled()` and redirects to `/settings`
+  under the `production` capability, proven by `developer-routes.contract.test.tsx`. The developer
+  page's Design row opens the gallery.
+- Fixtures are CSF3-shaped `*.gallery.tsx` modules (`native-settings`, eight stories including
+  long French strings; `native-text-entry-dialog`, default, submit-disabled and pending) listed in
+  the explicit `src/design/gallery/registry.ts`, behind the `@/design` barrel. Titles and story
+  names are typed `gallery.*` keys in FR and EN.
+- `/settings-gallery` and the `settingsGallery.*` strings no longer exist.
+- Tests: `registry.test.ts` (orphans, uniqueness, light/dark × iOS/Android render matrix, role and
+  label on every interactive element), `no-storybook.contract.test.ts`, the developer-routes
+  contract and the gallery screen suites. `src/design/gallery/*.ts` joins the 90% lines and
+  branches tier.
+- Lint: `@/design/*` deep imports are banned outside `src/design/**` (`banDesignDeepImports`,
+  `timecalendar/design-home`); B-7 forbids `src/design/**` from importing features, routes,
+  `@/api/generated` or `@/db` ([lint-format.md](./lint-format.md)).
+- ADR [064](./decisions/064-in-house-component-gallery.md): in-house gallery instead of
+  Storybook, frozen scope. [accessibility.md](./accessibility.md) carries the device
+  accessibility recipe.
+
 ## 2026-10-25 — Android design-system device-pass fixes
 
 - `theming.md` (`chrome/native-settings.tsx`): **Placement** rule. `NativeSettingsRadioDialog`,
