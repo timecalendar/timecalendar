@@ -20,8 +20,8 @@ const ids = {
   submit: "gallery-text-entry-submit",
 } as const
 
-// Pending locks Cancel and the iOS swipe-dismiss, so the story releases it on
-// its own to leave a way out.
+// On iOS, pending locks Cancel and the swipe-dismiss, so the story releases it
+// on its own to leave a way out.
 const PENDING_MS = 3000
 
 const ignore = () => undefined

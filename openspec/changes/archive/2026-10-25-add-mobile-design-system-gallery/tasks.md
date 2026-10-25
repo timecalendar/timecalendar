@@ -217,7 +217,7 @@ unless a split helps review.
       `known-a11y-violations.ts` with an inbox link and the list only shrinks. `theming.md`: the
       Android switch row's trailing `Switch` is a known violation. `testing.md` and `CHANGELOG.md`
       name the known-violation list.
-- [ ] 7.8 Update the Purpose of `openspec/specs/mobile-developer-page/spec.md` at archive time to
+- [x] 7.8 Update the Purpose of `openspec/specs/mobile-developer-page/spec.md` at archive time to
       name the component gallery instead of the settings gallery entry.
 
 ## 7a. Review fixes

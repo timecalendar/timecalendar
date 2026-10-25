@@ -48,7 +48,7 @@ exported through the `@/design` barrel. Fixtures are `*.gallery.tsx` files next 
 at `/developer/gallery`. A fixture meta lists its story export names in display order (`stories`);
 a story that only one platform can render declares `platforms` (the native settings
 `FloatingAction` and `RadioDialog` stories are Android-only). Dialog stories close on Cancel and
-Save and reopen from a row behind them; the pending text-entry story releases its lock after three
+Save and reopen from a row behind them; the pending text-entry story releases its iOS lock after three
 seconds so Cancel works. See ADR [064](./decisions/064-in-house-component-gallery.md).
 
 ## Responsive presentation ownership

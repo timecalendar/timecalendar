@@ -207,7 +207,7 @@ The seam has no disabled row, and adding one would be a seam change outside this
 message) stories with a static `ids` object (`gallery-text-entry-*`). Each mounts the dialog open
 over a `NativeSettingsHost` holding one "Open the dialog" action row
 (`gallery-text-entry-open`). Cancel, hardware Back, the iOS swipe-dismiss and Save close the
-dialog; the row reopens it. `pending` locks Cancel and the iOS swipe-dismiss, so the `Pending`
+dialog; the row reopens it. On iOS, `pending` locks Cancel and the swipe-dismiss (Android keeps both active), so the `Pending`
 story releases it after 3 s, and reopening starts pending again; without that, an iOS reviewer
 would have no way out of the story. This pulls one slice-2.3 fixture forward because it is the
 only disabled/pending state already in chrome, and it gives the registry two modules so the
