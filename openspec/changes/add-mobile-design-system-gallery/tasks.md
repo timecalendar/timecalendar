@@ -220,7 +220,7 @@ unless a split helps review.
 - [x] 8.2 `npm run lint` passes with zero warnings.
 - [x] 8.3 `npm test -- --coverage` passes, including the 90% tier on `src/design/gallery/*.ts`, the
       70% global floor, and the per-file branch gate for every touched file.
-- [ ] 8.4 iOS simulator smoke (Mac): on a development build, open
+- [x] 8.4 iOS simulator smoke (Mac): on a development build, open
       `timecalendar-dev://developer/gallery/native-settings--long-strings` and
       `…/native-text-entry-dialog--submit-disabled` at `accessibility-extra-extra-extra-large` in
       dark mode, take screenshots and the accessibility tree, reset the simulator, and attach them

@@ -21,6 +21,16 @@ stories, and record pass or fail per line:
 - **Preview build:** `/developer/gallery` opens from Settings → Developer → Component gallery on a
   TestFlight or Play internal preview build, and a story renders its real SwiftUI/Compose controls.
 
+## Already found on the iOS simulator
+
+The agent device pass (`openspec/changes/archive/2026-10-25-add-mobile-design-system-gallery/evidence.md`,
+section 8.4) found three native-settings seam issues worth deciding on:
+
+- At the largest accessibility text size, a row with a trailing value and badge keeps them beside
+  the title, which then wraps two to three characters per line.
+- Changing text size while a native-settings header is on screen keeps its old height and clips it.
+- A story opened by deep link has no gallery index beneath it; Back returns to the previous tab.
+
 ## Why
 
 Jest proves every control declares a role and a label under the native mocks; it cannot judge

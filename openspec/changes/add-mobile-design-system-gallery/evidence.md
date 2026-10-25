@@ -105,4 +105,35 @@ error TS2322: Type '"developer.title"' is not assignable to type 'GalleryKey'.
 
 ## 8.4 iOS simulator smoke
 
-Pending (conductor device pass).
+iPhone 17 simulator (iOS 26.5), development build `fr.samuelprak.timecalendar.dev`, Metro on this
+branch, backend capability `development`, app language English. Simulator reset to light / `large`
+afterwards.
+
+- Settings → Developer: the Design section shows "Component gallery" with a chevron; tapping it
+  opens `/developer/gallery` with the native header "Component gallery" and back button
+  "Developer".
+- Index: two sections, "Native settings" (Choices, Destructive action, Floating action, Header
+  and alert, Long strings, Radio dialog, Rows, Switches) and "Text entry dialog" (Default,
+  Pending, Submit disabled); each row is one `AXButton` with its story name.
+- `timecalendar-dev://developer/gallery/native-settings--switches` from a running app opens the
+  story directly with the native header "Switches"; accessibility tree: `AXButton "Switch on"
+  value="1"`, `AXButton "Switch off" value="0"`.
+- `…/native-settings--long-strings`, light, default size: header, footer and section title wrap;
+  each row is one `AXButton` carrying title, subtitle and value
+  (`"Unconstitutionally strict verification, Last successful sync a few minutes ago from your
+  institution's server" value="Higher education institution"`).
+- Same story, dark, `accessibility-extra-extra-extra-large`, cold launch: header title and intro
+  wrap without clipping.
+- `…/native-text-entry-dialog--submit-disabled`, dark, default size: sheet titled "Rename the
+  calendar", Cancel enabled, Save rendered disabled, field exposed as `"Calendar name"`.
+
+Findings for the native-settings seam (outside this change, recorded in the inbox note):
+
+1. At `accessibility-extra-extra-extra-large`, a row with a trailing value and a badge
+   (long-strings story) keeps the title, value and badge side by side, so the title wraps two to
+   three characters per line. iOS Settings stacks the value under the title at accessibility
+   sizes.
+2. Changing the content size while the long-strings story is on screen clips the header title and
+   intro to their previous heights; a cold launch at the same size lays out correctly.
+3. A story opened by deep link has no gallery index beneath it, so Back returns to the tab the app
+   was on.
