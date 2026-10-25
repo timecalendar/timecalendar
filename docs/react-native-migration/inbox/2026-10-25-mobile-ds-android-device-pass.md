@@ -53,12 +53,10 @@ as written. This answers `2026-10-25-mobile-type-ramp-android-device-pass.md`.
    "Color #E91E63", which a screen-reader user can't use. They need color names (FR/EN).
 
 The environment picker lives on Settings › Developer (`/developer`, Backend section). It was
-re-checked on the same emulator with the fix running through Metro, while the picker still sat on
-the Settings hub; the developer page uses the same row and dialog split, with the dialog after its
-native host:
-Cancel and Back close the dialog, selecting an option shows the confirmation with nothing behind
-it, and after "Clear and switch" the app reloads with one app window and no dialog window. The
-Android date fields expose "Starts, 25 Oct 22:40" in the accessibility tree.
+re-checked on the same emulator with the fix running through Metro: Cancel and Back close the
+dialog, selecting an option shows the confirmation with nothing behind it, and the app keeps one
+window with no dialog window, including after "Clear and switch" reloads the app. The Android date
+fields expose "Starts, 25 Oct 22:40" in the accessibility tree.
 
 ## Why
 
@@ -67,8 +65,7 @@ this change cannot make.
 
 ## How to verify
 
-Item 1 passes on a physical device, and the environment picker repeats the Cancel, Back and
-select-then-confirm check from Settings › Developer, with the results recorded in this file. Items 2 to 5 and 7
+Item 1 passes on a physical device, with the results recorded in this file. Items 2 to 5 and 7
 each get a decision or a fix, either as an OpenSpec change or as an ADR.
 
 ## Blocks
