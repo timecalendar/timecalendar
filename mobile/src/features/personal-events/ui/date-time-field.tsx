@@ -54,13 +54,14 @@ export function DateTimeField({
 }: DateTimeFieldProps) {
   const theme = useTheme()
   const [step, setStep] = useState<AndroidStep>({ kind: "closed" })
+  const wallClock = toZonedTime(value, zone)
 
   if (Platform.OS !== "android") {
     return (
       <DateTimePicker
         {...(testID !== undefined ? { testID } : {})}
         mode="datetime"
-        value={toZonedTime(value, zone)}
+        value={wallClock}
         onValueChange={(_event, date) => onChange(fromZonedTime(date, zone))}
       />
     )
@@ -82,11 +83,11 @@ export function DateTimeField({
           key="date"
           mode="date"
           presentation="dialog"
-          value={dateDialogValue(toZonedTime(value, zone))}
+          value={dateDialogValue(wallClock)}
           onValueChange={(_event, day) =>
             setStep({
               kind: "time",
-              pending: mergePickedDay(toZonedTime(value, zone), day),
+              pending: mergePickedDay(wallClock, day),
             })
           }
           onDismiss={() => setStep({ kind: "closed" })}
