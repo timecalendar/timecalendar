@@ -80,10 +80,6 @@ import { useErrorAnnouncement } from "@/components/use-error-announcement"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { useTheme } from "@/theme"
 
-// The local Expo module is CNG-owned outside src; this is its only application edge.
-// eslint-disable-next-line no-restricted-imports
-import { clearAndSetSemantics } from "../../../modules/compose-semantics"
-
 export type NativeSettingsRowProps = {
   kind: "navigation" | "action" | "value"
   label: string
@@ -805,7 +801,7 @@ function ComposeSettingsSwitchRow({
       colors={listItemColors(palette)}
       modifiers={[
         ...segment,
-        testID(switchTestID ?? rowTestID),
+        testID(rowTestID),
         toggleable(value, toggle, { role: "switch" }),
       ]}
     >
@@ -822,7 +818,7 @@ function ComposeSettingsSwitchRow({
         <MaterialSwitch
           value={value}
           onCheckedChange={onValueChange}
-          modifiers={[clearAndSetSemantics()]}
+          {...(switchTestID ? { modifiers: [testID(switchTestID)] } : {})}
         />
       </ListItem.TrailingContent>
     </ListItem>

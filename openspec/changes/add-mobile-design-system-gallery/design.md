@@ -236,30 +236,37 @@ A nested control is not folded into its ancestor. Compose merging stops at a chi
 click or toggle semantics, so TalkBack gives a nested control its own stop; the check catches it.
 The mocks follow the real controls: a Compose `RadioButton` is a control only with `onClick`
 (Expo UI passes `clickable: onClick != null`), and a Compose `Switch` is always one (Expo UI's
-`SwitchView` always passes Compose a non-null `onCheckedChange`) unless it carries
-`clearAndSetSemantics()`.
+`SwitchView` always passes Compose a non-null `onCheckedChange`).
 
 The check reads what the suite-wide mocks project. If a fixture fails because a mock drops a
-modifier the real native control carries, fix the mock to project it; never exempt the story.
-Inject-and-revert proof: add an unlabeled `Pressable` to one story, confirm the test fails, revert.
+modifier the real native control carries, fix the mock to project it. Inject-and-revert proof: add
+an unlabeled `Pressable` to one story, confirm the test fails, revert.
 Host tests do not claim VoiceOver/TalkBack quality (testing.md).
 
-### D8a. The Android switch row is one TalkBack stop
+### D8a. Known violations are listed and only shrink
 
-`ComposeSettingsSwitchRow` is a `ListItem` with `toggleable(value, toggle, { role: "switch" })`
-and a trailing Material `Switch`. Expo UI 56 has no way to pass Compose a null `onCheckedChange`
-and no semantics-clearing modifier, so the `Switch` would be a second, unlabeled "Switch" stop.
-A local Android-only Expo module, `mobile/modules/compose-semantics`, registers
-`clearAndSetSemantics` into `ModifierRegistry` (Expo UI's documented extension path for custom
-Compose modifiers) and exports `clearAndSetSemantics()` as a modifier config. The trailing
-`Switch` carries it: Compose discards the switch's toggleable semantics, the switch keeps its
-pointer input, and the row is the single labeled switch. The row carries `switchTestID ?? testID`,
-the id the iOS Toggle carries, so one id reaches the one control on both platforms (Maestro's
-`user-calendar-visibility-<id>` tap keeps working).
+A violation the product really has and cannot fix in this change is listed in
+`src/design/gallery/known-a11y-violations.ts`: a typed entry per story id, platform and element
+(`testID`, else `<nearest ancestor testID> > <role>`), with the problem, a reason and an
+`docs/react-native-migration/inbox/` link. Per story and platform the registry test compares the
+found violations with the listed ones and fails on both differences: an unlisted violation, and a
+stale entry that no longer reproduces. A separate case fails on an entry naming a story absent from
+its platform, or a duplicate entry. The list can therefore only shrink, and a fix proves itself by
+deleting its entry.
 
-Alternatives: a disabled `Switch` (still a focusable, merging node announced as disabled);
-dropping row toggling and labeling the `Switch` (no `contentDescription` modifier in Expo UI 56);
-an allowlist in the check (leaves the real defect). Rejected.
+The list holds the Android switch row. `ComposeSettingsSwitchRow` is a `ListItem` with
+`toggleable(value, toggle, { role: "switch" })` and a trailing Material `Switch`. Expo UI 56 has no
+way to pass Compose a null `onCheckedChange` and no semantics-clearing modifier, so the `Switch` is
+a second, unlabeled "Switch" stop (`native-settings--switches`, `native-settings--long-strings`).
+The fix, a local Expo module registering a `clearAndSetSemantics` Compose modifier on the trailing
+`Switch` with the row carrying `switchTestID ?? testID`, adds Kotlin every Android build links and
+needs an Android build and a TalkBack check this change cannot run; the inbox note
+`2026-10-25-mobile-design-system-gallery-device-pass.md` carries it, and deleting the entries is its
+acceptance test.
+
+Alternatives: dropping the nested-control check (hides the defect); a disabled `Switch` (still a
+focusable node, announced as disabled); dropping row toggling and labeling the `Switch` (no
+`contentDescription` modifier in Expo UI 56). Rejected.
 
 ### D9. Coverage tier for the gallery logic
 

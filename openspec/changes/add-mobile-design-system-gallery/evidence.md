@@ -71,14 +71,36 @@ Mock fixes the matrix required (`jest/setup-expo-ui.ts`), each tracking the real
 
 - Compose `RadioButton` is a control only with `onClick` (Expo UI passes
   `clickable: onClick != null`). Compose `Switch` is always a control (Expo UI's `SwitchView`
-  always passes a non-null `onCheckedChange`) unless it carries `clearAndSetSemantics()`.
+  always passes a non-null `onCheckedChange`).
 
 The check covers nested controls: Compose merging stops at a child with its own click or toggle
-semantics. Inject-and-revert: with `clearAndSetSemantics()` removed from the switch row's trailing
-`Switch` in `native-settings.tsx`, `npx jest src/design/gallery/registry.test.ts` fails 4 tests
-(Android light and dark × `native-settings--switches` and `native-settings--long-strings`), each
-reporting `"undefined missing label"` for the bare switch; restored, all 44 pass. Whether the Kotlin
-module compiles and TalkBack meets one stop per switch row is the Android device pass.
+semantics. The Android switch row's trailing `Switch` is listed in
+`src/design/gallery/known-a11y-violations.ts` (`native-settings--switches`: `switch-on`,
+`switch-off`; `native-settings--long-strings`: `long-switch`; each `<row testID> > switch missing
+label`), linked to `inbox/2026-10-25-mobile-design-system-gallery-device-pass.md`.
+`npx jest src/design/gallery/registry.test.ts`: 45 passed.
+
+Inject-and-revert, unlisted: with the `native-settings--long-strings` entry deleted, 2 tests fail
+(Android light and dark):
+
+```
+✕ renders native-settings--long-strings with accessible controls beyond the known violations
++   "unlisted": Array [
++     "gallery-native-settings-long-switch > switch missing label",
+Tests:       2 failed, 43 passed, 45 total
+```
+
+Inject-and-revert, stale: with a bogus iOS entry for `gallery-native-settings-action` in
+`native-settings--rows`, 2 tests fail (iOS light and dark):
+
+```
+✕ renders native-settings--rows with accessible controls beyond the known violations
++   "stale": Array [
++     "gallery-native-settings-action missing label",
+Tests:       2 failed, 43 passed, 45 total
+```
+
+Restored, all 45 pass.
 
 ## 6.2 No-Storybook contract
 

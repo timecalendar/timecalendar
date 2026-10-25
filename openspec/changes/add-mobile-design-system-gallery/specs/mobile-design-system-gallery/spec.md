@@ -127,19 +127,26 @@ In every story, on both platform branches, every host element that accepts a pre
 change or a selection SHALL expose an accessibility role and a non-empty accessibility label,
 including a control nested inside another control: Compose stops merging at a child with its own
 click or toggle semantics, so the nested control is a separate TalkBack stop. Text inputs SHALL
-expose a non-empty label. The check SHALL run in the same matrix as rendering and SHALL NOT allow
-per-story exemptions.
+expose a non-empty label. The check SHALL run in the same matrix as rendering. A violation the
+product cannot fix yet SHALL be listed in a typed known-violations list, one entry per story id,
+platform and element with a reason and an inbox link; the check SHALL fail on a violation not on
+the list and on a listed entry that no longer reproduces, so the list only shrinks.
 
 #### Scenario: An unlabeled control fails CI
 
 - **WHEN** a story renders a pressable element without an accessibility label
 - **THEN** the registry test fails naming the story, platform and element
 
-#### Scenario: An Android switch row is one TalkBack stop
+#### Scenario: An unlisted violation fails CI
 
-- **WHEN** a switch row renders on Android
-- **THEN** the toggleable row is the only switch control, and its trailing Material `Switch`
-  carries `clearAndSetSemantics()` so it adds no focus stop of its own
+- **WHEN** a story renders a violation that has no known-violations entry for its story, platform
+  and element
+- **THEN** the registry test fails reporting it as unlisted
+
+#### Scenario: A fixed violation must leave the list
+
+- **WHEN** a known-violations entry no longer reproduces in its story on its platform
+- **THEN** the registry test fails reporting the entry as stale
 
 ### Requirement: Fixtures cover named stress states
 

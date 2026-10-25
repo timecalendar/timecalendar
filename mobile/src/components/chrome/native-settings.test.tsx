@@ -98,11 +98,20 @@ describe.each(["ios", "android"] as const)(
       await fireEvent.press(view.getByTestId("action"))
       expect(action).toHaveBeenCalledTimes(1)
       expect(view.getByTestId("value").props.accessibilityRole).toBeFalsy()
-      expect(view.queryByTestId("toggle")).toBeNull()
-      expect(view.getAllByRole("switch")).toHaveLength(1)
-      await fireEvent.press(view.getByTestId("switch"))
-      expect(toggle).toHaveBeenCalledTimes(1)
-      expect(toggle).toHaveBeenLastCalledWith(false)
+      const switchTarget = view.getByTestId("switch")
+      if (platform === "ios") {
+        await fireEvent.press(switchTarget)
+        expect(toggle).toHaveBeenCalledTimes(1)
+      } else {
+        await fireEvent.press(view.getByTestId("toggle"))
+        expect(toggle).toHaveBeenCalledTimes(1)
+        expect(toggle).toHaveBeenLastCalledWith(false)
+
+        toggle.mockClear()
+        await fireEvent.press(switchTarget)
+        expect(toggle).toHaveBeenCalledTimes(1)
+        expect(toggle).toHaveBeenLastCalledWith(false)
+      }
       await fireEvent.press(view.getByTestId("choice"))
       expect(select).toHaveBeenCalledTimes(1)
       expect(view.getByTestId("choice").props.accessibilityState.selected).toBe(

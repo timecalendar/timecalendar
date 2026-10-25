@@ -96,8 +96,9 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   unregistered or extra `*.gallery.tsx` file, a duplicate meta id, title or story id, a story export
   missing from (or listed twice in) its meta's `stories` order, a story with neither `render` nor
   `args`, a React error in any story in light or dark on each platform branch the story declares,
-  and an interactive element without a role and label, nested controls included
-  ([accessibility.md](./accessibility.md) → Proof in CI).
+  and an interactive element without a role and label, nested controls included, unless that exact
+  violation is listed in `known-a11y-violations.ts`; a listed entry that no longer reproduces fails
+  too ([accessibility.md](./accessibility.md) → Proof in CI).
   `src/design/gallery/no-storybook.contract.test.ts` fails on a Storybook or `react-native-web`
   dependency or configuration directory (ADR 064). `src/design/gallery/*.ts` is in the 90% lines and
   branches tier; fixtures and `story-content.tsx` sit in the 70% global floor.

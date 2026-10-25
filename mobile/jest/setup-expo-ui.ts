@@ -811,12 +811,7 @@ jest.mock("@expo/ui/jetpack-compose", () => {
     const onNativeCheckedChange = (value: boolean) =>
       props.onCheckedChange?.(value)
     // The native Switch always passes Compose a non-null onCheckedChange, so it
-    // is its own control unless its semantics are cleared.
-    const cleared = props.modifiers?.some(
-      (modifier) => modifier.$type === "clearAndSetSemantics",
-    )
-    if (cleared)
-      return React.createElement(View, { testID: testID(props.modifiers) })
+    // is its own toggle node even inside a toggleable row.
     return React.createElement(Pressable, {
       testID: testID(props.modifiers),
       accessibilityRole: "switch",

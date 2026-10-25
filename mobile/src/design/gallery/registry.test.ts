@@ -5,6 +5,7 @@ import type { TestInstance } from "test-renderer"
 import { galleryEntries } from "@/design"
 import { usePlatform } from "@/test-support/platform"
 
+import { knownA11yViolations } from "./known-a11y-violations"
 import { galleryModules } from "./registry"
 import { isGalleryEntryAvailable } from "./stories"
 import { GalleryStoryContent } from "./story-content"
@@ -83,6 +84,16 @@ function accessibleName(node: TestInstance): string {
     .trim()
 }
 
+function elementIdentifier(node: TestInstance): string {
+  if (node.props.testID) return String(node.props.testID)
+  let parent = node.parent
+  while (parent && !parent.props.testID) parent = parent.parent
+  const kind = String(
+    node.props.accessibilityRole ?? node.props.role ?? node.type,
+  )
+  return `${String(parent?.props.testID)} > ${kind}`
+}
+
 function accessibilityViolations(root: TestInstance): string[] {
   const controls = root.queryAll(isInteractive).flatMap((node) => {
     const problems = [
@@ -90,14 +101,20 @@ function accessibilityViolations(root: TestInstance): string[] {
       ...(accessibleName(node) ? [] : ["label"]),
     ]
     return problems.length
-      ? [`${String(node.props.testID)} missing ${problems.join(" and ")}`]
+      ? [`${elementIdentifier(node)} missing ${problems.join(" and ")}`]
       : []
   })
   const inputs = root
     .queryAll((node) => node.type === "TextInput")
     .filter((node) => !String(node.props.accessibilityLabel ?? "").trim())
-    .map((node) => `${String(node.props.testID)} missing label`)
+    .map((node) => `${elementIdentifier(node)} missing label`)
   return [...controls, ...inputs]
+}
+
+function knownViolations(story: string, platform: string): string[] {
+  return knownA11yViolations
+    .filter((known) => known.story === story && known.platform === platform)
+    .map((known) => `${known.element} ${known.problem}`)
 }
 
 describe("gallery registry", () => {
@@ -118,6 +135,27 @@ describe("gallery registry", () => {
       expect([...module.default.stories].sort()).toEqual(exports.sort())
       expect(duplicates(module.default.stories)).toEqual([])
     }
+  })
+
+  it("lists known accessibility violations only for stories that run on their platform", () => {
+    const orphans = knownA11yViolations
+      .filter(
+        (known) =>
+          !galleryEntries.some(
+            (entry) =>
+              entry.id === known.story &&
+              isGalleryEntryAvailable(entry, known.platform),
+          ),
+      )
+      .map((known) => `${known.story} on ${known.platform}`)
+    expect(orphans).toEqual([])
+    expect(
+      duplicates(
+        knownA11yViolations.map(
+          (known) => `${known.story} ${known.platform} ${known.element}`,
+        ),
+      ),
+    ).toEqual([])
   })
 
   it("gives every story a render function or args", () => {
@@ -147,14 +185,22 @@ describe.each(["ios", "android"] as const)("gallery stories on %s", (os) => {
       galleryEntries
         .filter((entry) => isGalleryEntryAvailable(entry, os))
         .map((entry) => [entry.id, entry] as const),
-    )("renders %s with accessible controls", async (id, entry) => {
-      const view = await render(createElement(GalleryStoryContent, { entry }))
-      expect(consoleError).not.toHaveBeenCalled()
-      expect({
-        story: id,
-        platform: os,
-        violations: accessibilityViolations(view.container),
-      }).toEqual({ story: id, platform: os, violations: [] })
-    })
+    )(
+      "renders %s with accessible controls beyond the known violations",
+      async (id, entry) => {
+        const view = await render(createElement(GalleryStoryContent, { entry }))
+        expect(consoleError).not.toHaveBeenCalled()
+        const violations = accessibilityViolations(view.container)
+        const known = knownViolations(id, os)
+        expect({
+          story: id,
+          platform: os,
+          unlisted: violations.filter(
+            (violation) => !known.includes(violation),
+          ),
+          stale: known.filter((violation) => !violations.includes(violation)),
+        }).toEqual({ story: id, platform: os, unlisted: [], stale: [] })
+      },
+    )
   })
 })

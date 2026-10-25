@@ -18,16 +18,40 @@ stories, and record pass or fail per line:
   stops are the back button and the story title; each row is one stop with its label, value and
   role; switches and choices announce their state; decorative icons are not stops; the disabled
   Save announces as dimmed/disabled.
-- **Android switch rows (new native code):** the Android build compiles the local
-  `mobile/modules/compose-semantics` module (it registers the `clearAndSetSemantics` Compose
-  modifier into Expo UI). On `native-settings--switches`, TalkBack meets each switch row once,
-  announcing "<label>, Switch, On/Off", with no extra unlabeled "Switch" stop on the trailing
-  thumb; tapping the row or the thumb toggles once. Maestro `03-calendar-visibility` still taps
-  `user-calendar-visibility-<id>` on Android.
 - **Dialog stories:** Cancel, Back and Save close the text-entry dialog and "Open the dialog"
   reopens it; on `native-text-entry-dialog--pending`, Cancel works after about three seconds.
 - **Preview build:** `/developer/gallery` opens from Settings → Developer → Component gallery on a
   TestFlight or Play internal preview build, and a story renders its real SwiftUI/Compose controls.
+
+## Android switch row: two TalkBack stops (known violation)
+
+Every Android `NativeSettingsSwitchRow` (the gallery's `native-settings--switches` and
+`native-settings--long-strings`, and every product switch row such as the calendar-visibility and
+show-weekends rows) gives TalkBack two stops: the toggleable `ListItem` ("<label>, Switch, On/Off")
+and then an unlabeled "Switch" on the trailing thumb. Compose merges a row's descendants into its
+node but stops at a child with its own toggle semantics, and Expo UI's `SwitchView` always passes
+the Material `Switch` a non-null `onCheckedChange`, so the thumb keeps its own node whatever the row
+does.
+
+The registry check lists these as known violations in
+`mobile/src/design/gallery/known-a11y-violations.ts` (Android, elements
+`gallery-native-settings-switch-on > switch`, `gallery-native-settings-switch-off > switch`,
+`gallery-native-settings-long-switch > switch`).
+
+Proposed fix, needing an Android build and a TalkBack check before it lands:
+
+- A local Android-only Expo module under `mobile/modules/` registers a `clearAndSetSemantics`
+  Compose modifier into Expo UI's `ModifierRegistry` (the documented extension path for custom
+  modifiers) and exports a `clearAndSetSemantics()` modifier config.
+- The switch row's trailing `Switch` carries `clearAndSetSemantics()` (it keeps its touch target),
+  and the row `ListItem` carries `switchTestID ?? testID`, the id the iOS Toggle carries; Maestro
+  `03-calendar-visibility` then still finds `user-calendar-visibility-<id>` on Android, and the jest
+  Compose `Switch` mock renders a non-control when its semantics are cleared.
+- On the build: the module compiles, TalkBack meets each switch row once with no unlabeled
+  "Switch" stop, tapping the row or the thumb toggles once, and the Android Maestro suite passes.
+
+Acceptance: the three entries are deleted from `known-a11y-violations.ts` and the registry test
+stays green.
 
 ## Already found on the iOS simulator
 
@@ -48,9 +72,10 @@ screen reader or build Android on the Mac.
 ## How to verify
 
 Every line above passes, or each failure is filed as a follow-up against the fixture or the
-native-settings seam (not as an exemption in the registry test).
+native-settings seam. A failure the registry check also sees goes in `known-a11y-violations.ts`
+with a link to its note, never as a looser check.
 
 ## Blocks
 
-Nothing; informational. Slice 2.3 (fixtures for existing primitives) should read the result
+Nothing blocks the gallery. The switch-row fix above waits on an Android build. Slice 2.3 (fixtures for existing primitives) should read the result
 first.

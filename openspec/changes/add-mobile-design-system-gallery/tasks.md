@@ -213,9 +213,10 @@ unless a split helps review.
       `gallery.*` strings, the new tests, lint and coverage tier, ADR 064 and the accessibility
       recipe. Current state only, no history wording, in every touched doc. Verify:
       `npx prettier --check` on every touched Markdown file.
-- [x] 7.9 `runtime.md`: the `mobile/modules/compose-semantics` local module (D8a). `theming.md`:
-      the Android switch row is one toggleable `ListItem` with a semantics-cleared trailing
-      `Switch`. `accessibility.md`: nested controls are checked on their own.
+- [x] 7.9 `accessibility.md`: nested controls are checked on their own; known violations live in
+      `known-a11y-violations.ts` with an inbox link and the list only shrinks. `theming.md`: the
+      Android switch row's trailing `Switch` is a known violation. `testing.md` and `CHANGELOG.md`
+      name the known-violation list.
 - [ ] 7.8 Update the Purpose of `openspec/specs/mobile-developer-page/spec.md` at archive time to
       name the component gallery instead of the settings gallery entry.
 
@@ -227,19 +228,18 @@ unless a split helps review.
       the pending release on both platforms.
 - [x] 7a.2 Nested controls (D8, D8a): drop the interactive-ancestor skip from
       `registry.test.ts`; the Compose `RadioButton` mock is a control only with `onClick`, the
-      `Switch` mock unless it carries `clearAndSetSemantics()`; create
-      `mobile/modules/compose-semantics` and give the switch row's trailing `Switch` that modifier,
-      the row `switchTestID ?? testID`. Update `native-settings.test.tsx` and
-      `settings-screen.test.tsx`. Inject-and-revert: removing the modifier fails the Android
-      `switches` and `long-strings` stories.
+      `Switch` mock always. Add `src/design/gallery/known-a11y-violations.ts` with the Android
+      switch-row entries for `native-settings--switches` and `native-settings--long-strings`; the
+      registry test fails on an unlisted violation, a stale entry and an entry for a story absent
+      from its platform. Inject-and-revert: deleting an entry fails with `unlisted`, a bogus entry
+      fails with `stale`. The switch-row fix is in
+      inbox/2026-10-25-mobile-design-system-gallery-device-pass.md.
 - [x] 7a.3 Explicit story order (D3): `GalleryMeta.stories`, `buildGalleryEntries` follows it, the
       registry test keeps it equal to the story exports.
 - [x] 7a.4 `platforms` on stories; `FloatingAction` and `RadioDialog` are Android-only; the index
       hides and the story route redirects off-platform stories.
 - [x] 7a.5 `gallery.openStory.hint` on index rows; the Settings Developer row reads
       `isDeveloperSurfaceEnabled()`; B-7 lint message and `architecture.md` Structure wording.
-- [ ] 7a.6 Android build compiling `modules/compose-semantics` and a TalkBack pass over a switch
-      row (HUMAN: see inbox/2026-10-25-mobile-design-system-gallery-device-pass.md)
 
 ## 8. Local verification
 
