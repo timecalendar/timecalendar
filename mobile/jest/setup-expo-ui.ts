@@ -212,6 +212,9 @@ jest.mock("@expo/ui/swift-ui/modifiers", () => {
     font: (value: unknown) => modifier("font", value),
     foregroundStyle: (value: unknown) => modifier("foregroundStyle", value),
     frame: (value: unknown) => modifier("frame", value),
+    lineLimit: (value?: number) => modifier("lineLimit", value),
+    minimumScaleFactor: (value: number) =>
+      modifier("minimumScaleFactor", value),
     listRowBackground: (value: unknown) => modifier("listRowBackground", value),
     listRowInsets: (value: unknown) => modifier("listRowInsets", value),
     padding: (value: unknown) => modifier("padding", value),
@@ -290,6 +293,18 @@ jest.mock("@expo/ui/swift-ui", () => {
         ...props,
         testID: modifierValue(modifiers, "accessibilityIdentifier"),
         foreground: modifierValue(modifiers, "foregroundStyle"),
+        accessibilityLabel: modifierValue(modifiers, "accessibilityLabel"),
+        ...(modifierValue(modifiers, "accessibilityValue") !== undefined
+          ? {
+              accessibilityValue: {
+                text: modifierValue(modifiers, "accessibilityValue"),
+              },
+            }
+          : {}),
+        accessibilityElementsHidden:
+          modifierValue(modifiers, "accessibilityHidden") === true || undefined,
+        numberOfLines: modifierValue(modifiers, "lineLimit"),
+        minimumFontScale: modifierValue(modifiers, "minimumScaleFactor"),
       },
       children,
     )

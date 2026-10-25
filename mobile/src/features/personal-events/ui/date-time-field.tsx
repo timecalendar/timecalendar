@@ -1,5 +1,4 @@
 import { fromZonedTime, toZonedTime } from "date-fns-tz"
-import { getLocales, useCalendars } from "expo-localization"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Platform, Pressable, StyleSheet } from "react-native"
@@ -9,7 +8,7 @@ import { ThemedText } from "@/components/themed-text"
 import {
   type AppLocale,
   formatShortDateTime,
-  toPickerLocale,
+  useUses24HourClock,
 } from "@/features/calendar/data"
 import { Radii, Spacing, useTheme } from "@/theme"
 
@@ -63,18 +62,13 @@ export function DateTimeField({
   const theme = useTheme()
   const [step, setStep] = useState<AndroidStep>({ kind: "closed" })
   const wallClock = toZonedTime(value, zone)
-  const uses24HourClock = useCalendars()[0]?.uses24hourClock ?? null
+  const uses24HourClock = useUses24HourClock()
 
   if (Platform.OS !== "android") {
     return (
       <DateTimePicker
         {...(testID !== undefined ? { testID } : {})}
         mode="datetime"
-        locale={toPickerLocale(
-          locale,
-          getLocales()[0]?.regionCode ?? null,
-          uses24HourClock,
-        )}
         value={wallClock}
         onValueChange={(_event, date) => onChange(fromZonedTime(date, zone))}
       />

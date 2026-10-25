@@ -129,7 +129,7 @@ Going to the background keeps the committed date and the
 horizontal offset. The grid uses filled physical-hairline views in static scroll content, with one
 extra hairline of render height so the exact 24:00 closing boundary is not clipped.
 
-`CalendarScreen` passes `useCalendars()[0].uses24hourClock` into pure gutter formatting.
+`CalendarScreen` passes `useUses24HourClock()` (the device `uses24hourClock`) into pure gutter formatting.
 `true` produces 24-hour labels, `false` produces 12-hour day periods, and `null` retains
 the deterministic 24-hour convention. Full-day geometry still begins at midnight, but the clipped
 00:00 text is omitted; compact secondary labels run from 01:00 through 23:00. The controller retains only settled, clamped clock

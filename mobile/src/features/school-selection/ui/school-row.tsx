@@ -7,7 +7,7 @@ import { ThemedText } from "@/components/themed-text"
 import { emitExportGuideEvent } from "@/features/export-guides/ui"
 import { decideIntranetUrl, useImportDraft } from "@/features/onboarding"
 import { type SchoolListItem } from "@/features/school-selection/data"
-import { Spacing, useTheme } from "@/theme"
+import { ChevronMaxFontScale, Spacing, useTheme } from "@/theme"
 
 import { SchoolLogo } from "./school-logo"
 
@@ -71,6 +71,7 @@ export function SchoolRow({ school }: { school: SchoolListItem }) {
           iosWeight="semibold"
           color={theme.textTertiary}
           scaling="text"
+          maxFontSizeMultiplier={ChevronMaxFontScale}
         />
       )}
     </Pressable>

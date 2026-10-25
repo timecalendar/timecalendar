@@ -53,7 +53,8 @@ describe("on iOS", () => {
     const row = screen.getByTestId("settings-environment")
     expect(row.props.accessibilityRole).toBe("button")
     expect(screen.getByText("Preproduction")).toBeTruthy()
-    expect(row.props.accessibilityLabel).toBe("Environment, Preproduction")
+    expect(row.props.accessibilityLabel).toBe("Environment")
+    expect(row.props.accessibilityValue).toEqual({ text: "Preproduction" })
 
     fireEvent.press(row)
     const choiceButtons = (Alert.alert as jest.Mock).mock.calls[0]?.[2] as {
@@ -92,7 +93,8 @@ describe("on iOS", () => {
     await render(<EnvironmentSelectorHarness />)
     const row = screen.getByTestId("settings-environment")
     expect(screen.getByText("Local")).toBeTruthy()
-    expect(row.props.accessibilityLabel).toBe("Environment, Local")
+    expect(row.props.accessibilityLabel).toBe("Environment")
+    expect(row.props.accessibilityValue).toEqual({ text: "Local" })
 
     fireEvent.press(row)
 

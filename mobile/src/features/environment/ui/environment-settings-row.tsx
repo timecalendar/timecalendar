@@ -26,10 +26,6 @@ export function EnvironmentSettingsRow({
       accessibilityRole="button"
       icon={{ ios: "server.rack", android: "dns" }}
       label={label}
-      accessibilityLabel={t("environment.selector.accessibilityLabel", {
-        primary: label,
-        secondary: value,
-      })}
       secondary={value}
       hint={t("environment.selector.hint")}
       onPress={selector.choose}

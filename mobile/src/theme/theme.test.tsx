@@ -4,6 +4,7 @@ import { Text } from "react-native"
 import { GlassSurface } from "@/components/chrome"
 import {
   buildNavTheme,
+  ChevronMaxFontScale,
   Colors,
   Elevation,
   IconSize,
@@ -211,6 +212,7 @@ describe("design tokens", () => {
     expect(Motion).toEqual({ fast: 150, base: 250, slow: 400 })
     expect(Layout.fabClearance).toBe(96)
     expect(WordmarkMaxFontScale).toBe(1.5)
+    expect(ChevronMaxFontScale).toBe(2)
   })
 
   it("gives each scheme its own raised boxShadow", () => {

@@ -48,15 +48,16 @@ const decorative = {
   importantForAccessibility: "no-hide-descendants",
 } as const
 
-function textCap(props: IconScaling): number | undefined {
-  if (props.scaling === "fixed") return 1
-  return props.maxFontSizeMultiplier
+function resolveSize(props: IconProps, fontScale: number): number {
+  if (props.scaling === "fixed") return props.size
+  return (
+    props.size * Math.min(fontScale, props.maxFontSizeMultiplier ?? Infinity)
+  )
 }
 
 export function Icon(props: IconProps) {
   const { fontScale } = useWindowDimensions()
-  const cap = textCap(props)
-  const resolved = props.size * Math.min(fontScale, cap ?? Infinity)
+  const resolved = resolveSize(props, fontScale)
 
   if (Platform.OS === "ios") {
     if (props.ios === undefined) return null
@@ -79,7 +80,7 @@ export function Icon(props: IconProps) {
       size={props.size}
       box={resolved}
       color={props.color}
-      cap={cap}
+      scaling={props}
       testID={props.testID}
     />
   )
@@ -92,22 +93,36 @@ function MaterialIcon({
   size,
   box,
   color,
-  cap,
+  scaling,
   testID,
 }: {
   glyph: MaterialGlyph
   size: number
   box: number
   color: string
-  cap: number | undefined
+  scaling: IconScaling
   testID: string | undefined
 }) {
   const [loaded] = useFonts({ [materialSymbols.name]: materialSymbols.font })
   return (
-    <View {...decorative} testID={testID} style={{ width: box, height: box }}>
+    <View
+      {...decorative}
+      testID={testID}
+      style={{
+        width: box,
+        height: box,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
       {loaded && (
         <Text
-          maxFontSizeMultiplier={cap}
+          {...(scaling.scaling === "fixed"
+            ? // A fixed icon is a glyph drawn like an image: it keeps its
+              // design size below the default text size too.
+              // eslint-disable-next-line no-restricted-syntax
+              { allowFontScaling: false }
+            : { maxFontSizeMultiplier: scaling.maxFontSizeMultiplier })}
           style={{
             fontFamily: materialSymbols.name,
             color,

@@ -13,7 +13,6 @@ import {
   formatTime,
   formatTimeRange,
   resolveLocale,
-  toPickerLocale,
 } from "./format"
 
 describe("formatClockTime", () => {
@@ -371,22 +370,6 @@ describe("formatShortDateTime", () => {
       "15 juin 6:30 PM",
     )
   })
-})
-
-describe("toPickerLocale", () => {
-  it.each([
-    ["en", "US", false, "en_US@hours=h12"],
-    ["en", "GB", true, "en_GB@hours=h23"],
-    ["en", null, null, "en_US@hours=h23"],
-    ["fr", "FR", false, "fr_FR@hours=h12"],
-    ["fr", "BE", null, "fr_BE@hours=h23"],
-    ["fr", null, true, "fr_FR@hours=h23"],
-  ] as const)(
-    "maps %s with region %s and 24-hour %s to %s",
-    (locale, region, uses24HourClock, expected) => {
-      expect(toPickerLocale(locale, region, uses24HourClock)).toBe(expected)
-    },
-  )
 })
 
 describe("resolveLocale", () => {

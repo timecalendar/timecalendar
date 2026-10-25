@@ -7,7 +7,7 @@ import { usePlatform } from "@/test-support/platform"
 
 import { Icon, MATERIAL_GLYPHS } from "./icon"
 
-let mockFontScale = 2
+let mockFontScale = 1
 jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({
   __esModule: true,
   default: () => ({
@@ -32,7 +32,7 @@ jest.mock("expo-symbols", () => ({
 }))
 
 beforeEach(() => {
-  mockFontScale = 2
+  mockFontScale = 1
   mockFontLoaded = true
   mockSymbolView.mockClear()
 })
@@ -59,6 +59,7 @@ describe("Icon on Android", () => {
   usePlatform("android")
 
   it("grows a text icon and its box with the font scale", async () => {
+    mockFontScale = 2
     const view = await render(
       <Icon
         testID="icon"
@@ -80,6 +81,7 @@ describe("Icon on Android", () => {
   })
 
   it("caps a text icon at its neighbor's multiplier", async () => {
+    mockFontScale = 2
     const view = await render(
       <Icon
         testID="icon"
@@ -95,21 +97,57 @@ describe("Icon on Android", () => {
     expect(glyphOf(view).props.maxFontSizeMultiplier).toBe(1.2)
   })
 
-  it("keeps a fixed icon at its design size", async () => {
+  it.each([0.8, 2])(
+    "keeps a fixed icon at its design size at font scale %s",
+    async (fontScale) => {
+      mockFontScale = fontScale
+      const view = await render(
+        <Icon
+          testID="icon"
+          android="add"
+          size={24}
+          color="#000"
+          scaling="fixed"
+        />,
+      )
+      expect(boxOf(view)).toMatchObject({ width: 24, height: 24 })
+      expect(glyphOf(view).props.allowFontScaling).toBe(false)
+    },
+  )
+
+  it("shrinks a text icon with a small font scale", async () => {
+    mockFontScale = 0.8
     const view = await render(
       <Icon
         testID="icon"
         android="add"
-        size={24}
+        size={20}
         color="#000"
-        scaling="fixed"
+        scaling="text"
       />,
     )
-    expect(boxOf(view)).toMatchObject({ width: 24, height: 24 })
-    expect(glyphOf(view).props.maxFontSizeMultiplier).toBe(1)
+    expect(boxOf(view)).toMatchObject({ width: 16, height: 16 })
+    expect(glyphOf(view).props.allowFontScaling).toBeUndefined()
+  })
+
+  it("centers the glyph in its box", async () => {
+    const view = await render(
+      <Icon
+        testID="icon"
+        android="add"
+        size={20}
+        color="#000"
+        scaling="text"
+      />,
+    )
+    expect(boxOf(view)).toMatchObject({
+      alignItems: "center",
+      justifyContent: "center",
+    })
   })
 
   it("reserves the box empty until the font loads", async () => {
+    mockFontScale = 2
     mockFontLoaded = false
     const view = await render(
       <Icon
@@ -157,6 +195,7 @@ describe("Icon on iOS", () => {
   usePlatform("ios")
 
   it("sizes a text symbol by the font scale and a fixed one by its design size", async () => {
+    mockFontScale = 2
     await render(
       <>
         <Icon ios="plus" size={20} color="#111" scaling="text" />
@@ -173,6 +212,14 @@ describe("Icon on iOS", () => {
     expect(mockSymbolView.mock.calls.map(([props]) => props.size)).toEqual([
       40, 30, 20,
     ])
+  })
+
+  it("keeps a fixed symbol at its design size below the default text size", async () => {
+    mockFontScale = 0.8
+    await render(<Icon ios="plus" size={20} color="#111" scaling="fixed" />)
+    expect(mockSymbolView).toHaveBeenCalledWith(
+      expect.objectContaining({ size: 20 }),
+    )
   })
 
   it("forwards the name, tint, weight and test id as a decorative view", async () => {

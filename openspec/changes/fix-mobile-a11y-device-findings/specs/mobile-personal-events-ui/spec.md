@@ -2,7 +2,7 @@
 
 ### Requirement: Date and time display follows the device clock setting
 
-Personal-event date/time text SHALL follow the device's 12/24-hour preference in the app's language: the Android date/time field's displayed value, its accessible "label, value" name and the personal-events list ranges SHALL render 12-hour time when the device uses a 12-hour clock and 24-hour time otherwise. The iOS native date/time picker SHALL render in the app's language while keeping the device's hour cycle.
+Personal-event date/time text SHALL follow the device's 12/24-hour preference in the app's language: the Android date/time field's displayed value, its accessible "label, value" name and the personal-events list ranges SHALL render 12-hour time when the device uses a 12-hour clock and 24-hour time otherwise. The iOS native date/time picker SHALL receive no locale override, so it follows the device's language and hour cycle.
 
 #### Scenario: A 12-hour device on Android
 
@@ -15,10 +15,10 @@ Personal-event date/time text SHALL follow the device's 12/24-hour preference in
 - **WHEN** the device uses a 24-hour clock
 - **THEN** the field displays "25 Oct 22:40"
 
-#### Scenario: The iOS picker locale
+#### Scenario: The iOS picker follows the device
 
-- **WHEN** the app language is French, the device region is FR and the device uses a 12-hour clock
-- **THEN** the iOS picker receives the locale "fr_FR@hours=h12"
+- **WHEN** the app language is French and the device uses a 12-hour clock
+- **THEN** the iOS picker receives no locale and renders with the device language and hour cycle
 
 #### Scenario: The list follows the same setting
 

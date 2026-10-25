@@ -116,8 +116,9 @@ describe("UserCalendarDetailScreen", () => {
       screen.getByRole("button", { name: "Name" }).props.accessibilityHint,
     ).toBe("Rename calendar")
     expect(screen.getByText("ENSEEIHT")).toBeTruthy()
-    expect(screen.getByTestId("user-calendar-school")).toBeTruthy()
-    expect(screen.getByText("Toulouse INP")).toBeTruthy()
+    expect(screen.getByTestId("user-calendar-school").props).toMatchObject({
+      accessibilityValue: { text: "Toulouse INP" },
+    })
     expect(screen.getByRole("button", { name: "Delete calendar" })).toBeTruthy()
     expect(screen.queryByTestId("user-calendars-write-error")).toBeNull()
   })

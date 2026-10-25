@@ -67,9 +67,11 @@ seconds so Cancel works. See ADR [064](./decisions/064-in-house-component-galler
   because TalkBack reads the button's content description instead of its child text. The Delete label uses
   `destructive`.
   The field text, its accessible name and the list ranges follow the device 12/24-hour setting
-  through `formatShortDateTime(…, uses24HourClock)`; the iOS picker receives
-  `toPickerLocale(locale, region, uses24HourClock)` (for example `fr_FR@hours=h12`), so it reads
-  in the app language with the device hour cycle. Color swatches announce translated names
+  through `formatShortDateTime(…, uses24HourClock)`, read once per screen with the calendar data
+  hook `useUses24HourClock`; the list passes it to its rows. The iOS picker takes no `locale` and
+  follows the device language and clock (`ui/date-time-field.test.tsx`); an app language that
+  differs from the device language is a known parity gap
+  (`docs/react-native-migration/inbox/2026-10-25-mobile-ios-picker-device-language.md`). Color swatches announce translated names
   (`SWATCH_NAME_KEYS`) as radios on Android and selected buttons on iOS
   (`ui/color-swatch-picker.test.tsx`).
 - Home's brand lockup renders the app name as a one-line `title2` header capped at

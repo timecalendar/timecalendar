@@ -25,7 +25,7 @@ These rules guard real product touchables (interactive controls declare `accessi
 
 ## Icon scaling — encoded in `Icon`
 
-- Every icon renders through `Icon` (`src/components/icon.tsx`) and declares a required `scaling`. `"text"` icons sit beside or inside text: the glyph and its box grow with the font scale, optionally capped with the neighbor text's `maxFontSizeMultiplier`, and their container uses `minWidth` / `minHeight` so it grows too. `"fixed"` icons are standalone chrome (header actions, FABs, status and error glyphs) and keep their design size. No glyph clips its own box at any scale, including Android 2.0.
+- Every icon renders through `Icon` (`src/components/icon.tsx`) and declares a required `scaling`. `"text"` icons sit beside or inside text: the glyph and its box grow with the font scale, optionally capped with the neighbor text's `maxFontSizeMultiplier` (a row chevron caps at `ChevronMaxFontScale`, 2, so a cue never rivals the row text), and their container uses `minWidth` / `minHeight` so it grows too. `"fixed"` icons are standalone chrome (header actions, FABs, status and error glyphs) and keep their design size at every font scale, above and below the default. No glyph clips its own box at any scale, including Android 2.0.
 - `Icon` is always decorative (`accessible={false}`, hidden from VoiceOver and TalkBack); the control that contains it owns the label.
 - Encoded by the type (`scaling` is required) and lint L9; proven by `src/components/icon.test.tsx` (box and glyph sizes per scaling on Android, `SymbolView` size on iOS, decorative props, the Material codepoint pin). See ADR [065](./decisions/065-icon-text-scaling.md).
 
@@ -46,18 +46,27 @@ These rules guard real product touchables (interactive controls declare `accessi
   time>"), and the name follows each commit (`features/personal-events/ui/date-time-field.test.tsx`).
 - Personal-event date/time text follows the device 12/24-hour setting in the app language: the
   Android field, its accessible name and the personal-events list render 12-hour time on a 12-hour
-  device, and the iOS picker receives the app locale with the device region and hour cycle
-  (`fr_FR@hours=h12`) (`date-time-field.test.tsx`, `personal-events-list.test.tsx`,
-  `features/calendar/data/format.test.ts`).
+  device (`date-time-field.test.tsx`, `personal-events-list.test.tsx`,
+  `features/calendar/data/format.test.ts`). The device setting is read once through
+  `useUses24HourClock` (`features/calendar/data/device-clock.test.ts`). The iOS SwiftUI picker takes
+  no `locale`: it follows the device language and clock, because `@expo/ui` applies only identifiers
+  Foundation lists, so an app language paired with the device region or an `@hours=` cycle is
+  dropped silently. The picker reading the device language rather than the in-app language is a
+  known parity gap (`docs/react-native-migration/inbox/2026-10-25-mobile-ios-picker-device-language.md`).
 - Personal-event color swatches announce a translated color name, never a hex code. Android
   exposes each as a `radio` with `checked` inside the `radiogroup`; iOS, which has no radio trait,
   exposes a `button` with `selected` (`features/personal-events/ui/color-swatch-picker.test.tsx`).
   Every preset has a name through the `SWATCH_NAME_KEYS` record.
 - iOS settings rows that show a value (value, navigation and action rows) stack the label above
   the value at accessibility text sizes, with the navigation chevron kept trailing; the
-  accessibility identifier, label, hint and value are the same in both layouts. The value row
-  keeps `LabeledContent` as its single accessibility element and puts the stacked column in its
-  label slot. Android Compose rows do not change (`src/components/chrome/native-settings.test.tsx`).
+  accessibility identifier, label, hint and value are the same in both layouts. The stacked value
+  row drops `LabeledContent`, which gives its label under half the row: the label text carries the
+  row's identifier, label and value, and the visible value text is hidden, so VoiceOver reads
+  "label, value" once. A row passes its value as `value`, never folded into `accessibilityLabel`.
+  At accessibility sizes a single-word row label is held to one line with `minimumScaleFactor`
+  0.5, so SwiftUI shrinks it instead of hyphenating it mid-word; a multi-word label still wraps,
+  and SwiftUI can still hyphenate a word in it that is wider than the row. Android Compose rows do
+  not change (`src/components/chrome/native-settings.test.tsx`).
 - The event-details color dot is decorative and centers on the first title line: it sits in a
   hidden strut sized by one `title`-step line (`features/calendar/ui/event-details-screen.test.tsx`).
 - Controlled native text-entry dialogs isolate the background accessibility tree, keep native input

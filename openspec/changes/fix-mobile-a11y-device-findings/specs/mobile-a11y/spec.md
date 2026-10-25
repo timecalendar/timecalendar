@@ -16,8 +16,13 @@ Every symbol icon in the app SHALL declare whether it scales with text. An icon 
 
 #### Scenario: A chrome icon keeps its size
 
-- **WHEN** an icon declared as fixed with size 24 renders at font scale 2.0
+- **WHEN** an icon declared as fixed with size 24 renders at font scale 2.0 or 0.8
 - **THEN** its glyph and its box both measure 24 and the glyph does not scale with the OS font size
+
+#### Scenario: A row chevron stays a cue
+
+- **WHEN** the school row's text-scaled chevron renders at iOS AX5
+- **THEN** it grows at most 2× its design size
 
 #### Scenario: Icons are decorative
 

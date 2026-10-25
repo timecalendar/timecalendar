@@ -26,8 +26,9 @@ See proposal.md for the device evidence. These code facts shape the approach:
   `hourCycle: "h12"`. `jest/setup-localization.ts` makes `getCalendars` / `useCalendars` return
   `uses24hourClock: true`, and suites spy on them per case.
 - The iOS field is `@expo/ui`'s SwiftUI `DatePicker` (compact). With no `locale` prop it uses the
-  device locale and the device hour cycle. Its `locale` prop sets `environment(\.locale,
-Locale(identifier:))`. The app has an in-app language preference (`settings.languagePreference`).
+  device locale and the device hour cycle. Its `locale` prop sets `environment(\.locale, …)` only
+  for identifiers in `Locale.availableIdentifiers` (`EnvironmentModifier.swift`); any other
+  identifier, such as `fr_US` or `fr_FR@hours=h12`, is dropped silently. The app has an in-app language preference (`settings.languagePreference`).
 - `ColorSwatchPicker` renders `Pressable` swatches with `accessibilityRole="button"`,
   `accessibilityState={{ selected }}` and the label `"Color #E91E63"`, inside a
   `View accessibilityRole="radiogroup"`. The visible field label "Color" precedes the group.
@@ -72,13 +73,25 @@ content-size category natively (needs a native module for a value RN already exp
 ### Decision 2: iOS settings rows stack at accessibility sizes, decided in JS
 
 `SwiftSettingsRow` reads `useIsAccessibilityTextSize()`. At accessibility sizes a row with a
-`value` renders `HStack(alignment: center) { VStack(alignment: leading, spacing 2) { label row
-(icon tile + label [+ subtitle]), value [badge] }, Spacer, [chevron] }`: the label gets the full
-width, the value sits under it in `textSecondary`, and the navigation chevron stays trailing. The `kind: "value"` row keeps `LabeledContent`, which stays its single accessibility element, with
-the stacked column in its label slot and an empty value slot (`@expo/ui` 56 exposes no
-`accessibilityElement(children:)` modifier, so a bare stack would not combine its texts for VoiceOver).
-Rows without a value and default sizes are unchanged. Accessibility modifiers (identifier, label,
-hint, value) stay on the same outer element, so VoiceOver reads the row the same way at every size.
+`value` renders `HStack { HStack(spacing 12) { icon tile, VStack(alignment: leading, spacing 2)
+{ label, [subtitle], HStack(spacing 6) { value, [badge] } } }, Spacer, [chevron] }`: the label gets
+the full width beside the icon tile, the value sits under the label in `textSecondary`, and the
+navigation chevron stays trailing.
+The `kind: "value"` row drops `LabeledContent` at these sizes, because `LabeledContent` gives its
+label under half the row even with an empty value slot. `@expo/ui` 56 exposes no
+`accessibilityElement(children:)` modifier, so the stacked value row puts its accessibility
+modifiers (identifier, label, value) on the label `Text` and hides the visible value `Text`:
+VoiceOver reads "label, value" once. Navigation and action rows keep the modifiers on their
+`Button`. Rows pass their value as `value`, never folded into `accessibilityLabel` (the
+Environment row's compound label is removed), so the value is not read twice.
+
+At accessibility sizes a single-word row label gets `lineLimit(1)` + `minimumScaleFactor(0.5)`.
+SwiftUI hyphenates a word that is wider than its line; at AX5 a word such as "Notifications" is
+wider than the whole row, so more width alone cannot fix it. With one line and a scale floor
+SwiftUI shrinks the word instead (checked on the iPhone 17 simulator at AX5). A multi-word label
+keeps unlimited lines: a line limit there would not stop SwiftUI from hyphenating a long word
+inside the allowed lines, so the shrink would not apply.
+Rows without a value and default sizes are unchanged.
 
 Alternatives: `ViewThatFits` (not exposed by `@expo/ui` 56); `lineLimit(1)` + truncation (hides
 the label, which HIG rejects at accessibility sizes); a `.fixedSize` label (overflows the row).
@@ -136,13 +149,17 @@ type IconProps = {
   chevron, checklist progress, changelog item): the rendered size is
   `size × min(fontScale, maxFontSizeMultiplier ?? ∞)`, and the box is that size, so the container
   grows with it. `"fixed"` is for standalone chrome (header actions, FAB, `StatusSymbol`,
-  `ErrorState` glyph): the size stays `size`.
+  `ErrorState` glyph): the size stays `size` at every font scale. The school-row chevron is a cue,
+  not content, so it caps at `ChevronMaxFontScale = 2` (`tokens.ts`); uncapped it reached about
+  50pt at AX5.
 - iOS renders `SymbolView` with the resolved size (SF Symbols are images and do not font-scale).
 - Android renders a `View` of the resolved size holding an RN `Text` in
   `MaterialSymbols_400Regular` (loaded with `expo-font` `useFonts` from
   `expo-symbols/androidWeights/regular`). `"text"` passes `fontSize = lineHeight = size` with the
   OS scaling it (capped by `maxFontSizeMultiplier` when set). `"fixed"` passes
-  `maxFontSizeMultiplier={1}`, the cap lint L8 permits. The glyph string comes from a closed
+  `allowFontScaling={false}` (one line-level exemption from the font-scaling ban: the glyph is
+  drawn like an image and keeps exactly `size` at every font scale, including below 1, which
+  `maxFontSizeMultiplier` alone does not do). The glyph is centered in its box. The glyph string comes from a closed
   `MaterialGlyph` table (`{ arrow_forward: 0xe5c8, … }`) holding only the glyphs the app uses; a
   test pins each codepoint against `expo-symbols`' `symbols.json`. Before the font loads, the box
   renders empty at the resolved size, so layout does not jump.
@@ -164,19 +181,21 @@ with text by itself); a documented exemption from L8 (still clips).
 `formatShortDateTime(date, locale, zone, uses24HourClock: boolean | null)`: `false` renders
 `d MMM` + the cached `hour12Formatter(locale, zone, true)` output; `true` or `null` keep `HH:mm`
 (the same `!== false` convention as `formatClockTime`). The argument is required, so `tsc` finds
-every caller. The Android field and `personal-events-list.tsx` pass
-`useCalendars()[0]?.uses24hourClock ?? null`. The field's accessible name already composes from the
-same display string, so the announcement follows.
+every caller. `formatShortDateTime` composes `d MMM` with `formatClockTime`, so the 12/24-hour
+branch lives in one place. The device setting is read by the calendar data hook
+`useUses24HourClock()` (`useCalendars()[0]?.uses24hourClock ?? null`), used by the Android field,
+the personal-events list (once, passed to its rows) and `CalendarScreen`. The field's accessible
+name already composes from the same display string, so the announcement follows.
 
-iOS `DateTimeField` passes `locale` = `toPickerLocale(locale, regionCode, uses24HourClock)`,
-for example `"fr_FR@hours=h23"` or `"en_GB@hours=h12"`: the language is the app locale, the region
-is the device's `getLocales()[0]?.regionCode` (falling back to `FR` / `US`), and the keyword is
-`h23` when the device is 24-hour or unknown and `h12` otherwise. Foundation honors the `hours` keyword from iOS 16, below the 16.4 floor. The picker then
-reads in the app language and keeps the device hour cycle. The helper is pure and tested.
+The iOS `DateTimeField` passes no `locale`: the picker follows the device language and clock, the
+native behaviour. Reading in the in-app language instead is a known, low-priority parity gap
+(`docs/react-native-migration/inbox/2026-10-25-mobile-ios-picker-device-language.md`).
 
-Alternatives: default the argument to `null` (a new caller would silently ignore the device); pass
-no iOS locale (follows the device clock but ignores the in-app language); a bare app locale
-(`fr_FR` pins 24-hour and overrides the device toggle).
+Alternatives: default the argument to `null` (a new caller would silently ignore the device); a
+composed identifier with the app language and the device region or hour cycle (`fr_US`,
+`fr_FR@hours=h12`: `@expo/ui` drops identifiers Foundation does not list, so the picker silently
+follows the device anyway); a bare app locale (`fr_FR` pins 24-hour and overrides the device
+toggle).
 
 ### Decision 7: swatches carry names, and selection uses each platform's native semantics
 

@@ -23,9 +23,10 @@ call sites rendered `SymbolView` directly, each with an implicit and unrecorded 
   - `"fixed"`: standalone chrome (header actions, FABs, status glyphs). The size stays `size`.
 - iOS renders `SymbolView` at the resolved size. Android renders a `View` of the resolved size
   holding an RN `Text` in `MaterialSymbols_400Regular`, loaded with `expo-font` `useFonts` from
-  `expo-symbols/androidWeights/regular`; `"fixed"` caps the text at `maxFontSizeMultiplier={1}`
-  (the cap lint L8 permits) and `"text"` passes the caller's cap. Before the font loads the box
-  renders empty at its final size.
+  `expo-symbols/androidWeights/regular`, centered in its box; `"fixed"` sets
+  `allowFontScaling={false}` (one line-level lint exemption: the glyph is drawn like an image and
+  keeps its design size below the default text size too) and `"text"` passes the caller's cap.
+  Before the font loads the box renders empty at its final size.
 - Android glyphs come from the closed `MATERIAL_GLYPHS` table (only the glyphs the app uses);
   `icon.test.tsx` pins every codepoint against `expo-symbols`' `symbols.json`.
 - `Icon` is always decorative; the control that contains it owns the accessible name.
@@ -43,7 +44,8 @@ clips).
 Every icon makes its scaling decision in the type system, and lint keeps new icons on the seam.
 Android duplicates `SymbolView`'s font rendering in one file, and a new Android glyph needs a
 `MATERIAL_GLYPHS` row (the codepoint test proves it). Text icons on iOS grow up to 3.571× at AX5,
-so a text icon in a dense row needs the same cap as its neighbor text.
+so a text icon in a dense row needs the same cap as its neighbor text, and a row chevron, a cue
+rather than content, caps at `ChevronMaxFontScale` (2).
 
 ## Revisit if
 

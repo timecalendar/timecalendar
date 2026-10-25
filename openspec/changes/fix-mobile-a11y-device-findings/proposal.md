@@ -36,9 +36,9 @@ previews. This change fixes them and encodes the rules that keep them fixed.
 - **Date/time display follows the device clock.** `formatShortDateTime` takes the device's
   `uses24hourClock` as a required argument and renders 12-hour time in the app locale when it is
   `false`. The Android personal-event field (display and its accessible "label, value" name) and the
-  personal-events list pass `useCalendars()[0].uses24hourClock`. The iOS SwiftUI picker receives
-  the app locale with the device hour cycle (`fr_FR@hours=h12`), so it reads in the app language
-  and still follows the device setting.
+  personal-events list read the device setting through one hook, `useUses24HourClock`. The iOS
+  SwiftUI picker takes no locale and follows the device language and clock; the in-app language
+  there is a known parity gap filed in the inbox.
 - **Color swatches announce color names.** Each preset has a translated name (FR/EN) through an
   exhaustive `Record<SwatchPreset, …>`. Swatches announce the name and their selected state: role
   `radio` with `checked` on Android inside the existing `radiogroup`, role `button` with

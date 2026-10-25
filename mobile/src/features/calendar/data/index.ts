@@ -32,6 +32,7 @@ export {
   startOfDayInZone,
   utcDayKey,
 } from "./day-key"
+export { useUses24HourClock } from "./device-clock"
 export {
   type EpochDay,
   epochDayKey,
@@ -88,7 +89,6 @@ export {
   formatTime,
   formatTimeRange,
   resolveLocale,
-  toPickerLocale,
 } from "./format"
 export {
   type Interval,

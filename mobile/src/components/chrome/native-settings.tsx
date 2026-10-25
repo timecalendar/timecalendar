@@ -53,6 +53,9 @@ import {
   font,
   foregroundStyle,
   frame,
+  lineLimit,
+  minimumScaleFactor,
+  type ModifierConfig as SwiftModifierConfig,
   padding as swiftPadding,
   shapes,
   tint,
@@ -175,6 +178,7 @@ const SEGMENT_GAP = 2
 const LIST_INSET = 16
 const LIST_BOTTOM_PADDING = 24
 const FAB_CLEARANCE = 88
+const UNBREAKABLE_WORD_MIN_SCALE = 0.5
 
 const segmentCorners: Record<SegmentPosition, { top: number; bottom: number }> =
   {
@@ -514,40 +518,61 @@ function SwiftIconTile({ icon }: { icon: NativeSettingsIcon }) {
   )
 }
 
+// SwiftUI breaks a word wider than its line mid-word, so at accessibility sizes
+// a single-word label stays on one line and shrinks to fit instead.
+function useUnbreakableWordModifiers(label: string): SwiftModifierConfig[] {
+  const accessibilitySize = useIsAccessibilityTextSize()
+  if (!accessibilitySize || /\s/.test(label.trim())) return []
+  return [lineLimit(1), minimumScaleFactor(UNBREAKABLE_WORD_MIN_SCALE)]
+}
+
 function SwiftRowLabel({
   label,
   icon,
   subtitle,
   destructive = false,
+  titleModifiers = [],
+  detail,
 }: {
   label: string
   icon?: NativeSettingsIcon | undefined
   subtitle?: string | undefined
   destructive?: boolean | undefined
+  titleModifiers?: SwiftModifierConfig[] | undefined
+  detail?: React.ReactNode
 }) {
   const theme = useTheme()
+  const wordModifiers = useUnbreakableWordModifiers(label)
   const title = (
     <SwiftText
-      modifiers={[foregroundStyle(destructive ? theme.error : theme.text)]}
+      modifiers={[
+        foregroundStyle(destructive ? theme.error : theme.text),
+        ...wordModifiers,
+        ...titleModifiers,
+      ]}
     >
       {label}
     </SwiftText>
   )
-  const text = subtitle ? (
-    <VStack alignment="leading" spacing={2}>
-      {title}
-      <SwiftText
-        modifiers={[
-          font({ textStyle: "subheadline" }),
-          foregroundStyle(theme.textSecondary),
-        ]}
-      >
-        {subtitle}
-      </SwiftText>
-    </VStack>
-  ) : (
-    title
-  )
+  const text =
+    subtitle || detail ? (
+      <VStack alignment="leading" spacing={2}>
+        {title}
+        {subtitle ? (
+          <SwiftText
+            modifiers={[
+              font({ textStyle: "subheadline" }),
+              foregroundStyle(theme.textSecondary),
+            ]}
+          >
+            {subtitle}
+          </SwiftText>
+        ) : null}
+        {detail}
+      </VStack>
+    ) : (
+      title
+    )
   if (!icon) return text
   return (
     <HStack spacing={12}>
@@ -594,12 +619,18 @@ function SwiftDisclosureChevron() {
 function SwiftRowValue({
   value,
   badge,
-}: Pick<SwiftRowContentProps, "value" | "badge">) {
+  hidden = false,
+}: Pick<SwiftRowContentProps, "value" | "badge"> & { hidden?: boolean }) {
   const theme = useTheme()
   return (
     <>
       {value ? (
-        <SwiftText modifiers={[foregroundStyle(theme.textSecondary)]}>
+        <SwiftText
+          modifiers={[
+            foregroundStyle(theme.textSecondary),
+            ...(hidden ? [accessibilityHidden()] : []),
+          ]}
+        >
           {value}
         </SwiftText>
       ) : null}
@@ -636,19 +667,25 @@ function SwiftStackedRowLabel({
   value,
   badge,
   destructive,
-}: SwiftRowContentProps) {
+  titleModifiers,
+  valueHidden = false,
+}: SwiftRowContentProps & {
+  titleModifiers?: SwiftModifierConfig[] | undefined
+  valueHidden?: boolean
+}) {
   return (
-    <VStack alignment="leading" spacing={2}>
-      <SwiftRowLabel
-        label={label}
-        icon={icon}
-        subtitle={subtitle}
-        destructive={destructive}
-      />
-      <HStack spacing={6}>
-        <SwiftRowValue value={value} badge={badge} />
-      </HStack>
-    </VStack>
+    <SwiftRowLabel
+      label={label}
+      icon={icon}
+      subtitle={subtitle}
+      destructive={destructive}
+      titleModifiers={titleModifiers}
+      detail={
+        <HStack spacing={6}>
+          <SwiftRowValue value={value} badge={badge} hidden={valueHidden} />
+        </HStack>
+      }
+    />
   )
 }
 
@@ -718,15 +755,15 @@ function SwiftSettingsRow(props: NativeSettingsRowProps) {
     destructive: props.destructive,
   }
   if (props.kind === "value" && stacked) {
-    // LabeledContent stays the row's single accessibility element; the stacked
-    // column is its label and the trailing value slot stays empty.
+    // LabeledContent gives its label under half the row, so the stacked value
+    // row is plain text: the title carries the row's accessibility and the
+    // visible value is hidden, so VoiceOver reads the label and value once.
     return (
-      <LabeledContent
-        label={<SwiftStackedRowLabel {...content} />}
-        modifiers={modifiers}
-      >
-        {null}
-      </LabeledContent>
+      <SwiftStackedRowLabel
+        {...content}
+        titleModifiers={modifiers}
+        valueHidden
+      />
     )
   }
   if (props.kind === "value") {

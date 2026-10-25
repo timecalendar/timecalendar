@@ -16,6 +16,7 @@ export {
 } from "@/theme/text-scale"
 export type { ThemeColor } from "@/theme/tokens"
 export {
+  ChevronMaxFontScale,
   Colors,
   Elevation,
   Fonts,

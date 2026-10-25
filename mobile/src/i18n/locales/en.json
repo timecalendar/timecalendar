@@ -162,7 +162,6 @@
   "gallery.textEntryDialog.submit": "Save",
   "gallery.textEntryDialog.open": "Open the dialog",
   "environment.selector.label": "Environment",
-  "environment.selector.accessibilityLabel": "{{primary}}, {{secondary}}",
   "environment.selector.title": "Choose an environment",
   "environment.selector.body": "Only approved TimeCalendar services are available.",
   "environment.selector.hint": "Choose which TimeCalendar service this test build uses",

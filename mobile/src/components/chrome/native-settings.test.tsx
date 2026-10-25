@@ -17,7 +17,7 @@ import {
 
 jest.mock("expo-router", () => ({ router: { push: jest.fn() } }))
 
-let mockFontScale = 2
+let mockFontScale = 1
 jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({
   __esModule: true,
   default: () => ({
@@ -28,7 +28,7 @@ jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({
   }),
 }))
 afterEach(() => {
-  mockFontScale = 2
+  mockFontScale = 1
 })
 jest.mock("@/hooks/use-color-scheme", () => ({
   useColorScheme: () => "dark",
@@ -787,15 +787,52 @@ describe("iOS settings rows at accessibility text sizes", () => {
       within(action.getByTestId("swiftui-vstack")).getByText("English"),
     ).toBeTruthy()
 
-    const value = view.getByTestId("value")
-    const valueColumn = within(value).getByTestId("swiftui-vstack")
-    expect(within(valueColumn).getByText("Version")).toBeTruthy()
-    expect(within(valueColumn).getByText("4.0.0")).toBeTruthy()
-    expect(within(value).getAllByText("4.0.0")).toHaveLength(1)
+    const title = view.getByTestId("value")
+    expect(title).toHaveTextContent("Version")
+    const valueColumn = title.parent!
+    expect(valueColumn.props.testID).toBe("swiftui-vstack")
+    const visibleValue = within(valueColumn).getByText("4.0.0", {
+      includeHiddenElements: true,
+    })
+    expect(visibleValue.props.accessibilityElementsHidden).toBe(true)
+    expect(
+      view.getAllByText("4.0.0", { includeHiddenElements: true }),
+    ).toHaveLength(1)
 
     expect(
       within(view.getByTestId("plain")).queryByTestId("swiftui-vstack"),
     ).toBeNull()
+  })
+
+  it("shrinks a single-word label onto one line instead of breaking it", async () => {
+    const view = await renderRows(3.571)
+
+    const word = view.getByText("About")
+    expect(word.props.numberOfLines).toBe(1)
+    expect(word.props.minimumFontScale).toBe(0.5)
+    expect(view.getByTestId("value").props.numberOfLines).toBe(1)
+  })
+
+  it("lets a multi-word label wrap at accessibility sizes", async () => {
+    mockFontScale = 3.571
+    const view = await render(
+      <NativeSettingsHost>
+        <NativeSettingsRow
+          kind="navigation"
+          label="Hidden events"
+          href="/hidden-events"
+          testID="phrase"
+        />
+      </NativeSettingsHost>,
+    )
+    const phrase = view.getByText("Hidden events")
+    expect(phrase.props.numberOfLines).toBeUndefined()
+    expect(phrase.props.minimumFontScale).toBeUndefined()
+  })
+
+  it("lets a single-word label wrap normally at the default size", async () => {
+    const view = await renderRows(1)
+    expect(view.getByText("About").props.numberOfLines).toBeUndefined()
   })
 
   it("keeps the label and value side by side at the default size", async () => {

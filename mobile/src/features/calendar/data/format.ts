@@ -228,23 +228,6 @@ export function formatShortDateTime(
   zone: string,
   uses24HourClock: boolean | null,
 ): string {
-  const opts = { locale: LOCALES[locale] }
-  if (uses24HourClock !== false) {
-    return formatInTimeZone(date, zone, "d MMM HH:mm", opts)
-  }
-  return `${formatInTimeZone(date, zone, "d MMM", opts)} ${hour12Formatter(locale, zone, true).format(date)}`
-}
-
-const DEFAULT_PICKER_REGIONS: Record<AppLocale, string> = { fr: "FR", en: "US" }
-
-// The iOS picker's locale: the app language with the device region and hour
-// cycle, so it reads in the app language and keeps the device clock setting.
-export function toPickerLocale(
-  locale: AppLocale,
-  regionCode: string | null,
-  uses24HourClock: boolean | null,
-): string {
-  const region = regionCode ?? DEFAULT_PICKER_REGIONS[locale]
-  const hours = uses24HourClock === false ? "h12" : "h23"
-  return `${locale}_${region}@hours=${hours}`
+  const day = formatInTimeZone(date, zone, "d MMM", { locale: LOCALES[locale] })
+  return `${day} ${formatClockTime(date, locale, zone, uses24HourClock)}`
 }

@@ -1,4 +1,3 @@
-import { useCalendars } from "expo-localization"
 import { router, useIsFocused, useLocalSearchParams } from "expo-router"
 import { useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
@@ -27,6 +26,7 @@ import {
   useCalendarWindow,
   usePagePresenter,
   useSyncCalendars,
+  useUses24HourClock,
 } from "@/features/calendar/data"
 import {
   OwnedCalendarShell,
@@ -55,7 +55,7 @@ export function CalendarScreen() {
   const { t, i18n } = useTranslation()
   const theme = useTheme()
   const locale = resolveLocale(i18n.language)
-  const uses24HourClock = useCalendars()[0].uses24hourClock
+  const uses24HourClock = useUses24HourClock()
   const {
     view,
     setView,

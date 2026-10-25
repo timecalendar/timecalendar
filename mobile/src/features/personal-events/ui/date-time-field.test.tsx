@@ -100,22 +100,12 @@ function deviceClock(uses24hourClock: boolean | null) {
   ] as unknown as ReturnType<typeof Localization.useCalendars>)
 }
 
-const mockGetLocales = jest.spyOn(Localization, "getLocales")
-
-function deviceRegion(regionCode: string | null) {
-  mockGetLocales.mockReturnValue([
-    { languageTag: "en-US", regionCode },
-  ] as unknown as ReturnType<typeof Localization.getLocales>)
-}
-
 beforeEach(() => {
   deviceClock(true)
-  deviceRegion("US")
 })
 
 afterAll(() => {
   mockUseCalendars.mockRestore()
-  mockGetLocales.mockRestore()
 })
 
 describe("feature-owned DateTimeField", () => {
@@ -159,28 +149,21 @@ describe("feature-owned DateTimeField", () => {
     expect(onChange).toHaveBeenCalledWith(fromZonedTime(FIXED, NOUMEA))
   })
 
-  it.each([
-    ["en", "US", false, "en_US@hours=h12"],
-    ["fr", "FR", true, "fr_FR@hours=h23"],
-    ["fr", "FR", false, "fr_FR@hours=h12"],
-    ["en", null, null, "en_US@hours=h23"],
-  ] as const)(
-    "gives the iOS picker the app language with the device region and clock (%s, %s, 24-hour %s)",
-    async (locale, region, uses24hourClock, expected) => {
-      deviceClock(uses24hourClock)
-      deviceRegion(region)
-      const { getByTestId } = await render(
-        <DateTimeField
-          testID="field"
-          value={INITIAL}
-          locale={locale}
-          zone={DEVICE_ZONE}
-          onChange={jest.fn()}
-        />,
-      )
-      expect(getByTestId("datetime-locale")).toHaveTextContent(expected)
-    },
-  )
+  // @expo/ui applies a picker locale only when Foundation lists it, so an app
+  // language paired with the device region or hour cycle is silently dropped.
+  it("leaves the iOS picker on the device language and clock", async () => {
+    deviceClock(false)
+    const { getByTestId } = await render(
+      <DateTimeField
+        testID="field"
+        value={INITIAL}
+        locale="fr"
+        zone={DEVICE_ZONE}
+        onChange={jest.fn()}
+      />,
+    )
+    expect(getByTestId("datetime-locale")).toHaveTextContent("undefined")
+  })
 
   describe.each([DEVICE_ZONE, NOUMEA])("on Android in %s", (zone) => {
     usePlatform("android")
