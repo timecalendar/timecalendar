@@ -1,3 +1,17 @@
+## 2026-10-25 — UI defect fixes from the design-system audit
+
+- `navigation.md`: the `(tabs)` registration carries `title: t("common.back")`, so iOS back
+  buttons of tab-pushed siblings have a localized accessible label under the minimal display mode;
+  `src/components/settings-route-structure.test.ts` enforces it.
+- `features.md`: the Android personal-event date/time field is a native date dialog followed by a
+  native time dialog, committed together as one display-zone wall clock and cancel-safe at either
+  step. The Delete label uses `destructive`.
+- `theming.md`: brand-colored small text uses `actionText`, never `primary`;
+  `src/theme/brand-small-text.test.ts` fails on any `type="smallBold"` + `themeColor="primary"`
+  element under `mobile/src/`.
+- `features.md`: the Android time dialog follows the device 12/24-hour setting, and a dialog
+  confirming an invalid or epoch date closes with the value unchanged.
+
 ## 2026-10-25 — Calendar paging spike removed
 
 - The `paging-spike` feature module and the `/dev-paging-spike` route no longer exist. The

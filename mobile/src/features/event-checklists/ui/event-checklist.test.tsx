@@ -3,6 +3,7 @@ import {
   render,
   screen,
   userEvent,
+  within,
 } from "@testing-library/react-native"
 
 import {
@@ -10,6 +11,7 @@ import {
   useChecklist,
   useChecklistActions,
 } from "@/features/event-checklists/data"
+import { Colors } from "@/theme"
 
 import { EventChecklist } from "./event-checklist"
 
@@ -62,7 +64,11 @@ describe("EventChecklist", () => {
   it("renders the section heading and the add control", async () => {
     await render(<EventChecklist eventUid="ev-1" />)
     expect(screen.getByRole("header", { name: "Checklist" })).toBeTruthy()
-    expect(screen.getByLabelText("Add a checklist item")).toBeTruthy()
+    expect(
+      within(screen.getByLabelText("Add a checklist item")).getByText(
+        "Add note",
+      ),
+    ).toHaveStyle({ color: Colors.light.actionText })
   })
 
   it("shows the empty state when there are no items", async () => {

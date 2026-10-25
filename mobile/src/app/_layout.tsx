@@ -10,6 +10,7 @@ import "@/firebase"
 
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client"
 import { Stack, ThemeProvider } from "expo-router"
+import { useTranslation } from "react-i18next"
 import { Platform, StyleSheet } from "react-native"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 
@@ -102,6 +103,7 @@ function ActivityRuntime() {
 }
 
 export default function RootLayout() {
+  const { t } = useTranslation()
   const colorScheme = useColorScheme()
   const navTheme = buildNavTheme(colorScheme === "dark" ? "dark" : "light")
   const rootScreenOptions = buildCompactRootScreenOptions(
@@ -133,7 +135,7 @@ export default function RootLayout() {
                 <Stack screenOptions={rootScreenOptions}>
                   <Stack.Screen
                     name="(tabs)"
-                    options={{ headerShown: false }}
+                    options={{ headerShown: false, title: t("common.back") }}
                   />
                   <Stack.Screen
                     name="profile"

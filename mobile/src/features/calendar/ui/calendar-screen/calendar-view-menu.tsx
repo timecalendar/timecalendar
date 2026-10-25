@@ -113,7 +113,10 @@ function CalendarPlatformMenu({
           >
             {labels[view]}
           </ThemedText>
-          <View style={[styles.chevron, { borderColor: theme.primary }]} />
+          <View
+            testID="calendar-view-chevron"
+            style={[styles.chevron, { borderColor: theme.text }]}
+          />
         </View>
       </Pressable>
     </MenuView>

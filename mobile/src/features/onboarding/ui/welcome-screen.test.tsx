@@ -1,4 +1,4 @@
-import { act, fireEvent, render } from "@testing-library/react-native"
+import { act, fireEvent, render, within } from "@testing-library/react-native"
 import { router } from "expo-router"
 import {
   AccessibilityInfo,
@@ -73,7 +73,18 @@ describe("WelcomeScreen", () => {
   })
 
   it("renders the three localized pages in welcome-first order", async () => {
-    const { getAllByRole, getByText } = await render(<WelcomeScreen />)
+    const { getAllByRole, getByTestId, getByText } = await render(
+      <WelcomeScreen />,
+    )
+
+    for (const [testID, label] of [
+      ["onboarding-skip", "Skip"],
+      ["onboarding-next", "Next"],
+    ] as const) {
+      expect(within(getByTestId(testID)).getByText(label)).toHaveStyle({
+        color: Colors.light.actionText,
+      })
+    }
 
     expect(getByText("Welcome to TimeCalendar!")).toBeTruthy()
     expect(getByText("See your university timetable")).toBeTruthy()

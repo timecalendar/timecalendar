@@ -1,7 +1,8 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Alert } from "react-native"
+import { Alert, Platform } from "react-native"
 
+import { NativeSettingsRadioDialog } from "@/components/chrome"
 import {
   type BackendEnvironment,
   getAllowedBackendEnvironments,
@@ -18,6 +19,7 @@ export function EnvironmentSettingsControl() {
   const capability = getBackendEnvironmentCapability()
   const current = useEffectiveBackendEnvironment()
   const [switching, setSwitching] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   if (capability === "production") return null
 
@@ -44,13 +46,21 @@ export function EnvironmentSettingsControl() {
     )
   }
 
+  const allowed = getAllowedBackendEnvironments(capability)
+
+  // Android's Alert keeps only three buttons, which drops Cancel once the
+  // development capability lists three environments.
   const choose = () => {
     if (switching) return
+    if (Platform.OS === "android") {
+      setPickerOpen(true)
+      return
+    }
     Alert.alert(
       t("environment.selector.title"),
       t("environment.selector.body"),
       [
-        ...getAllowedBackendEnvironments(capability).map((environment) => ({
+        ...allowed.map((environment) => ({
           text: t(`environment.choice.${environment}`),
           onPress: () => confirm(environment),
         })),
@@ -67,20 +77,38 @@ export function EnvironmentSettingsControl() {
   )
 
   return (
-    <SettingsRow
-      first
-      variant="action"
-      accessibilityRole="button"
-      icon={{ ios: "server.rack", android: "dns" }}
-      label={label}
-      accessibilityLabel={t("environment.selector.accessibilityLabel", {
-        primary: label,
-        secondary: value,
-      })}
-      secondary={value}
-      hint={t("environment.selector.hint")}
-      onPress={choose}
-      testID="settings-environment"
-    />
+    <>
+      <SettingsRow
+        first
+        variant="action"
+        accessibilityRole="button"
+        icon={{ ios: "server.rack", android: "dns" }}
+        label={label}
+        accessibilityLabel={t("environment.selector.accessibilityLabel", {
+          primary: label,
+          secondary: value,
+        })}
+        secondary={value}
+        hint={t("environment.selector.hint")}
+        onPress={choose}
+        testID="settings-environment"
+      />
+      <NativeSettingsRadioDialog
+        visible={pickerOpen}
+        title={t("environment.selector.title")}
+        cancelLabel={t("environment.confirm.cancel")}
+        value={current}
+        options={allowed.map((environment) => ({
+          value: environment,
+          label: t(`environment.choice.${environment}`),
+        }))}
+        testID="settings-environment-dialog"
+        onDismiss={() => setPickerOpen(false)}
+        onSelect={(target) => {
+          setPickerOpen(false)
+          confirm(target)
+        }}
+      />
+    </>
   )
 }

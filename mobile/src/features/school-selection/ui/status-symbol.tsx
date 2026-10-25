@@ -1,10 +1,24 @@
-import { type SFSymbol, SymbolView } from "expo-symbols"
-import { Platform } from "react-native"
+import { type AndroidSymbol, type SFSymbol, SymbolView } from "expo-symbols"
+import { View } from "react-native"
 
 import { useTheme } from "@/theme"
 
-export function StatusSymbol({ name }: { name: SFSymbol }) {
+// expo-symbols' Android SymbolView renders a Text glyph and drops the a11y
+// props, so the host wrapper is what keeps TalkBack off the decoration.
+export function StatusSymbol({
+  name,
+}: {
+  name: { ios: SFSymbol; android: AndroidSymbol }
+}) {
   const theme = useTheme()
-  if (Platform.OS !== "ios") return null
-  return <SymbolView name={name} size={40} tintColor={theme.textSecondary} />
+  return (
+    <View
+      testID="status-symbol"
+      accessible={false}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <SymbolView name={name} size={40} tintColor={theme.textSecondary} />
+    </View>
+  )
 }

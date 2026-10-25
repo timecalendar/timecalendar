@@ -287,7 +287,7 @@ function GuidePageContent({
             onPress={() => router.back()}
             style={[styles.back, { borderColor: theme.primary }]}
           >
-            <ThemedText type="smallBold" themeColor="primary">
+            <ThemedText type="smallBold" themeColor="actionText">
               {t("common.back")}
             </ThemedText>
           </Pressable>

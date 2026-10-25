@@ -1,4 +1,4 @@
-import { fireEvent, render } from "@testing-library/react-native"
+import { fireEvent, render, within } from "@testing-library/react-native"
 import { router, Stack, useLocalSearchParams } from "expo-router"
 import { AccessibilityInfo, StyleSheet } from "react-native"
 
@@ -282,6 +282,9 @@ describe("GuidePageScreen", () => {
       }),
       undefined,
     )
+    expect(
+      within(view.getByTestId("export-guide-visible-back")).getByText("Back"),
+    ).toHaveStyle({ color: Colors.light.actionText })
     await fireEvent.press(view.getByTestId("export-guide-visible-back"))
     expect(router.back).toHaveBeenCalledTimes(1)
   })

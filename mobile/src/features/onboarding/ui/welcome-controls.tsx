@@ -26,7 +26,7 @@ export function WelcomeSkip({ hidden, onPress }: WelcomeSkipProps) {
           onPress={onPress}
           style={styles.textButton}
         >
-          <ThemedText type="smallBold" themeColor="primary">
+          <ThemedText type="smallBold" themeColor="actionText">
             {t("onboarding.skip")}
           </ThemedText>
         </Pressable>
@@ -75,7 +75,7 @@ export function WelcomeFooter({
           onPress={onNext}
           style={styles.nextButton}
         >
-          <ThemedText type="smallBold" themeColor="primary">
+          <ThemedText type="smallBold" themeColor="actionText">
             {t("onboarding.next")}
           </ThemedText>
           <SymbolView

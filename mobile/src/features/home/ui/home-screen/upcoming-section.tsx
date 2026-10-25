@@ -72,7 +72,7 @@ export function UpcomingSection({
           onPress={() => onOpenCalendar(now)}
           style={styles.textAction}
         >
-          <ThemedText type="smallBold" themeColor="primary">
+          <ThemedText type="smallBold" themeColor="actionText">
             {t("home.upcoming.seeAll")}
           </ThemedText>
         </Pressable>

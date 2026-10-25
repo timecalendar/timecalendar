@@ -178,7 +178,11 @@ export default function SchoolPickerScreen() {
                 />
               ) : searching ? (
                 <ListStatus
-                  media={<StatusSymbol name="magnifyingglass" />}
+                  media={
+                    <StatusSymbol
+                      name={{ ios: "magnifyingglass", android: "search" }}
+                    />
+                  }
                   message={t("onboarding.school.noResults", {
                     query: filter.trim(),
                   })}
@@ -188,7 +192,11 @@ export default function SchoolPickerScreen() {
                 </ListStatus>
               ) : (
                 <ListStatus
-                  media={<StatusSymbol name="graduationcap" />}
+                  media={
+                    <StatusSymbol
+                      name={{ ios: "graduationcap", android: "school" }}
+                    />
+                  }
                   message={t("onboarding.school.empty")}
                   announceKey="empty"
                 >

@@ -65,7 +65,7 @@ function HeaderIconAction({
       <SymbolView
         name={Platform.OS === "ios" ? symbol : { android: "today" }}
         size={HEADER_ICON_SIZE}
-        tintColor={theme.primary}
+        tintColor={theme.text}
       />
     </Pressable>
   )

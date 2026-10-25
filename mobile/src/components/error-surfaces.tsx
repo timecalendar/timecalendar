@@ -174,14 +174,17 @@ export function ErrorState({
   const theme = useTheme()
   return (
     <View testID={testID} style={[styles.state, style]}>
-      <SymbolView
-        name={{ ios: "exclamationmark.circle", android: "error_outline" }}
-        size={40}
-        tintColor={theme.error}
+      <View
         accessible={false}
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
-      />
+      >
+        <SymbolView
+          name={{ ios: "exclamationmark.circle", android: "error_outline" }}
+          size={40}
+          tintColor={theme.error}
+        />
+      </View>
       <ErrorMessage title={title} message={message} />
       {primaryAction || secondaryAction ? (
         <View style={styles.actions}>
