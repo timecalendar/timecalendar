@@ -1,3 +1,43 @@
+## 2026-10-25 — Design-system gallery
+
+- `/developer/gallery` lists every registered fixture as a native settings section with one row
+  per story; `/developer/gallery/[story]` renders one story as the screen under the compact native
+  header. Stories deep-link as `timecalendar-dev://developer/gallery/<meta id>--<export>`; an
+  unknown id redirects to the index. Both routes are layout-less root Stack siblings of
+  `developer.tsx` ([navigation.md](./navigation.md) → Component gallery).
+- The whole `/developer` subtree shares `isDeveloperSurfaceEnabled()` and redirects to `/settings`
+  under the `production` capability, proven by `developer-routes.contract.test.tsx`. The developer
+  page's Design row opens the gallery.
+- Fixtures are CSF3-shaped `*.gallery.tsx` modules (`native-settings`, eight stories including
+  long French strings; `native-text-entry-dialog`, default, submit-disabled and pending) listed in
+  the explicit `src/design/gallery/registry.ts`, behind the `@/design` barrel. Each meta lists its
+  story export names in display order (`stories`); a story may declare `platforms`, and the index
+  and story route offer it only there (`FloatingAction` and `RadioDialog` are Android-only). Dialog
+  stories close on Cancel and Save and reopen from a row behind them. Titles, story names and the
+  index row hint are typed `gallery.*` keys in FR and EN.
+- The gallery accessibility check covers nested controls on their own. Known violations live in
+  `src/design/gallery/known-a11y-violations.ts`, each keyed by story, platform and element with a
+  reason and an inbox link; the check fails on an unlisted violation and on a stale entry, so the
+  list only shrinks. It holds the Android switch row's inner Material `Switch` in
+  `native-settings--switches` and `native-settings--long-strings`
+  ([accessibility.md](./accessibility.md) → Proof in CI). The jest Compose `Switch` mock is always
+  a control, and `RadioButton` is a control only with `onClick`.
+- `/settings-gallery` and the `settingsGallery.*` strings no longer exist.
+- Tests: `registry.test.ts` (orphans, uniqueness, meta story order, light/dark × iOS/Android render
+  matrix, role and label on every interactive element, nested controls included, known violations
+  exact), `no-storybook.contract.test.ts`, the developer-routes contract and the gallery screen
+  suites. `src/design/gallery/*.ts` joins the 90% lines and branches tier.
+- Lint: `@/design/*` deep imports are banned outside `src/design/**` (`banDesignDeepImports`,
+  `timecalendar/design-home`); B-7 forbids `src/design/**` from importing features, routes,
+  `@/api/generated` or `@/db` ([lint-format.md](./lint-format.md)).
+- React Doctor: `mobile/react-doctor.config.json` turns `react-doctor/no-multi-component-file`
+  off for `src/**/*.gallery.tsx` only, since a fixture file holds one component per story; pinned
+  by `react-doctor.config.test.ts` ([../react-doctor.md](../react-doctor.md) → Configured
+  exceptions).
+- ADR [064](./decisions/064-in-house-component-gallery.md): in-house gallery instead of
+  Storybook, frozen scope. [accessibility.md](./accessibility.md) carries the device
+  accessibility recipe.
+
 ## 2026-10-25 — Android design-system device-pass fixes
 
 - `theming.md` (`chrome/native-settings.tsx`): **Placement** rule. `NativeSettingsRadioDialog`,

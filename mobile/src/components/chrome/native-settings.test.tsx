@@ -122,16 +122,12 @@ describe.each(["ios", "android"] as const)(
           "Selected",
         )
       } else {
-        const choiceTargets = within(view.getByTestId("choice")).getAllByRole(
-          "radio",
-        )
-        expect(choiceTargets).toHaveLength(1)
-        expect(choiceTargets[0]?.props.onPress).toBeUndefined()
+        expect(
+          within(view.getByTestId("choice")).queryAllByRole("radio"),
+        ).toHaveLength(0)
 
         const dialogOption = view.getByTestId("dialog-system")
-        const dialogIndicators = within(dialogOption).getAllByRole("radio")
-        expect(dialogIndicators).toHaveLength(1)
-        expect(dialogIndicators[0]?.props.onPress).toBeUndefined()
+        expect(within(dialogOption).queryAllByRole("radio")).toHaveLength(0)
         await fireEvent.press(dialogOption)
         expect(dialogSelect).toHaveBeenCalledTimes(1)
       }

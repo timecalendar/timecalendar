@@ -206,7 +206,11 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
     margins, no dividers, and no chevron. Headlines are `bodyLarge`/`onSurface`, supporting values
     `bodyMedium`/`onSurfaceVariant`, footers `bodySmall`/`onSurfaceVariant`. Row icons are flat
     Material Symbols tinted `onSurfaceVariant` in the leading slot. The radio dialog is a
-    `selectableGroup` Column of full-width 56dp radio rows.
+    `selectableGroup` Column of full-width 56dp radio rows. A switch row is a toggleable
+    `ListItem` (role switch) carrying `testID`; its trailing Material `Switch` carries
+    `switchTestID` and is still its own unlabeled TalkBack stop, a known violation
+    ([accessibility.md](./accessibility.md) → Proof in CI). Choice and radio-dialog `RadioButton`s
+    take no `onClick` and add no semantics of their own.
   - **Row subtitle and destructive rows:** a row `subtitle` is a second line under the label (iOS
     `subheadline`/`textSecondary` in a leading VStack; Android the supporting slot, which moves any
     `value` to trailing `labelLarge`/`onSurfaceVariant` text). The default accessibility label reads
@@ -271,7 +275,7 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
   SwiftUI and Material hosts, that each platform composition contains one native scroll owner, that
   the brand reaches the iOS Form tint and every Compose `seedColor`, and that icons, footers, segment
   positions, Material text roles, and the radio-dialog structure are wired. Rendered geometry stays
-  device evidence, checked through the dev-only `/settings-gallery`.
+  device evidence, checked through the native settings stories of `/developer/gallery`.
 - The placement invariant ("native settings dialog placement" in `native-settings.test.tsx`, and
   the placement cases in `native-settings-numeric-editor.test.tsx` and
   `native-text-entry-dialog.test.tsx`) asserts that each standalone dialog rejects rendering inside

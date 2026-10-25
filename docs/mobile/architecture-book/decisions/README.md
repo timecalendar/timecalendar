@@ -56,6 +56,7 @@ decision changes; use Git for its history.
 | [061](./061-calendar-conflict-pointer-and-assistive-targets.md)       | Separate Calendar conflict pointer and assistive targets                                          |
 | [062](./062-calendar-windowed-native-scrollview-paging.md)            | Page the Calendar with a windowed native horizontal ScrollView                                    |
 | [063](./063-platform-type-ramp.md)                                    | Resolve the type ramp per platform in the theme layer                                             |
+| [064](./064-in-house-component-gallery.md)                            | Review components in an in-house on-device gallery, not Storybook                                 |
 
 > `045` is intentionally left free: the open source-recovery PR carries an ADR
 > numbered `044` that collides with the merged one above and renumbers to `045`

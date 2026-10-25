@@ -11,7 +11,7 @@ import {
   useUserCalendars,
   useUserCalendarsLoaded,
 } from "@/features/calendar-sources"
-import { getBackendEnvironmentCapability } from "@/features/environment"
+import { isDeveloperSurfaceEnabled } from "@/features/developer"
 import { deriveCalendarSummary } from "@/features/settings/data"
 import { useShowWeekendsPreference } from "@/features/settings/prefs"
 
@@ -94,7 +94,7 @@ export function SettingsScreen() {
   const { unreadCount } = useActivityState()
   const { showWeekends, setShowWeekends } = useShowWeekendsPreference()
   const summary = deriveCalendarSummary(calendars, loaded)
-  const showDeveloperTools = getBackendEnvironmentCapability() !== "production"
+  const showDeveloperTools = isDeveloperSurfaceEnabled()
   const summaryValue =
     summary.state === "loaded" && summary.calendarCount === 0
       ? t("settingsHub.summary.empty")

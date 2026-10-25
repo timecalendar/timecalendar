@@ -129,6 +129,16 @@ and cleanup proofs.
 The three cohort totals reconcile exactly: `19 + 22 + 6 = 47`; together with the 18 warning
 entries above, `47 + 18 = 65`.
 
+## Configured exceptions
+
+`mobile/react-doctor.config.json` holds one scoped override and nothing else: the rule
+`react-doctor/no-multi-component-file` is off for `src/**/*.gallery.tsx`. A gallery fixture is a
+CSF3-shaped module whose named exports are the stories, so one file per component carrying several
+story components is the format itself (ADR
+[064](./architecture-book/decisions/064-in-house-component-gallery.md)). Every other file and rule
+is scanned as before. `react-doctor.config.test.ts` pins the override to exactly this rule and
+glob.
+
 ## Standalone dependency boundary
 
 `mobile/package.json` and `mobile/package-lock.json` exclusively define the mobile dependency

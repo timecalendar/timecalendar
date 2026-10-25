@@ -21,6 +21,8 @@ these pages describe the system as it is now.
   `store`, `form`, and `ui`; a feature creates only the layers it needs.
 - Shared infrastructure is reached through owned seams such as `@/db`, `@/storage`,
   `@/firebase`, and `@/components/chrome`.
+- The gallery registry, fixture types and story helpers live in `src/design/` behind the
+  `@/design` barrel; `*.gallery.tsx` fixtures live next to the component they exercise.
 - Sublayers import sibling sublayer barrels, never their own feature barrel.
 - Cross-feature dependencies use public barrels and must keep the dependency graph
   acyclic. ESLint enforces the detailed boundaries.

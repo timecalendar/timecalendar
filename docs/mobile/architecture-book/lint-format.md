@@ -5,6 +5,7 @@ The exact rules and their options live in `mobile/eslint.config.js` (named block
 `generated-code`, `timecalendar/feature-boundaries`, `timecalendar/chrome-seams`,
 `timecalendar/activity-seam`, `timecalendar/export-guide-seam`,
 `timecalendar/color-scheme-seam`, `timecalendar/developer-tools-home`,
+`timecalendar/design-home`,
 `timecalendar/calendar-sources-is-a-leaf`, `timecalendar/storage-seams`, and
 `timecalendar/tests`). The config is the source of
 truth; this file carries the caveats the config can't (R-1).
@@ -24,7 +25,8 @@ truth; this file carries the caveats the config can't (R-1).
   `origin/main`. Both use the exact lockfile pin and disable telemetry, score reporting, caches,
   and cross-project supply-chain analysis. CI enforces the changed-code command; the normalized
   inventory and dispositions live in [`../react-doctor.md`](../react-doctor.md) (ADR
-  [053](./decisions/053-react-doctor-changed-code-gate.md)).
+  [053](./decisions/053-react-doctor-changed-code-gate.md)). `react-doctor.config.json` carries
+  one scoped override: `no-multi-component-file` is off for `src/**/*.gallery.tsx`.
 - `eslint-plugin-react-native-a11y` is ESLint-8-era: loaded via `fixupPluginRules`
   (`@eslint/compat`) with an npm `override` pinning its eslint peer. If its rules
   misbehave under a future ESLint, the fallback is a minimal local rule for touchables.
@@ -100,6 +102,11 @@ truth; this file carries the caveats the config can't (R-1).
     sublayer shape rather than cycles between two named features. The removal prune that
     would otherwise want that import is inverted instead: `useActivityOwnershipPrune`
     lives in the Activity feature and _observes_ the held-calendar set.
+  - **B-7 — the design layer knows no product** (the `design` element, `src/design`):
+    `src/design/**` may not import a `feature-sublayer`, `feature-barrel`, `route`,
+    `generated-api` or `db-seam` element. It consumes shared seams such as `@/theme`,
+    `@/components/chrome`, `@/i18n` and `@/hooks`. The gallery registry imports fixtures from `src/components/**`, which stays
+    allowed.
   - **Caveat this block exists to carry (R-1): a flat-config block that adds a ban must
     re-call `restrictedImports([...])`, never list its one pattern alone.** Flat config
     **replaces** a rule's options rather than merging them, and
@@ -196,6 +203,15 @@ truth; this file carries the caveats the config can't (R-1).
   route-pattern reason as the color-scheme seam. Same static-import-only caveat as raw-fetch;
   `jest.mock("@/features/environment", …)` factories are not imports and stay free. See
   [navigation.md](./navigation.md) → Developer page.
+- **Design layer: one barrel** (`designDeepImportPattern`, the `banDesignDeepImports` flag of
+  `restrictedImports`): `@/design/<anything>` is banned outside `src/design/**`; code imports
+  `@/design`. The `timecalendar/design-home` block re-calls
+  `restrictedImports([routeEntrypointImportPattern], { banDesignDeepImports: false })` for
+  `src/design/**`, re-including the route pattern for the same reason as the color-scheme seam.
+  Inside `src/design/`, a folder imports its own files relatively and other folders through
+  `@/design/<folder>/…`. Fixtures import only types from `@/design` (`import type`), so the
+  registry → fixture → barrel edge is not a runtime cycle; the registry render test is the
+  backstop. See ADR [064](./decisions/064-in-house-component-gallery.md).
 - **L8 — font scaling is never disabled** (`no-restricted-syntax` in
   `timecalendar/architecture`, the `restrictedSyntax` constant): two selectors,
   `JSXAttribute[name.name='allowFontScaling'][value.expression.value=false]` and
