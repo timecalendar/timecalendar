@@ -249,37 +249,32 @@ export function NativeSettingsHost({
 }: NativeSettingsHostProps) {
   const colorScheme = useResolvedScheme()
   const theme = useTheme()
-  if (Platform.OS === "ios") {
-    return (
-      <SwiftHost
-        colorScheme={colorScheme}
-        useViewportSizeMeasurement
-        style={styles.fill}
-      >
-        <Form modifiers={[tint(theme.primary)]}>
-          <NativeSettingsHostContext.Provider value>
-            {children}
-          </NativeSettingsHostContext.Provider>
-        </Form>
-      </SwiftHost>
-    )
-  }
   return (
-    <ComposeSettingsHost useViewportSizeMeasurement style={styles.fill}>
-      <LazyColumn
-        contentPadding={{
-          top: 0,
-          bottom: reservesFloatingAction
-            ? LIST_BOTTOM_PADDING + FAB_CLEARANCE
-            : LIST_BOTTOM_PADDING,
-        }}
-        modifiers={[fillMaxSize()]}
-      >
-        <NativeSettingsHostContext.Provider value>
-          {children}
-        </NativeSettingsHostContext.Provider>
-      </LazyColumn>
-    </ComposeSettingsHost>
+    <NativeSettingsHostContext.Provider value>
+      {Platform.OS === "ios" ? (
+        <SwiftHost
+          colorScheme={colorScheme}
+          useViewportSizeMeasurement
+          style={styles.fill}
+        >
+          <Form modifiers={[tint(theme.primary)]}>{children}</Form>
+        </SwiftHost>
+      ) : (
+        <ComposeSettingsHost useViewportSizeMeasurement style={styles.fill}>
+          <LazyColumn
+            contentPadding={{
+              top: 0,
+              bottom: reservesFloatingAction
+                ? LIST_BOTTOM_PADDING + FAB_CLEARANCE
+                : LIST_BOTTOM_PADDING,
+            }}
+            modifiers={[fillMaxSize()]}
+          >
+            {children}
+          </LazyColumn>
+        </ComposeSettingsHost>
+      )}
+    </NativeSettingsHostContext.Provider>
   )
 }
 
