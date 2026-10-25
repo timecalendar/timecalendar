@@ -23,4 +23,6 @@ export {
   Spacing,
   StateOpacity,
 } from "@/theme/tokens"
+export type { TypeStep, TypeVariant } from "@/theme/typography"
+export { TypeRamp } from "@/theme/typography"
 export { useTheme } from "@/theme/use-theme"
