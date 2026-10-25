@@ -82,7 +82,10 @@ transform for `node_modules/(storybook|@storybook/react)` and adds `storybook|@s
    `expo-router` → `@expo/metro-runtime`, from `npm ls react-dom`). `react-native-web` is absent.
 2. **Fingerprint runtime policy.** `mobile/app.config.ts:84` sets `runtimeVersion: { policy: "fingerprint" }`.
    `eas.md:39-43` makes this load-bearing (ADR 006). Every fingerprint move forces fresh store builds
-   on every lane, and those builds are local and deliberate (`eas.md:45-63`, ADR 040).
+   on every lane, and those builds are local and deliberate (`eas.md:45-63`, ADR 040). **The React
+   Native app is not in production** (it replaces the live Flutter app at the v4 cutover), so no
+   installed binary depends on today's fingerprint. A fingerprint move or a new native dependency
+   costs nothing before the first public release and is not weighed in this decision.
 3. **What the fingerprint actually hashes.** This was read from `@expo/fingerprint` 0.19.4
    (`build/sourcer/Sourcer.js:17-50`). It hashes Expo and RN-core autolinking results for both
    platforms, the resolved Expo config plus loaded config-plugin files, `eas.json` and `.easignore`,
@@ -199,7 +202,7 @@ expression is `process.env.STORYBOOK_ENABLED === "true" && process.env.APP_VARIA
 Even then, the route file `src/app/storybook.tsx` still ships (constraint 5) and renders blank with
 a warning. It also needs the same runtime `isDevVariant()` gate as `dev-paging-spike`.
 
-**Native leakage into store binaries.** This is the main problem. `@storybook/react-native`
+**Native code in store binaries.** Before the first public release this is tidiness, not a cost. `@storybook/react-native`
 hard-depends on `@storybook/react-native-ui`, whose `react-native-svg` peer is **non-optional**.
 npm auto-installs it, and Expo autolinking follows non-optional peers (constraint 4). The result
 is that `react-native-svg` native code gets linked into **every** binary, store builds included,
@@ -211,7 +214,7 @@ For RN-core-autolinked libraries that means a `react-native.config.js` `dependen
 `ui-lite` without controls. Whether that exclusion fully restores the store fingerprint is
 **unverified** and needs a spike with `runtimeversion:resolve` before and after.
 
-**Fingerprint impact.** This is predicted from the fingerprint sources in constraint 3:
+**Fingerprint impact** (predicted from constraint 3; relevant only after the first public release):
 
 | Change | Moves release fingerprints? |
 | --- | --- |
@@ -231,13 +234,24 @@ renders with RNTL under jest-expo, and the official expo-example does exactly th
 - the i18next literal-string rule (`eslint.config.js:250`) will flag story fixtures.
 The `react-dom` peer adds no new package, because it is already present transitively.
 
-**Version risk.** v11 is in `next` (2026-10-21), and upstream examples already track SDK 57.
-The project would adopt a major that is about to be superseded.
+**Version risk.** `@storybook/react-native` 10.7.0 is `latest`; 11.0.0-next.1 is in `next`
+(2026-10-21). Moving from 10.x to 11.x changes the `storybook` peer from ^10.5.4 to ^11.0.0-alpha.6,
+introduces CSF Factories, and moves on-device addons from `addons` to `deviceAddons` (upstream
+PR #932). Upstream's `expo-router-example` runs SDK 57 / RN 0.86.3 with New Architecture and React
+Compiler on both tags and uses entry swapping, not a route; SDK 56 is unverified. Mounting as an
+Expo Router route is "fully supported but not the preferred setup" (upstream `expo-router.md:12`).
 
-**Verdict.** It is technically feasible as a route. It brings a native dependency into store
-binaries unless autolinking exclusions are added and proven, it moves the fingerprint at least once,
-and it has a recurring ESM/Jest maintenance cost. Its strongest benefit is on-device controls. That
-benefit specifically needs the native slider and datetimepicker that make the leakage worse.
+**Accessibility.** On-device addons are actions, controls, backgrounds and notes. There is no
+on-device accessibility addon: `@storybook/addon-a11y` 10.6.3 runs axe-core against a web DOM, so it
+only applies to Option 2, where it audits web approximations rather than the SwiftUI/Compose
+controls. On device, the accessibility tools are the platform's (VoiceOver, TalkBack, Xcode
+Accessibility Inspector, Accessibility Scanner, OS text-size settings), identical for Options 1 and 4.
+
+**Verdict.** Feasible as a route, on a setup upstream does not prefer and has not shown on SDK 56.
+Its real benefit is the on-device Controls panel. Its real costs are a second test config (ESM
+transform, annotations), a 10.x to 11.x migration soon after adoption, and a story being a view
+inside one route rather than a screen, which hides header actions, sheets and `Stack.Screen`
+options from screen-reader review.
 
 ## Option 2: Storybook for web via `@storybook/react-native-web-vite`
 
@@ -305,7 +319,8 @@ and is reached from the Settings hub environment section. It has a Jest suite
 | --- | --- | --- | --- | --- |
 | Setup cost | Medium: about 6 devDeps, `.rnstorybook/`, metro wrapper, route, Jest ESM transform, autolinking exclusions | Medium-high: RNW, Vite, `.storybook/`, per-component web shims | High (1 + 2) | Low: registry, fixtures, one test |
 | Store-bundle and binary leak risk | JS stripped by `enabled`; **native `react-native-svg` (+ slider, datetimepicker) autolinked into store binaries** unless excluded | None on device (separate toolchain), but RNW enters the lockfile | Same as 1 | Inert JS only, behind an existing tested gate |
-| Fingerprint (ADR 006) | Moves at least once (svg autolink, any script or `.gitignore` edit) | No native effect; `package.json` scripts would move it | Moves | **No change** |
+| Fingerprint (ADR 006) | Moves at least once; no cost before the first public release | `package.json` scripts would move it | Moves | No change |
+| Accessibility review | Platform tools only; no on-device a11y addon; story is a view, not a screen | `addon-a11y` (axe) on web approximations only | Mixed | Platform tools; each fixture is a real screen with the real header |
 | Metro config impact | Wrapped by `withStorybook` (resolver, generated requires) | None (Vite) | Wrapped | None |
 | jest-expo reuse | `composeStories` works, needs sucrase/ESM transform + annotations | Same stories, web-only tests | Both | Native: fixtures are components |
 | Visual regression path | Maestro `assertScreenshot` via `/select-story-sync`; Chromatic RN (early access) | Chromatic web / Argos / test-runner, but of web approximations | Both | Maestro `assertScreenshot` over gallery deep links |
@@ -335,27 +350,44 @@ outside ADR 057's three-journey budget, so it needs either an ADR 057 amendment 
 
 ## Recommendation
 
-**Adopt Option 4 now: grow `/settings-gallery` into a general `/gallery`, written in CSF3 shape
-without a Storybook dependency. Keep Option 1 (route-mounted, `ui-lite`) as a recorded revisit
-trigger.**
+**Adopt Option 4: an in-house on-device gallery where each fixture is a real Expo Router route
+(`/developer/gallery/[story]`). Fixtures are written in CSF3 shape, with no Storybook dependency.**
+This holds with native-dependency and fingerprint costs weighted at zero (independent advisor
+review, 2026-10-25).
 
-Rationale:
-- The components that matter are SwiftUI and Compose controls behind `src/components/chrome/`.
-  Only on-device rendering shows them, and the existing gallery already does that inside the real
-  provider tree, on dev builds and preview store builds alike.
-- It costs zero fingerprint moves and zero native surface. Option 1's unavoidable
-  `react-native-svg` autolink (and the controls addon's slider and datetimepicker) would put native
-  code into store binaries or demand an unproven autolinking exclusion. That is the kind of
-  native-config churn ADR 006 and ADR 040 make expensive.
-- Fixtures written as **CSF3 objects** (`export default { title, component }` plus named exports with
-  `args` / `render`) are plain TypeScript. If controls are ever needed, `@storybook/react-native`
-  can load the same files unchanged, so the migration is a config change, not a rewrite.
-- Every guarantee is encoded as a test (Principle 1) rather than as a bundler flag.
+Decisive reasons:
+- **No accessibility advantage for Storybook on React Native.** There is no on-device a11y addon;
+  the review tools are the platform's and work the same either way.
+- **Screen readers judge screens, not views.** A gallery route renders the fixture as the screen,
+  under the real native header, so focus order, the back button and the "name exposed once" rule
+  (`accessibility.md:27-29`) are what ships. A Storybook story is a view inside one route, and
+  VoiceOver would likely also traverse Storybook's own UI (unverified).
+- **Real providers and gate for free.** The in-app theme override reaches SwiftUI/Compose
+  (`use-color-scheme.ts:15-21`, `testing.md:91`); FR/EN, Router context and the capability gate
+  (`settings-gallery-screen.tsx:32-34`) already exist; preview builds are where release-config
+  accessibility checks happen (`accessibility.md:43-45`).
+- **Principle 1.** Named fixture states become a Jest matrix (story × light/dark × iOS/Android)
+  under the existing mocks, extending `settings-gallery-screen.test.tsx:34-37`, with no second
+  config. A deep link per story serves Maestro and agents.
+- **Churn.** Adopting `@storybook/react-native` 10.x now means migrating to 11.x shortly after.
 
-**Revisit Option 1 if** any of these holds: more than about 40 fixtures exist and interactive args
-would replace many hand-written states; a second contributor or designer needs a self-serve
-workshop; Chromatic RN leaves early access and visual review is wanted as a service; or upstream
-publishes an SDK 56/57 support statement and makes `react-native-svg` optional.
+Given up: the on-device Controls panel. Explicit named states (longest FR string, disabled, busy,
+error, largest text size) are easier to review for accessibility than live knobs.
+
+**Accessibility workflow.** Open a story by deep link (`timecalendar-dev://developer/gallery/<id>`
+on development builds, `timecalendar://…` on preview, `app.config.ts:74-78`). Set conditions with
+`xcrun simctl ui booted content_size accessibility-extra-extra-extra-large` /
+`xcrun simctl ui booted appearance dark` on iOS, or `adb shell settings put system font_scale 2.0` /
+`adb shell cmd uimode night yes` on Android. Screenshot, read the accessibility tree, then a
+VoiceOver/TalkBack pass on a simulator or a TestFlight / Play internal device.
+
+**Main risk: hand-rebuilding Storybook.** ADR C freezes scope (index page, story route, no controls,
+no docs engine). Fixtures stay CSF3-shaped so `@storybook/react-native` can load them later as a
+config change.
+
+**Revisit Option 1 if** a second contributor or designer needs a self-serve workshop, live prop
+editing becomes a real need, or Chromatic RN leaves early access and visual review is wanted as a
+service.
 
 ### Wiring sketch
 

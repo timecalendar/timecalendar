@@ -39,15 +39,16 @@ welcome/connect and the personal-event form are the worst offenders.
 
 ## Storybook recommendation
 
-**Do not adopt Storybook now.** Grow the existing `/settings-gallery` into a general
-`/developer/gallery` with fixtures written in CSF3 shape (`*.gallery.tsx`, local types, explicit
-test-enforced registry). Reasons: the components worth cataloguing are SwiftUI/Compose controls
-that only render on device, inside the app's real providers; web Storybook can't render them and
-reverses ADR 007; `@storybook/react-native` 10.7 pulls a required `react-native-svg` peer that
-autolinks native code into store binaries and moves the EAS fingerprint, and its examples target
-SDK 57 (SDK 56 unverified). The gallery costs zero dependencies and zero fingerprint moves, and
-works on preview store builds. Because fixtures are CSF3-shaped, moving to on-device Storybook later
-is a config change. Revisit at ~40 fixtures, a second contributor, or Chromatic RN GA.
+**In-house on-device gallery, not Storybook** (independent advisor review). Each fixture is a
+real Expo Router route at `/developer/gallery/[story]`, written in CSF3 shape. Reasons: Storybook
+has no on-device accessibility addon (`@storybook/addon-a11y` is web-only), so the a11y tools are
+the platform's either way; a gallery route renders the fixture as a real screen under the real
+header, which is what VoiceOver/TalkBack review needs, while a Storybook story is a view inside one
+route; the app's providers, translations and dev/preview gate already exist; fixture states become a
+Jest matrix with no second config; and `@storybook/react-native` 10.x would need a 10.x to 11.x
+migration soon after adoption. Native-dependency and fingerprint costs were weighted at zero: the
+React Native app is not in production. Given up: the live Controls panel. Revisit with a second
+contributor or a real need for live prop editing.
 
 ## Phase plan
 
