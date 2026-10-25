@@ -153,18 +153,16 @@ const deviceColorSchemeDeepImportPattern = {
 
 // The environment control's single home is the developer page (navigation.md →
 // Developer page): Settings keeps one gated row to it, never the control itself.
-const developerToolsMessage =
-  "The environment control lives on the developer page — mount it from src/features/developer/ui only (navigation.md → Developer page)."
-
 const developerToolsImportPath = {
   name: "@/features/environment",
   importNames: ["EnvironmentSettingsControl"],
-  message: developerToolsMessage,
+  message:
+    "The environment control lives on the developer page — mount it from src/features/developer/ui only (navigation.md → Developer page).",
 }
 
 const developerToolsDeepImportPattern = {
   regex: "^@/features/environment/ui($|/)",
-  message: developerToolsMessage,
+  message: developerToolsImportPath.message,
 }
 
 // Route files are entrypoints, not modules. Named (rather than inlined in the
