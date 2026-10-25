@@ -10,8 +10,9 @@ import {
 } from "@/components/chrome"
 import { isDevVariant } from "@/config/variant"
 import {
-  EnvironmentSettingsControl,
-  getBackendEnvironmentCapability,
+  EnvironmentSelectorDialog,
+  EnvironmentSettingsRow,
+  useEnvironmentSelector,
 } from "@/features/environment"
 
 // Static declarations keep the selectors discoverable by the Maestro source
@@ -36,8 +37,9 @@ export function DeveloperScreen() {
   const { t } = useTranslation()
   const [importOpen, setImportOpen] = useState(false)
   const [token, setToken] = useState("")
+  const environmentSelector = useEnvironmentSelector()
 
-  if (getBackendEnvironmentCapability() === "production") {
+  if (environmentSelector.capability === "production") {
     return <Redirect href="/settings" />
   }
 
@@ -61,7 +63,7 @@ export function DeveloperScreen() {
           title={t("developer.section.backend")}
           testID="developer-section-backend"
         >
-          <EnvironmentSettingsControl />
+          <EnvironmentSettingsRow selector={environmentSelector} />
         </NativeSettingsSection>
         {isDevVariant() ? (
           <NativeSettingsSection
@@ -92,6 +94,7 @@ export function DeveloperScreen() {
           />
         </NativeSettingsSection>
       </NativeSettingsHost>
+      <EnvironmentSelectorDialog selector={environmentSelector} />
       {importOpen ? (
         <NativeTextEntryDialog
           title={t("developer.devImport.dialogTitle")}

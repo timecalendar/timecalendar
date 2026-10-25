@@ -33,6 +33,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme"
 import { useTheme } from "@/theme"
 
 import { NativeErrorNotice } from "./native-error-notice"
+import { useAssertOutsideNativeSettingsHost } from "./native-settings-host-context"
 
 export type NativeSettingsNumericEditorIds = {
   container: string
@@ -174,6 +175,7 @@ function AndroidNumericEditor(props: NativeSettingsNumericEditorProps) {
 export function NativeSettingsNumericEditor(
   props: NativeSettingsNumericEditorProps,
 ) {
+  useAssertOutsideNativeSettingsHost("NativeSettingsNumericEditor")
   return Platform.OS === "ios" ? (
     <IosNumericEditor {...props} />
   ) : (

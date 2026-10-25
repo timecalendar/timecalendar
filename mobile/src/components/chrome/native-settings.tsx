@@ -69,6 +69,10 @@ import {
 import { Platform, StyleSheet } from "react-native"
 
 import {
+  NativeSettingsHostContext,
+  useAssertOutsideNativeSettingsHost,
+} from "@/components/chrome/native-settings-host-context"
+import {
   materialSymbolSource,
   type NativeSettingsIcon,
 } from "@/components/chrome/native-settings-icons"
@@ -245,31 +249,32 @@ export function NativeSettingsHost({
 }: NativeSettingsHostProps) {
   const colorScheme = useResolvedScheme()
   const theme = useTheme()
-  if (Platform.OS === "ios") {
-    return (
-      <SwiftHost
-        colorScheme={colorScheme}
-        useViewportSizeMeasurement
-        style={styles.fill}
-      >
-        <Form modifiers={[tint(theme.primary)]}>{children}</Form>
-      </SwiftHost>
-    )
-  }
   return (
-    <ComposeSettingsHost useViewportSizeMeasurement style={styles.fill}>
-      <LazyColumn
-        contentPadding={{
-          top: 0,
-          bottom: reservesFloatingAction
-            ? LIST_BOTTOM_PADDING + FAB_CLEARANCE
-            : LIST_BOTTOM_PADDING,
-        }}
-        modifiers={[fillMaxSize()]}
-      >
-        {children}
-      </LazyColumn>
-    </ComposeSettingsHost>
+    <NativeSettingsHostContext.Provider value>
+      {Platform.OS === "ios" ? (
+        <SwiftHost
+          colorScheme={colorScheme}
+          useViewportSizeMeasurement
+          style={styles.fill}
+        >
+          <Form modifiers={[tint(theme.primary)]}>{children}</Form>
+        </SwiftHost>
+      ) : (
+        <ComposeSettingsHost useViewportSizeMeasurement style={styles.fill}>
+          <LazyColumn
+            contentPadding={{
+              top: 0,
+              bottom: reservesFloatingAction
+                ? LIST_BOTTOM_PADDING + FAB_CLEARANCE
+                : LIST_BOTTOM_PADDING,
+            }}
+            modifiers={[fillMaxSize()]}
+          >
+            {children}
+          </LazyColumn>
+        </ComposeSettingsHost>
+      )}
+    </NativeSettingsHostContext.Provider>
   )
 }
 
@@ -895,6 +900,7 @@ function ComposeSettingsChoiceRow({
 export function NativeSettingsRadioDialog<Value extends string>(
   props: NativeSettingsRadioDialogProps<Value>,
 ) {
+  useAssertOutsideNativeSettingsHost("NativeSettingsRadioDialog")
   if (!props.visible || Platform.OS === "ios") return null
   return (
     <ComposeSettingsHost matchContents>

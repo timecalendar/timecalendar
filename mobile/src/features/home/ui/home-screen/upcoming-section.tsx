@@ -62,7 +62,7 @@ export function UpcomingSection({
             style={styles.emptyState}
           />
         ) : (
-          <ThemedText style={styles.sectionTitle}>
+          <ThemedText type="sectionTitle">
             {t("home.upcoming.title")}
           </ThemedText>
         )}
@@ -161,7 +161,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  sectionTitle: { fontSize: 20, lineHeight: 25, fontWeight: "700" },
   emptyState: { flexShrink: 1 },
   textAction: {
     minWidth: Platform.OS === "android" ? 48 : 44,

@@ -49,14 +49,14 @@ pushed on the root Stack stays compact.
 **Developer page.** `/developer` is a root Stack sibling with the compact header, reached from the
 Settings hub's Developer section (the hub's last section, rendered only when the backend capability
 is not `production`). It redirects to `/settings` when the capability is `production`. It hosts
-three sections: Backend (the environment entry, the only place `EnvironmentSettingsControl` is
-mounted), Test data (import a calendar by token through the native text-entry dialog, which pushes
+three sections: Backend (the environment row, the only place the environment selector is
+mounted; its dialog renders after the native host), Test data (import a calendar by token through the native text-entry dialog, which pushes
 `/dev-import?token=…`; rendered only on the development variant, where that screen acts; on
 success `/dev-import` returns with `dismissTo("/calendar")`, since the root Stack's
 `initialRouteName: "(tabs)"` puts the tabs beneath it in-app and on a cold deep link alike, and
 falls back to `replace` only when nothing is beneath, so the root Stack never holds a second
 `(tabs)`), and
-Design (the `/settings-gallery` entry). The environment control's home is enforced by the
+Design (the `/settings-gallery` entry). The environment selector's home is enforced by the
 `banDeveloperTools` flag of `restrictedImports` and its `timecalendar/developer-tools-home` opt-out
 block in `mobile/eslint.config.js`.
 

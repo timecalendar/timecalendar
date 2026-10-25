@@ -3,6 +3,7 @@ import { fireEvent, render } from "@testing-library/react-native"
 import { usePlatform } from "@/test-support/platform"
 import { Colors } from "@/theme"
 
+import { NativeSettingsHost } from "./native-settings"
 import { NativeSettingsNumericEditor } from "./native-settings-numeric-editor"
 
 jest.mock("@/hooks/use-color-scheme", () => ({
@@ -74,3 +75,36 @@ describe("NativeSettingsNumericEditor on Android", () => {
     expect(props.onCancel).toHaveBeenCalledTimes(1)
   })
 })
+
+describe.each(["ios", "android"] as const)(
+  "NativeSettingsNumericEditor placement on %s",
+  (platform) => {
+    usePlatform(platform)
+
+    it("rejects rendering inside NativeSettingsHost", async () => {
+      const consoleError = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {})
+      await expect(
+        render(
+          <NativeSettingsHost>
+            <NativeSettingsNumericEditor {...props} />
+          </NativeSettingsHost>,
+        ),
+      ).rejects.toThrow(
+        "NativeSettingsNumericEditor must render outside NativeSettingsHost; place it after </NativeSettingsHost>.",
+      )
+      consoleError.mockRestore()
+    })
+
+    it("renders as a sibling after NativeSettingsHost", async () => {
+      const view = await render(
+        <>
+          <NativeSettingsHost />
+          <NativeSettingsNumericEditor {...props} />
+        </>,
+      )
+      expect(view.getByTestId(ids.field)).toBeTruthy()
+    })
+  },
+)

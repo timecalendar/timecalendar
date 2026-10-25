@@ -1,6 +1,7 @@
 import { fromZonedTime, toZonedTime } from "date-fns-tz"
 import { useCalendars } from "expo-localization"
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Platform, Pressable, StyleSheet } from "react-native"
 
 import { DateTimePicker } from "@/components/chrome"
@@ -54,6 +55,7 @@ export function DateTimeField({
   zone,
   onChange,
 }: DateTimeFieldProps) {
+  const { t } = useTranslation()
   const theme = useTheme()
   const [step, setStep] = useState<AndroidStep>({ kind: "closed" })
   const wallClock = toZonedTime(value, zone)
@@ -70,16 +72,26 @@ export function DateTimeField({
     )
   }
 
+  // TalkBack reads a focusable node's contentDescription instead of its
+  // descendant text, so the label alone would hide the value.
+  const display = formatShortDateTime(value, locale, zone)
   return (
     <>
       <Pressable
         testID={testID}
         accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel}
+        accessibilityLabel={
+          accessibilityLabel === undefined
+            ? undefined
+            : t("personalEvents.form.dateTimeAccessibilityLabel", {
+                label: accessibilityLabel,
+                value: display,
+              })
+        }
         onPress={() => setStep({ kind: "date" })}
         style={[styles.field, { backgroundColor: theme.backgroundElement }]}
       >
-        <ThemedText>{formatShortDateTime(value, locale, zone)}</ThemedText>
+        <ThemedText>{display}</ThemedText>
       </Pressable>
       {step.kind === "date" && (
         <DateTimePicker

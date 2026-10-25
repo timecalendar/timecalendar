@@ -31,41 +31,43 @@ describe.each(["ios", "android"] as const)(
       const select = jest.fn()
       const dialogSelect = jest.fn()
       const view = await render(
-        <NativeSettingsHost>
-          <NativeSettingsSection title="Section" testID="section">
-            <NativeSettingsRow
-              kind="navigation"
-              label="Navigate"
-              href="/about"
-              testID="nav"
-            />
-            <NativeSettingsRow
-              kind="action"
-              label="Act"
-              onPress={action}
-              testID="action"
-            />
-            <NativeSettingsRow
-              kind="value"
-              label="Value"
-              value="Read only"
-              testID="value"
-            />
-            <NativeSettingsSwitchRow
-              label="Toggle"
-              value
-              onValueChange={toggle}
-              testID="toggle"
-              switchTestID="switch"
-            />
-            <NativeSettingsChoiceRow
-              label="Choice"
-              selected
-              selectedAccessibilityLabel="Selected"
-              onSelect={select}
-              testID="choice"
-            />
-          </NativeSettingsSection>
+        <>
+          <NativeSettingsHost>
+            <NativeSettingsSection title="Section" testID="section">
+              <NativeSettingsRow
+                kind="navigation"
+                label="Navigate"
+                href="/about"
+                testID="nav"
+              />
+              <NativeSettingsRow
+                kind="action"
+                label="Act"
+                onPress={action}
+                testID="action"
+              />
+              <NativeSettingsRow
+                kind="value"
+                label="Value"
+                value="Read only"
+                testID="value"
+              />
+              <NativeSettingsSwitchRow
+                label="Toggle"
+                value
+                onValueChange={toggle}
+                testID="toggle"
+                switchTestID="switch"
+              />
+              <NativeSettingsChoiceRow
+                label="Choice"
+                selected
+                selectedAccessibilityLabel="Selected"
+                onSelect={select}
+                testID="choice"
+              />
+            </NativeSettingsSection>
+          </NativeSettingsHost>
           <NativeSettingsRadioDialog
             visible
             title="Dialog"
@@ -76,7 +78,7 @@ describe.each(["ios", "android"] as const)(
             onSelect={dialogSelect}
             onDismiss={jest.fn()}
           />
-        </NativeSettingsHost>,
+        </>,
       )
       const hosts = view.getAllByTestId(
         platform === "ios" ? "swiftui-host" : "compose-host",
@@ -375,7 +377,8 @@ describe("native settings chrome on android", () => {
 
   it("seeds every Compose host with the brand color", async () => {
     const view = await render(
-      <NativeSettingsHost>
+      <>
+        <NativeSettingsHost />
         <NativeSettingsRadioDialog
           visible
           title="Dialog"
@@ -386,7 +389,7 @@ describe("native settings chrome on android", () => {
           onSelect={jest.fn()}
           onDismiss={jest.fn()}
         />
-      </NativeSettingsHost>,
+      </>,
     )
     const hosts = view.getAllByTestId("compose-host")
     expect(hosts).toHaveLength(2)
@@ -651,3 +654,59 @@ describe("native settings chrome on android", () => {
     ).toEqual({ top: 0, bottom: 24 })
   })
 })
+
+describe.each(["ios", "android"] as const)(
+  "native settings dialog placement on %s",
+  (platform) => {
+    usePlatform(platform)
+
+    it.each([true, false])(
+      "rejects a radio dialog (visible=%s) rendered inside the host",
+      async (visible) => {
+        const consoleError = jest
+          .spyOn(console, "error")
+          .mockImplementation(() => {})
+        await expect(
+          render(
+            <NativeSettingsHost>
+              <NativeSettingsSection>
+                <NativeSettingsRadioDialog
+                  visible={visible}
+                  title="Dialog"
+                  cancelLabel="Cancel"
+                  value="a"
+                  options={[{ label: "A", value: "a" }]}
+                  testID="dialog"
+                  onSelect={jest.fn()}
+                  onDismiss={jest.fn()}
+                />
+              </NativeSettingsSection>
+            </NativeSettingsHost>,
+          ),
+        ).rejects.toThrow(
+          "NativeSettingsRadioDialog must render outside NativeSettingsHost; place it after </NativeSettingsHost>.",
+        )
+        consoleError.mockRestore()
+      },
+    )
+
+    it("accepts a radio dialog rendered after the host", async () => {
+      const view = await render(
+        <>
+          <NativeSettingsHost />
+          <NativeSettingsRadioDialog
+            visible
+            title="Dialog"
+            cancelLabel="Cancel"
+            value="a"
+            options={[{ label: "A", value: "a" }]}
+            testID="dialog"
+            onSelect={jest.fn()}
+            onDismiss={jest.fn()}
+          />
+        </>,
+      )
+      expect(view.queryByTestId("dialog") !== null).toBe(platform === "android")
+    })
+  },
+)

@@ -10,7 +10,7 @@ import {
 import { useSchools } from "@/features/school-selection/data"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { usePlatform } from "@/test-support/platform"
-import { Spacing } from "@/theme"
+import { Colors, Spacing } from "@/theme"
 
 import SchoolPickerScreen from "./school-picker-screen"
 
@@ -93,6 +93,9 @@ const screenOptions = () =>
     unstable_headerLeftItems?: () => { onPress: () => void }[]
     headerSearchBarOptions: {
       placeholder: string
+      textColor: string
+      hintTextColor: string
+      headerIconColor: string
       onChangeText: (e: { nativeEvent: { text: string } }) => void
       onCancelButtonPress: () => void
       onClose: () => void
@@ -203,6 +206,21 @@ describe("SchoolPickerScreen", () => {
     )
   })
 
+  it.each(["light", "dark"] as const)(
+    "colors the header search field text for the %s scheme",
+    async (scheme) => {
+      mockUseColorScheme.mockReturnValue(scheme)
+      mockUseSchools.mockReturnValue(ready([]))
+      await render(<SchoolPickerScreen />)
+
+      expect(screenOptions().headerSearchBarOptions).toMatchObject({
+        textColor: Colors[scheme].text,
+        hintTextColor: Colors[scheme].textSecondary,
+        headerIconColor: Colors[scheme].text,
+      })
+    },
+  )
+
   it("returns to calendar management from its scoped add-school flow", async () => {
     mockUseLocalSearchParams.mockReturnValue({ source: "calendar-management" })
     mockUseSchools.mockReturnValue(ready([]))
@@ -283,6 +301,12 @@ describe("SchoolPickerScreen", () => {
     const { getByText, getByTestId } = await render(<SchoolPickerScreen />)
 
     expect(getByText("Could not load schools.")).toBeTruthy()
+    expect(
+      StyleSheet.flatten(getByTestId("onboarding-school-error").props.style),
+    ).toMatchObject({
+      paddingHorizontal: Spacing.four,
+      paddingVertical: Spacing.five,
+    })
     fireEvent.press(getByTestId("onboarding-school-retry"))
     expect(refetch).toHaveBeenCalledTimes(1)
   })

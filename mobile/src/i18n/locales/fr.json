@@ -246,6 +246,7 @@
   "personalEvents.form.titlePlaceholder": "Titre de l’événement",
   "personalEvents.form.startLabel": "Début",
   "personalEvents.form.endLabel": "Fin",
+  "personalEvents.form.dateTimeAccessibilityLabel": "{{label}}, {{value}}",
   "personalEvents.form.colorLabel": "Couleur",
   "personalEvents.form.locationLabel": "Lieu",
   "personalEvents.form.locationPlaceholder": "Où",

@@ -16,6 +16,8 @@ These rules guard real product touchables (interactive controls declare `accessi
 
 - `ThemedText` maps the heading ramp steps `type="largeTitle"`, `"title"`, `"title2"` and `"sectionTitle"` (and the `subtitle` alias, which resolves to `sectionTitle`) to `accessibilityRole="header"`, so titles are exposed to VoiceOver/TalkBack as headings (rotor/heading navigation) without each call site declaring the role. `headline`, `body`, `callout`, `label`, `footnote`, `caption`, `captionSmall` and the `default` / `small` / `smallBold` aliases carry **no** role: `headline` is the row/card title style, and row titles exposed as headings would flood the rotor. A caller-supplied `accessibilityRole` **still wins** (the default applies only when unset; `{...rest}` spreads last).
 - The role per step is the exhaustive `headingRole: Record<TypeVariant, boolean>` in `themed-text.tsx`, so a `TypeVariant` added without a role decision is a `tsc` error. See ADR [063](./decisions/063-platform-type-ramp.md).
+- Home's "Up next" and "Today" titles use the `sectionTitle` step in both the populated and the
+  empty state, so they are headers in every state (`features/home/ui/home-screen.test.tsx`).
 - Encoded in the **component**, not a lint rule, because lint cannot know which `<Text>` is semantically a heading — that's authorial intent tied to the visual `type`, and the component already owns `type→style`, so it owns `type→role` too.
 
 ## Accessible async status
@@ -31,6 +33,8 @@ These rules guard real product touchables (interactive controls declare `accessi
 - Ordinary pushed routes expose their localized name once through native compact chrome. Caption-
   only `PageIntro` content follows that navigation heading before fields, actions, status, or rows;
   content headings remain only when they identify domain content such as an event or release.
+- The Android personal-event date/time field announces its label and its value ("Starts, <date
+  time>"), and the name follows each commit (`features/personal-events/ui/date-time-field.test.tsx`).
 - Controlled native text-entry dialogs isolate the background accessibility tree, keep native input
   and Cancel/Save actions present while pending, announce inline validation/write failure and
   persistence-gated success, and expose stable native identifiers on both platforms. On iOS the

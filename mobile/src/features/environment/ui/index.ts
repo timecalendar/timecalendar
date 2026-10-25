@@ -1,2 +1,7 @@
 export { EnvironmentRuntimeGate } from "./environment-runtime-gate"
-export { EnvironmentSettingsControl } from "./environment-settings-control"
+export { EnvironmentSelectorDialog } from "./environment-selector-dialog"
+export { EnvironmentSettingsRow } from "./environment-settings-row"
+export {
+  type EnvironmentSelector,
+  useEnvironmentSelector,
+} from "./use-environment-selector"

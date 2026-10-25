@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen } from "@testing-library/react-native"
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react-native"
 import { router } from "expo-router"
 import type { ReactNode } from "react"
 
@@ -29,15 +35,13 @@ jest.mock("@/components/chrome", () => {
 })
 
 let mockCapability: "development" | "preview" | "production" = "development"
-jest.mock("@/features/environment", () => {
-  const { Text: MockText } = jest.requireActual("react-native")
-  return {
-    getBackendEnvironmentCapability: () => mockCapability,
-    EnvironmentSettingsControl: () => (
-      <MockText testID="settings-environment">Environment</MockText>
-    ),
-  }
-})
+const mockSwitch = jest.fn()
+jest.mock("@/features/environment/data", () => ({
+  ...jest.requireActual("@/features/environment/data"),
+  getBackendEnvironmentCapability: () => mockCapability,
+  useEffectiveBackendEnvironment: () => "preprod",
+  switchBackendEnvironment: (...args: unknown[]) => mockSwitch(...args),
+}))
 
 let mockDevVariant = true
 jest.mock("@/config/variant", () => ({
@@ -73,6 +77,7 @@ beforeEach(() => {
   mockCapability = "development"
   mockDevVariant = true
   mockPush.mockReset()
+  mockSwitch.mockReset()
 })
 
 it("redirects to Settings in production", async () => {
@@ -169,3 +174,26 @@ describe.each(["ios", "android"] as const)(
     })
   },
 )
+
+describe("DeveloperScreen environment selector on Android", () => {
+  usePlatform("android")
+
+  it("keeps the row in the backend section and opens the dialog outside the host", async () => {
+    await render(<DeveloperScreen />)
+    expect(
+      screen
+        .getAllByTestId(/^(developer-section-backend|settings-environment)$/)
+        .map((node) => node.props.testID),
+    ).toEqual(["developer-section-backend", "settings-environment"])
+    const list = screen.getByTestId("compose-lazy-column-scroll-owner")
+    expect(within(list).getByTestId("settings-environment")).toBeOnTheScreen()
+
+    await press("settings-environment")
+
+    expect(screen.getByTestId("settings-environment-dialog")).toBeOnTheScreen()
+    expect(within(list).queryByTestId("settings-environment-dialog")).toBeNull()
+    await press("settings-environment-dialog-cancel")
+    expect(screen.queryByTestId("settings-environment-dialog")).toBeNull()
+    expect(mockSwitch).not.toHaveBeenCalled()
+  })
+})

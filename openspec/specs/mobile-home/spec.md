@@ -2,7 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change add-mobile-home. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: The Home tab renders the today / next-up view
 
 The Home tab (`src/app/(tabs)/index.tsx`) SHALL render the home today view (`HomeScreen` from
@@ -267,3 +269,17 @@ When Home has neither an upcoming event nor an event today, the Up next title/ca
 - **WHEN** Home has upcoming, all-day, timed, finished-today, or next-active-day content
 - **THEN** its existing cards, timeline geometry, checklist progress, routes, labels, and selectors remain unchanged
 
+### Requirement: Home section titles are headings in every state
+
+The Home "Up next" and "Today" section titles SHALL be exposed to assistive technology as headings and SHALL render the platform type ramp's section-title step whether the section is empty or populated, so one title never changes size, weight or role with the section's state.
+
+#### Scenario: Populated sections expose heading titles
+
+- **WHEN** Home renders with events in both the Today and Up next sections
+- **THEN** "Today" and "Up next" are each exposed with the header role
+- **AND** each renders the section-title ramp step with no local font size, line height or weight override
+
+#### Scenario: Empty and populated titles match
+
+- **WHEN** a section changes from empty to populated
+- **THEN** its title keeps the header role and the same section-title ramp step

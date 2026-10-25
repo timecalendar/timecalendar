@@ -151,18 +151,26 @@ const deviceColorSchemeDeepImportPattern = {
   message: deviceColorSchemeImportPath.message,
 }
 
-// The environment control's single home is the developer page (navigation.md →
-// Developer page): Settings keeps one gated row to it, never the control itself.
+// The environment selector's single home is the developer page (navigation.md →
+// Developer page): Settings keeps one gated row to it, never the selector itself.
 const developerToolsImportPath = {
   name: "@/features/environment",
-  importNames: ["EnvironmentSettingsControl"],
+  importNames: [
+    "useEnvironmentSelector",
+    "EnvironmentSettingsRow",
+    "EnvironmentSelectorDialog",
+  ],
   message:
-    "The environment control lives on the developer page — mount it from src/features/developer/ui only (navigation.md → Developer page).",
+    "The environment selector lives on the developer page — mount it from src/features/developer/ui only (navigation.md → Developer page).",
 }
 
 const developerToolsDeepImportPattern = {
   regex: "^@/features/environment/ui($|/)",
-  importNames: ["EnvironmentSettingsControl"],
+  importNames: [
+    "useEnvironmentSelector",
+    "EnvironmentSettingsRow",
+    "EnvironmentSelectorDialog",
+  ],
   message: developerToolsImportPath.message,
 }
 

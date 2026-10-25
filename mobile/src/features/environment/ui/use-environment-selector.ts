@@ -2,7 +2,6 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Alert, Platform } from "react-native"
 
-import { NativeSettingsRadioDialog } from "@/components/chrome"
 import {
   type BackendEnvironment,
   getAllowedBackendEnvironments,
@@ -12,16 +11,16 @@ import {
   switchBackendEnvironment,
   useEffectiveBackendEnvironment,
 } from "@/features/environment/data"
-import { SettingsRow } from "@/features/settings/ui/settings-row"
 
-export function EnvironmentSettingsControl() {
+export type EnvironmentSelector = ReturnType<typeof useEnvironmentSelector>
+
+export function useEnvironmentSelector() {
   const { t } = useTranslation()
   const capability = getBackendEnvironmentCapability()
   const current = useEffectiveBackendEnvironment()
   const [switching, setSwitching] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
-
-  if (capability === "production") return null
+  const allowed = getAllowedBackendEnvironments(capability)
 
   const confirm = (target: BackendEnvironment) => {
     if (target === current || switching) return
@@ -46,8 +45,6 @@ export function EnvironmentSettingsControl() {
     )
   }
 
-  const allowed = getAllowedBackendEnvironments(capability)
-
   // Android's Alert keeps only three buttons, which drops Cancel once the
   // development capability lists three environments.
   const choose = () => {
@@ -69,46 +66,21 @@ export function EnvironmentSettingsControl() {
     )
   }
 
-  const label = t("environment.selector.label")
-  const value = t(
-    switching
-      ? "environment.selector.switching"
-      : `environment.choice.${current}`,
-  )
+  const select = (target: BackendEnvironment) => {
+    setPickerOpen(false)
+    confirm(target)
+  }
 
-  return (
-    <>
-      <SettingsRow
-        first
-        variant="action"
-        accessibilityRole="button"
-        icon={{ ios: "server.rack", android: "dns" }}
-        label={label}
-        accessibilityLabel={t("environment.selector.accessibilityLabel", {
-          primary: label,
-          secondary: value,
-        })}
-        secondary={value}
-        hint={t("environment.selector.hint")}
-        onPress={choose}
-        testID="settings-environment"
-      />
-      <NativeSettingsRadioDialog
-        visible={pickerOpen}
-        title={t("environment.selector.title")}
-        cancelLabel={t("environment.confirm.cancel")}
-        value={current}
-        options={allowed.map((environment) => ({
-          value: environment,
-          label: t(`environment.choice.${environment}`),
-        }))}
-        testID="settings-environment-dialog"
-        onDismiss={() => setPickerOpen(false)}
-        onSelect={(target) => {
-          setPickerOpen(false)
-          confirm(target)
-        }}
-      />
-    </>
-  )
+  const dismiss = () => setPickerOpen(false)
+
+  return {
+    capability,
+    current,
+    allowed,
+    switching,
+    pickerOpen,
+    choose,
+    select,
+    dismiss,
+  }
 }

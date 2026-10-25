@@ -3,6 +3,8 @@ check needs eyes on a real screen).
 
 # Platform type ramp (OpenSpec `mobile-type-ramp`): Android device pass
 
+**Verdict:** no weight change; ADR 063 unchanged. See `2026-10-25-mobile-ds-android-device-pass.md`.
+
 ## What I need
 
 On an Android dev build of `main` (the ramp is merged), check these screens at the default font

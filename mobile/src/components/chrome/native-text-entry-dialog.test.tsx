@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react-native"
 import { usePlatform } from "@/test-support/platform"
 import { Colors } from "@/theme"
 
+import { NativeSettingsHost } from "./native-settings"
 import { NativeTextEntryDialog } from "./native-text-entry-dialog"
 
 const onCancel = jest.fn()
@@ -228,3 +229,36 @@ describe("NativeTextEntryDialog on Android", () => {
     expect(onSubmit).toHaveBeenCalledWith("Fast draft")
   })
 })
+
+describe.each(["ios", "android"] as const)(
+  "NativeTextEntryDialog placement on %s",
+  (platform) => {
+    usePlatform(platform)
+
+    it("rejects rendering inside NativeSettingsHost", async () => {
+      const consoleError = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {})
+      await expect(
+        render(
+          <NativeSettingsHost>
+            <NativeTextEntryDialog {...props} />
+          </NativeSettingsHost>,
+        ),
+      ).rejects.toThrow(
+        "NativeTextEntryDialog must render outside NativeSettingsHost; place it after </NativeSettingsHost>.",
+      )
+      consoleError.mockRestore()
+    })
+
+    it("renders as a sibling after NativeSettingsHost", async () => {
+      const view = await render(
+        <>
+          <NativeSettingsHost />
+          <NativeTextEntryDialog {...props} />
+        </>,
+      )
+      expect(view.getByTestId(props.ids.input)).toBeTruthy()
+    })
+  },
+)
