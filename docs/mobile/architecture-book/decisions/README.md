@@ -70,9 +70,6 @@ decision changes; use Git for its history.
 > exists to catch, caught by reading the index rather than by git. It has since
 > merged, so `047` is taken, not free. `048` skipped past both.
 >
-> `064` is reserved by the open component-gallery PR (#484,
-> `064-in-house-component-gallery.md`); the icon-scaling ADR took `065`.
->
 > `049` belongs to [PR #328](https://github.com/timecalendar/timecalendar/pull/328).
 > Its open-PR reservation was detected before the calendar naming/import decisions
 > took `050`–`052`, so all four records remain distinct after the branches meet.
