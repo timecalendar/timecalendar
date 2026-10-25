@@ -57,6 +57,7 @@ decision changes; use Git for its history.
 | [062](./062-calendar-windowed-native-scrollview-paging.md)            | Page the Calendar with a windowed native horizontal ScrollView                                    |
 | [063](./063-platform-type-ramp.md)                                    | Resolve the type ramp per platform in the theme layer                                             |
 | [064](./064-in-house-component-gallery.md)                            | Review components in an in-house on-device gallery, not Storybook                                 |
+| [065](./065-icon-text-scaling.md)                                     | Make icons declare their text scaling, and draw Android glyphs in their own box                   |
 
 > `045` is intentionally left free: the open source-recovery PR carries an ADR
 > numbered `044` that collides with the merged one above and renumbers to `045`

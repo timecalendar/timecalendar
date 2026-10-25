@@ -1,11 +1,11 @@
 import { Image } from "expo-image"
-import { SymbolView } from "expo-symbols"
 import { useTranslation } from "react-i18next"
 import { Platform, Pressable, StyleSheet, View } from "react-native"
 
 import { GlassSurface } from "@/components/chrome"
+import { Icon } from "@/components/icon"
 import { ThemedText } from "@/components/themed-text"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme, WordmarkMaxFontScale } from "@/theme"
 
 export function HomeScreenHeader({ onAdd }: { onAdd: () => void }) {
   const { t } = useTranslation()
@@ -18,7 +18,12 @@ export function HomeScreenHeader({ onAdd }: { onAdd: () => void }) {
           style={styles.logo}
           accessibilityElementsHidden
         />
-        <ThemedText style={styles.appName} numberOfLines={2}>
+        <ThemedText
+          type="title2"
+          numberOfLines={1}
+          maxFontSizeMultiplier={WordmarkMaxFontScale}
+          style={styles.appName}
+        >
           {t("app.name")}
         </ThemedText>
       </View>
@@ -35,7 +40,7 @@ export function HomeScreenHeader({ onAdd }: { onAdd: () => void }) {
             onPress={onAdd}
             style={styles.headerAction}
           >
-            <SymbolView name="plus" size={24} tintColor={theme.text} />
+            <Icon ios="plus" size={24} color={theme.text} scaling="fixed" />
           </Pressable>
         </GlassSurface>
       )}
@@ -55,11 +60,7 @@ export function HomeAddFab({ onPress }: { onPress: () => void }) {
       android_ripple={{ color: theme.ripple, borderless: true, radius: 28 }}
       style={[styles.fab, { backgroundColor: theme.primary }]}
     >
-      <SymbolView
-        name={{ android: "add" }}
-        size={26}
-        tintColor={theme.background}
-      />
+      <Icon android="add" size={26} color={theme.background} scaling="fixed" />
     </Pressable>
   )
 }
@@ -78,7 +79,7 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   logo: { width: 30, height: 30 },
-  appName: { fontSize: 21, lineHeight: 28, fontWeight: "700" },
+  appName: { flexShrink: 1 },
   headerActionGlass: {
     width: 44,
     height: 44,

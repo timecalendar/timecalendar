@@ -222,6 +222,17 @@ truth; this file carries the caveats the config can't (R-1).
   no other block sets `no-restricted-syntax`; a future block that does must spread
   `restrictedSyntax`, because flat config replaces the options and would silently drop L8 for
   its files. See [accessibility.md](./accessibility.md).
+- **L9 — icons only through the `Icon` primitive** (`symbolViewImportPath`, appended to `paths`
+  by the `banSymbolView` flag of `restrictedImports`): `SymbolView` is banned as a named import
+  from `expo-symbols` everywhere except `src/components/icon.tsx` and
+  `src/components/icon.test.tsx`, so every icon declares its text scaling. Type imports
+  (`SFSymbol`, `AndroidSymbol`, `SymbolWeight`) stay allowed because `importNames` names only the
+  component. The exemption is the `timecalendar/icon-seam` block, which re-calls
+  `restrictedImports([routeEntrypointImportPattern], { banSymbolView: false })` for the same
+  route-pattern reason as the color-scheme seam. Same static-import-only caveat as raw-fetch;
+  `jest.mock("expo-symbols", …)` factories are not imports. See
+  [accessibility.md](./accessibility.md) → Icon scaling and ADR
+  [065](./decisions/065-icon-text-scaling.md).
 - **Generated code** (`src/api/generated/`) is exempt from hand-written-code rules but
   still Prettier-formatted; Orval's `afterAllFilesWrite: prettier --write` keeps regen
   output aligned with the committed format.

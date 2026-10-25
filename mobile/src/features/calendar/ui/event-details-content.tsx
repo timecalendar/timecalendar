@@ -80,6 +80,8 @@ export function EventDetailsContent({
   )
 }
 
+const ZERO_WIDTH_SPACE = "\u200B"
+
 function TitleBlock({
   event,
   locale,
@@ -93,11 +95,21 @@ function TitleBlock({
 
   return (
     <View style={styles.titleBlock}>
-      <View style={styles.titleRow}>
+      <View testID="event-details-title-row" style={styles.titleRow}>
+        {/* A hidden title-step line sizes the strut, so the dot centers on the
+            first title line at every scale and Dynamic Type curve. */}
         <View
-          accessibilityLabel={t("eventDetails.colorLabel")}
-          style={[styles.swatch, { backgroundColor: event.color }]}
-        />
+          testID="event-details-color-strut"
+          accessible={false}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={styles.strut}
+        >
+          <ThemedText type="title" style={styles.strutLine}>
+            {ZERO_WIDTH_SPACE}
+          </ThemedText>
+          <View style={[styles.swatch, { backgroundColor: event.color }]} />
+        </View>
         <ThemedText type="title" style={styles.title}>
           {displayEventTitle(event.title, t("calendar.event.noTitle"))}
         </ThemedText>
@@ -160,9 +172,14 @@ const styles = StyleSheet.create({
   },
   titleRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: Spacing.two,
   },
+  strut: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  strutLine: { width: 0 },
   swatch: {
     width: Spacing.four,
     height: Spacing.four,

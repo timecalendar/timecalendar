@@ -1,4 +1,6 @@
-import type { AndroidSymbol, SFSymbol } from "expo-symbols"
+import type { SFSymbol } from "expo-symbols"
+
+import type { MaterialGlyph } from "@/components/icon"
 
 export const CHANGELOG_VERSION = 4
 
@@ -12,8 +14,7 @@ export type ChangelogTranslationKey =
 
 export interface ChangelogIcon {
   readonly ios: SFSymbol
-  readonly android: AndroidSymbol
-  readonly web: AndroidSymbol
+  readonly android: MaterialGlyph
 }
 
 export interface ChangelogItem {
@@ -34,21 +35,17 @@ export const CHANGELOG_RELEASES: readonly ChangelogRelease[] = [
     label: "4.0",
     items: [
       {
-        icon: { ios: "paintpalette", android: "palette", web: "palette" },
+        icon: { ios: "paintpalette", android: "palette" },
         titleKey: "changelog.item.design.title",
         subtitleKey: "changelog.item.design.subtitle",
       },
       {
-        icon: { ios: "bolt.fill", android: "bolt", web: "bolt" },
+        icon: { ios: "bolt.fill", android: "bolt" },
         titleKey: "changelog.item.speed.title",
         subtitleKey: "changelog.item.speed.subtitle",
       },
       {
-        icon: {
-          ios: "iphone",
-          android: "smartphone",
-          web: "smartphone",
-        },
+        icon: { ios: "iphone", android: "smartphone" },
         titleKey: "changelog.item.native.title",
         subtitleKey: "changelog.item.native.subtitle",
       },

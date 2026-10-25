@@ -96,6 +96,9 @@ surfaces and calendar content; native controls are tinted and composed rather th
   - `Spacing` carries `twoHalf` (12) and `fiveHalf` (48) between the existing steps.
   - `MinTouchTarget` is 44 on iOS and 48 elsewhere, resolved by `Platform.select` at module load like `Fonts`.
   - `IconSize` (`small` 14 / `medium` 17 / `large` 22 / `xlarge` 28).
+  - `WordmarkMaxFontScale` (1.5) is the `maxFontSizeMultiplier` of text that carries the one-word brand name (Home app name, onboarding page titles). See [Accessibility](./accessibility.md).
+  - `ChevronMaxFontScale` (2) is the `maxFontSizeMultiplier` of a text-scaled row chevron (the school row), so the cue stays smaller than the row text at accessibility sizes.
+- **Text-scale seam (`src/theme/text-scale.ts`):** `AccessibilityFontScale` (1.786), `isAccessibilityTextSize(fontScale)` and `useIsAccessibilityTextSize()`, which reads `useWindowDimensions().fontScale` and follows a live change. Layouts that change shape at accessibility text sizes read it; `src/theme/text-scale.test.ts` pins the threshold.
   - `StateOpacity` (`pressed` 0.65, `disabled` 0.55). `pressed` is the iOS press feedback only; Android pressed state is the `ripple` color.
   - `Elevation.raised` is a CSS `boxShadow` string per scheme (`Elevation.raised[scheme]`, passed to the RN `boxShadow` style prop). Elevation never uses the legacy `shadow*` props.
   - `Motion` (`fast` 150 / `base` 250 / `slow` 400 ms). A consumer that animates owns reduced motion; the token carries no motion policy.
@@ -105,7 +108,7 @@ surfaces and calendar content; native controls are tinted and composed rather th
 - `src/theme/use-theme.ts` owns light/dark resolution: `useTheme()` reads the `@/hooks/use-color-scheme` seam and returns `Colors[scheme]`.
 - **Home welcome surface:** `homeHero` is a quiet pink paper (`#FCE4EC` light / `#321824` dark) carrying normal `text`; `homeHeroDate` is its stronger eyebrow (`#AD1457` light / `#FF80AB` dark). These are fixed scheme tokens rather than call-site alpha math. Event colors on Home remain non-text accent bars/dots because imported calendar colors cannot guarantee text contrast.
 - **Single color-scheme seam (C1):** `@/hooks/use-color-scheme` is the **one** scheme source — both `useTheme` _and_ the root `_layout.tsx` read it (never `useColorScheme` from `react-native` directly), so a theme override is a single-file change. The seam resolves the stored theme preference (a `"light"`/`"dark"` override wins, `"system"` falls through to the device scheme), **preserving the `ColorSchemeName` return contract** so `useTheme` / `buildNavTheme` / `theme.test.tsx` are untouched. **Lint-enforced (L1):** `no-restricted-imports` bans `useColorScheme` and `Appearance` from `react-native` everywhere except `src/hooks/use-color-scheme.ts` (block `timecalendar/color-scheme-seam`; see `lint-format.md`).
-- `src/theme/index.ts` re-exports the public surface (`Colors` / `Spacing` / `Radii` / `Fonts` / `MaxContentWidth` / `MinTouchTarget` / `IconSize` / `StateOpacity` / `Elevation` / `Motion` / `Layout` / `ThemeColor` / `TypeRamp` / `TypeVariant` / `TypeStep` / `useTheme` / `buildNavTheme` / the responsive exports) — **call sites import `@/theme`**, import-source-only. `Fonts.mono` resolves via `Platform.select` (`ios` → `ui-monospace`, `default` → `monospace`).
+- `src/theme/index.ts` re-exports the public surface (`Colors` / `Spacing` / `Radii` / `Fonts` / `MaxContentWidth` / `MinTouchTarget` / `IconSize` / `WordmarkMaxFontScale` / `ChevronMaxFontScale` / `StateOpacity` / `Elevation` / `Motion` / `Layout` / `AccessibilityFontScale` / `isAccessibilityTextSize` / `useIsAccessibilityTextSize` / `ThemeColor` / `TypeRamp` / `TypeVariant` / `TypeStep` / `useTheme` / `buildNavTheme` / the responsive exports) — **call sites import `@/theme`**, import-source-only. `Fonts.mono` resolves via `Platform.select` (`ios` → `ui-monospace`, `default` → `monospace`).
 - `Themed*` consumers import from `@/theme`. `ThemedText` owns no type scale: it renders the `TypeRamp` step named by `type` (default `body`) and passes the step's `dynamicTypeRamp`; caller `style` and props win. The aliases `default` → `body`, `small` → `callout`, `smallBold` → `label` and `subtitle` → `sectionTitle` resolve inside the component. Color comes from `tone` (`primary` → `text`, `secondary` → `textSecondary`, `action` → `actionText`, `destructive` → `destructive`, `onPrimary` → `onPrimary`; `primary` is the label color, not brand pink, and the union has no brand or tertiary member) or from `themeColor` (any `ThemeColor`); the two props are mutually exclusive at the type level, and with neither the text is `text`. The heading role per step follows [Accessibility](./accessibility.md#the-heading-role-contract--encoded-in-themedtext).
 
 ## Responsive content lanes — measured owners, semantic caps
@@ -199,7 +202,11 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
     subheadline-semibold in `primary`; the default Form button style
     keeps the full-row highlight. An optional row `icon` renders a white SF Symbol on a 29pt continuous
     rounded-square tile in `primaryStrong` (the white-on-brand fill pair). Section footers use the
-    native Section footer.
+    native Section footer. At accessibility text sizes (`useIsAccessibilityTextSize`) a row with a
+    `value` stacks the value under the label, beside the icon tile, with the navigation chevron
+    kept trailing; the stacked value row is plain text whose label carries the row's
+    accessibility, with the visible value hidden. At those sizes a single-word label is one line
+    with `minimumScaleFactor` 0.5, so it shrinks instead of breaking mid-word.
   - **Android:** every Compose Host (list and dialog) receives `seedColor = primary`. Each section is
     a `titleSmall`/`primary` heading inset 16dp, then one grouped list: rows are `surfaceContainer`
     segments 2dp apart with 20dp outer and 4dp inner corners chosen by child position, 16dp side
@@ -252,6 +259,12 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
     footers; the chrome seam owns them. Features pass copy, icons, values, and intent only.
   - **Numeric editor:** `chrome/native-settings-numeric-editor.tsx` carries the same brand accent
     (iOS Form `tint`, Compose `seedColor`).
+- **`src/components/icon.tsx`** — `Icon`, the only renderer of a symbol glyph (lint L9 bans
+  `SymbolView` elsewhere, ADR [065](./decisions/065-icon-text-scaling.md)). iOS renders
+  `SymbolView`; Android draws the Material Symbols glyph from the closed `MATERIAL_GLYPHS` table (`icon-glyphs.ts`)
+  in a box sized by the required `scaling` (see [Accessibility → Icon
+  scaling](./accessibility.md#icon-scaling--encoded-in-icon)). Callers pass the color token; the
+  icon carries no tone of its own.
 - **`chrome/index.ts`** — the barrel. Exports `NativeTabs`, `GlassSurface`, `Host`, `Picker`, `DateTimePicker`, `MenuView`, and `MenuComponentRef`.
 
 ## Lint boundary — the R-1 enforcement

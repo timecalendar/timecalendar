@@ -1,9 +1,9 @@
 import { router, Stack } from "expo-router"
-import { SymbolView } from "expo-symbols"
 import * as WebBrowser from "expo-web-browser"
 import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet, View } from "react-native"
 
+import { Icon } from "@/components/icon"
 import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import {
@@ -78,15 +78,12 @@ export default function ConnectScreen() {
             ]}
           >
             <ThemedText type="smallBold">{school.name}</ThemedText>
-            <SymbolView
-              name={{
-                ios: "arrow.up.right",
-                android: "open_in_new",
-                web: "open_in_new",
-              }}
+            <Icon
+              ios="arrow.up.right"
+              android="open_in_new"
               size={18}
-              tintColor={theme.primary}
-              accessible={false}
+              color={theme.primary}
+              scaling="text"
             />
           </Pressable>
         )}

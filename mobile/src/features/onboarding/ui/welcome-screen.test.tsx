@@ -7,11 +7,22 @@ import {
 } from "react-native"
 import { cancelAnimation, withTiming } from "react-native-reanimated"
 
-import { Colors, resolveResponsiveLayout } from "@/theme"
+import { Colors, resolveResponsiveLayout, WordmarkMaxFontScale } from "@/theme"
 
 import WelcomeScreen from "./welcome-screen"
 
 jest.mock("expo-router", () => ({ router: { push: jest.fn() } }))
+
+let mockFontScale = 1
+jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({
+  __esModule: true,
+  default: () => ({
+    width: 390,
+    height: 800,
+    scale: 3,
+    fontScale: mockFontScale,
+  }),
+}))
 
 type PagerMock = {
   setPage: jest.Mock
@@ -40,7 +51,10 @@ beforeEach(() => {
   jest.mocked(withTiming).mockClear()
 })
 
-afterEach(() => jest.useRealTimers())
+afterEach(() => {
+  jest.useRealTimers()
+  mockFontScale = 1
+})
 
 describe("WelcomeScreen", () => {
   it("keeps one compact gutter and readable tablet caps for page and actions", async () => {
@@ -69,6 +83,42 @@ describe("WelcomeScreen", () => {
         })
       }
     }
+    await act(flushMicrotasks)
+  })
+
+  it("scrolls each page's content and caps the brand title", async () => {
+    const { getByTestId, getByText } = await render(<WelcomeScreen />)
+
+    for (const id of ["welcome", "agenda", "notifications"]) {
+      const scroll = getByTestId(`onboarding-page-scroll-${id}`)
+      expect(
+        within(scroll).getByTestId(`onboarding-page-content-${id}`),
+      ).toBeTruthy()
+      expect(
+        StyleSheet.flatten(scroll.props.contentContainerStyle),
+      ).toMatchObject({ flexGrow: 1, justifyContent: "center" })
+    }
+    expect(
+      getByText("Welcome to TimeCalendar!").props.maxFontSizeMultiplier,
+    ).toBe(WordmarkMaxFontScale)
+
+    await act(flushMicrotasks)
+  })
+
+  it("halves the illustration at accessibility text sizes", async () => {
+    const view = await render(<WelcomeScreen />)
+    const cardHeight = () =>
+      StyleSheet.flatten(
+        view.getByTestId("onboarding-illustration-welcome", {
+          includeHiddenElements: true,
+        }).parent!.props.style,
+      ).height
+
+    expect(cardHeight()).toBe(200)
+    mockFontScale = 3.571
+    await view.rerender(<WelcomeScreen />)
+    expect(cardHeight()).toBe(100)
+
     await act(flushMicrotasks)
   })
 

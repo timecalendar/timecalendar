@@ -219,15 +219,15 @@ export function formatCompactMonthYear(
   return formatInTimeZone(day, zone, "LLL yyyy", { locale: LOCALES[locale] })
 }
 
-// A compact date + time ("15 juin 08:30" / "15 Jun 08:30") for dense rows — the
-// personal-events list and the Android date-time field echo (the two former
-// `toLocaleString` seam-bypass sites).
+// A compact date + time ("15 juin 08:30" / "15 Jun 08:30", or "15 Jun 8:30 AM"
+// on a 12-hour device) for dense rows — the personal-events list and the
+// Android date-time field echo.
 export function formatShortDateTime(
   date: Date,
   locale: AppLocale,
   zone: string,
+  uses24HourClock: boolean | null,
 ): string {
-  return formatInTimeZone(date, zone, "d MMM HH:mm", {
-    locale: LOCALES[locale],
-  })
+  const day = formatInTimeZone(date, zone, "d MMM", { locale: LOCALES[locale] })
+  return `${day} ${formatClockTime(date, locale, zone, uses24HourClock)}`
 }

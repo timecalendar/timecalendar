@@ -6,7 +6,11 @@ import { EmptyState } from "@/components/empty-state"
 import { headerScrollProps } from "@/components/header-scroll-props"
 import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
-import { formatShortDateTime, resolveLocale } from "@/features/calendar/data"
+import {
+  formatShortDateTime,
+  resolveLocale,
+  useUses24HourClock,
+} from "@/features/calendar/data"
 import {
   type PersonalEvent,
   usePersonalEvents,
@@ -25,6 +29,7 @@ export function PersonalEventsList() {
   const theme = useTheme()
   const events = usePersonalEvents()
   const hasEvents = events.length > 0
+  const uses24HourClock = useUses24HourClock()
 
   return (
     <>
@@ -70,7 +75,9 @@ export function PersonalEventsList() {
                 testID="personal-events-empty"
               />
             }
-            renderItem={({ item }) => <EventRow event={item} />}
+            renderItem={({ item }) => (
+              <EventRow event={item} uses24HourClock={uses24HourClock} />
+            )}
           />
         )}
       </RootPage>
@@ -78,12 +85,18 @@ export function PersonalEventsList() {
   )
 }
 
-function EventRow({ event }: { event: PersonalEvent }) {
+function EventRow({
+  event,
+  uses24HourClock,
+}: {
+  event: PersonalEvent
+  uses24HourClock: boolean | null
+}) {
   const { t, i18n } = useTranslation()
   const theme = useTheme()
   const locale = resolveLocale(i18n.language)
   const displayZone = useDisplayZone()
-  const range = `${formatShortDateTime(event.startsAt, locale, displayZone)} – ${formatShortDateTime(event.endsAt, locale, displayZone)}`
+  const range = `${formatShortDateTime(event.startsAt, locale, displayZone, uses24HourClock)} – ${formatShortDateTime(event.endsAt, locale, displayZone, uses24HourClock)}`
 
   return (
     <Link href={`/personal-event-form?uid=${event.uid}`} asChild>

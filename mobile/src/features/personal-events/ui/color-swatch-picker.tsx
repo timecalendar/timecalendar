@@ -1,14 +1,13 @@
 import { useTranslation } from "react-i18next"
-import { Pressable, StyleSheet, View } from "react-native"
+import { Platform, Pressable, StyleSheet, View } from "react-native"
 
 import { Radii, Spacing, useTheme } from "@/theme"
 
-import { SWATCH_PRESETS } from "./color-swatch-presets"
+import { SWATCH_NAME_KEYS, SWATCH_PRESETS } from "./color-swatch-presets"
 
 // A small preset-palette color picker (design D4): a row of single-select
 // swatches, custom RN (no new native dep). The chosen color is a #RRGGBB string
 // stored verbatim by the data layer (ADR 011) — the UI never re-encodes it.
-//
 export interface ColorSwatchPickerProps {
   value: string
   onChange: (hex: string) => void
@@ -17,6 +16,7 @@ export interface ColorSwatchPickerProps {
 export function ColorSwatchPicker({ value, onChange }: ColorSwatchPickerProps) {
   const { t } = useTranslation()
   const theme = useTheme()
+  const isAndroid = Platform.OS === "android"
 
   return (
     <View style={styles.row} accessibilityRole="radiogroup">
@@ -26,11 +26,12 @@ export function ColorSwatchPicker({ value, onChange }: ColorSwatchPickerProps) {
           <Pressable
             key={hex}
             testID={`color-swatch-${hex}`}
-            accessibilityRole="button"
-            accessibilityState={{ selected }}
-            accessibilityLabel={t("personalEvents.color.swatchLabel", {
-              color: hex,
-            })}
+            // UIKit has no radio trait: VoiceOver reads a selected button.
+            accessibilityRole={isAndroid ? "radio" : "button"}
+            accessibilityState={
+              isAndroid ? { checked: selected } : { selected }
+            }
+            accessibilityLabel={t(SWATCH_NAME_KEYS[hex])}
             hitSlop={Spacing.two}
             onPress={() => onChange(hex)}
             style={[

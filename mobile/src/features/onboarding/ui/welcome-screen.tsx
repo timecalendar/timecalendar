@@ -8,6 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedView } from "@/components/themed-view"
 import { useReducedMotion } from "@/hooks/use-reduced-motion"
+import { useIsAccessibilityTextSize } from "@/theme"
 
 import { WelcomeFooter, WelcomeSkip } from "./welcome-controls"
 import { WelcomeEntrance } from "./welcome-entrance"
@@ -24,10 +25,12 @@ export default function WelcomeScreen() {
   const [currentPage, setCurrentPage] = useState(0)
   const reduceMotion = useReducedMotion()
   const isLastPage = currentPage === WELCOME_PAGES.length - 1
-  const illustrationHeight = Math.min(
-    windowHeight * ILLUSTRATION_HEIGHT_RATIO,
-    MAX_ILLUSTRATION_HEIGHT,
-  )
+  const isAccessibilityTextSize = useIsAccessibilityTextSize()
+  const illustrationHeight =
+    Math.min(
+      windowHeight * ILLUSTRATION_HEIGHT_RATIO,
+      MAX_ILLUSTRATION_HEIGHT,
+    ) / (isAccessibilityTextSize ? 2 : 1)
 
   const handlePageSelected = (event: PagerViewOnPageSelectedEvent) => {
     setCurrentPage(event.nativeEvent.position)

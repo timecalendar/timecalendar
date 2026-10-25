@@ -210,6 +210,14 @@ export const MaxContentWidth = 800
 
 export const MinTouchTarget = Platform.select({ ios: 44, default: 48 })
 
+// "TimeCalendar" is one unbreakable word: above this scale it outgrows the
+// smallest readable lane and breaks mid-word.
+export const WordmarkMaxFontScale = 1.5
+
+// A row chevron is a cue, not content: at full accessibility scale it would
+// rival the row's text.
+export const ChevronMaxFontScale = 2
+
 export const IconSize = {
   small: 14,
   medium: 17,

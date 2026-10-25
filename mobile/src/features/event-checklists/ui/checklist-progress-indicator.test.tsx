@@ -90,6 +90,35 @@ describe("ChecklistProgressIndicator", () => {
     expect(count.props.minimumFontScale).toBe(0.75)
   })
 
+  it.each([
+    [{ width: 40, height: 30 }, true],
+    [{ width: 60, height: 20 }, true],
+    [{ width: 60, height: 30 }, false],
+  ])("packs compact output into tight bounds %o", async (bounds, dense) => {
+    await render(
+      <ChecklistProgressIndicator
+        progress={partial}
+        variant="compact"
+        bounds={bounds}
+      />,
+    )
+
+    const style = StyleSheet.flatten(
+      screen.getByTestId("checklist-progress-compact", {
+        includeHiddenElements: true,
+      }).props.style,
+    )
+    const countStyle = StyleSheet.flatten(
+      screen.getByTestId("checklist-progress-count", {
+        includeHiddenElements: true,
+      }).props.style,
+    )
+    expect(style.maxWidth).toBe(bounds.width)
+    expect(style.maxHeight).toBe(bounds.height)
+    expect(style.paddingHorizontal).toBe(dense ? 0 : 4)
+    expect(countStyle.fontSize === 8).toBe(dense)
+  })
+
   it("builds the localized phrase only for nonzero progress", async () => {
     await i18n.changeLanguage("en")
     expect(checklistProgressLabel(i18n.t, partial)).toBe(

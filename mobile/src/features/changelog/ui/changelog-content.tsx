@@ -1,7 +1,7 @@
-import { SymbolView } from "expo-symbols"
 import { useTranslation } from "react-i18next"
 import { Platform, ScrollView, StyleSheet, View } from "react-native"
 
+import { Icon } from "@/components/icon"
 import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import type { ChangelogRelease } from "@/features/changelog/data"
@@ -55,10 +55,12 @@ export function ChangelogContent({ releases, footer }: ChangelogContentProps) {
                           { backgroundColor: theme.primarySoft },
                         ]}
                       >
-                        <SymbolView
-                          name={item.icon}
-                          tintColor={theme.primary}
-                          style={styles.symbol}
+                        <Icon
+                          ios={item.icon.ios}
+                          android={item.icon.android}
+                          size={24}
+                          color={theme.primary}
+                          scaling="text"
                         />
                       </View>
                       <View style={styles.copy}>
@@ -99,14 +101,14 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   icon: {
-    width: 44,
-    height: 44,
+    minWidth: 44,
+    minHeight: 44,
+    padding: 10,
     borderRadius: Radii.medium,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
-  symbol: { width: 24, height: 24 },
   copy: { flex: 1, minWidth: 0, gap: Spacing.one },
   itemTitle: { fontWeight: "700" },
 })

@@ -1,3 +1,33 @@
+## 2026-10-25 — Accessibility device findings
+
+- ADR [065](./decisions/065-icon-text-scaling.md): icons declare their text scaling, and Android
+  draws its own glyph box. `src/components/icon.tsx` is the only symbol renderer, with a required
+  `scaling: "text" | "fixed"`; a fixed icon keeps exactly its size at every font scale, including
+  below 1. Proven by `src/components/icon.test.tsx` (sizes per scaling, font scales 0.8 and 2,
+  centered Android glyph, decorative props, Material codepoint pin).
+- `lint-format.md`: **L9** bans `SymbolView` from `expo-symbols` outside the `Icon` module
+  (`banSymbolView`, exemption block `timecalendar/icon-seam`); type imports stay allowed.
+- `accessibility.md`: new **Icon scaling** section; the accessibility text size seam
+  (`AccessibilityFontScale` 1.786, `useIsAccessibilityTextSize`, `src/theme/text-scale.test.ts`);
+  the brand text cap `WordmarkMaxFontScale` (1.5) on the Home app name and onboarding titles; the
+  row chevron cap `ChevronMaxFontScale` (2); iOS settings rows stack at accessibility sizes, the
+  stacked value row is plain text that VoiceOver reads as "label, value" once, a row passes its
+  value as `value` rather than in `accessibilityLabel`, and a single-word row label shrinks to one
+  line instead of breaking mid-word (`native-settings.test.tsx`, `environment-selector.test.tsx`);
+  swatches announce translated names with radio/checked or button/selected
+  (`color-swatch-picker.test.tsx`); personal-event date/time text follows the device 12/24-hour
+  setting through `useUses24HourClock` (`date-time-field.test.tsx`, `format.test.ts`,
+  `device-clock.test.ts`), and the iOS picker takes no `locale` so it follows the device language
+  and clock (inbox: iOS picker device language); the event-details color dot is decorative and first-line aligned
+  (`event-details-screen.test.tsx`).
+- `theming.md`: `WordmarkMaxFontScale`, `ChevronMaxFontScale` and the `text-scale.ts` exports join
+  the token layer and the `@/theme` surface; `Icon` gets its own bullet; `chrome/native-settings.tsx`
+  records the stacked iOS rows and the single-word label shrink.
+- `calendar.md`: `CalendarScreen` reads the device clock through `useUses24HourClock`.
+- `features.md`: personal events (12/24-hour display, iOS picker on the device locale, swatch names), Home app
+  name on `title2`, scrolling onboarding pages with the halved illustration, first-line event
+  color dot.
+
 ## 2026-10-25 — Design-system gallery
 
 - `/developer/gallery` lists every registered fixture as a native settings section with one row
