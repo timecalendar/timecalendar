@@ -308,6 +308,16 @@ const meta: GalleryMeta<NativeSettingsRowProps> = {
   id: "native-settings",
   title: "gallery.nativeSettings.title",
   component: NativeSettingsRow,
+  stories: [
+    "Rows",
+    "Destructive",
+    "Switches",
+    "Choices",
+    "HeaderAndAlert",
+    "FloatingAction",
+    "RadioDialog",
+    "LongStrings",
+  ],
 }
 
 export default meta
@@ -339,11 +349,13 @@ export const HeaderAndAlert: Story = {
 
 export const FloatingAction: Story = {
   name: "gallery.nativeSettings.story.floatingAction",
+  platforms: ["android"],
   render: () => <FloatingActionFixture />,
 }
 
 export const RadioDialog: Story = {
   name: "gallery.nativeSettings.story.radioDialog",
+  platforms: ["android"],
   render: () => <RadioDialogFixture />,
 }
 

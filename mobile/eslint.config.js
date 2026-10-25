@@ -610,7 +610,7 @@ module.exports = defineConfig([
                 },
               },
               message:
-                "B-7: src/design/ may not import features, routes, @/api/generated or @/db — it consumes @/theme, @/components/chrome, @/i18n and @/hooks only (lint-format.md → Design layer).",
+                "B-7: src/design/ may not import features, routes, @/api/generated or @/db — it consumes shared seams such as @/theme, @/components/chrome, @/i18n and @/hooks (lint-format.md → Design layer).",
             },
             {
               // B-2 (no cycle): a sublayer may not import ITS OWN feature barrel.

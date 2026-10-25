@@ -106,13 +106,7 @@ describe.each(["ios", "android"] as const)(
       const view = await render(<SettingsScreen />)
       await fireEvent.press(view.getByTestId("settings-appearance"))
       expect(mockPush).toHaveBeenCalledWith("/appearance-settings")
-      await fireEvent.press(
-        view.getByTestId(
-          platform === "ios"
-            ? "settings-show-weekends-switch"
-            : "settings-show-weekends-row",
-        ),
-      )
+      await fireEvent.press(view.getByTestId("settings-show-weekends-switch"))
       expect(getShowWeekends()).toBe(false)
     })
   },

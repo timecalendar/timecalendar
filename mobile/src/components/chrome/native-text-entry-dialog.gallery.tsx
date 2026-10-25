@@ -1,7 +1,10 @@
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import {
   NativeSettingsHost,
+  NativeSettingsRow,
+  NativeSettingsSection,
   NativeTextEntryDialog,
   type NativeTextEntryDialogProps,
 } from "@/components/chrome"
@@ -17,37 +20,67 @@ const ids = {
   submit: "gallery-text-entry-submit",
 } as const
 
+// Pending locks Cancel and the iOS swipe-dismiss, so the story releases it on
+// its own to leave a way out.
+const PENDING_MS = 3000
+
 const ignore = () => undefined
 
 function TextEntryFixture({
   initialValue,
   message,
-  pending,
+  pendingOnOpen = false,
   submitDisabled,
 }: Pick<
   NativeTextEntryDialogProps,
-  "initialValue" | "message" | "pending" | "submitDisabled"
->) {
+  "initialValue" | "message" | "submitDisabled"
+> & { pendingOnOpen?: boolean }) {
   const { t } = useTranslation()
+  const [open, setOpen] = useState(true)
+  const [pending, setPending] = useState(pendingOnOpen)
+
+  useEffect(() => {
+    if (!open || !pending) return
+    const timer = setTimeout(() => setPending(false), PENDING_MS)
+    return () => clearTimeout(timer)
+  }, [open, pending])
+
+  const close = () => setOpen(false)
+  const reopen = () => {
+    setPending(pendingOnOpen)
+    setOpen(true)
+  }
+
   return (
     <>
-      <NativeSettingsHost />
-      <NativeTextEntryDialog
-        title={t("gallery.textEntryDialog.dialogTitle")}
-        initialValue={initialValue}
-        label={t("gallery.textEntryDialog.fieldLabel")}
-        placeholder={t("gallery.textEntryDialog.placeholder")}
-        message={message}
-        inputKind="text"
-        cancelLabel={t("gallery.textEntryDialog.cancel")}
-        submitLabel={t("gallery.textEntryDialog.submit")}
-        pending={pending}
-        submitDisabled={submitDisabled}
-        ids={ids}
-        onChange={ignore}
-        onSubmit={ignore}
-        onCancel={ignore}
-      />
+      <NativeSettingsHost>
+        <NativeSettingsSection>
+          <NativeSettingsRow
+            kind="action"
+            label={t("gallery.textEntryDialog.open")}
+            onPress={reopen}
+            testID="gallery-text-entry-open"
+          />
+        </NativeSettingsSection>
+      </NativeSettingsHost>
+      {open ? (
+        <NativeTextEntryDialog
+          title={t("gallery.textEntryDialog.dialogTitle")}
+          initialValue={initialValue}
+          label={t("gallery.textEntryDialog.fieldLabel")}
+          placeholder={t("gallery.textEntryDialog.placeholder")}
+          message={message}
+          inputKind="text"
+          cancelLabel={t("gallery.textEntryDialog.cancel")}
+          submitLabel={t("gallery.textEntryDialog.submit")}
+          pending={pending}
+          submitDisabled={submitDisabled}
+          ids={ids}
+          onChange={ignore}
+          onSubmit={close}
+          onCancel={close}
+        />
+      ) : null}
     </>
   )
 }
@@ -58,21 +91,13 @@ function DefaultFixture() {
     <TextEntryFixture
       initialValue={t("gallery.textEntryDialog.value")}
       message={null}
-      pending={false}
       submitDisabled={false}
     />
   )
 }
 
 function SubmitDisabledFixture() {
-  return (
-    <TextEntryFixture
-      initialValue=""
-      message={null}
-      pending={false}
-      submitDisabled
-    />
-  )
+  return <TextEntryFixture initialValue="" message={null} submitDisabled />
 }
 
 function PendingFixture() {
@@ -81,7 +106,7 @@ function PendingFixture() {
     <TextEntryFixture
       initialValue={t("gallery.textEntryDialog.value")}
       message={t("gallery.textEntryDialog.validation")}
-      pending
+      pendingOnOpen
       submitDisabled={false}
     />
   )
@@ -91,6 +116,7 @@ const meta: GalleryMeta<NativeTextEntryDialogProps> = {
   id: "native-text-entry-dialog",
   title: "gallery.textEntryDialog.title",
   component: NativeTextEntryDialog,
+  stories: ["Default", "SubmitDisabled", "Pending"],
 }
 
 export default meta

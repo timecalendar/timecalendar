@@ -1,9 +1,11 @@
-import { render } from "@testing-library/react-native"
+import { act, fireEvent, render } from "@testing-library/react-native"
 import type { ReactElement } from "react"
 
 import { usePlatform } from "@/test-support/platform"
 
 import * as fixture from "./native-text-entry-dialog.gallery"
+
+const PENDING_MS = 3000
 
 function renderStory(story: { render?: (args: object) => ReactElement }) {
   return render(story.render!({}))
@@ -32,6 +34,48 @@ describe.each(["ios", "android"] as const)(
       const view = await renderStory(fixture.SubmitDisabled)
       expect(view.getByTestId("gallery-text-entry-input").props.value).toBe("")
       expect(disabled(view)).toBe(true)
+    })
+
+    it("closes on Cancel and Save, and the open row brings it back", async () => {
+      const view = await renderStory(fixture.Default)
+      await fireEvent.press(view.getByTestId("gallery-text-entry-cancel"))
+      expect(view.queryByTestId("gallery-text-entry-dialog")).toBeNull()
+
+      await fireEvent.press(view.getByTestId("gallery-text-entry-open"))
+      expect(view.getByTestId("gallery-text-entry-dialog")).toBeOnTheScreen()
+
+      await fireEvent.press(view.getByTestId("gallery-text-entry-submit"))
+      expect(view.queryByTestId("gallery-text-entry-dialog")).toBeNull()
+    })
+
+    it("releases the pending lock so the dialog can be cancelled", async () => {
+      const releases: (() => void)[] = []
+      const realSetTimeout = globalThis.setTimeout
+      const spy = jest.spyOn(globalThis, "setTimeout").mockImplementation(((
+        handler: () => void,
+        delay?: number,
+      ) => {
+        if (delay === PENDING_MS) {
+          releases.push(handler)
+          return 0
+        }
+        return realSetTimeout(handler, delay)
+      }) as typeof setTimeout)
+      try {
+        const view = await renderStory(fixture.Pending)
+        expect(disabled(view)).toBe(true)
+        expect(releases).toHaveLength(1)
+
+        await act(() => releases[0]?.())
+        expect(disabled(view)).toBe(false)
+        await fireEvent.press(view.getByTestId("gallery-text-entry-cancel"))
+        expect(view.queryByTestId("gallery-text-entry-dialog")).toBeNull()
+
+        await fireEvent.press(view.getByTestId("gallery-text-entry-open"))
+        expect(disabled(view)).toBe(true)
+      } finally {
+        spy.mockRestore()
+      }
     })
 
     it("locks the field and shows progress while pending", async () => {

@@ -1,4 +1,4 @@
-import type { GalleryEntry, GalleryModule } from "./types"
+import type { GalleryEntry, GalleryModule, GalleryPlatform } from "./types"
 
 export function toStoryId(metaId: string, exportName: string): string {
   const kebab = exportName
@@ -13,22 +13,17 @@ export function buildGalleryEntries(
 ): GalleryEntry[] {
   return modules.flatMap((module) => {
     const meta = module.default
-    // Sorted explicitly: the Babel CJS transform reorders exports, and ES module
-    // namespaces sort them anyway, so source order is not observable.
-    return Object.keys(module)
-      .filter((exportName) => exportName !== "default")
-      .sort()
-      .map((exportName) => {
-        const story = module[exportName] as GalleryEntry["story"]
-        return {
-          id: toStoryId(meta.id, exportName),
-          metaId: meta.id,
-          title: meta.title,
-          name: story.name,
-          story,
-          component: meta.component as GalleryEntry["component"],
-        }
-      })
+    return meta.stories.map((exportName) => {
+      const story = module[exportName] as GalleryEntry["story"]
+      return {
+        id: toStoryId(meta.id, exportName),
+        metaId: meta.id,
+        title: meta.title,
+        name: story.name,
+        story,
+        component: meta.component as GalleryEntry["component"],
+      }
+    })
   })
 }
 
@@ -37,4 +32,12 @@ export function findGalleryEntry(
   id: string,
 ): GalleryEntry | undefined {
   return entries.find((entry) => entry.id === id)
+}
+
+export function isGalleryEntryAvailable(
+  entry: GalleryEntry,
+  platform: string,
+): boolean {
+  const { platforms } = entry.story
+  return !platforms || platforms.includes(platform as GalleryPlatform)
 }

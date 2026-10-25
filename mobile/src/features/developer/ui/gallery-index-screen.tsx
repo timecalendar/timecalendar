@@ -6,7 +6,7 @@ import {
   NativeSettingsRow,
   NativeSettingsSection,
 } from "@/components/chrome"
-import { galleryEntries, type GalleryEntry } from "@/design"
+import { availableGalleryEntries, type GalleryEntry } from "@/design"
 
 import { isDeveloperSurfaceEnabled } from "./developer-access"
 
@@ -28,12 +28,12 @@ function groupByFixture(entries: readonly GalleryEntry[]): Fixture[] {
   return [...fixtures.values()]
 }
 
-const galleryFixtures = groupByFixture(galleryEntries)
-
 export function GalleryIndexScreen() {
   const { t } = useTranslation()
 
   if (!isDeveloperSurfaceEnabled()) return <Redirect href="/settings" />
+
+  const galleryFixtures = groupByFixture(availableGalleryEntries())
 
   return (
     <>
@@ -50,6 +50,7 @@ export function GalleryIndexScreen() {
                 key={entry.id}
                 kind="navigation"
                 label={t(entry.name)}
+                hint={t("gallery.openStory.hint")}
                 href={{
                   pathname: "/developer/gallery/[story]",
                   params: { story: entry.id },

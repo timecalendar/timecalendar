@@ -98,20 +98,11 @@ describe.each(["ios", "android"] as const)(
       await fireEvent.press(view.getByTestId("action"))
       expect(action).toHaveBeenCalledTimes(1)
       expect(view.getByTestId("value").props.accessibilityRole).toBeFalsy()
-      const switchTarget = view.getByTestId("switch")
-      if (platform === "ios") {
-        await fireEvent.press(switchTarget)
-        expect(toggle).toHaveBeenCalledTimes(1)
-      } else {
-        await fireEvent.press(view.getByTestId("toggle"))
-        expect(toggle).toHaveBeenCalledTimes(1)
-        expect(toggle).toHaveBeenLastCalledWith(false)
-
-        toggle.mockClear()
-        await fireEvent.press(switchTarget)
-        expect(toggle).toHaveBeenCalledTimes(1)
-        expect(toggle).toHaveBeenLastCalledWith(false)
-      }
+      expect(view.queryByTestId("toggle")).toBeNull()
+      expect(view.getAllByRole("switch")).toHaveLength(1)
+      await fireEvent.press(view.getByTestId("switch"))
+      expect(toggle).toHaveBeenCalledTimes(1)
+      expect(toggle).toHaveBeenLastCalledWith(false)
       await fireEvent.press(view.getByTestId("choice"))
       expect(select).toHaveBeenCalledTimes(1)
       expect(view.getByTestId("choice").props.accessibilityState.selected).toBe(
@@ -122,16 +113,12 @@ describe.each(["ios", "android"] as const)(
           "Selected",
         )
       } else {
-        const choiceTargets = within(view.getByTestId("choice")).getAllByRole(
-          "radio",
-        )
-        expect(choiceTargets).toHaveLength(1)
-        expect(choiceTargets[0]?.props.onPress).toBeUndefined()
+        expect(
+          within(view.getByTestId("choice")).queryAllByRole("radio"),
+        ).toHaveLength(0)
 
         const dialogOption = view.getByTestId("dialog-system")
-        const dialogIndicators = within(dialogOption).getAllByRole("radio")
-        expect(dialogIndicators).toHaveLength(1)
-        expect(dialogIndicators[0]?.props.onPress).toBeUndefined()
+        expect(within(dialogOption).queryAllByRole("radio")).toHaveLength(0)
         await fireEvent.press(dialogOption)
         expect(dialogSelect).toHaveBeenCalledTimes(1)
       }

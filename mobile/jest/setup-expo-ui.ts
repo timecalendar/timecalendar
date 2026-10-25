@@ -797,8 +797,8 @@ jest.mock("@expo/ui/jetpack-compose", () => {
     TrailingContent: Slot,
   })
   function RadioButton(props: { selected: boolean; onClick?: () => void }) {
-    return React.createElement(Pressable, {
-      accessibilityRole: "radio",
+    return React.createElement(hostFor(props.onClick), {
+      accessibilityRole: props.onClick ? "radio" : undefined,
       accessibilityState: { selected: props.selected, checked: props.selected },
       onPress: props.onClick,
     })
@@ -810,6 +810,13 @@ jest.mock("@expo/ui/jetpack-compose", () => {
   }) {
     const onNativeCheckedChange = (value: boolean) =>
       props.onCheckedChange?.(value)
+    // The native Switch always passes Compose a non-null onCheckedChange, so it
+    // is its own control unless its semantics are cleared.
+    const cleared = props.modifiers?.some(
+      (modifier) => modifier.$type === "clearAndSetSemantics",
+    )
+    if (cleared)
+      return React.createElement(View, { testID: testID(props.modifiers) })
     return React.createElement(Pressable, {
       testID: testID(props.modifiers),
       accessibilityRole: "switch",

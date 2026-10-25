@@ -6,6 +6,7 @@ import { galleryEntries } from "@/design"
 import { usePlatform } from "@/test-support/platform"
 
 import { galleryModules } from "./registry"
+import { isGalleryEntryAvailable } from "./stories"
 import { GalleryStoryContent } from "./story-content"
 
 const { readFileSync, readdirSync } = jest.requireActual("node:fs") as {
@@ -70,13 +71,6 @@ function isInteractive(node: TestInstance): boolean {
   )
 }
 
-function hasInteractiveAncestor(node: TestInstance): boolean {
-  for (let parent = node.parent; parent; parent = parent.parent) {
-    if (isInteractive(parent)) return true
-  }
-  return false
-}
-
 // Both platforms merge a control's descendants into its one accessibility
 // node (SwiftUI Button content, Compose mergeDescendants), so a child's text or
 // content description names the control.
@@ -90,18 +84,15 @@ function accessibleName(node: TestInstance): string {
 }
 
 function accessibilityViolations(root: TestInstance): string[] {
-  const controls = root
-    .queryAll(isInteractive)
-    .filter((node) => !hasInteractiveAncestor(node))
-    .flatMap((node) => {
-      const problems = [
-        ...(node.props.accessibilityRole || node.props.role ? [] : ["role"]),
-        ...(accessibleName(node) ? [] : ["label"]),
-      ]
-      return problems.length
-        ? [`${String(node.props.testID)} missing ${problems.join(" and ")}`]
-        : []
-    })
+  const controls = root.queryAll(isInteractive).flatMap((node) => {
+    const problems = [
+      ...(node.props.accessibilityRole || node.props.role ? [] : ["role"]),
+      ...(accessibleName(node) ? [] : ["label"]),
+    ]
+    return problems.length
+      ? [`${String(node.props.testID)} missing ${problems.join(" and ")}`]
+      : []
+  })
   const inputs = root
     .queryAll((node) => node.type === "TextInput")
     .filter((node) => !String(node.props.accessibilityLabel ?? "").trim())
@@ -119,6 +110,14 @@ describe("gallery registry", () => {
     expect(duplicates(galleryModules.map((m) => m.default.id))).toEqual([])
     expect(duplicates(galleryModules.map((m) => m.default.title))).toEqual([])
     expect(duplicates(galleryEntries.map((entry) => entry.id))).toEqual([])
+  })
+
+  it("orders every story export exactly once in its meta", () => {
+    for (const module of galleryModules) {
+      const exports = Object.keys(module).filter((name) => name !== "default")
+      expect([...module.default.stories].sort()).toEqual(exports.sort())
+      expect(duplicates(module.default.stories)).toEqual([])
+    }
   })
 
   it("gives every story a render function or args", () => {
@@ -144,17 +143,18 @@ describe.each(["ios", "android"] as const)("gallery stories on %s", (os) => {
       consoleError.mockRestore()
     })
 
-    it.each(galleryEntries.map((entry) => [entry.id, entry] as const))(
-      "renders %s with accessible controls",
-      async (id, entry) => {
-        const view = await render(createElement(GalleryStoryContent, { entry }))
-        expect(consoleError).not.toHaveBeenCalled()
-        expect({
-          story: id,
-          platform: os,
-          violations: accessibilityViolations(view.container),
-        }).toEqual({ story: id, platform: os, violations: [] })
-      },
-    )
+    it.each(
+      galleryEntries
+        .filter((entry) => isGalleryEntryAvailable(entry, os))
+        .map((entry) => [entry.id, entry] as const),
+    )("renders %s with accessible controls", async (id, entry) => {
+      const view = await render(createElement(GalleryStoryContent, { entry }))
+      expect(consoleError).not.toHaveBeenCalled()
+      expect({
+        story: id,
+        platform: os,
+        violations: accessibilityViolations(view.container),
+      }).toEqual({ story: id, platform: os, violations: [] })
+    })
   })
 })

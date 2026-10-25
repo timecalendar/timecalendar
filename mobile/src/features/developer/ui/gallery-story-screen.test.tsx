@@ -55,6 +55,20 @@ describe.each(["ios", "android"] as const)(
       expect(screen.getByTestId("gallery-text-entry-dialog")).toBeOnTheScreen()
     })
 
+    it("renders an Android-only story only on Android", async () => {
+      mockStory = "native-settings--radio-dialog"
+      await render(<GalleryStoryScreen />)
+      if (platform === "ios") {
+        expect(screen.getByTestId("redirect")).toHaveTextContent(
+          "/developer/gallery",
+        )
+      } else {
+        expect(
+          screen.getByTestId("gallery-native-settings-dialog-open"),
+        ).toBeOnTheScreen()
+      }
+    })
+
     it("redirects an unknown id to the index", async () => {
       mockStory = "does-not-exist"
       await render(<GalleryStoryScreen />)

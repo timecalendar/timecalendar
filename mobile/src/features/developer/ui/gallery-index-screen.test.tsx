@@ -45,10 +45,40 @@ describe.each(["ios", "android"] as const)(
         "gallery-section-native-settings",
         "gallery-section-native-text-entry-dialog",
       ])
-      expect(screen.getAllByTestId(/^gallery-story-/)).toHaveLength(11)
+      const androidOnly = [
+        "native-settings--floating-action",
+        "native-settings--radio-dialog",
+      ]
+      expect(
+        screen
+          .getAllByTestId(/^gallery-story-/)
+          .map((node) =>
+            String(node.props.testID).replace("gallery-story-", ""),
+          ),
+      ).toEqual(
+        [
+          "native-settings--rows",
+          "native-settings--destructive",
+          "native-settings--switches",
+          "native-settings--choices",
+          "native-settings--header-and-alert",
+          "native-settings--floating-action",
+          "native-settings--radio-dialog",
+          "native-settings--long-strings",
+          "native-text-entry-dialog--default",
+          "native-text-entry-dialog--submit-disabled",
+          "native-text-entry-dialog--pending",
+        ].filter((id) => platform === "android" || !androidOnly.includes(id)),
+      )
       expect(
         screen.getByTestId("gallery-story-native-text-entry-dialog--pending"),
       ).toHaveTextContent(/Pending/)
+      if (platform === "ios") {
+        expect(
+          screen.getByTestId("gallery-story-native-text-entry-dialog--pending")
+            .props.accessibilityHint,
+        ).toBe("Opens this component state")
+      }
     })
 
     it("opens a story by id", async () => {
