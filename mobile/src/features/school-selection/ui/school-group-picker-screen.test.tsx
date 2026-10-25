@@ -1,4 +1,4 @@
-import { act, fireEvent, render } from "@testing-library/react-native"
+import { act, fireEvent, render, within } from "@testing-library/react-native"
 import { router, useLocalSearchParams } from "expo-router"
 import { StyleSheet } from "react-native"
 
@@ -209,6 +209,27 @@ describe("SchoolGroupPickerScreen", () => {
     expect(getByText("Could not load groups.")).toBeTruthy()
     fireEvent.press(getByTestId("onboarding-group-retry"))
     expect(refetch).toHaveBeenCalledTimes(1)
+  })
+
+  it("insets the error state by the standard lane gutter", async () => {
+    mockUseSchoolGroups.mockReturnValue({
+      groups: [],
+      isLoading: false,
+      isError: true,
+      refetch: jest.fn(),
+    })
+    const { getByTestId } = await render(<SchoolGroupPickerScreen />)
+    await act(() =>
+      fireEvent(getByTestId("onboarding-group-content"), "layout", {
+        nativeEvent: { layout: { width: 390, height: 0, x: 0, y: 0 } },
+      }),
+    )
+
+    const content = getByTestId("onboarding-group-scroll")
+    expect(within(content).getByTestId("onboarding-group-error")).toBeTruthy()
+    expect(
+      StyleSheet.flatten(content.props.contentContainerStyle).paddingHorizontal,
+    ).toBeGreaterThanOrEqual(Spacing.four)
   })
   it("retains cached group selection during a refresh failure", async () => {
     mockUseSchoolGroups.mockReturnValue(

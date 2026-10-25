@@ -3,7 +3,9 @@ import { Alert } from "react-native"
 
 import { usePlatform } from "@/test-support/platform"
 
-import { EnvironmentSettingsControl } from "./environment-settings-control"
+import { EnvironmentSelectorDialog } from "./environment-selector-dialog"
+import { EnvironmentSettingsRow } from "./environment-settings-row"
+import { useEnvironmentSelector } from "./use-environment-selector"
 
 let mockCapability: "development" | "preview" | "production" = "preview"
 let mockEnvironment: "local" | "preprod" | "production" = "preprod"
@@ -16,6 +18,16 @@ jest.mock("@/features/environment/data", () => ({
 }))
 
 jest.mock("expo-symbols", () => ({ SymbolView: () => null }))
+
+function EnvironmentSelectorHarness() {
+  const selector = useEnvironmentSelector()
+  return (
+    <>
+      <EnvironmentSettingsRow selector={selector} />
+      <EnvironmentSelectorDialog selector={selector} />
+    </>
+  )
+}
 
 beforeEach(() => {
   mockCapability = "preview"
@@ -33,13 +45,13 @@ describe("on iOS", () => {
 
   it("is absent and inert in production", async () => {
     mockCapability = "production"
-    await render(<EnvironmentSettingsControl />)
+    await render(<EnvironmentSelectorHarness />)
     expect(screen.queryByTestId("settings-environment")).toBeNull()
     expect(Alert.alert).not.toHaveBeenCalled()
   })
 
   it("offers only preview choices and requires destructive confirmation", async () => {
-    await render(<EnvironmentSettingsControl />)
+    await render(<EnvironmentSelectorHarness />)
     const row = screen.getByTestId("settings-environment")
     expect(row.props.accessibilityRole).toBe("button")
     expect(screen.getByText("Preproduction")).toBeTruthy()
@@ -79,7 +91,7 @@ describe("on iOS", () => {
   it("adds local only for the development capability", async () => {
     mockCapability = "development"
     mockEnvironment = "local"
-    await render(<EnvironmentSettingsControl />)
+    await render(<EnvironmentSelectorHarness />)
     const row = screen.getByTestId("settings-environment")
     expect(screen.getByText("Local")).toBeTruthy()
     expect(row.props.accessibilityLabel).toBe("Environment, Local")
@@ -106,7 +118,7 @@ describe("on Android", () => {
 
   it("is absent and inert in production", async () => {
     mockCapability = "production"
-    await render(<EnvironmentSettingsControl />)
+    await render(<EnvironmentSelectorHarness />)
     expect(screen.queryByTestId("settings-environment")).toBeNull()
     expect(screen.queryByTestId("settings-environment-dialog")).toBeNull()
   })
@@ -114,7 +126,7 @@ describe("on Android", () => {
   it("lists every development environment in a radio dialog with the current one selected", async () => {
     mockCapability = "development"
     mockEnvironment = "local"
-    await render(<EnvironmentSettingsControl />)
+    await render(<EnvironmentSelectorHarness />)
     expect(screen.queryByTestId("settings-environment-dialog")).toBeNull()
 
     await fireEvent.press(screen.getByTestId("settings-environment"))
@@ -136,7 +148,7 @@ describe("on Android", () => {
 
   it("cancels without an alert or a switch, and reopens", async () => {
     mockCapability = "development"
-    await render(<EnvironmentSettingsControl />)
+    await render(<EnvironmentSelectorHarness />)
 
     await fireEvent.press(screen.getByTestId("settings-environment"))
     await fireEvent.press(
@@ -153,7 +165,7 @@ describe("on Android", () => {
 
   it("treats the current environment as inert", async () => {
     mockCapability = "development"
-    await render(<EnvironmentSettingsControl />)
+    await render(<EnvironmentSelectorHarness />)
 
     await fireEvent.press(screen.getByTestId("settings-environment"))
     await fireEvent.press(screen.getByTestId(choiceTestID("preprod")))
@@ -165,7 +177,7 @@ describe("on Android", () => {
 
   it("switches to another environment once after destructive confirmation", async () => {
     mockCapability = "development"
-    await render(<EnvironmentSettingsControl />)
+    await render(<EnvironmentSelectorHarness />)
 
     await fireEvent.press(screen.getByTestId("settings-environment"))
     await fireEvent.press(screen.getByTestId(choiceTestID("local")))
@@ -185,5 +197,38 @@ describe("on Android", () => {
     })
     expect(mockSwitch).toHaveBeenCalledTimes(1)
     expect(mockSwitch).toHaveBeenCalledWith("local")
+  })
+
+  it("restores the current environment when the switch fails", async () => {
+    mockCapability = "development"
+    let rejectSwitch: (error: Error) => void = () => {}
+    mockSwitch.mockReturnValue(
+      new Promise((_resolve, reject) => {
+        rejectSwitch = reject
+      }),
+    )
+    await render(<EnvironmentSelectorHarness />)
+
+    await fireEvent.press(screen.getByTestId("settings-environment"))
+    await fireEvent.press(screen.getByTestId(choiceTestID("local")))
+    const buttons = (Alert.alert as jest.Mock).mock.calls[0]?.[2] as {
+      onPress?: () => void
+    }[]
+    await act(async () => {
+      buttons[1]?.onPress?.()
+    })
+    expect(screen.getByTestId("settings-environment")).toHaveTextContent(
+      /Clearing local data…/,
+    )
+
+    await fireEvent.press(screen.getByTestId("settings-environment"))
+    expect(screen.queryByTestId("settings-environment-dialog")).toBeNull()
+
+    await act(async () => {
+      rejectSwitch(new Error("offline"))
+    })
+    expect(screen.getByTestId("settings-environment")).toHaveTextContent(
+      /Preproduction/,
+    )
   })
 })

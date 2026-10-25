@@ -1,3 +1,17 @@
+## 2026-10-25 — Android design-system device-pass fixes
+
+- `theming.md` (`chrome/native-settings.tsx`): **Placement** rule. `NativeSettingsRadioDialog`,
+  `NativeSettingsNumericEditor` and `NativeTextEntryDialog` render after `</NativeSettingsHost>`,
+  never inside it; each throws on render inside the host through a private context. Enforced by
+  `src/components/chrome/native-settings.test.tsx`, `native-settings-numeric-editor.test.tsx` and
+  `native-text-entry-dialog.test.tsx`, listed under "What CI proves".
+- `features.md`: the `environment` feature exposes `useEnvironmentSelector`,
+  `EnvironmentSettingsRow` and `EnvironmentSelectorDialog`; Settings places the row in its
+  environment section and the dialog after the native host. The Android personal-event date/time
+  field's accessible name is "label, value".
+- `accessibility.md`: Home's section titles are `sectionTitle` headers in the populated and empty
+  states; the Android date/time field announces its label and value.
+
 ## 2026-10-25 — Developer page
 
 - `/developer` is a root Stack sibling (compact header, `src/app/developer.tsx` over

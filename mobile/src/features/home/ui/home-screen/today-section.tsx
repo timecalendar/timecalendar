@@ -49,9 +49,7 @@ export function TodaySection({
           testID="home-today-empty"
         />
       ) : (
-        <ThemedText style={styles.sectionTitle}>
-          {t("home.today.title")}
-        </ThemedText>
+        <ThemedText type="sectionTitle">{t("home.today.title")}</ThemedText>
       )}
       {allDayEvents.length > 0 && (
         <AllDayEvents
@@ -138,7 +136,6 @@ function AllDayEvents({
 
 const styles = StyleSheet.create({
   section: { gap: Spacing.one },
-  sectionTitle: { fontSize: 20, lineHeight: 25, fontWeight: "700" },
   allDayRow: { gap: Spacing.two },
   allDayLabel: { paddingTop: Spacing.one },
   allDayItems: { flex: 1, gap: Spacing.two },

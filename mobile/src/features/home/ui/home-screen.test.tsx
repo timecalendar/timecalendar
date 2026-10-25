@@ -168,6 +168,8 @@ describe("HomeScreen", () => {
     expect(
       StyleSheet.flatten(screen.getByText("Today").props.style),
     ).toMatchObject(TypeRamp.sectionTitle.style)
+    expect(screen.getByRole("header", { name: "Up next" })).toBeTruthy()
+    expect(screen.getByRole("header", { name: "Today" })).toBeTruthy()
     expect(screen.getByText("Nothing coming up for now.")).toBeTruthy()
     expect(screen.getByText("No events today")).toBeTruthy()
     expect(screen.getByText("Enjoy the open day.")).toBeTruthy()
@@ -190,6 +192,8 @@ describe("HomeScreen", () => {
     expect(screen.getAllByText("Algorithms").length).toBeGreaterThan(0)
     expect(screen.queryByTestId("home-upcoming-empty")).toBeNull()
     expect(screen.queryByTestId("home-today-empty")).toBeNull()
+    expect(screen.getByRole("header", { name: "Up next" })).toBeTruthy()
+    expect(screen.getByRole("header", { name: "Today" })).toBeTruthy()
   })
 
   it("shows partial and complete progress for personal and synced upcoming/timed events", async () => {

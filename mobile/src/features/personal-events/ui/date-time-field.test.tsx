@@ -1,6 +1,7 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
 import { fromZonedTime, toZonedTime } from "date-fns-tz"
 import * as Localization from "expo-localization"
+import { useState } from "react"
 
 import { formatShortDateTime } from "@/features/calendar/data"
 import { usePlatform } from "@/test-support/platform"
@@ -247,6 +248,52 @@ describe("feature-owned DateTimeField", () => {
         expect(getByTestId("time-is24Hour")).toHaveTextContent(expected)
       },
     )
+
+    it("announces the label and the displayed value, and follows a commit", async () => {
+      function ControlledField() {
+        const [value, setValue] = useState(INITIAL)
+        return (
+          <DateTimeField
+            testID="field"
+            accessibilityLabel="Starts"
+            value={value}
+            locale="en"
+            zone={zone}
+            onChange={setValue}
+          />
+        )
+      }
+      const view = await render(<ControlledField />)
+      expect(view.getByTestId("field").props.accessibilityLabel).toBe(
+        `Starts, ${formatShortDateTime(INITIAL, "en", zone)}`,
+      )
+
+      for (const id of ["field", "date-confirm", "time-confirm"]) {
+        await act(async () => {
+          fireEvent.press(view.getByTestId(id))
+        })
+      }
+
+      const committed = fromZonedTime(new Date(2030, 0, 2, 9, 41), zone)
+      expect(view.getByTestId("field").props.accessibilityLabel).toBe(
+        `Starts, ${formatShortDateTime(committed, "en", zone)}`,
+      )
+    })
+
+    it("sets no label without an accessibilityLabel prop, leaving the value text as the name", async () => {
+      const view = await render(
+        <DateTimeField
+          testID="field"
+          value={INITIAL}
+          locale="en"
+          zone={zone}
+          onChange={jest.fn()}
+        />,
+      )
+      const field = view.getByTestId("field")
+      expect(field.props.accessibilityLabel).toBeUndefined()
+      expect(field).toHaveTextContent(formatShortDateTime(INITIAL, "en", zone))
+    })
 
     it.each(["date", "time"])(
       "cancelling at the %s step leaves the value unchanged and reopens",

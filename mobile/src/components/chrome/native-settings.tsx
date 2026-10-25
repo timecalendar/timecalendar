@@ -69,6 +69,10 @@ import {
 import { Platform, StyleSheet } from "react-native"
 
 import {
+  NativeSettingsHostContext,
+  useAssertOutsideNativeSettingsHost,
+} from "@/components/chrome/native-settings-host-context"
+import {
   materialSymbolSource,
   type NativeSettingsIcon,
 } from "@/components/chrome/native-settings-icons"
@@ -252,7 +256,11 @@ export function NativeSettingsHost({
         useViewportSizeMeasurement
         style={styles.fill}
       >
-        <Form modifiers={[tint(theme.primary)]}>{children}</Form>
+        <Form modifiers={[tint(theme.primary)]}>
+          <NativeSettingsHostContext.Provider value>
+            {children}
+          </NativeSettingsHostContext.Provider>
+        </Form>
       </SwiftHost>
     )
   }
@@ -267,7 +275,9 @@ export function NativeSettingsHost({
         }}
         modifiers={[fillMaxSize()]}
       >
-        {children}
+        <NativeSettingsHostContext.Provider value>
+          {children}
+        </NativeSettingsHostContext.Provider>
       </LazyColumn>
     </ComposeSettingsHost>
   )
@@ -895,6 +905,7 @@ function ComposeSettingsChoiceRow({
 export function NativeSettingsRadioDialog<Value extends string>(
   props: NativeSettingsRadioDialogProps<Value>,
 ) {
+  useAssertOutsideNativeSettingsHost("NativeSettingsRadioDialog")
   if (!props.visible || Platform.OS === "ios") return null
   return (
     <ComposeSettingsHost matchContents>

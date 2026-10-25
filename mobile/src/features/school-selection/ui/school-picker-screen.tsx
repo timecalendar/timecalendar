@@ -101,6 +101,7 @@ export default function SchoolPickerScreen() {
             autoCapitalize: "none",
             // Default placement; "stacked" overlaps the large title on iOS 26.
             hideWhenScrolling: false,
+            textColor: theme.text,
             hintTextColor: theme.textSecondary,
             headerIconColor: theme.text,
           },
@@ -168,6 +169,7 @@ export default function SchoolPickerScreen() {
               ) : isError && schools.length === 0 ? (
                 <ErrorState
                   testID="onboarding-school-error"
+                  style={styles.status}
                   title={t("errors.loadTitle")}
                   message={t("onboarding.school.error")}
                   primaryAction={{
@@ -227,6 +229,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.three,
     paddingBottom: Spacing.three,
+  },
+  status: {
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.five,
   },
   missingSchool: {
     minHeight: 48,
