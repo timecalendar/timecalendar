@@ -152,7 +152,7 @@ const deviceColorSchemeDeepImportPattern = {
 }
 
 // Route files are entrypoints, not modules. Named (rather than inlined in the
-// block that applies it) because two blocks now re-include it: any block that
+// block that applies it) because several blocks re-include it: any block that
 // re-sets `no-restricted-imports` for files under src/ has to carry it forward,
 // since flat-config options REPLACE rather than merge.
 const routeEntrypointImportPattern = {
