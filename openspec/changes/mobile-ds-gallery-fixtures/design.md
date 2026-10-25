@@ -33,7 +33,8 @@ See proposal.md for motivation. The state this change builds on:
   lays out correctly. That header is `NativeSettingsHeader`
   (`src/components/chrome/native-settings-header.tsx`): React Native content inside
   `RNHostView matchContents` inside a SwiftUI `List` row on iOS (`ComposeRNHostView` in a Compose
-  `Row` on Android).
+  `Row` on Android). The live device check (D7) shows the same clip on plain React Native screens,
+  so the cause is not this header.
 - **Concurrent work**: `fix/mobile-a11y-device-findings` changes shared rows, onboarding, the date
   field, color swatches and Android dialogs. This change does not edit any component.
 
@@ -181,9 +182,12 @@ tables drift; the spec requires one).
 
 **Decision:** keep the layout-less route shape. `GalleryStoryScreen` calls a
 `useGalleryIndexAnchor(enabled)` hook (new `src/features/developer/ui/gallery-anchor.ts`) that,
-once on mount, reads the root Stack state through expo-router's `useNavigation()`; if the route
-directly beneath the story is not `developer/gallery`, it calls `navigation.reset` with the same
-routes plus `{ name: "developer/gallery" }` inserted beneath the story and `index + 1`. Existing
+on mount and on every Stack `state` event, reads the root Stack state through expo-router's
+`useNavigation()`; if the story is focused and the route directly beneath it is not
+`developer/gallery`, it calls `navigation.reset` with the same routes plus
+`{ name: "developer/gallery" }` inserted beneath the story and `index + 1`. The `state` listener
+exists because on a cold link the container commits its initial state just after the story's
+first effect and reverts the mount-time reset (observed on the iOS simulator). Existing
 routes keep their keys, so the story screen is not remounted and nothing animates. The state
 transform is a pure exported function `withGalleryIndexBeneath(state)` that returns `undefined`
 when the index is already beneath the story. `enabled` is false when the gate redirects, the id is
@@ -209,25 +213,17 @@ unaffected (no new gallery feature).
 
 ### D7. Text-size change while a story is open (device-pass finding 2)
 
-The gallery screen does not own the clipped content: `GalleryStoryContent` is a plain `flex: 1`
-View, and React Native text re-lays out on a content-size change. The clip is in
-`NativeSettingsHeader`, where `RNHostView matchContents` sizes the SwiftUI `List` row from the
-React Native content once and the row does not re-measure when the content grows. That is a
-component (and possibly Expo UI) defect, out of this change's scope.
-
-Investigation (an implementer task on the iOS simulator, which the Mac runs): open
-`native-settings--header-and-alert` and `native-settings--long-strings` at `large`, switch to
-`accessibility-extra-extra-extra-large` live, screenshot; repeat with the new pure React Native
-stories (`themed-text--long-strings`, `root-page--long-strings`) and confirm whether the native
-navigation bar title and React Native content adapt. Record what clips and what does not in
-`docs/react-native-migration/inbox/2026-10-25-mobile-gallery-fixtures-findings.md` with the
-screenshots' description, the suspected cause and a proposed fix for the component owner (for
-example re-keying the `RNHostView` on `fontScale`, or an Expo UI issue reproduction — filed in the
-inbox, never upstream). If the investigation shows the gallery screen itself clips, fix it in
-`gallery-story-screen.tsx` with a test instead.
+The clip is app-wide React Native behavior, not a gallery or `NativeSettingsHeader` defect. On the
+iOS 26.5 simulator, switching live from `large` to `accessibility-extra-extra-extra-large` leaves
+`themed-text--ramp` and the Home tab (a plain React Native screen outside the gallery) at their old
+row heights with every line clipped, while the SwiftUI Settings screen and the native navigation
+bar title re-lay out. Reopening the story or a cold launch at the same size renders correctly. React
+Native text measurement is not invalidated by a live Dynamic Type change; the evidence is recorded
+in `docs/react-native-migration/inbox/2026-10-25-mobile-gallery-fixtures-findings.md`. The gallery
+adds no workaround.
 
 Alternative rejected: re-keying `GalleryStoryContent` on `fontScale`. It would hide in the
-gallery a defect that ships in About and Settings, which defeats the gallery's purpose ("focus
+gallery a defect that ships on every React Native screen, which defeats the gallery's purpose ("focus
 order and Back are what ships").
 
 ### D8. Native mocks mirror native semantics

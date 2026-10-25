@@ -65,9 +65,12 @@ const ACTIVATION_PROPS = [
   "onChange",
 ] as const
 
+// An accessible={false} node is no accessibility element (Expo UI's Android
+// MenuView anchor); the controls inside it are checked on their own.
 function isInteractive(node: TestInstance): boolean {
   return (
     node.type !== "TextInput" &&
+    node.props.accessible !== false &&
     ACTIVATION_PROPS.some((prop) => typeof node.props[prop] === "function")
   )
 }

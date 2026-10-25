@@ -106,7 +106,7 @@ function PickerFixture({
 }
 
 const styles = StyleSheet.create({
-  stack: { gap: Spacing.two, alignItems: "flex-start" },
+  stack: { gap: Spacing.two },
 })
 
 const meta: GalleryMeta<PickerProps> = {

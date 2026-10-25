@@ -47,7 +47,7 @@ describe.each(["ios", "android"] as const)("menu stories on %s", (platform) => {
 
     await fireEvent.press(view.getByTestId("menu-action-delete"))
     expect(view.getByTestId("gallery-menu-last-action")).toHaveTextContent(
-      "Last action: delete",
+      "Last action: Delete",
     )
   })
 

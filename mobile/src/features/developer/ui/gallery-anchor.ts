@@ -28,14 +28,20 @@ export function withGalleryIndexBeneath<State extends StackState>(
 }
 
 // A deep link opens the story with (tabs) or another screen beneath it; the
-// index is inserted under the story so Back walks story → index → app.
+// index is inserted under the story so Back walks story → index → app. On a
+// cold link the container commits its initial state after the first reset and
+// reverts it, so the anchor is re-applied on every state change until it holds.
 export function useGalleryIndexAnchor(enabled: boolean) {
   const navigation = useNavigation()
   useEffect(() => {
     if (!enabled) return
-    const anchored = withGalleryIndexBeneath(navigation.getState())
-    if (anchored) {
-      navigation.reset(anchored as Parameters<typeof navigation.reset>[0])
+    const anchor = () => {
+      const anchored = withGalleryIndexBeneath(navigation.getState())
+      if (anchored) {
+        navigation.reset(anchored as Parameters<typeof navigation.reset>[0])
+      }
     }
+    anchor()
+    return navigation.addListener("state", anchor)
   }, [enabled, navigation])
 }

@@ -33,12 +33,15 @@ describe.each(["ios", "android"] as const)(
       expect(view.getByTestId(field).props.value).toBe("30")
     })
 
-    it("closes on Submit and shows the submitted value on the row", async () => {
+    it("closes on Submit, shows the value on the row and reopens with it", async () => {
       const view = await renderStory(fixture.Default)
       await fireEvent.changeText(view.getByTestId(field), "45")
       await fireEvent.press(view.getByTestId("gallery-numeric-editor-submit"))
       expect(view.queryByTestId(field)).toBeNull()
       expect(view.getByTestId(openRow)).toHaveTextContent(/45/)
+
+      await fireEvent.press(view.getByTestId(openRow))
+      expect(view.getByTestId(field).props.value).toBe("45")
     })
 
     it("shows the validation message", async () => {

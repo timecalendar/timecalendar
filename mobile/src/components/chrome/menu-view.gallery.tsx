@@ -60,6 +60,11 @@ function MenuFixture({ variant }: { variant: "default" | "states" | "long" }) {
           },
         ]
       : choiceActions
+  const actionTitles = new Map(
+    actions
+      .flatMap((action) => [action, ...(action.subactions ?? [])])
+      .map((action) => [action.id, action.title]),
+  )
   const triggerLabel = t("gallery.menuView.triggerLabel", {
     value: labels[choice],
   })
@@ -96,7 +101,9 @@ function MenuFixture({ variant }: { variant: "default" | "states" | "long" }) {
         </MenuView>
         {lastAction === null ? null : (
           <ThemedText tone="secondary" testID="gallery-menu-last-action">
-            {t("gallery.menuView.lastAction", { action: lastAction })}
+            {t("gallery.menuView.lastAction", {
+              action: actionTitles.get(lastAction),
+            })}
           </ThemedText>
         )}
       </View>

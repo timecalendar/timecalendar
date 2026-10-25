@@ -9,12 +9,15 @@
 - The WCAG `contrastRatio` helper and `documentedContrastPairs` live in `src/theme/contrast.ts`;
   `theme.test.tsx` asserts them and `design-tokens--contrast-pairs` draws them
   ([theming.md](./theming.md) → Contrast).
-- A story opened by a deep link puts the gallery index beneath itself, so Back returns to the index
+- A story opened by a cold or warm deep link puts the gallery index beneath itself, re-applying it
+  on Stack state changes until it holds, so Back returns to the index
   ([navigation.md](./navigation.md) → Component gallery).
 - L10: `fixture-coverage.contract.test.ts` requires a sibling `*.gallery.tsx` and `*.test.tsx` for
   every `.tsx` under `src/design/` outside its helper list ([testing.md](./testing.md)).
-- The `@expo/ui/community/menu` mock wraps the trigger as a button on iOS and as a non-accessible
-  view on Android; the date-time picker mock forwards its props and maps `disabled`.
+- The `@expo/ui/community/menu` mock wraps the trigger as a button on iOS and, on Android, as a
+  `Pressable` with `accessible={false}` that opens the menu on press; the date-time picker mock
+  forwards its props and maps `disabled`. The gallery accessibility check skips an
+  `accessible={false}` element and checks its descendants ([accessibility.md](./accessibility.md)).
 
 ## 2026-10-25 — Accessibility device findings
 

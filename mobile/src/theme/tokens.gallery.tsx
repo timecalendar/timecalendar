@@ -127,7 +127,7 @@ function ColorsFixture() {
 }
 
 function ContrastPairsFixture() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   return (
     <TokenPage>
       {schemes.map((scheme) => (
@@ -142,7 +142,10 @@ function ContrastPairsFixture() {
               const ratio = contrastRatio(
                 palette[foreground],
                 palette[background],
-              ).toFixed(2)
+              ).toLocaleString(i18n.language, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
               const floorLabel = t(`gallery.designTokens.floor.${floor}`)
               return (
                 <TokenSwatch

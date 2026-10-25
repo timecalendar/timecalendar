@@ -111,8 +111,8 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
 - **A stateful fixture has a `*.gallery.test.tsx`** next to it that drives its stories (presses,
   dialog close and reopen, menu selection, a date pick), using the suite-wide native mocks. The
   `@expo/ui/community/menu` mock wraps the trigger as each platform does: a button on iOS (the
-  SwiftUI `Menu` label), a non-accessible view on Android (the children carry the role and call
-  `show()`). The `@expo/ui/community/datetime-picker` mock forwards its props and maps `disabled`.
+  SwiftUI `Menu` label); on Android a `Pressable` with `accessible={false}` whose press opens the
+  menu, while the children carry their own role (`MenuView.android.tsx`). The `@expo/ui/community/datetime-picker` mock forwards its props and maps `disabled`.
 
 ## E2E — Maestro, real round-trip
 

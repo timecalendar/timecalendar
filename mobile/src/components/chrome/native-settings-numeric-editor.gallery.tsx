@@ -28,14 +28,13 @@ type Copy = Pick<
 
 function NumericEditorFixture({ copy }: { copy: Copy }) {
   const { t } = useTranslation()
-  const initialValue = t("gallery.numericEditor.value")
   const [open, setOpen] = useState(true)
-  const [value, setValue] = useState(initialValue)
+  const [value, setValue] = useState(() => t("gallery.numericEditor.value"))
 
   const editor = open ? (
     <NativeSettingsNumericEditor
       {...copy}
-      initialValue={initialValue}
+      initialValue={value}
       ids={ids}
       onCancel={() => setOpen(false)}
       onSubmit={(next) => {

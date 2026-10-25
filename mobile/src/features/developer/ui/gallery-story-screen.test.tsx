@@ -8,7 +8,11 @@ import { GalleryStoryScreen } from "./gallery-story-screen"
 const mockScreenOptions = jest.fn()
 let mockStory = "native-settings--switches"
 let mockCapability = "preview"
-const mockNavigation = { getState: jest.fn(), reset: jest.fn() }
+const mockNavigation = {
+  getState: jest.fn(),
+  reset: jest.fn(),
+  addListener: jest.fn(() => () => {}),
+}
 jest.mock("expo-router", () => {
   const { Text: MockText } = jest.requireActual("react-native")
   return {

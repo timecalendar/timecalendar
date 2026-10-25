@@ -127,17 +127,15 @@ their public modules (`@/components/chrome`, `@/components/<file>`, `@/theme`), 
 
 ## 7. Text-size change investigation
 
-- [ ] 7.1 (HUMAN: conductor device pass, see inbox/2026-10-25-mobile-gallery-fixtures-findings.md item 2) iOS simulator per D7: `native-settings--header-and-alert`,
-      `native-settings--long-strings`, `themed-text--long-strings` and `root-page--long-strings`
-      opened at `content_size large`, switched live to `accessibility-extra-extra-extra-large`,
-      screenshot and accessibility tree each; reset to `large`/`light` afterwards. Note which
-      surface clips (native navigation bar, `NativeSettingsHeader`, React Native content). If only
-      the native-settings header clips, no code change here. If the gallery screen clips, fix it in
-      `gallery-story-screen.tsx` with a test.
+- [x] 7.1 iOS simulator per D7 (conductor device pass, iOS 26.5): a live switch from `large` to
+      `accessibility-extra-extra-extra-large` clips `themed-text--ramp` and the Home tab alike
+      (React Native rows keep their old heights); the SwiftUI Settings screen and the native
+      navigation bar title re-lay out; reopening or a cold launch renders correctly. App-wide
+      React Native behavior, not the gallery screen or `NativeSettingsHeader`: no code change
+      here, evidence in inbox/2026-10-25-mobile-gallery-fixtures-findings.md item 2.
 - [x] 7.2 Write `docs/react-native-migration/inbox/2026-10-25-mobile-gallery-fixtures-findings.md`
-      (`For:` the native-settings seam owner): the 7.1 evidence, the suspected cause
-      (`RNHostView matchContents` in a SwiftUI `List` row not re-measuring), a proposed fix and how
-      to verify it on device; plus every violation added in 5.2 and anything the new fixtures show
+      (`For:` the device-pass owner): the 7.1 evidence (live Dynamic Type change not re-measuring
+      React Native text app-wide) and how to verify it on device; plus every violation added in 5.2 and anything the new fixtures show
       on the simulator (clipping, wrapping, missing labels). Never file outside the inbox. Verify:
       the note exists and every `known-a11y-violations.ts` entry added here links it.
 

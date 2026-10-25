@@ -15,7 +15,17 @@ const { relative, resolve } = jest.requireActual("node:path") as {
   resolve(...paths: string[]): string
 }
 
-const mockNavigation = { getState: jest.fn(), reset: jest.fn() }
+const mockNavigation = {
+  getState: () => ({
+    index: 1,
+    routes: [
+      { name: "(tabs)", key: "tabs-1" },
+      { name: "developer/gallery/[story]", key: "story-1" },
+    ],
+  }),
+  reset: jest.fn(),
+  addListener: jest.fn(() => () => {}),
+}
 jest.mock("expo-router", () => {
   const { Text: MockText } = jest.requireActual("react-native")
   return {
@@ -85,5 +95,6 @@ it.each(developerRoutes)(
         .map((node) => node.props.testID),
     }).toEqual({ route, redirect: "/settings", content: [] })
     expect(mockNavigation.reset).not.toHaveBeenCalled()
+    expect(mockNavigation.addListener).not.toHaveBeenCalled()
   },
 )

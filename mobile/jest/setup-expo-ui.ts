@@ -146,19 +146,19 @@ jest.mock("@expo/ui/community/menu", () => {
     const [expanded, setExpanded] = React.useState(false)
     React.useImperativeHandle(ref, () => ({ show: () => setExpanded(true) }))
     // iOS: the children are the label of a SwiftUI Menu, itself the button.
-    // Android: the anchor Pressable is accessible={false}; the children carry
-    // their own role and open the menu through ref.show().
-    const trigger =
+    // Android: the children sit in an accessible={false} Pressable that opens
+    // the menu on press; the children carry their own role.
+    const trigger = React.createElement(
+      Pressable,
       Platform.OS === "ios"
-        ? React.createElement(
-            Pressable,
-            {
-              accessibilityRole: "button",
-              onPress: () => setExpanded(true),
-            },
-            props.children,
-          )
-        : React.createElement(View, { accessible: false }, props.children)
+        ? { accessibilityRole: "button", onPress: () => setExpanded(true) }
+        : {
+            accessible: false,
+            focusable: false,
+            onPress: () => setExpanded(true),
+          },
+      props.children,
+    )
     return React.createElement(
       View,
       null,

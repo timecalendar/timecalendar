@@ -5,7 +5,16 @@ import {
   withGalleryIndexBeneath,
 } from "./gallery-anchor"
 
-const mockNavigation = { getState: jest.fn(), reset: jest.fn() }
+const mockStateListeners = new Set<() => void>()
+const mockNavigation = {
+  getState: jest.fn(),
+  reset: jest.fn(),
+  addListener: jest.fn((event: string, listener: () => void) => {
+    if (event === "state") mockStateListeners.add(listener)
+    return () => mockStateListeners.delete(listener)
+  }),
+}
+const emitState = () => mockStateListeners.forEach((listener) => listener())
 jest.mock("expo-router", () => ({ useNavigation: () => mockNavigation }))
 
 const tabs = { name: "(tabs)", key: "tabs-1" }
@@ -59,6 +68,7 @@ describe("useGalleryIndexAnchor", () => {
   beforeEach(() => {
     mockNavigation.getState.mockReturnValue(stack([tabs, story]))
     mockNavigation.reset.mockClear()
+    mockStateListeners.clear()
   })
 
   it("resets the stack once with the index beneath the story", async () => {
@@ -68,6 +78,21 @@ describe("useGalleryIndexAnchor", () => {
     expect(mockNavigation.reset).toHaveBeenCalledWith(
       stack([tabs, anchor, story]),
     )
+  })
+
+  it("re-anchors when a cold start's initial state commit reverts the reset", async () => {
+    await renderHook(() => useGalleryIndexAnchor(true))
+    emitState()
+    expect(mockNavigation.reset).toHaveBeenCalledTimes(2)
+    mockNavigation.getState.mockReturnValue(stack([tabs, anchor, story]))
+    emitState()
+    expect(mockNavigation.reset).toHaveBeenCalledTimes(2)
+  })
+
+  it("stops listening on unmount", async () => {
+    const hook = await renderHook(() => useGalleryIndexAnchor(true))
+    await hook.unmount()
+    expect(mockStateListeners.size).toBe(0)
   })
 
   it("does nothing when disabled", async () => {
