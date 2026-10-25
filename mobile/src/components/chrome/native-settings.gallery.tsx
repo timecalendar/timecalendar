@@ -18,9 +18,9 @@ import type { GalleryMeta, GalleryStory } from "@/design"
 
 type Story = GalleryStory<NativeSettingsRowProps>
 
-type Choice = "first" | "second"
-
 const CHOICES = ["first", "second"] as const
+
+type Choice = (typeof CHOICES)[number]
 
 function RowsFixture() {
   const { t } = useTranslation()

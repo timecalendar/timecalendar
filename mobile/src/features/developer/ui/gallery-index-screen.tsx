@@ -28,6 +28,8 @@ function groupByFixture(entries: readonly GalleryEntry[]): Fixture[] {
   return [...fixtures.values()]
 }
 
+const galleryFixtures = groupByFixture(galleryEntries)
+
 export function GalleryIndexScreen() {
   const { t } = useTranslation()
 
@@ -37,7 +39,7 @@ export function GalleryIndexScreen() {
     <>
       <Stack.Screen options={{ title: t("gallery.title") }} />
       <NativeSettingsHost>
-        {groupByFixture(galleryEntries).map((fixture) => (
+        {galleryFixtures.map((fixture) => (
           <NativeSettingsSection
             key={fixture.metaId}
             title={t(fixture.title)}
