@@ -51,7 +51,7 @@ Order by number of duplicates removed and by which screens they unblock.
 | 3.6 | L | `ListRow` / `ListSection` / `Separator` (platform-adaptive, matched to seam geometry in the gallery side by side) | Timezone chooser, school picker, hidden events, activity, personal events, provider selection, group picker |
 | 3.7 | S | `Badge`, `ColorDot` | Header pill, checklist pill, personal events, Home dots |
 | 3.8 | M | `HeaderAction` + `FloatingAction` in chrome | Home, calendar, programme, event details, changelog sheet |
-| 3.9 | M | `EventSurface` (after owner decision on agenda rail, ADR) | Home, event details, agenda |
+| 3.9 | M | `EventSurface` `tile` = grid tint + accent stripe; Home gains the stripe, agenda drops gray fill and shadow (ADR F) | Home, event details, agenda |
 
 ## Phase 4 — Lint ratchet
 
@@ -102,4 +102,4 @@ phase 4, so the ratchet never allowlists it.
 | C | In-house CSF3-shaped gallery on the `/developer` page instead of Storybook (capability gate, translated strings, Storybook revisit triggers) | 2 | Rejects a dependency with native/fingerprint impact; records triggers |
 | D | Rename native-settings seam to `NativeList*` and retire `SettingsRow` adapters | 3 | Amends ADR 060 |
 | E | Visual-style lint ratchet (`local/no-style-literals`, raw-primitive bans) | 4 | New repo-wide gate with allowlist mechanics |
-| F | Event-color surface vocabulary (agenda rail vs wash; text on data colors) | 3.9 | Product-visual decision that theming.md currently forbids in part |
+| F | Event tiles share the grid's tint + accent stripe; theming.md event-tile exception to the no-rail rule; text on data colors | 3.9 | Product-visual decision that theming.md currently forbids in part |

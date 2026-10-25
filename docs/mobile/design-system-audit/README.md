@@ -33,7 +33,7 @@ welcome/connect and the personal-event form are the worst offenders.
 5. Two list systems: the native seam for short lists, 8 hand-built RN row styles elsewhere; second row API owned by the wrong feature.
 6. 9 local loading/empty/error variants, spinners in 5 colors; `StatusSymbol` blank on Android.
 7. No `TextField`: 5 restyled `TextInput`s; input stroke ≈1.3:1 (unverified) below 3:1.
-8. Event color: agenda rail + shadow vs Home wash; `TagBubble` text on a data color.
+8. Event color drawn three ways (grid: tint + accent stripe; agenda: gray + raw-color stripe + shadow; Home: tint only); `TagBubble` text on a data color.
 9. `components/` vs `chrome/` boundary unwritten; calendar header icons pink against navigation.md.
 10. Lint guards seams, not visuals: nothing stops hex, raw `fontSize`, raw `TextInput`, or `useColorScheme` from `react-native`.
 
@@ -67,7 +67,8 @@ Calendar chrome (renderer untouched). Six ADRs (A–F) listed in the roadmap.
    of Settings into a dedicated **developer page** (`/developer`) that hosts the gallery and the
    existing dev tools (environment switch, dev import).
 3. **Gallery strings are translated** (FR/EN, `gallery.*` namespace); no lint exemption.
-4. **Agenda tile rail:** open; explained in assessment issue 8, decided in ADR F.
+4. **Event tiles:** the stripe is part of the event color. Every event tile (grid, agenda, Home)
+   uses the week grid's tint + accent stripe; the agenda shadow goes (assessment issue 8, ADR F).
 5. **No pixel-diff lane** for now.
 6. **Delete the paging spike.**
 7. **Type ramp numbers approved** as a starting point; final device check still happens in phase 1.5.

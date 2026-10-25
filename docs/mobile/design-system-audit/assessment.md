@@ -78,10 +78,16 @@ The drift is not in values; it is in **components and typography**.
    colors ([§A11](./duplication-and-drift.md#a11-empty-loading-and-error-states)).
 7. **No text field.** Five restyled `TextInput` implementations, two of them duplicates of
    `step-styles.ts` ([§A12](./duplication-and-drift.md#a12-text-inputs-candidate-textfield)).
-8. **Event-color vocabulary is split.** The agenda uses a colored leading rail plus the app's only
-   card shadow (`mobile/src/features/calendar/ui/agenda-list.tsx:199`, `:247`); Home uses the
-   pale wash. theming.md explicitly forbids "a colored leading rail" on generic cards; agenda tiles
-   are arguably event geometry ("block"), so this needs an owner decision, not a silent fix.
+8. **Event-color vocabulary is split three ways.** The week grid draws the full event appearance:
+   pale `surface` fill plus a 3px contrast-adjusted `accent` stripe
+   (`mobile/src/features/calendar/renderer/owned-calendar-page.tsx:280-287`, values from
+   `resolveEventAppearance`, `mobile/src/features/calendar/data/event-color.ts:91-103`). The agenda
+   draws a neutral `backgroundElement` fill, a 2px stripe in the raw `event.color` (no 3:1 contrast
+   adjustment) and the app's only card shadow (`agenda-list.tsx:197-200`, `:247-254`). Home cards
+   draw the `surface` fill only, no stripe (`upcoming-scroller.tsx:108`, `today-timeline.tsx:210`,
+   `:344`). Owner decision: the stripe is part of the event's color; every event tile uses the grid's
+   surface + accent stripe, and the agenda shadow goes. theming.md's "no colored leading rail" rule
+   stays for generic cards and gains an explicit event-tile exception (ADR F).
 9. **Ambiguous homes.** `src/components/` has no barrel and no rule for what belongs there vs in
    `chrome/`. `chrome/` mixes two different things: thin alpha-API wrappers (ADR 010) and large
    composed product components (`native-settings.tsx` ≈ 24 KB, header, numeric editor, text
