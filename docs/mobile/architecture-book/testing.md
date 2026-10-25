@@ -93,9 +93,10 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   Environment, language, and locale-synchronizer suites own feature behavior. Geometry, ripple,
   large text, and screen-reader traversal remain the owner device checklist under ADR 060.
 - **Gallery fixtures are a test matrix.** `src/design/gallery/registry.test.ts` fails on an
-  unregistered or extra `*.gallery.tsx` file, a duplicate meta id, title or story id, a story with
-  neither `render` nor `args`, a React error in any story in light or dark on either platform
-  branch, and an interactive element without a role and label
+  unregistered or extra `*.gallery.tsx` file, a duplicate meta id, title or story id, a story export
+  missing from (or listed twice in) its meta's `stories` order, a story with neither `render` nor
+  `args`, a React error in any story in light or dark on each platform branch the story declares,
+  and an interactive element without a role and label, nested controls included
   ([accessibility.md](./accessibility.md) → Proof in CI).
   `src/design/gallery/no-storybook.contract.test.ts` fails on a Storybook or `react-native-web`
   dependency or configuration directory (ADR 064). `src/design/gallery/*.ts` is in the 90% lines and

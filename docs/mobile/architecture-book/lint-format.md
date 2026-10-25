@@ -103,8 +103,8 @@ truth; this file carries the caveats the config can't (R-1).
     lives in the Activity feature and _observes_ the held-calendar set.
   - **B-7 — the design layer knows no product** (the `design` element, `src/design`):
     `src/design/**` may not import a `feature-sublayer`, `feature-barrel`, `route`,
-    `generated-api` or `db-seam` element. It consumes `@/theme`, `@/components/chrome`, `@/i18n`
-    and `@/hooks`. The gallery registry imports fixtures from `src/components/**`, which stays
+    `generated-api` or `db-seam` element. It consumes shared seams such as `@/theme`,
+    `@/components/chrome`, `@/i18n` and `@/hooks`. The gallery registry imports fixtures from `src/components/**`, which stays
     allowed.
   - **Caveat this block exists to carry (R-1): a flat-config block that adds a ban must
     re-call `restrictedImports([...])`, never list its one pattern alone.** Flat config

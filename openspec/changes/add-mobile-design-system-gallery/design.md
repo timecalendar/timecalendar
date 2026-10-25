@@ -99,11 +99,18 @@ rendering under production can. Rejected.
 
 ```ts
 export type GalleryKey = Extract<keyof typeof en, `gallery.${string}`>
-export type GalleryMeta<P> = { id: string; title: GalleryKey; component: ComponentType<P> }
+export type GalleryPlatform = "ios" | "android"
+export type GalleryMeta<P> = {
+  id: string
+  title: GalleryKey
+  component: ComponentType<P>
+  stories: readonly string[]
+}
 export type GalleryStory<P> = {
   name: GalleryKey
   args?: Partial<P>
   render?: (args: Partial<P>) => ReactElement
+  platforms?: readonly GalleryPlatform[]
 }
 export type GalleryModule = { default: GalleryMeta<never> } & Record<string, unknown>
 ```
@@ -116,6 +123,13 @@ export type GalleryModule = { default: GalleryMeta<never> } & Record<string, unk
   the FR/EN parity typing covers them. CSF3's `name` is optional; requiring it is a narrowing, so
   modules stay CSF3-loadable (Storybook would show the key as the name, an accepted cost if
   Storybook is ever adopted).
+- `stories` lists the story export names in display order. ES module namespaces sort their keys
+  and the Babel CJS transform reorders exports, so source order is not observable; alphabetical
+  order would scatter related states. The registry test keeps `stories` equal to the module's
+  story exports, each once.
+- `platforms` names the only platforms a story can render on (absent: both). A primitive that
+  renders nothing on one platform (the Android-only floating action and radio dialog) is not
+  offered there.
 - `render(args)` receives the story's `args`. A story without `render` must declare `args` and
   renders `<meta.component {...args} />`; the registry test enforces it because `Partial<P>` cannot.
 - Stateful fixtures are named components in the fixture file (`function SwitchesFixture()`), and
@@ -131,12 +145,15 @@ export type GalleryModule = { default: GalleryMeta<never> } & Record<string, unk
 - `src/design/gallery/stories.ts` (pure, 90% tier, D9): `toStoryId(metaId, exportName)`
   (`"LongStrings"` → `long-strings`, joined `native-settings--long-strings`, Storybook's id format),
   `buildGalleryEntries(modules)` → ordered `{ id, metaId, title, name, story, component }[]`
-  (registry order, then export order, skipping `default`), and `findGalleryEntry(entries, id)`.
+  (registry order, then each meta's `stories` order), `findGalleryEntry(entries, id)` and
+  `isGalleryEntryAvailable(entry, platform)`.
 - `src/design/gallery/story-content.tsx`: `GalleryStoryContent({ entry })` renders `render(args)`
   or `<component {...args} />` inside a `flex: 1` `View`.
 - `src/design/index.ts` exports the types (`export type`), `galleryEntries`
-  (`buildGalleryEntries(galleryModules)`), `findGalleryEntry` bound to them, and
-  `GalleryStoryContent`.
+  (`buildGalleryEntries(galleryModules)`), `availableGalleryEntries()` (filtered by `Platform.OS`
+  at call time), `findGalleryEntry` bound to the available entries, and `GalleryStoryContent`.
+  The index lists `availableGalleryEntries()`; the story route redirects to the index for an id
+  that is unknown or not available on the running platform.
 - Fixtures import only types from `@/design` (`import type`), erased at build time, so the
   registry → fixture → `@/design` edge is not a runtime cycle. The fixture imports the components it
   exercises from `@/components/chrome`.
@@ -161,7 +178,7 @@ barrel; the cycle risk is handled by type-only imports. Rejected.
 
 `src/components/chrome/native-settings.gallery.tsx`, meta
 `{ id: "native-settings", title: "gallery.nativeSettings.title", component: NativeSettingsRow }`.
-Each story renders its own `NativeSettingsHost`. Stories, in export order:
+Each story renders its own `NativeSettingsHost`. Stories, in `stories` order:
 
 | Export | Content (from today's screen) |
 | --- | --- |
@@ -170,8 +187,8 @@ Each story renders its own `NativeSettingsHost`. Stories, in export order:
 | `Switches` | on and off switch rows, one with icon |
 | `Choices` | two choice rows, single selection |
 | `HeaderAndAlert` | `NativeSettingsAlert` with Retry, `NativeSettingsHeader` caption counting retries |
-| `FloatingAction` | host with `reservesFloatingAction`, `NativeSettingsFloatingAction` (Android renders it, iOS does not) |
-| `RadioDialog` | action row opening `NativeSettingsRadioDialog` (Android) over the choices |
+| `FloatingAction` | host with `reservesFloatingAction`, `NativeSettingsFloatingAction`; `platforms: ["android"]` (iOS renders no FAB) |
+| `RadioDialog` | action row opening `NativeSettingsRadioDialog` over the choices; `platforms: ["android"]` (iOS renders no radio dialog) |
 | `LongStrings` | stress: longest French copy in label, subtitle, value, hint, footer, header tagline; badge `99+` |
 
 testIDs become `gallery-native-settings-<thing>` (the `settings-gallery-*` ids go away with the
@@ -187,8 +204,12 @@ The seam has no disabled row, and adding one would be a seam change outside this
 `src/components/chrome/native-text-entry-dialog.gallery.tsx`
 (`id: "native-text-entry-dialog"`, `component: NativeTextEntryDialog`) has `Default`,
 `SubmitDisabled` (empty value, `submitDisabled`) and `Pending` (`pending`, with a validation
-message) stories, each mounting the dialog open over an empty `NativeSettingsHost` with a static
-`ids` object (`gallery-text-entry-*`). This pulls one slice-2.3 fixture forward because it is the
+message) stories with a static `ids` object (`gallery-text-entry-*`). Each mounts the dialog open
+over a `NativeSettingsHost` holding one "Open the dialog" action row
+(`gallery-text-entry-open`). Cancel, hardware Back, the iOS swipe-dismiss and Save close the
+dialog; the row reopens it. `pending` locks Cancel and the iOS swipe-dismiss, so the `Pending`
+story releases it after 3 s, and reopening starts pending again; without that, an iOS reviewer
+would have no way out of the story. This pulls one slice-2.3 fixture forward because it is the
 only disabled/pending state already in chrome, and it gives the registry two modules so the
 uniqueness checks test real data.
 
@@ -203,31 +224,58 @@ uniqueness checks test real data.
 3. Matrix: `describe.each(["ios","android"])` with `usePlatform`, `describe.each(["light","dark"])`
    with a mutable `@/hooks/use-color-scheme` mock, `it.each(galleryEntries)` rendering
    `<GalleryStoryContent entry />`. A `console.error` spy fails the test on any React error.
-4. Accessibility: in the same render, collect host elements that accept activation or change
+4. Accessibility: in the same render, collect every host element, nested ones included, that
+   accepts activation or change
    (Pressable/Touchable hosts — `onClick` / `onResponderRelease` / `onPress` — and hosts with
    `onValueChange`, `onCheckedChange`, `onSelect` or `onChange`, excluding `TextInput`). Each must
    have `accessibilityRole` (or `role`) and a non-empty accessible name (`accessibilityLabel` /
    `aria-label`, else its text content). Each `TextInput` must have a non-empty
    `accessibilityLabel`. Failures name story, platform and the element's `testID`.
 
+A nested control is not folded into its ancestor. Compose merging stops at a child with its own
+click or toggle semantics, so TalkBack gives a nested control its own stop; the check catches it.
+The mocks follow the real controls: a Compose `RadioButton` is a control only with `onClick`
+(Expo UI passes `clickable: onClick != null`), and a Compose `Switch` is always one (Expo UI's
+`SwitchView` always passes Compose a non-null `onCheckedChange`) unless it carries
+`clearAndSetSemantics()`.
+
 The check reads what the suite-wide mocks project. If a fixture fails because a mock drops a
 modifier the real native control carries, fix the mock to project it; never exempt the story.
 Inject-and-revert proof: add an unlabeled `Pressable` to one story, confirm the test fails, revert.
 Host tests do not claim VoiceOver/TalkBack quality (testing.md).
+
+### D8a. The Android switch row is one TalkBack stop
+
+`ComposeSettingsSwitchRow` is a `ListItem` with `toggleable(value, toggle, { role: "switch" })`
+and a trailing Material `Switch`. Expo UI 56 has no way to pass Compose a null `onCheckedChange`
+and no semantics-clearing modifier, so the `Switch` would be a second, unlabeled "Switch" stop.
+A local Android-only Expo module, `mobile/modules/compose-semantics`, registers
+`clearAndSetSemantics` into `ModifierRegistry` (Expo UI's documented extension path for custom
+Compose modifiers) and exports `clearAndSetSemantics()` as a modifier config. The trailing
+`Switch` carries it: Compose discards the switch's toggleable semantics, the switch keeps its
+pointer input, and the row is the single labeled switch. The row carries `switchTestID ?? testID`,
+the id the iOS Toggle carries, so one id reaches the one control on both platforms (Maestro's
+`user-calendar-visibility-<id>` tap keeps working).
+
+Alternatives: a disabled `Switch` (still a focusable, merging node announced as disabled);
+dropping row toggling and labeling the `Switch` (no `contentDescription` modifier in Expo UI 56);
+an allowlist in the check (leaves the real defect). Rejected.
 
 ### D9. Coverage tier for the gallery logic
 
 Add `"src/design/gallery/*.ts": { lines: 90, branches: 90 }` to `coverageThreshold`. It covers
 `stories.ts` and `registry.ts` (`types.ts` has no statements); the `.tsx` fixtures and
 `story-content.tsx` stay in the 70% global tier with presentational code (ADR 003).
-`stories.test.ts` covers every branch with synthetic modules (args-only story, `default` skip,
-not-found lookup, multi-word export names).
+`stories.test.ts` covers every branch with synthetic modules (args-only story, `stories` order,
+platform availability, not-found lookup, multi-word export names).
 
 ### D10. Strings
 
 - Add `gallery.title` ("Component gallery" / "Galerie de composants"),
   `gallery.nativeSettings.title`, `gallery.nativeSettings.story.<name>` per story,
-  `gallery.nativeSettings.*` copy, `gallery.textEntryDialog.*` (title, story names, dialog copy).
+  `gallery.nativeSettings.*` copy, `gallery.textEntryDialog.*` (title, story names, dialog copy,
+  the `open` row), and `gallery.openStory.hint` ("Opens this component state" / "Ouvre cet état
+  du composant") on every index row.
 - Remove every `settingsGallery.*` key.
 - `developer.gallery.label` becomes "Component gallery" / "Galerie de composants";
   `developer.gallery.hint` becomes "Every component state, one screen each" /

@@ -27,11 +27,11 @@ unless a split helps review.
       fails to compile (delete it).
 - [x] 2.2 Create `src/design/gallery/stories.ts` per D4: `toStoryId(metaId, exportName)`
       (camelCase/PascalCase export → kebab, `"<metaId>--<kebab>"`), `buildGalleryEntries(modules)`
-      (registry order then export order, skips `default`) and `findGalleryEntry(entries, id)`
-      (returns `undefined` when absent). Verify: §2.3 passes.
+      (registry order then each meta's `stories` order), `findGalleryEntry(entries, id)`
+      (returns `undefined` when absent) and `isGalleryEntryAvailable(entry, platform)`. Verify: §2.3 passes.
 - [x] 2.3 Create `src/design/gallery/stories.test.ts` with synthetic modules covering every
-      branch: single-word and multi-word export names, an args-only story, the `default` skip,
-      ordering, found and not-found lookup. Verify:
+      branch: single-word and multi-word export names, an args-only story, `stories` ordering,
+      platform availability, found and not-found lookup. Verify:
       `npx jest src/design/gallery/stories.test.ts --coverage --collectCoverageFrom='src/design/gallery/*.ts'`
       reports 100% branches on `stories.ts`.
 - [x] 2.4 Create `src/design/gallery/story-content.tsx`: `GalleryStoryContent({ entry })` renders
@@ -62,8 +62,9 @@ unless a split helps review.
       `npx tsc --noEmit`; `npx eslint src/components/chrome/native-settings.gallery.tsx` clean.
 - [x] 3.2 Create `src/components/chrome/native-text-entry-dialog.gallery.tsx` per D7: meta
       `{ id: "native-text-entry-dialog", title: "gallery.textEntryDialog.title", component: NativeTextEntryDialog }`,
-      stories `Default`, `SubmitDisabled`, `Pending`, each a named fixture component rendering an
-      empty `NativeSettingsHost` and the open dialog with a static `ids` object
+      stories `Default`, `SubmitDisabled`, `Pending`, each a named fixture component rendering a
+      `NativeSettingsHost` with the reopen row and the dialog (open on mount, closed by Cancel/Save,
+      `Pending` released after 3 s) with a static `ids` object
       (`gallery-text-entry-*` testIDs), `gallery.textEntryDialog.*` copy, `inputKind="text"`.
       Verify: `npx tsc --noEmit`; eslint clean on the file.
 - [x] 3.3 Create `src/components/chrome/native-settings.gallery.test.tsx` porting the behavioral
@@ -84,7 +85,8 @@ unless a split helps review.
       `NativeSettingsHost` with one `NativeSettingsSection` per fixture (title `t(meta.title)`,
       testID `gallery-section-<metaId>`) and one `kind="navigation"` row per story (label
       `t(entry.name)`, `href={{ pathname: "/developer/gallery/[story]", params: { story: entry.id } }}`,
-      testID `gallery-story-<id>`). Group from `galleryEntries` in order. Verify: `npx tsc --noEmit`.
+      hint `t("gallery.openStory.hint")`, testID `gallery-story-<id>`). Group from
+      `availableGalleryEntries()` in order. Verify: `npx tsc --noEmit`.
 - [x] 4.3 Create `src/features/developer/ui/gallery-story-screen.tsx` (`GalleryStoryScreen`): gate
       first; read `story` with `useLocalSearchParams<{ story: string }>()`; unknown id →
       `<Redirect href="/developer/gallery" />`; else
@@ -211,8 +213,33 @@ unless a split helps review.
       `gallery.*` strings, the new tests, lint and coverage tier, ADR 064 and the accessibility
       recipe. Current state only, no history wording, in every touched doc. Verify:
       `npx prettier --check` on every touched Markdown file.
+- [x] 7.9 `runtime.md`: the `mobile/modules/compose-semantics` local module (D8a). `theming.md`:
+      the Android switch row is one toggleable `ListItem` with a semantics-cleared trailing
+      `Switch`. `accessibility.md`: nested controls are checked on their own.
 - [ ] 7.8 Update the Purpose of `openspec/specs/mobile-developer-page/spec.md` at archive time to
       name the component gallery instead of the settings gallery entry.
+
+## 7a. Review fixes
+
+- [x] 7a.1 Dialog stories are escapable (D7): `open` state, Cancel/Save close, the
+      `gallery-text-entry-open` row reopens, `Pending` releases after 3 s.
+      `native-text-entry-dialog.gallery.test.tsx` proves cancel → closed, reopen, save → closed and
+      the pending release on both platforms.
+- [x] 7a.2 Nested controls (D8, D8a): drop the interactive-ancestor skip from
+      `registry.test.ts`; the Compose `RadioButton` mock is a control only with `onClick`, the
+      `Switch` mock unless it carries `clearAndSetSemantics()`; create
+      `mobile/modules/compose-semantics` and give the switch row's trailing `Switch` that modifier,
+      the row `switchTestID ?? testID`. Update `native-settings.test.tsx` and
+      `settings-screen.test.tsx`. Inject-and-revert: removing the modifier fails the Android
+      `switches` and `long-strings` stories.
+- [x] 7a.3 Explicit story order (D3): `GalleryMeta.stories`, `buildGalleryEntries` follows it, the
+      registry test keeps it equal to the story exports.
+- [x] 7a.4 `platforms` on stories; `FloatingAction` and `RadioDialog` are Android-only; the index
+      hides and the story route redirects off-platform stories.
+- [x] 7a.5 `gallery.openStory.hint` on index rows; the Settings Developer row reads
+      `isDeveloperSurfaceEnabled()`; B-7 lint message and `architecture.md` Structure wording.
+- [ ] 7a.6 Android build compiling `modules/compose-semantics` and a TalkBack pass over a switch
+      row (HUMAN: see inbox/2026-10-25-mobile-design-system-gallery-device-pass.md)
 
 ## 8. Local verification
 

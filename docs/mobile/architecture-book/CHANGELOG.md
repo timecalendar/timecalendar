@@ -10,12 +10,21 @@
   page's Design row opens the gallery.
 - Fixtures are CSF3-shaped `*.gallery.tsx` modules (`native-settings`, eight stories including
   long French strings; `native-text-entry-dialog`, default, submit-disabled and pending) listed in
-  the explicit `src/design/gallery/registry.ts`, behind the `@/design` barrel. Titles and story
-  names are typed `gallery.*` keys in FR and EN.
+  the explicit `src/design/gallery/registry.ts`, behind the `@/design` barrel. Each meta lists its
+  story export names in display order (`stories`); a story may declare `platforms`, and the index
+  and story route offer it only there (`FloatingAction` and `RadioDialog` are Android-only). Dialog
+  stories close on Cancel and Save and reopen from a row behind them. Titles, story names and the
+  index row hint are typed `gallery.*` keys in FR and EN.
+- The Android switch row is one TalkBack stop: the toggleable `ListItem` carries
+  `switchTestID ?? testID` (the iOS Toggle's id) and its trailing Material `Switch` carries
+  `clearAndSetSemantics()`, registered into Expo UI by the local `mobile/modules/compose-semantics`
+  module ([runtime.md](./runtime.md), [theming.md](./theming.md)). The jest Compose `Switch` mock
+  stays a control unless its semantics are cleared, and `RadioButton` is a control only with
+  `onClick`.
 - `/settings-gallery` and the `settingsGallery.*` strings no longer exist.
-- Tests: `registry.test.ts` (orphans, uniqueness, light/dark × iOS/Android render matrix, role and
-  label on every interactive element), `no-storybook.contract.test.ts`, the developer-routes
-  contract and the gallery screen suites. `src/design/gallery/*.ts` joins the 90% lines and
+- Tests: `registry.test.ts` (orphans, uniqueness, meta story order, light/dark × iOS/Android render
+  matrix, role and label on every interactive element, nested controls included),
+  `no-storybook.contract.test.ts`, the developer-routes contract and the gallery screen suites. `src/design/gallery/*.ts` joins the 90% lines and
   branches tier.
 - Lint: `@/design/*` deep imports are banned outside `src/design/**` (`banDesignDeepImports`,
   `timecalendar/design-home`); B-7 forbids `src/design/**` from importing features, routes,

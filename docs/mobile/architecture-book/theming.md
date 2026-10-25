@@ -206,7 +206,11 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
     margins, no dividers, and no chevron. Headlines are `bodyLarge`/`onSurface`, supporting values
     `bodyMedium`/`onSurfaceVariant`, footers `bodySmall`/`onSurfaceVariant`. Row icons are flat
     Material Symbols tinted `onSurfaceVariant` in the leading slot. The radio dialog is a
-    `selectableGroup` Column of full-width 56dp radio rows.
+    `selectableGroup` Column of full-width 56dp radio rows. A switch row is one toggleable
+    `ListItem` (role switch) carrying `switchTestID ?? testID`, the id the iOS Toggle carries; its
+    trailing Material `Switch` keeps its touch target but carries `clearAndSetSemantics()`
+    (`mobile/modules/compose-semantics`), so TalkBack meets one stop. Choice and radio-dialog
+    `RadioButton`s take no `onClick` and add no semantics of their own.
   - **Row subtitle and destructive rows:** a row `subtitle` is a second line under the label (iOS
     `subheadline`/`textSecondary` in a leading VStack; Android the supporting slot, which moves any
     `value` to trailing `labelLarge`/`onSurfaceVariant` text). The default accessibility label reads

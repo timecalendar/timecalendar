@@ -69,10 +69,16 @@ Mock fixes the matrix required (`jest/setup-expo-ui.ts`), each tracking the real
 - Compose `OutlinedTextField` projects its `Label` slot text as the `TextInput`
   `accessibilityLabel`, which is what TalkBack announces.
 
-The check treats a control nested inside another control as part of the outer node (SwiftUI
-Button content and Compose `mergeDescendants`). This covers the trailing Material `RadioButton`
-and `Switch` inside the choice and switch rows. Whether TalkBack gives the trailing `Switch`
-(which has `onCheckedChange` set) a focus stop of its own stays a question for the 8.5 device pass.
+- Compose `RadioButton` is a control only with `onClick` (Expo UI passes
+  `clickable: onClick != null`). Compose `Switch` is always a control (Expo UI's `SwitchView`
+  always passes a non-null `onCheckedChange`) unless it carries `clearAndSetSemantics()`.
+
+The check covers nested controls: Compose merging stops at a child with its own click or toggle
+semantics. Inject-and-revert: with `clearAndSetSemantics()` removed from the switch row's trailing
+`Switch` in `native-settings.tsx`, `npx jest src/design/gallery/registry.test.ts` fails 4 tests
+(Android light and dark × `native-settings--switches` and `native-settings--long-strings`), each
+reporting `"undefined missing label"` for the bare switch; restored, all 44 pass. Whether the Kotlin
+module compiles and TalkBack meets one stop per switch row is the Android device pass.
 
 ## 6.2 No-Storybook contract
 
@@ -112,9 +118,9 @@ afterwards.
 - Settings → Developer: the Design section shows "Component gallery" with a chevron; tapping it
   opens `/developer/gallery` with the native header "Component gallery" and back button
   "Developer".
-- Index: two sections, "Native settings" (Choices, Destructive action, Floating action, Header
-  and alert, Long strings, Radio dialog, Rows, Switches) and "Text entry dialog" (Default,
-  Pending, Submit disabled); each row is one `AXButton` with its story name.
+- Index: two sections, "Native settings" and "Text entry dialog"; each row is one `AXButton` with
+  its story name. Row order (meta `stories`) and the absence of the Android-only stories on iOS
+  are pinned by `gallery-index-screen.test.tsx`; this pass does not cover them.
 - `timecalendar-dev://developer/gallery/native-settings--switches` from a running app opens the
   story directly with the native header "Switches"; accessibility tree: `AXButton "Switch on"
   value="1"`, `AXButton "Switch off" value="0"`.

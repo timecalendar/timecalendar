@@ -18,6 +18,14 @@ stories, and record pass or fail per line:
   stops are the back button and the story title; each row is one stop with its label, value and
   role; switches and choices announce their state; decorative icons are not stops; the disabled
   Save announces as dimmed/disabled.
+- **Android switch rows (new native code):** the Android build compiles the local
+  `mobile/modules/compose-semantics` module (it registers the `clearAndSetSemantics` Compose
+  modifier into Expo UI). On `native-settings--switches`, TalkBack meets each switch row once,
+  announcing "<label>, Switch, On/Off", with no extra unlabeled "Switch" stop on the trailing
+  thumb; tapping the row or the thumb toggles once. Maestro `03-calendar-visibility` still taps
+  `user-calendar-visibility-<id>` on Android.
+- **Dialog stories:** Cancel, Back and Save close the text-entry dialog and "Open the dialog"
+  reopens it; on `native-text-entry-dialog--pending`, Cancel works after about three seconds.
 - **Preview build:** `/developer/gallery` opens from Settings → Developer → Component gallery on a
   TestFlight or Play internal preview build, and a story renders its real SwiftUI/Compose controls.
 

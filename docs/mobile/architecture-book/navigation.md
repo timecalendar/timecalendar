@@ -61,7 +61,9 @@ Design (the component gallery entry, `/developer/gallery`). The environment sele
 block in `mobile/eslint.config.js`.
 
 **Component gallery.** `/developer/gallery` (`src/app/developer/gallery.tsx`) lists every
-registered fixture as a native settings section with one navigation row per story.
+registered fixture as a native settings section with one navigation row per story, in the order
+the fixture meta's `stories` array declares. A story whose `platforms` excludes the running OS is
+not listed, and its deep link redirects to the index like an unknown id.
 `/developer/gallery/[story]` (`src/app/developer/gallery/[story].tsx`) renders one story as the
 whole screen under the compact native header titled with the story's translated name, with no
 gallery chrome around it, so focus order and Back are what ships. Story ids are

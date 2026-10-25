@@ -12,8 +12,10 @@ and preview builds.
 ### Requirement: Fixtures are CSF3-shaped modules with no Storybook dependency
 
 Each fixture module SHALL be a `*.gallery.tsx` file colocated with the component it exercises. Its
-default export SHALL be a meta object with a stable kebab-case `id`, a `title` and the `component`;
-each named export SHALL be a story with a `name` and an optional `args` and/or `render`, so the
+default export SHALL be a meta object with a stable kebab-case `id`, a `title`, the `component` and
+a `stories` array listing every story export name exactly once in display order; each named export
+SHALL be a story with a `name`, an optional `args` and/or `render`, and an optional `platforms`
+list naming the only platforms that can render it, so the
 module stays loadable by Component Story Format 3 tooling as a configuration change. A fixture's
 `title` and every story `name` SHALL be translation keys in the `gallery.*` namespace, checked at
 compile time. A story without `render` SHALL declare `args`, and SHALL render the meta component
@@ -23,6 +25,12 @@ with them. No fixture, type or gallery module SHALL import Storybook.
 
 - **WHEN** a story declares a `name` that is not a `gallery.*` catalog key
 - **THEN** `npx tsc --noEmit` fails
+
+#### Scenario: A story missing from the meta order is rejected
+
+- **WHEN** a fixture module exports a story its meta's `stories` array does not list, or lists one
+  twice
+- **THEN** the registry test fails
 
 #### Scenario: A story without render or args is rejected
 
@@ -70,9 +78,18 @@ no registered story SHALL redirect to the gallery index.
 
 `/developer/gallery` SHALL render, under the compact native header with a localized title, one
 native settings section per registered fixture module (titled with the fixture's translated
-title, in registry order) and one navigation row per story (labeled with the story's translated
-name, in export order) that opens the story route. Rows SHALL follow the native settings row
+title, in registry order) and one navigation row per story available on the running platform
+(labeled with the story's translated name and a localized hint, in the order the meta's `stories`
+array declares) that opens the story route. Explicit order keeps related states together
+(`Rows`, `Destructive`, `Switches`, `Choices` first) where alphabetical export order would scatter
+them, and module namespaces expose no source order. Rows SHALL follow the native settings row
 contract (one focus stop, link/button role, disclosure, decorative icons hidden).
+
+#### Scenario: A platform-scoped story is offered only on its platform
+
+- **WHEN** the index renders on iOS
+- **THEN** the Android-only `native-settings--floating-action` and `native-settings--radio-dialog`
+  rows are absent, and opening either story id redirects to `/developer/gallery`
 
 #### Scenario: Activating a story row opens it
 
@@ -95,9 +112,9 @@ ships.
 
 ### Requirement: Every story renders in both schemes on both platforms
 
-Automated tests SHALL render every registered story in the light and dark schemes on the iOS and
-Android platform branches under the suite-wide native mocks, without throwing and without React
-errors logged.
+Automated tests SHALL render every registered story in the light and dark schemes on each of the
+iOS and Android platform branches the story is available on, under the suite-wide native mocks,
+without throwing and without React errors logged.
 
 #### Scenario: A fixture that crashes in dark mode fails CI
 
@@ -107,14 +124,22 @@ errors logged.
 ### Requirement: Every interactive element in a story is accessible
 
 In every story, on both platform branches, every host element that accepts a press, a value
-change or a selection SHALL expose an accessibility role and a non-empty accessibility label.
-Text inputs SHALL expose a non-empty label. The check SHALL run in the same matrix as rendering
-and SHALL NOT allow per-story exemptions.
+change or a selection SHALL expose an accessibility role and a non-empty accessibility label,
+including a control nested inside another control: Compose stops merging at a child with its own
+click or toggle semantics, so the nested control is a separate TalkBack stop. Text inputs SHALL
+expose a non-empty label. The check SHALL run in the same matrix as rendering and SHALL NOT allow
+per-story exemptions.
 
 #### Scenario: An unlabeled control fails CI
 
 - **WHEN** a story renders a pressable element without an accessibility label
 - **THEN** the registry test fails naming the story, platform and element
+
+#### Scenario: An Android switch row is one TalkBack stop
+
+- **WHEN** a switch row renders on Android
+- **THEN** the toggleable row is the only switch control, and its trailing Material `Switch`
+  carries `clearAndSetSemantics()` so it adds no focus stop of its own
 
 ### Requirement: Fixtures cover named stress states
 
@@ -122,7 +147,14 @@ The native settings fixture SHALL be split into named stories covering every sea
 of each kind, destructive action, switches, choices, header and alert, floating action, radio
 dialog) and SHALL include at least one stress story that renders the longest French copy in row
 labels, subtitles, values, hints and section footers. The native text-entry dialog fixture SHALL
-include a disabled-submit story and a pending story.
+include a disabled-submit story and a pending story. Every dialog story SHALL leave a way out:
+Cancel, hardware Back and Save close the dialog, and a row behind it reopens it. The pending story
+SHALL release its lock after a few seconds so Cancel and the iOS swipe-dismiss work.
+
+#### Scenario: A dialog story can be dismissed and reopened
+
+- **WHEN** the user cancels the text-entry dialog in a story
+- **THEN** the dialog closes and the "open the dialog" row reopens it
 
 #### Scenario: Stress states are deep-linkable
 
