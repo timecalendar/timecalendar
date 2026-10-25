@@ -58,7 +58,9 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark
  * DoD's manual color-contrast review checks rendered screens against (design D5).
  * AA is 4.5:1 for body / 3:1 for large text (titles ≥ 18.66px bold or ≥ 24px) and
  * UI components. `src/theme/theme.test.tsx` computes every opaque pair below against
- * its floor, so a pair added here needs a row in its `documentedPairs` table. Which
+ * its floor, so a pair added here needs a row in `documentedContrastPairs`
+ * (`src/theme/contrast.ts`, also drawn by the `design-tokens--contrast-pairs`
+ * gallery story). Which
  * token lands on which background at a given site stays a manual review (the same
  * authorial-intent gap that keeps the heading role in ThemedText, not in lint).
  *

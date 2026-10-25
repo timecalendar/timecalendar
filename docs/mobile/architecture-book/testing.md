@@ -101,7 +101,18 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   too ([accessibility.md](./accessibility.md) → Proof in CI).
   `src/design/gallery/no-storybook.contract.test.ts` fails on a Storybook or `react-native-web`
   dependency or configuration directory (ADR 064). `src/design/gallery/*.ts` is in the 90% lines and
-  branches tier; fixtures and `story-content.tsx` sit in the 70% global floor.
+  branches tier; fixtures under `src/components/` and `story-content.tsx` sit in the 70% global
+  floor, and `src/theme/tokens.gallery.tsx` in the `src/theme/**` 90% tier.
+- **Every design primitive ships with a fixture and a test (L10).**
+  `src/design/gallery/fixture-coverage.contract.test.ts` fails, naming the module, when a `.tsx`
+  under `src/design/` (other than tests, fixtures and the `galleryInfrastructure` list) has no
+  sibling `*.gallery.tsx` or `*.test.tsx`, and fails when a `galleryInfrastructure` entry no longer
+  exists.
+- **A stateful fixture has a `*.gallery.test.tsx`** next to it that drives its stories (presses,
+  dialog close and reopen, menu selection, a date pick), using the suite-wide native mocks. The
+  `@expo/ui/community/menu` mock wraps the trigger as each platform does: a button on iOS (the
+  SwiftUI `Menu` label), a non-accessible view on Android (the children carry the role and call
+  `show()`). The `@expo/ui/community/datetime-picker` mock forwards its props and maps `disabled`.
 
 ## E2E — Maestro, real round-trip
 

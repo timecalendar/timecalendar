@@ -41,13 +41,30 @@ describe.each(["ios", "android"] as const)(
         screen
           .getAllByTestId(/^gallery-section-/)
           .map((node) => node.props.testID),
-      ).toEqual([
-        "gallery-section-native-settings",
-        "gallery-section-native-text-entry-dialog",
-      ])
+      ).toEqual(
+        [
+          "root-page",
+          "keyboard-safe-action-layout",
+          "themed-text",
+          "empty-state",
+          "error-surfaces",
+          "primary-action",
+          "native-settings",
+          "native-text-entry-dialog",
+          "native-settings-numeric-editor",
+          "menu-view",
+          "date-time-picker",
+          "glass-surface",
+          "design-tokens",
+        ].map((id) => `gallery-section-${id}`),
+      )
       const androidOnly = [
         "native-settings--floating-action",
         "native-settings--radio-dialog",
+      ]
+      const iosOnly = [
+        "date-time-picker--date-time",
+        "date-time-picker--disabled",
       ]
       expect(
         screen
@@ -57,6 +74,31 @@ describe.each(["ios", "android"] as const)(
           ),
       ).toEqual(
         [
+          "root-page--default",
+          "root-page--caption-only",
+          "root-page--scrolls-under-header",
+          "root-page--readable-lane",
+          "root-page--long-strings",
+          "keyboard-safe-action-layout--default",
+          "keyboard-safe-action-layout--fills-viewport",
+          "keyboard-safe-action-layout--long-strings",
+          "themed-text--ramp",
+          "themed-text--tones",
+          "themed-text--long-strings",
+          "empty-state--screen",
+          "empty-state--screen-with-artwork",
+          "empty-state--section",
+          "empty-state--long-strings",
+          "error-surfaces--state",
+          "error-surfaces--state-busy",
+          "error-surfaces--notice",
+          "error-surfaces--notice-compact",
+          "error-surfaces--field-error",
+          "error-surfaces--long-strings",
+          "primary-action--default",
+          "primary-action--disabled",
+          "primary-action--busy",
+          "primary-action--long-strings",
           "native-settings--rows",
           "native-settings--destructive",
           "native-settings--switches",
@@ -68,7 +110,32 @@ describe.each(["ios", "android"] as const)(
           "native-text-entry-dialog--default",
           "native-text-entry-dialog--submit-disabled",
           "native-text-entry-dialog--pending",
-        ].filter((id) => platform === "android" || !androidOnly.includes(id)),
+          "native-settings-numeric-editor--default",
+          "native-settings-numeric-editor--validation-error",
+          "native-settings-numeric-editor--long-strings",
+          "menu-view--default",
+          "menu-view--states",
+          "menu-view--long-strings",
+          "date-time-picker--date",
+          "date-time-picker--time",
+          "date-time-picker--date-time",
+          "date-time-picker--bounded",
+          "date-time-picker--disabled",
+          "glass-surface--regular",
+          "glass-surface--clear",
+          "glass-surface--interactive-button",
+          "glass-surface--long-strings",
+          "design-tokens--colors",
+          "design-tokens--contrast-pairs",
+          "design-tokens--spacing",
+          "design-tokens--radii",
+          "design-tokens--icon-sizes",
+          "design-tokens--elevation",
+        ].filter((id) =>
+          platform === "android"
+            ? !iosOnly.includes(id)
+            : !androidOnly.includes(id),
+        ),
       )
       expect(
         screen.getByTestId("gallery-story-native-text-entry-dialog--pending"),

@@ -1,3 +1,21 @@
+## 2026-10-25 — Gallery fixtures for shared components
+
+- The gallery holds one fixture per shared primitive: `root-page`, `keyboard-safe-action-layout`,
+  `themed-text`, `empty-state`, `error-surfaces`, `primary-action`,
+  `native-settings-numeric-editor`, `menu-view`, `date-time-picker`, `glass-surface`, and the
+  `design-tokens` page, each with a default story, a `long-strings` story where it shows copy, and
+  one story per state ([features.md](./features.md) → Design system gallery). Stateful fixtures
+  have a colocated `*.gallery.test.tsx`.
+- The WCAG `contrastRatio` helper and `documentedContrastPairs` live in `src/theme/contrast.ts`;
+  `theme.test.tsx` asserts them and `design-tokens--contrast-pairs` draws them
+  ([theming.md](./theming.md) → Contrast).
+- A story opened by a deep link puts the gallery index beneath itself, so Back returns to the index
+  ([navigation.md](./navigation.md) → Component gallery).
+- L10: `fixture-coverage.contract.test.ts` requires a sibling `*.gallery.tsx` and `*.test.tsx` for
+  every `.tsx` under `src/design/` outside its helper list ([testing.md](./testing.md)).
+- The `@expo/ui/community/menu` mock wraps the trigger as a button on iOS and as a non-accessible
+  view on Android; the date-time picker mock forwards its props and maps `disabled`.
+
 ## 2026-10-25 — Accessibility device findings
 
 - ADR [065](./decisions/065-icon-text-scaling.md): icons declare their text scaling, and Android

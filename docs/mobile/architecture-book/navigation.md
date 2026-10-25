@@ -69,8 +69,12 @@ whole screen under the compact native header titled with the story's translated 
 gallery chrome around it, so focus order and Back are what ships. Story ids are
 `<meta id>--<kebab-case export name>` and deep-link as
 `timecalendar-dev://developer/gallery/<id>` (`timecalendar://…` on preview builds); an unknown id
-redirects to the index. A cold deep link puts `(tabs)` beneath the story, so Back returns to the
-tabs. Both routes are layout-less root Stack siblings of `developer.tsx`, the `user-calendars`
+redirects to the index. A story opened by a cold or warm deep link puts the gallery index beneath
+itself on mount (`useGalleryIndexAnchor`, `src/features/developer/ui/gallery-anchor.ts`): it resets
+the root Stack with the same routes and keys plus `developer/gallery` under the story, so Back
+returns to the index and then to where the app was. A story opened from the index leaves the stack
+alone. `gallery-anchor.test.ts` covers the cold, warm and already-anchored stacks, and
+`gallery-story-screen.test.tsx` asserts no reset on a redirect. Both routes are layout-less root Stack siblings of `developer.tsx`, the `user-calendars`
 shape: never add `developer/_layout.tsx` or `developer/gallery/index.tsx`.
 
 **One gate for the `/developer` subtree.** Every screen of the subtree starts with
