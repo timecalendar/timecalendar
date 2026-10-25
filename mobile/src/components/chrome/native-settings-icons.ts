@@ -5,7 +5,11 @@ const materialSymbols = {
   add: require("@/assets/icons/material/add.xml") as ImageSourcePropType,
   calendar_month:
     require("@/assets/icons/material/calendar_month.xml") as ImageSourcePropType,
+  developer_mode:
+    require("@/assets/icons/material/developer_mode.xml") as ImageSourcePropType,
   dns: require("@/assets/icons/material/dns.xml") as ImageSourcePropType,
+  download:
+    require("@/assets/icons/material/download.xml") as ImageSourcePropType,
   event_note:
     require("@/assets/icons/material/event_note.xml") as ImageSourcePropType,
   feedback:

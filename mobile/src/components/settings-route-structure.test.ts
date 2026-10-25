@@ -85,6 +85,16 @@ describe("Settings route structure", () => {
     )
   })
 
+  it("keeps the developer page as a thin titled root destination", () => {
+    expect(route("developer.tsx").trim()).toBe(
+      'export { DeveloperScreen as default } from "@/features/developer/ui"',
+    )
+    expect(route("_layout.tsx")).toContain('<Stack.Screen name="developer" />')
+    expect(route("../features/developer/ui/developer-screen.tsx")).toContain(
+      'title: t("developer.title")',
+    )
+  })
+
   it("redirects legacy Profile and More routes to canonical Settings", () => {
     expect(route("profile.tsx")).toContain('<Redirect href="/settings" />')
     expect(route("more.tsx")).toContain('<Redirect href="/settings" />')

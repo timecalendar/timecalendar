@@ -1,3 +1,18 @@
+## 2026-10-25 — Developer page
+
+- `/developer` is a root Stack sibling (compact header, `src/app/developer.tsx` over
+  `src/features/developer/ui`) that redirects to `/settings` when the backend capability is
+  `production`.
+- It holds three sections: Backend (`EnvironmentSettingsControl`), Test data (import a calendar
+  by token, pushing `/dev-import`; development variant only) and Design (the `/settings-gallery`
+  entry).
+- The Settings hub carries one developer-related element: a last Developer section with a single
+  row to `/developer`, rendered when the capability is not `production`.
+- Lint: `EnvironmentSettingsControl` and `@/features/environment/ui/**` are banned outside
+  `src/features/developer/**` and `src/features/environment/**` (`banDeveloperTools`,
+  `timecalendar/developer-tools-home`).
+- `navigation.md`, `features.md` and `lint-format.md` follow.
+
 ## 2026-10-25 — Platform type ramp and ThemedText tone
 
 - `src/theme/typography.ts` defines `TypeRamp` (exported from `@/theme` with `TypeVariant` and

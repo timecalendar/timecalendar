@@ -23,10 +23,9 @@ jest.mock("@/features/activity", () => ({
 }))
 jest.mock("expo-router", () => ({ router: { push: jest.fn() } }))
 
-let mockCapability: "development" | "production" = "production"
+let mockCapability: "development" | "preview" | "production" = "production"
 jest.mock("@/features/environment", () => ({
   getBackendEnvironmentCapability: () => mockCapability,
-  EnvironmentSettingsControl: () => null,
 }))
 
 const mockCalendars = useUserCalendars as jest.Mock
@@ -94,7 +93,7 @@ describe.each(["ios", "android"] as const)(
           "bell",
           "info.circle",
           "bubble.left.and.text.bubble.right",
-          "square.grid.2x2",
+          "hammer",
         ]) {
           expect(view.getByTestId(`swiftui-image-${symbol}`)).toBeOnTheScreen()
         }
@@ -119,7 +118,7 @@ describe.each(["ios", "android"] as const)(
   },
 )
 
-it("preserves loading, empty, populated, badge, and environment states", async () => {
+it("preserves loading, empty, populated, badge, and developer states", async () => {
   mockLoaded.mockReturnValue(false)
   const view = await render(<SettingsScreen />)
   expect(
@@ -136,7 +135,27 @@ it("preserves loading, empty, populated, badge, and environment states", async (
   await view.rerender(<SettingsScreen />)
   expect(view.getByText("2 calendars")).toBeOnTheScreen()
   expect(view.getByText("99+")).toBeOnTheScreen()
-  expect(view.getByTestId("settings-section-environment")).toBeOnTheScreen()
-  await fireEvent.press(view.getByTestId("settings-gallery"))
-  expect(mockPush).toHaveBeenCalledWith("/settings-gallery")
+  expect(view.getByTestId("settings-section-developer")).toBeOnTheScreen()
+  for (const id of [
+    "settings-section-environment",
+    "settings-environment",
+    "settings-gallery",
+  ]) {
+    expect(view.queryByTestId(id)).toBeNull()
+  }
+  await fireEvent.press(view.getByTestId("settings-developer"))
+  expect(mockPush).toHaveBeenCalledWith("/developer")
+})
+
+it("shows the developer row on preview builds", async () => {
+  mockCapability = "preview"
+  const view = await render(<SettingsScreen />)
+  expect(view.getByTestId("settings-section-developer")).toBeOnTheScreen()
+  expect(view.getByTestId("settings-developer")).toBeOnTheScreen()
+})
+
+it("hides the developer section in production", async () => {
+  const view = await render(<SettingsScreen />)
+  expect(view.queryByTestId("settings-section-developer")).toBeNull()
+  expect(view.queryByTestId("settings-developer")).toBeNull()
 })

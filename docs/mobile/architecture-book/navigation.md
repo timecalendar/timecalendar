@@ -46,7 +46,17 @@ The Settings tab root is the one titled-tab exception: its nested Stack shows a 
 (`headerLargeTitle: true`) that collapses into the compact bar on scroll. Every Settings destination
 pushed on the root Stack stays compact.
 
-`/settings-gallery` is a dev-only root sibling reached from the Settings hub's environment section.
+**Developer page.** `/developer` is a root Stack sibling with the compact header, reached from the
+Settings hub's Developer section (the hub's last section, rendered only when the backend capability
+is not `production`). It redirects to `/settings` when the capability is `production`. It hosts
+three sections: Backend (the environment entry, the only place `EnvironmentSettingsControl` is
+mounted), Test data (import a calendar by token through the native text-entry dialog, which pushes
+`/dev-import?token=…`; rendered only on the development variant, where that screen acts), and
+Design (the `/settings-gallery` entry). The environment control's home is enforced by the
+`banDeveloperTools` flag of `restrictedImports` and its `timecalendar/developer-tools-home` opt-out
+block in `mobile/eslint.config.js`.
+
+`/settings-gallery` is a dev-only root sibling reached from the developer page.
 It renders every `native-settings` primitive for a one-pass device check in both schemes and
 redirects to `/settings` when the backend capability is `production`, matching the environment
 control's gate.
