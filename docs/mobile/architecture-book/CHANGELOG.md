@@ -30,6 +30,10 @@
 - Lint: `@/design/*` deep imports are banned outside `src/design/**` (`banDesignDeepImports`,
   `timecalendar/design-home`); B-7 forbids `src/design/**` from importing features, routes,
   `@/api/generated` or `@/db` ([lint-format.md](./lint-format.md)).
+- React Doctor: `mobile/react-doctor.config.json` turns `react-doctor/no-multi-component-file`
+  off for `src/**/*.gallery.tsx` only, since a fixture file holds one component per story; pinned
+  by `react-doctor.config.test.ts` ([../react-doctor.md](../react-doctor.md) → Configured
+  exceptions).
 - ADR [064](./decisions/064-in-house-component-gallery.md): in-house gallery instead of
   Storybook, frozen scope. [accessibility.md](./accessibility.md) carries the device
   accessibility recipe.

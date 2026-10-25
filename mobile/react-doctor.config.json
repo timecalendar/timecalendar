@@ -1,0 +1,10 @@
+{
+  "ignore": {
+    "overrides": [
+      {
+        "files": ["src/**/*.gallery.tsx"],
+        "rules": ["react-doctor/no-multi-component-file"]
+      }
+    ]
+  }
+}

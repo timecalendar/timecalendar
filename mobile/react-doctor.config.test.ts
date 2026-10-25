@@ -50,6 +50,23 @@ describe("React Doctor repository contract", () => {
     ).toEqual(CHANGED_FLAGS)
   })
 
+  it("limits configured exceptions to the gallery fixture override", () => {
+    const config = JSON.parse(
+      readFileSync(join(__dirname, "react-doctor.config.json"), "utf8"),
+    )
+
+    expect(config).toEqual({
+      ignore: {
+        overrides: [
+          {
+            files: ["src/**/*.gallery.tsx"],
+            rules: ["react-doctor/no-multi-component-file"],
+          },
+        ],
+      },
+    })
+  })
+
   it("fetches base history and runs the changed-code gate after install", () => {
     const workflow = readFileSync(
       join(__dirname, "../.github/workflows/ci-mobile.yml"),
