@@ -1,3 +1,12 @@
+## 2026-10-25 — Calendar paging spike removed
+
+- The `paging-spike` feature module and the `/dev-paging-spike` route no longer exist. The
+  headerless root set is exactly `(tabs)`, `onboarding`, `profile`, `more`, `dev-import` and
+  `calendar-import-result`, enforced by `settings-route-structure.test.ts`.
+- E02 evidence stays in `docs/perf/E02-spike-evidence.md` and the
+  `mobile/perf/samples/spike-d5038fad-*` runs.
+- `navigation.md` and `features.md` follow.
+
 ## 2026-10-02 — Windowed native ScrollView paging owns the Calendar
 
 - [ADR 062](./decisions/062-calendar-windowed-native-scrollview-paging.md): one windowed native
