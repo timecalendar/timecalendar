@@ -145,6 +145,12 @@ const deviceColorSchemeImportPath = {
     "Read the color scheme through @/hooks/use-color-scheme — it resolves the Settings theme override (C1). react-native's useColorScheme/Appearance are imported only inside src/hooks/use-color-scheme.ts.",
 }
 
+const deviceColorSchemeDeepImportPattern = {
+  regex:
+    "^react-native/Libraries/Utilities/(Appearance|useColorScheme)($|[./])",
+  message: deviceColorSchemeImportPath.message,
+}
+
 // Route files are entrypoints, not modules. Named (rather than inlined in the
 // block that applies it) because two blocks now re-include it: any block that
 // re-sets `no-restricted-imports` for files under src/ has to carry it forward,
@@ -192,6 +198,7 @@ const restrictedImports = (
       ...(banChromeSeam ? chromeSeamImportPatterns : []),
       ...(banActivitySeam ? [activityClientImportPattern] : []),
       ...(banExportGuideSeam ? [exportGuideClientImportPattern] : []),
+      ...(banDeviceColorScheme ? [deviceColorSchemeDeepImportPattern] : []),
       ...extraPatterns,
     ],
     paths: [

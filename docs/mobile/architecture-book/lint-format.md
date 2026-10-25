@@ -172,7 +172,9 @@ truth; this file carries the caveats the config can't (R-1).
   appended to `paths` by the `banDeviceColorScheme` flag of `restrictedImports`, so every block
   that builds its config through `restrictedImports` carries it): `useColorScheme` and
   `Appearance` are banned as named imports from `react-native` everywhere except
-  `src/hooks/use-color-scheme.ts`. ESLint's `importNames` also reports
+  `src/hooks/use-color-scheme.ts`. Deep imports of
+  `react-native/Libraries/Utilities/Appearance*` and `…/useColorScheme*` are banned by the
+  `deviceColorSchemeDeepImportPattern` regex under the same flag. ESLint's `importNames` also reports
   `import * as RN from "react-native"` and `export { … } from "react-native"`. The exemption is
   the `timecalendar/color-scheme-seam` block, which re-calls
   `restrictedImports([routeEntrypointImportPattern], { banDeviceColorScheme: false })`: the route

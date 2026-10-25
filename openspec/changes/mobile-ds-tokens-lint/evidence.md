@@ -89,6 +89,45 @@ $ npx eslint src/features/home/ui/event-accessibility.ts   # after revert
 exit 0 (0 problem lines)
 ```
 
+### probe: src/features/home/ui/event-accessibility.ts (prepend)
+```
++ import Appearance from "react-native/Libraries/Utilities/Appearance"
+```
+```
+$ npx eslint src/features/home/ui/event-accessibility.ts
+1:1  error    'react-native/Libraries/Utilities/Appearance' import is restricted from being used by a pattern. Read the color scheme through @/hooks/use-color-scheme — it resolves the Settings theme override (C1). react-native's useColorScheme/Appearance are imported only inside src/hooks/use-color-scheme.ts  no-restricted-imports
+✖ 3 problems (2 errors, 1 warning)
+```
+```
+$ npx eslint src/features/home/ui/event-accessibility.ts   # after revert
+exit 0 (0 problem lines)
+```
+
+### probe: src/features/home/ui/event-accessibility.ts (prepend)
+```
++ import useColorScheme from "react-native/Libraries/Utilities/useColorScheme"
+```
+```
+$ npx eslint src/features/home/ui/event-accessibility.ts
+1:1  error    'react-native/Libraries/Utilities/useColorScheme' import is restricted from being used by a pattern. Read the color scheme through @/hooks/use-color-scheme — it resolves the Settings theme override (C1). react-native's useColorScheme/Appearance are imported only inside src/hooks/use-color-scheme.ts  no-restricted-imports
+✖ 3 problems (2 errors, 1 warning)
+```
+```
+$ npx eslint src/features/home/ui/event-accessibility.ts   # after revert
+exit 0 (0 problem lines)
+```
+
+### probe: src/hooks/use-color-scheme.ts (prepend, deep import stays allowed in the seam)
+```
++ import Appearance from "react-native/Libraries/Utilities/Appearance"
+```
+```
+$ npx eslint src/hooks/use-color-scheme.ts
+1:1  error    Run autofix to sort these imports!      simple-import-sort/imports
+1:8  warning  'Appearance' is defined but never used  @typescript-eslint/no-unused-vars
+(no no-restricted-imports report)
+```
+
 6.5 seam negative, then the inherited storage and route-entrypoint bans inside the seam block:
 
 ### seam negative

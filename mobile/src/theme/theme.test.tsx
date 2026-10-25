@@ -190,7 +190,7 @@ describe.each(documentedPairs)(
 )
 
 describe("design tokens", () => {
-  it("adds the 12 and 48 spacing steps without moving the existing scale", () => {
+  it("exposes the spacing scale", () => {
     expect(Spacing).toEqual({
       half: 2,
       one: 4,
@@ -226,9 +226,21 @@ describe("design tokens", () => {
       jest.doMock("react-native/Libraries/Utilities/Platform", () =>
         jest.requireActual(`react-native/Libraries/Utilities/Platform.${os}`),
       )
-      const tokens =
-        jest.requireActual<typeof import("@/theme/tokens")>("@/theme/tokens")
-      expect(tokens.MinTouchTarget).toBe(expected)
+      try {
+        const tokens =
+          jest.requireActual<typeof import("@/theme/tokens")>("@/theme/tokens")
+        expect(tokens.MinTouchTarget).toBe(expected)
+      } finally {
+        jest.dontMock("react-native/Libraries/Utilities/Platform")
+      }
+    })
+  })
+
+  it("leaves Platform un-mocked for the rest of the file", () => {
+    jest.isolateModules(() => {
+      const { Platform } =
+        jest.requireActual<typeof import("react-native")>("react-native")
+      expect(Platform.OS).toBe("ios")
     })
   })
 })

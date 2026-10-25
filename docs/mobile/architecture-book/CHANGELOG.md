@@ -5,9 +5,10 @@
   `Spacing` carries `twoHalf` (12) and `fiveHalf` (48). `Colors` carries `outline` (3:1 boundary
   role in both schemes) and `scrim` (overlay, no contrast obligation).
 - Every opaque contrast pair documented in `tokens.ts` is computed against its floor in
-  `theme.test.tsx` (`documentedPairs`), and the documented ratios are the computed values.
+  `theme.test.tsx` (`documentedPairs`); the test asserts each pair clears its documented floor.
 - L1: `useColorScheme` / `Appearance` from `react-native` are lint-banned outside
-  `src/hooks/use-color-scheme.ts` (`banDeviceColorScheme`, `timecalendar/color-scheme-seam`).
+  `src/hooks/use-color-scheme.ts` (`banDeviceColorScheme`, `timecalendar/color-scheme-seam`),
+  as are deep imports of `react-native/Libraries/Utilities/Appearance*` / `…/useColorScheme*`.
 - L8: `allowFontScaling={false}` and `{ allowFontScaling: false }` are lint-banned everywhere
   (`no-restricted-syntax`, `restrictedSyntax`); `maxFontSizeMultiplier` caps stay allowed.
 - `theming.md`, `lint-format.md` and `accessibility.md` follow.
