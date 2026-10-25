@@ -73,5 +73,9 @@ Calendar chrome (renderer untouched). Six ADRs (A–F) listed in the roadmap.
 6. **Delete the paging spike.**
 7. **Type ramp numbers approved** as a starting point; final device check still happens in phase 1.5.
 
+8. **Accessibility is a workstream of its own**, not a side effect of primitives: screen-reader
+   labels and roles, Dynamic Type up to the largest accessibility sizes, contrast in both schemes,
+   touch targets. The catalog choice must support reviewing components that way.
+
 T01 (phase 1 defect fixes 1.1–1.3 plus the `(tabs)` back label and pink calendar header icons) is
 dispatched as its own change.

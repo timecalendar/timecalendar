@@ -4,6 +4,20 @@ The full **Architecture Book** for `mobile/` (the React Native app) lives at
 **`docs/mobile/architecture-book/`**. It is *not* auto-loaded into context — read the
 relevant file(s) on demand when working on `mobile/`. Only this index is always in context.
 
+## Release status — read first
+
+The React Native app in `mobile/` is **not in production**. It is a new application being built
+to replace the live Flutter app (v3) at the v4 cutover. No user runs a React Native build.
+
+Consequences for every decision:
+
+- There are no installed React Native binaries to keep compatible. A native dependency or an EAS
+  fingerprint change costs nothing until the first public release; never argue against a change
+  because it "needs a new store build" or "breaks OTA compatibility".
+- Store, TestFlight and Play internal uploads are previews for the team, not releases.
+- Production users, crash rates and live data belong to the Flutter app. Parity with Flutter is
+  the bar; Flutter's behavior is the reference, not a legacy to preserve.
+
 ## When to read it
 
 Working on `mobile/`? Read the topical file for the area you're touching **before**
