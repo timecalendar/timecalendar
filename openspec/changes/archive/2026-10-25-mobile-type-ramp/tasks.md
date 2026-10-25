@@ -85,7 +85,7 @@ migrate any call site to a new variant name or to `tone` (phase 5). Do not touch
 - [x] 4.3 `TZ=UTC npm test -- --coverage` green, including the 90% per-file branch gate for
       `src/theme/**`.
 - [x] 4.4 `npm run react-doctor:changed` reports no new findings.
-- [ ] 4.5 `openspec validate mobile-type-ramp` passes (repo root). CI `test-mobile` is green on
+- [x] 4.5 `openspec validate mobile-type-ramp` passes (repo root). CI `test-mobile` is green on
       the PR; the PR body carries the D4 device-check table so the device pass knows which
       screens to inspect.
 
