@@ -2,7 +2,18 @@ import { render, renderHook } from "@testing-library/react-native"
 import { Text } from "react-native"
 
 import { GlassSurface } from "@/components/chrome"
-import { buildNavTheme, Colors, useTheme } from "@/theme"
+import {
+  buildNavTheme,
+  Colors,
+  Elevation,
+  IconSize,
+  Layout,
+  Motion,
+  Spacing,
+  StateOpacity,
+  type ThemeColor,
+  useTheme,
+} from "@/theme"
 
 // Drive the device color scheme the token layer resolves through.
 const mockUseColorScheme = jest.fn()
@@ -65,6 +76,248 @@ describe("theme", () => {
     const dark = await renderHook(() => useTheme())
     expect(dark.result.current.positive).toBe("#7EE2A8")
     expect(dark.result.current.informational).toBe("#A8C7FA")
+  })
+
+  it("resolves the outline and scrim roles per scheme", async () => {
+    mockUseColorScheme.mockReturnValue("light")
+    const light = await renderHook(() => useTheme())
+    expect(light.result.current.outline).toBe("#7C7F87")
+    expect(light.result.current.scrim).toBe("#00000066")
+
+    mockUseColorScheme.mockReturnValue("dark")
+    const dark = await renderHook(() => useTheme())
+    expect(dark.result.current.outline).toBe("#80838D")
+    expect(dark.result.current.scrim).toBe("#00000099")
+  })
+})
+
+function relativeLuminance(hex: string) {
+  if (!/^#[0-9a-f]{6}$/i.test(hex)) {
+    throw new Error(`contrastRatio needs an opaque 6-digit hex, got ${hex}`)
+  }
+  const linear = (offset: number) => {
+    const channel = parseInt(hex.slice(offset, offset + 2), 16) / 255
+    return channel <= 0.04045
+      ? channel / 12.92
+      : ((channel + 0.055) / 1.055) ** 2.4
+  }
+  return 0.2126 * linear(1) + 0.7152 * linear(3) + 0.0722 * linear(5)
+}
+
+function contrastRatio(foreground: string, background: string) {
+  const a = relativeLuminance(foreground)
+  const b = relativeLuminance(background)
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
+}
+
+type ContrastPair = {
+  scheme: keyof typeof Colors
+  foreground: ThemeColor
+  background: ThemeColor
+  floor: "body" | "ui"
+}
+
+const documentedPairs: ContrastPair[] = [
+  ...(["light", "dark"] as const).flatMap((scheme): ContrastPair[] => [
+    { scheme, foreground: "text", background: "background", floor: "body" },
+    {
+      scheme,
+      foreground: "text",
+      background: "backgroundElement",
+      floor: "body",
+    },
+    {
+      scheme,
+      foreground: "text",
+      background: "backgroundSelected",
+      floor: "body",
+    },
+    {
+      scheme,
+      foreground: "textSecondary",
+      background: "background",
+      floor: "body",
+    },
+    {
+      scheme,
+      foreground: "textSecondary",
+      background: "backgroundElement",
+      floor: "body",
+    },
+    { scheme, foreground: "text", background: "homeHero", floor: "body" },
+    {
+      scheme,
+      foreground: "homeHeroDate",
+      background: "homeHero",
+      floor: "body",
+    },
+    {
+      scheme,
+      foreground: "onPrimary",
+      background: "primaryStrong",
+      floor: "body",
+    },
+    {
+      scheme,
+      foreground: "primaryStrong",
+      background: "background",
+      floor: "ui",
+    },
+    {
+      scheme,
+      foreground: "actionText",
+      background: "background",
+      floor: "body",
+    },
+    { scheme, foreground: "error", background: "background", floor: "body" },
+    {
+      scheme,
+      foreground: "error",
+      background: "backgroundElement",
+      floor: "body",
+    },
+    {
+      scheme,
+      foreground: "destructive",
+      background: "backgroundElement",
+      floor: "ui",
+    },
+    {
+      scheme,
+      foreground: "positive",
+      background: "background",
+      floor: "body",
+    },
+    {
+      scheme,
+      foreground: "positive",
+      background: "backgroundElement",
+      floor: "body",
+    },
+    {
+      scheme,
+      foreground: "informational",
+      background: "background",
+      floor: "body",
+    },
+    {
+      scheme,
+      foreground: "informational",
+      background: "backgroundElement",
+      floor: "body",
+    },
+    { scheme, foreground: "outline", background: "background", floor: "ui" },
+    {
+      scheme,
+      foreground: "outline",
+      background: "backgroundElement",
+      floor: "ui",
+    },
+    {
+      scheme,
+      foreground: "outline",
+      background: "backgroundSelected",
+      floor: "ui",
+    },
+  ]),
+  {
+    scheme: "light",
+    foreground: "primary",
+    background: "background",
+    floor: "ui",
+  },
+  {
+    scheme: "light",
+    foreground: "onPrimary",
+    background: "primary",
+    floor: "ui",
+  },
+  {
+    scheme: "dark",
+    foreground: "primary",
+    background: "background",
+    floor: "body",
+  },
+  {
+    scheme: "dark",
+    foreground: "logoSurface",
+    background: "background",
+    floor: "ui",
+  },
+]
+
+const floorRatio = { body: 4.5, ui: 3 } as const
+
+describe("contrastRatio", () => {
+  it("matches known WCAG ratios", () => {
+    expect(contrastRatio("#000000", "#ffffff")).toBeCloseTo(21, 2)
+    expect(
+      contrastRatio(Colors.light.onPrimary, Colors.light.primaryStrong),
+    ).toBeCloseTo(5.87, 2)
+    expect(
+      contrastRatio(Colors.light.primary, Colors.light.background),
+    ).toBeCloseTo(4.35, 2)
+  })
+
+  it("refuses a translucent token", () => {
+    expect(() =>
+      contrastRatio(Colors.light.scrim, Colors.light.background),
+    ).toThrow("opaque 6-digit hex")
+  })
+})
+
+describe.each(documentedPairs)(
+  "$scheme $foreground on $background",
+  ({ scheme, foreground, background, floor }) => {
+    it(`clears the ${floor} contrast floor`, () => {
+      expect(
+        contrastRatio(Colors[scheme][foreground], Colors[scheme][background]),
+      ).toBeGreaterThanOrEqual(floorRatio[floor])
+    })
+  },
+)
+
+describe("design tokens", () => {
+  it("adds the 12 and 48 spacing steps without moving the existing scale", () => {
+    expect(Spacing).toEqual({
+      half: 2,
+      one: 4,
+      two: 8,
+      twoHalf: 12,
+      three: 16,
+      four: 24,
+      five: 32,
+      fiveHalf: 48,
+      six: 64,
+    })
+  })
+
+  it("exposes the icon, state, motion and layout scales", () => {
+    expect(IconSize).toEqual({ small: 14, medium: 17, large: 22, xlarge: 28 })
+    expect(StateOpacity).toEqual({ pressed: 0.65, disabled: 0.55 })
+    expect(Motion).toEqual({ fast: 150, base: 250, slow: 400 })
+    expect(Layout.fabClearance).toBe(96)
+  })
+
+  it("gives each scheme its own raised boxShadow", () => {
+    expect(Elevation.raised.light).not.toBe(Elevation.raised.dark)
+    for (const shadow of Object.values(Elevation.raised)) {
+      expect(shadow).toMatch(/^0 2px 6px rgba\(0,0,0,0\.\d+\)$/)
+    }
+  })
+
+  it.each([
+    ["ios", 44],
+    ["android", 48],
+  ] as const)("resolves MinTouchTarget on %s to %d", (os, expected) => {
+    jest.isolateModules(() => {
+      jest.doMock("react-native/Libraries/Utilities/Platform", () =>
+        jest.requireActual(`react-native/Libraries/Utilities/Platform.${os}`),
+      )
+      const tokens =
+        jest.requireActual<typeof import("@/theme/tokens")>("@/theme/tokens")
+      expect(tokens.MinTouchTarget).toBe(expected)
+    })
   })
 })
 

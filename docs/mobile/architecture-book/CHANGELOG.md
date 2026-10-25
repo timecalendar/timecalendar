@@ -1,3 +1,17 @@
+## 2026-10-25 — Design-system tokens, color-scheme and font-scaling lint
+
+- `@/theme` exports `MinTouchTarget` (44 iOS / 48 elsewhere), `IconSize`, `StateOpacity`,
+  `Elevation.raised` (per-scheme `boxShadow` strings), `Motion` and `Layout.fabClearance`;
+  `Spacing` carries `twoHalf` (12) and `fiveHalf` (48). `Colors` carries `outline` (3:1 boundary
+  role in both schemes) and `scrim` (overlay, no contrast obligation).
+- Every opaque contrast pair documented in `tokens.ts` is computed against its floor in
+  `theme.test.tsx` (`documentedPairs`), and the documented ratios are the computed values.
+- L1: `useColorScheme` / `Appearance` from `react-native` are lint-banned outside
+  `src/hooks/use-color-scheme.ts` (`banDeviceColorScheme`, `timecalendar/color-scheme-seam`).
+- L8: `allowFontScaling={false}` and `{ allowFontScaling: false }` are lint-banned everywhere
+  (`no-restricted-syntax`, `restrictedSyntax`); `maxFontSizeMultiplier` caps stay allowed.
+- `theming.md`, `lint-format.md` and `accessibility.md` follow.
+
 ## 2026-10-25 — UI defect fixes from the design-system audit
 
 - `navigation.md`: the `(tabs)` registration carries `title: t("common.back")`, so iOS back

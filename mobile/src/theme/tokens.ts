@@ -22,6 +22,8 @@ export const Colors = {
     logoSurface: "#ffffff",
     separator: "#C6C6C8",
     ripple: "#0000001F",
+    outline: "#7C7F87",
+    scrim: "#00000066",
   },
   dark: {
     text: "#ffffff",
@@ -44,6 +46,8 @@ export const Colors = {
     logoSurface: "#ffffff",
     separator: "#38383A",
     ripple: "#FFFFFF1F",
+    outline: "#80838D",
+    scrim: "#00000099",
   },
 } as const
 
@@ -52,24 +56,25 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark
 /**
  * WCAG-AA contrast pairs — the documented foreground-on-background pairings the
  * DoD's manual color-contrast review checks rendered screens against (design D5).
- * Each ratio was computed at authoring time; AA is 4.5:1 for body / 3:1 for large
- * text (titles ≥ 18.66px bold or ≥ 24px). There is no runtime/CI checker — a static
- * tool can't know which token lands on which background at a given site (the same
+ * AA is 4.5:1 for body / 3:1 for large text (titles ≥ 18.66px bold or ≥ 24px) and
+ * UI components. `src/theme/theme.test.tsx` computes every opaque pair below against
+ * its floor, so a pair added here needs a row in its `documentedPairs` table. Which
+ * token lands on which background at a given site stays a manual review (the same
  * authorial-intent gap that keeps the heading role in ThemedText, not in lint).
  *
  *   LIGHT scheme
- *   - text            on background          #000 on #fff   → 21.0:1  (AAA)
- *   - text            on backgroundElement   #000 on #F0F0F3 → 18.4:1 (AAA)
- *   - text            on backgroundSelected  #000 on #E0E1E6 → 16.3:1 (AAA)
- *   - textSecondary   on background          #60646C on #fff → 5.3:1  (AA)
- *   - textSecondary   on backgroundElement   #60646C on #F0F0F3 → 4.6:1 (AA)
+ *   - text            on background          #000 on #fff   → 21.00:1 (AAA)
+ *   - text            on backgroundElement   #000 on #F0F0F3 → 18.46:1 (AAA)
+ *   - text            on backgroundSelected  #000 on #E0E1E6 → 16.08:1 (AAA)
+ *   - textSecondary   on background          #60646C on #fff → 5.94:1 (AA)
+ *   - textSecondary   on backgroundElement   #60646C on #F0F0F3 → 5.22:1 (AA)
  *
  *   DARK scheme
- *   - text            on background          #fff on #000   → 21.0:1  (AAA)
- *   - text            on backgroundElement   #fff on #212225 → 16.0:1 (AAA)
- *   - text            on backgroundSelected  #fff on #2E3135 → 13.6:1 (AAA)
- *   - textSecondary   on background          #B0B4BA on #000 → 10.3:1 (AAA)
- *   - textSecondary   on backgroundElement   #B0B4BA on #212225 → 7.9:1 (AAA)
+ *   - text            on background          #fff on #000   → 21.00:1 (AAA)
+ *   - text            on backgroundElement   #fff on #212225 → 15.91:1 (AAA)
+ *   - text            on backgroundSelected  #fff on #2E3135 → 13.07:1 (AAA)
+ *   - textSecondary   on background          #B0B4BA on #000 → 10.08:1 (AAA)
+ *   - textSecondary   on backgroundElement   #B0B4BA on #212225 → 7.64:1 (AAA)
  *
  *   HOME HERO
  *   - text on homeHero             #000 on #FCE4EC → 17.45:1 (light, AAA)
@@ -104,8 +109,16 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark
  *   - error dark on backgroundElement #FFB4AB on #212225 → 9.37:1 (body AAA)
  *
  *   DESTRUCTIVE
- *   - destructive light #B3261E on backgroundElement #F0F0F3 → 5.3:1 (UI ✅)
- *   - destructive dark #FFB4AB on backgroundElement #212225 → 9.1:1 (UI ✅)
+ *   - destructive light #B3261E on backgroundElement #F0F0F3 → 5.75:1 (UI ✅)
+ *   - destructive dark #FFB4AB on backgroundElement #212225 → 9.37:1 (UI ✅)
+ *
+ *   OUTLINE — the input / control boundary stroke (WCAG 1.4.11, 3:1 UI bar):
+ *   - outline light #7C7F87 on background #fff → 4.01:1 (UI ✅)
+ *   - outline light #7C7F87 on backgroundElement #F0F0F3 → 3.52:1 (UI ✅)
+ *   - outline light #7C7F87 on backgroundSelected #E0E1E6 → 3.07:1 (UI ✅)
+ *   - outline dark #80838D on background #000 → 5.55:1 (UI ✅)
+ *   - outline dark #80838D on backgroundElement #212225 → 4.20:1 (UI ✅)
+ *   - outline dark #80838D on backgroundSelected #2E3135 → 3.45:1 (UI ✅)
  *
  *   STATUS
  *   - positive light #146C43 on background #fff → 6.45:1 (body ✅)
@@ -129,7 +142,7 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark
  * `logoSurface` (#ffffff, both schemes) is the chip behind third-party school
  * logos — the artwork is drawn for white paper, so the surface stays white even
  * in dark (like white podcast/album art tiles). It carries no text; the only
- * contrast obligation is chip-vs-background in dark (#fff on #000, 21:1).
+ * contrast obligation is chip-vs-background in dark (#fff on #000, 21.00:1).
  *
  * NON-TEXT / DECORATIVE UI tones (none carries body text; where a ratio applies
  * it is the WCAG 1.4.11 3:1 UI-component bar or an exemption, stated per token):
@@ -147,6 +160,8 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark
  *   background: 4.35:1 light / 6.30:1 dark.
  * - `ripple` — the Android pressed-state layer (on-surface at 12%, M3 States).
  *   A transient overlay, no contrast obligation.
+ * - `scrim` — the modal / sheet backdrop (black at 40% light, 60% dark). An
+ *   overlay with no foreground, no contrast obligation.
  *
  * Selected-tab states reuse `text` on `backgroundSelected` (both schemes AAA above).
  * Adding a token, changing a value, or drawing a foreground on a background not
@@ -176,9 +191,11 @@ export const Spacing = {
   half: 2,
   one: 4,
   two: 8,
+  twoHalf: 12,
   three: 16,
   four: 24,
   five: 32,
+  fiveHalf: 48,
   six: 64,
 } as const
 
@@ -190,3 +207,34 @@ export const Radii = {
 } as const
 
 export const MaxContentWidth = 800
+
+export const MinTouchTarget = Platform.select({ ios: 44, default: 48 })
+
+export const IconSize = {
+  small: 14,
+  medium: 17,
+  large: 22,
+  xlarge: 28,
+} as const
+
+export const StateOpacity = {
+  pressed: 0.65,
+  disabled: 0.55,
+} as const
+
+export const Elevation = {
+  raised: {
+    light: "0 2px 6px rgba(0,0,0,0.16)",
+    dark: "0 2px 6px rgba(0,0,0,0.5)",
+  },
+} as const
+
+export const Motion = {
+  fast: 150,
+  base: 250,
+  slow: 400,
+} as const
+
+export const Layout = {
+  fabClearance: 96,
+} as const
