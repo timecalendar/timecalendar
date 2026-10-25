@@ -162,6 +162,7 @@ const developerToolsImportPath = {
 
 const developerToolsDeepImportPattern = {
   regex: "^@/features/environment/ui($|/)",
+  importNames: ["EnvironmentSettingsControl"],
   message: developerToolsImportPath.message,
 }
 

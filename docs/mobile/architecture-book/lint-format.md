@@ -188,8 +188,8 @@ truth; this file carries the caveats the config can't (R-1).
 - **The environment control lives on the developer page** (`developerToolsImportPath` and
   `developerToolsDeepImportPattern`, both under the `banDeveloperTools` flag of
   `restrictedImports`): `EnvironmentSettingsControl` is banned as a named import from
-  `@/features/environment`, and any `@/features/environment/ui/**` deep import is banned by
-  pattern, everywhere except `src/features/developer/**` and `src/features/environment/**`. The
+  `@/features/environment` and, by pattern, from `@/features/environment/ui` or any file under it,
+  everywhere except `src/features/developer/**` and `src/features/environment/**`. The
   exemption is the `timecalendar/developer-tools-home` block, which re-calls
   `restrictedImports([routeEntrypointImportPattern], { banDeveloperTools: false })` for the same
   route-pattern reason as the color-scheme seam. Same static-import-only caveat as raw-fetch;

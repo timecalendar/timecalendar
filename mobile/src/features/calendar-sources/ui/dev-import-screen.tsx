@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { ActivityIndicator, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -28,7 +28,7 @@ import { Spacing } from "@/theme"
 //
 // Dev branch: addCalendarFromToken(token) (resolve → durable upsert) →
 // useSyncCalendars().sync() (now sees the freshly-held token and fetches) →
-// router.replace("/calendar"). It owns its own local { pending, error } and, on a
+// leaveToCalendar(). It owns its own local { pending, error } and, on a
 // reject, records through @/firebase + surfaces an accessible failure (a11y alert
 // live-region), mirroring the persist seam's observability posture.
 export function DevImportScreen() {
@@ -52,6 +52,14 @@ export function DevImportScreen() {
     }
   }, [])
 
+  // Pushed from the developer page, the root Stack already holds the tabs:
+  // REPLACE would swap only this route and stack a second (tabs) above
+  // /developer. A cold deep link has nothing to dismiss to.
+  const leaveToCalendar = useCallback(() => {
+    if (router.canDismiss()) router.dismissTo("/calendar")
+    else router.replace("/calendar")
+  }, [router])
+
   useEffect(() => {
     if (!isDev || token === undefined || startedRef.current) return
     startedRef.current = true
@@ -60,14 +68,14 @@ export function DevImportScreen() {
       try {
         await addCalendarFromToken(token)
         await sync()
-        if (mountedRef.current) router.replace("/calendar")
+        if (mountedRef.current) leaveToCalendar()
       } catch (caught) {
         recordUnknownError(caught, "dev-import")
         if (mountedRef.current) setError(true)
       }
     }
     void run()
-  }, [isDev, token, sync, router])
+  }, [isDev, token, sync, leaveToCalendar])
 
   return (
     <ThemedView style={styles.container}>

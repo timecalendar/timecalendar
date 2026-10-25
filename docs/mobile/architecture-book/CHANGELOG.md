@@ -8,9 +8,14 @@
   entry).
 - The Settings hub carries one developer-related element: a last Developer section with a single
   row to `/developer`, rendered when the capability is not `production`.
-- Lint: `EnvironmentSettingsControl` and `@/features/environment/ui/**` are banned outside
-  `src/features/developer/**` and `src/features/environment/**` (`banDeveloperTools`,
-  `timecalendar/developer-tools-home`).
+- Lint: `EnvironmentSettingsControl` is banned outside `src/features/developer/**` and
+  `src/features/environment/**`, from the feature barrel and from `@/features/environment/ui/**`
+  (`banDeveloperTools`, `timecalendar/developer-tools-home`).
+- `/dev-import` reached in-app returns with `router.dismissTo("/calendar")` (the existing tabs);
+  a cold deep link with nothing to dismiss keeps `router.replace("/calendar")`.
+- ADR [043](./decisions/043-backend-environment-reset.md) is amended: the non-production indicator
+  lives on `/developer`, reached from Settings' single gated Developer row; its accessible-name
+  requirement is unchanged.
 - `navigation.md`, `features.md` and `lint-format.md` follow.
 
 ## 2026-10-25 — Platform type ramp and ThemedText tone

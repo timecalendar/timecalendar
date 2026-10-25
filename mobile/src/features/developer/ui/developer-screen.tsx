@@ -99,7 +99,7 @@ export function DeveloperScreen() {
           label={t("developer.devImport.fieldLabel")}
           placeholder={t("developer.devImport.placeholder")}
           message={null}
-          cancelLabel={t("developer.devImport.cancel")}
+          cancelLabel={t("common.cancel")}
           submitLabel={t("developer.devImport.submit")}
           pending={false}
           submitDisabled={token.trim().length === 0}

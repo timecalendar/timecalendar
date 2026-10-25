@@ -13,7 +13,8 @@ import { DevImportScreen } from "./dev-import-screen"
 // proof. Renders through the real theme + i18n trees. The import seam, the sync
 // seam, the variant gate, the router, and @/firebase are mocked so both branches
 // are provable without a real DB/network:
-//  - DEV branch: addCalendarFromToken(token) → sync() → router.replace("/calendar")
+//  - DEV branch: addCalendarFromToken(token) → sync() → back to the calendar
+//    (dismissTo when pushed in-app, replace on a cold deep link)
 //  - PRODUCTION branch: NO import call, inert "not available" state (the boundary)
 //  - failure: reject → recordUnknownError + accessible error state
 
@@ -40,13 +41,20 @@ const mockRecordUnknownError = recordUnknownError as jest.Mock
 
 const mockSync = jest.fn<Promise<void>, []>(() => Promise.resolve())
 const mockReplace = jest.fn()
+const mockDismissTo = jest.fn()
+const mockCanDismiss = jest.fn(() => false)
 
 beforeEach(() => {
   jest.clearAllMocks()
   mockAddCalendarFromToken.mockResolvedValue(undefined)
   mockSync.mockResolvedValue(undefined)
   mockUseSyncCalendars.mockReturnValue({ sync: mockSync })
-  mockUseRouter.mockReturnValue({ replace: mockReplace })
+  mockCanDismiss.mockReturnValue(false)
+  mockUseRouter.mockReturnValue({
+    replace: mockReplace,
+    dismissTo: mockDismissTo,
+    canDismiss: mockCanDismiss,
+  })
   mockUseLocalSearchParams.mockReturnValue({ token: "e2e-smoke-calendar" })
 })
 
@@ -71,9 +79,20 @@ describe("DevImportScreen", () => {
     await render(<DevImportScreen />)
 
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/calendar"))
+    expect(mockDismissTo).not.toHaveBeenCalled()
     expect(mockAddCalendarFromToken).toHaveBeenCalledWith("e2e-smoke-calendar")
     expect(mockSync).toHaveBeenCalledTimes(1)
     expect(mockRecordUnknownError).not.toHaveBeenCalled()
+  })
+
+  it("dev variant: pushed in-app, dismisses back to the existing calendar tab", async () => {
+    mockIsDevVariant.mockReturnValue(true)
+    mockCanDismiss.mockReturnValue(true)
+
+    await render(<DevImportScreen />)
+
+    await waitFor(() => expect(mockDismissTo).toHaveBeenCalledWith("/calendar"))
+    expect(mockReplace).not.toHaveBeenCalled()
   })
 
   it("finishes the mounted import when the sync callback changes during its rerender", async () => {
