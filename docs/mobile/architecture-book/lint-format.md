@@ -4,7 +4,8 @@ The exact rules and their options live in `mobile/eslint.config.js` (named block
 `timecalendar/architecture`, `routes-not-importable`, `mutator-owns-fetch`,
 `generated-code`, `timecalendar/feature-boundaries`, `timecalendar/chrome-seams`,
 `timecalendar/activity-seam`, `timecalendar/export-guide-seam`,
-`timecalendar/color-scheme-seam`, `timecalendar/calendar-sources-is-a-leaf`, `timecalendar/storage-seams`, and
+`timecalendar/color-scheme-seam`, `timecalendar/developer-tools-home`,
+`timecalendar/calendar-sources-is-a-leaf`, `timecalendar/storage-seams`, and
 `timecalendar/tests`). The config is the source of
 truth; this file carries the caveats the config can't (R-1).
 
@@ -184,6 +185,16 @@ truth; this file carries the caveats the config can't (R-1).
   `require("react-native").Appearance` and `jest.requireActual("react-native")` are not static
   imports, so the same static-import-only caveat as raw-fetch applies. See
   [theming.md](./theming.md).
+- **The environment control lives on the developer page** (`developerToolsImportPath` and
+  `developerToolsDeepImportPattern`, both under the `banDeveloperTools` flag of
+  `restrictedImports`): `EnvironmentSettingsControl` is banned as a named import from
+  `@/features/environment` and, by pattern, from `@/features/environment/ui` or any file under it,
+  everywhere except `src/features/developer/**` and `src/features/environment/**`. The
+  exemption is the `timecalendar/developer-tools-home` block, which re-calls
+  `restrictedImports([routeEntrypointImportPattern], { banDeveloperTools: false })` for the same
+  route-pattern reason as the color-scheme seam. Same static-import-only caveat as raw-fetch;
+  `jest.mock("@/features/environment", …)` factories are not imports and stay free. See
+  [navigation.md](./navigation.md) → Developer page.
 - **L8 — font scaling is never disabled** (`no-restricted-syntax` in
   `timecalendar/architecture`, the `restrictedSyntax` constant): two selectors,
   `JSXAttribute[name.name='allowFontScaling'][value.expression.value=false]` and

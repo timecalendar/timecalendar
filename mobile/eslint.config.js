@@ -151,6 +151,21 @@ const deviceColorSchemeDeepImportPattern = {
   message: deviceColorSchemeImportPath.message,
 }
 
+// The environment control's single home is the developer page (navigation.md →
+// Developer page): Settings keeps one gated row to it, never the control itself.
+const developerToolsImportPath = {
+  name: "@/features/environment",
+  importNames: ["EnvironmentSettingsControl"],
+  message:
+    "The environment control lives on the developer page — mount it from src/features/developer/ui only (navigation.md → Developer page).",
+}
+
+const developerToolsDeepImportPattern = {
+  regex: "^@/features/environment/ui($|/)",
+  importNames: ["EnvironmentSettingsControl"],
+  message: developerToolsImportPath.message,
+}
+
 // Route files are entrypoints, not modules. Named (rather than inlined in the
 // block that applies it) because several blocks re-include it: any block that
 // re-sets `no-restricted-imports` for files under src/ has to carry it forward,
@@ -188,6 +203,7 @@ const restrictedImports = (
     banActivitySeam = true,
     banExportGuideSeam = true,
     banDeviceColorScheme = true,
+    banDeveloperTools = true,
   } = {},
 ) => [
   "error",
@@ -199,12 +215,14 @@ const restrictedImports = (
       ...(banActivitySeam ? [activityClientImportPattern] : []),
       ...(banExportGuideSeam ? [exportGuideClientImportPattern] : []),
       ...(banDeviceColorScheme ? [deviceColorSchemeDeepImportPattern] : []),
+      ...(banDeveloperTools ? [developerToolsDeepImportPattern] : []),
       ...extraPatterns,
     ],
     paths: [
       ...restrictedImportPaths,
       ...(banActivitySeam ? [dbActivityTablesImportPath] : []),
       ...(banDeviceColorScheme ? [deviceColorSchemeImportPath] : []),
+      ...(banDeveloperTools ? [developerToolsImportPath] : []),
     ],
   },
 ]
@@ -312,6 +330,18 @@ module.exports = defineConfig([
       "no-restricted-imports": restrictedImports([
         routeEntrypointImportPattern,
       ]),
+    },
+  },
+  {
+    // Re-includes the route-entrypoint pattern because `routes-not-importable`
+    // also matches these files and flat config would otherwise drop the @/app ban.
+    name: "timecalendar/developer-tools-home",
+    files: ["src/features/developer/**", "src/features/environment/**"],
+    rules: {
+      "no-restricted-imports": restrictedImports(
+        [routeEntrypointImportPattern],
+        { banDeveloperTools: false },
+      ),
     },
   },
   {

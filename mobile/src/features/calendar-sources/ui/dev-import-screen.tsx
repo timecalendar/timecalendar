@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import { ActivityIndicator, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -10,7 +10,7 @@ import { ThemedView } from "@/components/themed-view"
 import { isDevVariant } from "@/config/variant"
 import { useSyncCalendars } from "@/features/calendar/data"
 import { addCalendarFromToken } from "@/features/calendar-sources/data"
-import { recordUnknownError } from "@/firebase"
+import { useRecordedAction } from "@/hooks/use-recorded-action"
 import { Spacing } from "@/theme"
 
 // The dev-only import deep-link screen (ADR 030) — PRESENTATIONAL (70% floor).
@@ -26,17 +26,18 @@ import { Spacing } from "@/theme"
 // screen renders an inert "not available" state and performs NO import/network
 // call. A colocated test proves the production branch never imports.
 //
-// Dev branch: addCalendarFromToken(token) (resolve → durable upsert) →
-// useSyncCalendars().sync() (now sees the freshly-held token and fetches) →
-// router.replace("/calendar"). It owns its own local { pending, error } and, on a
-// reject, records through @/firebase + surfaces an accessible failure (a11y alert
-// live-region), mirroring the persist seam's observability posture.
+// Dev branch: once per mount, addCalendarFromToken(token) (resolve → durable
+// upsert) → useSyncCalendars().sync() (now sees the freshly-held token and
+// fetches) runs through the shared write controller, which records a reject
+// through @/firebase and flips the `failed` flag behind the accessible failure
+// (a11y alert live-region). Success leaves to the calendar unless the screen
+// has unmounted meanwhile.
 export function DevImportScreen() {
   const { t } = useTranslation()
   const router = useRouter()
   const { token } = useLocalSearchParams<{ token?: string }>()
   const { sync } = useSyncCalendars()
-  const [error, setError] = useState(false)
+  const { run, failed } = useRecordedAction()
   const isDev = isDevVariant()
 
   // Guard against the effect firing twice (React 18 double-invoke / a param
@@ -56,18 +57,18 @@ export function DevImportScreen() {
     if (!isDev || token === undefined || startedRef.current) return
     startedRef.current = true
 
-    const run = async () => {
-      try {
-        await addCalendarFromToken(token)
-        await sync()
-        if (mountedRef.current) router.replace("/calendar")
-      } catch (caught) {
-        recordUnknownError(caught, "dev-import")
-        if (mountedRef.current) setError(true)
-      }
-    }
-    void run()
-  }, [isDev, token, sync, router])
+    void run("dev-import", async () => {
+      await addCalendarFromToken(token)
+      await sync()
+    }).then((imported) => {
+      if (!imported || !mountedRef.current) return
+      // The root Stack's initialRouteName puts (tabs) beneath this route,
+      // in-app and on a cold deep link alike: REPLACE would stack a second
+      // (tabs). replace is the fallback for when nothing is beneath.
+      if (router.canDismiss()) router.dismissTo("/calendar")
+      else router.replace("/calendar")
+    })
+  }, [isDev, token, run, sync, router])
 
   return (
     <ThemedView style={styles.container}>
@@ -82,7 +83,7 @@ export function DevImportScreen() {
             >
               {t("devImport.unavailable")}
             </ThemedText>
-          ) : error ? (
+          ) : failed ? (
             <ErrorNotice
               testID="dev-import-error"
               message={t("devImport.error")}

@@ -11,10 +11,7 @@ import {
   useUserCalendars,
   useUserCalendarsLoaded,
 } from "@/features/calendar-sources"
-import {
-  EnvironmentSettingsControl,
-  getBackendEnvironmentCapability,
-} from "@/features/environment"
+import { getBackendEnvironmentCapability } from "@/features/environment"
 import { deriveCalendarSummary } from "@/features/settings/data"
 import { useShowWeekendsPreference } from "@/features/settings/prefs"
 
@@ -97,8 +94,7 @@ export function SettingsScreen() {
   const { unreadCount } = useActivityState()
   const { showWeekends, setShowWeekends } = useShowWeekendsPreference()
   const summary = deriveCalendarSummary(calendars, loaded)
-  const showEnvironmentControl =
-    getBackendEnvironmentCapability() !== "production"
+  const showDeveloperTools = getBackendEnvironmentCapability() !== "production"
   const summaryValue =
     summary.state === "loaded" && summary.calendarCount === 0
       ? t("settingsHub.summary.empty")
@@ -168,19 +164,18 @@ export function SettingsScreen() {
             })}
         </NativeSettingsSection>
       ))}
-      {showEnvironmentControl ? (
+      {showDeveloperTools ? (
         <NativeSettingsSection
-          title={t("environment.selector.section")}
-          testID="settings-section-environment"
+          title={t("settingsHub.section.developer")}
+          testID="settings-section-developer"
         >
-          <EnvironmentSettingsControl />
           <NativeSettingsRow
             kind="navigation"
-            href="/settings-gallery"
-            label={t("settingsHub.gallery.label")}
-            icon={{ ios: "square.grid.2x2", android: "grid_view" }}
-            hint={t("settingsHub.gallery.hint")}
-            testID="settings-gallery"
+            href="/developer"
+            label={t("settingsHub.developer.label")}
+            icon={{ ios: "hammer", android: "developer_mode" }}
+            hint={t("settingsHub.developer.hint")}
+            testID="settings-developer"
           />
         </NativeSettingsSection>
       ) : null}

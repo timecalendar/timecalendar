@@ -1,3 +1,28 @@
+## 2026-10-25 — Developer page
+
+- `/developer` is a root Stack sibling (compact header, `src/app/developer.tsx` over
+  `src/features/developer/ui`) that redirects to `/settings` when the backend capability is
+  `production`.
+- It holds three sections: Backend (`EnvironmentSettingsControl`), Test data (import a calendar
+  by token, pushing `/dev-import`; development variant only) and Design (the `/settings-gallery`
+  entry).
+- The Settings hub carries one developer-related element: a last Developer section with a single
+  row to `/developer`, rendered when the capability is not `production`.
+- Lint: `EnvironmentSettingsControl` is banned outside `src/features/developer/**` and
+  `src/features/environment/**`, from the feature barrel and from `@/features/environment/ui/**`
+  (`banDeveloperTools`, `timecalendar/developer-tools-home`).
+- `/dev-import` returns with `router.dismissTo("/calendar")`: the root Stack's
+  `initialRouteName: "(tabs)"` keeps the tabs beneath it, in-app and on a cold deep link alike.
+  `router.replace("/calendar")` is the fallback when nothing is beneath.
+- `NativeTextEntryDialog` takes `inputKind?: "text" | "code"`; `"code"` disables
+  auto-capitalization and autocorrect (SwiftUI `textInputAutocapitalization("never")` +
+  `autocorrectionDisabled()`, Compose `KeyboardOptions(capitalization = None,
+  autoCorrectEnabled = false)`). The developer page's token dialog uses it.
+- ADR [043](./decisions/043-backend-environment-reset.md) is amended: the non-production indicator
+  lives on `/developer`, reached from Settings' single gated Developer row; its accessible-name
+  requirement is unchanged.
+- `navigation.md`, `features.md` and `lint-format.md` follow.
+
 ## 2026-10-25 — Platform type ramp and ThemedText tone
 
 - `src/theme/typography.ts` defines `TypeRamp` (exported from `@/theme` with `TypeVariant` and

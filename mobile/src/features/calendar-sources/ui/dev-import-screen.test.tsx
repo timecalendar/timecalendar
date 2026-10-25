@@ -13,7 +13,8 @@ import { DevImportScreen } from "./dev-import-screen"
 // proof. Renders through the real theme + i18n trees. The import seam, the sync
 // seam, the variant gate, the router, and @/firebase are mocked so both branches
 // are provable without a real DB/network:
-//  - DEV branch: addCalendarFromToken(token) → sync() → router.replace("/calendar")
+//  - DEV branch: addCalendarFromToken(token) → sync() → back to the calendar
+//    (dismissTo when pushed in-app, replace on a cold deep link)
 //  - PRODUCTION branch: NO import call, inert "not available" state (the boundary)
 //  - failure: reject → recordUnknownError + accessible error state
 
@@ -40,20 +41,31 @@ const mockRecordUnknownError = recordUnknownError as jest.Mock
 
 const mockSync = jest.fn<Promise<void>, []>(() => Promise.resolve())
 const mockReplace = jest.fn()
+const mockDismissTo = jest.fn()
+const mockCanDismiss = jest.fn(() => false)
+
+function renderScreen() {
+  return render(<DevImportScreen />)
+}
 
 beforeEach(() => {
   jest.clearAllMocks()
   mockAddCalendarFromToken.mockResolvedValue(undefined)
   mockSync.mockResolvedValue(undefined)
   mockUseSyncCalendars.mockReturnValue({ sync: mockSync })
-  mockUseRouter.mockReturnValue({ replace: mockReplace })
+  mockCanDismiss.mockReturnValue(false)
+  mockUseRouter.mockReturnValue({
+    replace: mockReplace,
+    dismissTo: mockDismissTo,
+    canDismiss: mockCanDismiss,
+  })
   mockUseLocalSearchParams.mockReturnValue({ token: "e2e-smoke-calendar" })
 })
 
 describe("DevImportScreen", () => {
   it("keeps its transient state centered and non-stretched", async () => {
     mockIsDevVariant.mockReturnValue(false)
-    const view = await render(<DevImportScreen />)
+    const view = await renderScreen()
     const contentStyle = StyleSheet.flatten(
       view.getByTestId("dev-import-content").props.style,
     )
@@ -68,12 +80,23 @@ describe("DevImportScreen", () => {
   it("dev variant: imports the token, syncs, and routes to the calendar", async () => {
     mockIsDevVariant.mockReturnValue(true)
 
-    await render(<DevImportScreen />)
+    await renderScreen()
 
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/calendar"))
+    expect(mockDismissTo).not.toHaveBeenCalled()
     expect(mockAddCalendarFromToken).toHaveBeenCalledWith("e2e-smoke-calendar")
     expect(mockSync).toHaveBeenCalledTimes(1)
     expect(mockRecordUnknownError).not.toHaveBeenCalled()
+  })
+
+  it("dev variant: pushed in-app, dismisses back to the existing calendar tab", async () => {
+    mockIsDevVariant.mockReturnValue(true)
+    mockCanDismiss.mockReturnValue(true)
+
+    await renderScreen()
+
+    await waitFor(() => expect(mockDismissTo).toHaveBeenCalledWith("/calendar"))
+    expect(mockReplace).not.toHaveBeenCalled()
   })
 
   it("finishes the mounted import when the sync callback changes during its rerender", async () => {
@@ -90,7 +113,7 @@ describe("DevImportScreen", () => {
       .mockReturnValueOnce({ sync: firstSync })
       .mockReturnValue({ sync: nextSync })
 
-    const view = await render(<DevImportScreen />)
+    const view = await renderScreen()
     await waitFor(() => expect(firstSync).toHaveBeenCalledTimes(1))
 
     await view.rerender(<DevImportScreen />)
@@ -100,10 +123,30 @@ describe("DevImportScreen", () => {
     expect(nextSync).not.toHaveBeenCalled()
   })
 
+  it("does not navigate when the screen unmounts before the import settles", async () => {
+    mockIsDevVariant.mockReturnValue(true)
+    let finishSync: () => void = () => undefined
+    mockSync.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishSync = resolve
+        }),
+    )
+
+    const view = await renderScreen()
+    await waitFor(() => expect(mockSync).toHaveBeenCalledTimes(1))
+
+    await view.unmount()
+    await act(async () => finishSync())
+
+    expect(mockReplace).not.toHaveBeenCalled()
+    expect(mockDismissTo).not.toHaveBeenCalled()
+  })
+
   it("production variant: performs NO import and shows the inert state (security boundary)", async () => {
     mockIsDevVariant.mockReturnValue(false)
 
-    await render(<DevImportScreen />)
+    await renderScreen()
 
     expect(screen.getByText("This screen is not available.")).toBeTruthy()
     // The security boundary: the action is inert regardless of the token param.
@@ -116,12 +159,16 @@ describe("DevImportScreen", () => {
     mockIsDevVariant.mockReturnValue(true)
     mockAddCalendarFromToken.mockRejectedValueOnce(new Error("resolve boom"))
 
-    await render(<DevImportScreen />)
+    await renderScreen()
 
     await waitFor(() =>
       expect(screen.getByTestId("dev-import-error")).toBeTruthy(),
     )
     expect(mockRecordUnknownError).toHaveBeenCalledTimes(1)
+    expect(mockRecordUnknownError).toHaveBeenCalledWith(
+      expect.any(Error),
+      "dev-import",
+    )
     expect(mockReplace).not.toHaveBeenCalled()
   })
 })

@@ -18,6 +18,9 @@ export type NativeTextEntryDialogProps = {
   placeholder: string
   message: string | null
   messageKind?: "validation" | "operation"
+  // "code" is for case-sensitive machine strings (tokens, ids): no
+  // auto-capitalization, no autocorrect.
+  inputKind?: "text" | "code"
   cancelLabel: string
   submitLabel: string
   pending: boolean
