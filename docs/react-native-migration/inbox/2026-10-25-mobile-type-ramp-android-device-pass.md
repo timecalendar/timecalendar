@@ -38,9 +38,13 @@ Nothing; informational. Phase 5 (screen migration to ramp names) should read the
 
 The iOS 26 simulator pass covered Home, Settings, onboarding welcome and Event details at the
 default size and at AX5, in light and dark. Nothing broke at the default size. At AX5, these
-layout issues are outside the ramp and belong to phase 5:
+layout issues were outside the ramp; all three are addressed by `fix-mobile-a11y-device-findings`
+and need the AX5 re-check:
 
-- The Home app name (a local 21pt override) breaks mid-word ("TimeCalen-dar").
+- The Home app name breaks mid-word ("TimeCalen-dar"). It is now a one-line `title2` capped at
+  `WordmarkMaxFontScale`.
 - On onboarding welcome, the subtitle is clipped by the pager's fixed height, and the title
-  breaks off a single character ("TimeCalenda / r!").
-- Settings rows (not `ThemedText`) hyphenate labels beside their values instead of stacking.
+  breaks off a single character ("TimeCalenda / r!"). Pages now scroll, the illustration halves at
+  accessibility sizes, and titles cap at `WordmarkMaxFontScale`.
+- Settings rows (not `ThemedText`) hyphenate labels beside their values instead of stacking. iOS
+  value rows now stack the label above the value at accessibility sizes.

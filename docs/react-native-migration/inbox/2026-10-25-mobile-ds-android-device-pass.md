@@ -33,23 +33,28 @@ as written. This answers `2026-10-25-mobile-type-ramp-android-device-pass.md`.
    emulator but never bound, so accessibility was checked through the uiautomator tree only. On
    device: Home section titles are announced as headings, and the personal-event Starts/Ends
    fields announce "Starts, <date time>, button". Also sweep Settings and onboarding.
-2. **Icon scaling policy (decision needed).** On Android, expo-symbols 56.0.6 `SymbolView` renders a
+2. **Icon scaling policy.** Addressed by `fix-mobile-a11y-device-findings` (ADR 065: the `Icon`
+   primitive with a required `scaling`, lint L9); needs the 2.0 device re-check. On Android, expo-symbols 56.0.6 `SymbolView` renders a
    font-scaled Text glyph inside a fixed-size box, so glyphs clip at font scale 2.0. The onboarding
    Next arrow is visibly clipped. This affects about 12 call sites. Lint L8 bans
    `allowFontScaling={false}`, so the fix is either an upstream fix, a box that scales with the
-   font scale, or a documented exemption. Owner: design-system phase 3.2 (`Icon` primitive).
-3. **12/24h field format.** The Android personal-event field shows a 24h `HH:mm` value
+   font scale, or a documented exemption.
+3. **12/24h field format.** Addressed by `fix-mobile-a11y-device-findings`: the field, its
+   accessible name and the list follow the device clock setting. The Android personal-event field shows a 24h `HH:mm` value
    (`formatShortDateTime`, `mobile/src/features/calendar/data/format.ts:225`). The time dialog and
    the calendar gutter follow the device's 12h setting. Decide whether the field follows the device
    clock setting.
-4. **Android `Alert` styling.** React Native's `Alert` on Android uses AppCompat styling (teal
+4. **Android `Alert` styling.** Deferred to its own change:
+   `2026-10-25-mobile-android-m3-alerts.md`. React Native's `Alert` on Android uses AppCompat styling (teal
    accent, ALL CAPS buttons), not Material 3 or the brand. Decide whether confirmations move to a
    chrome Material dialog.
-5. **Event details color dot alignment.** At 2x, the color dot centers on a three-line title
-   instead of aligning with the first line. Owner: phase 5.8 (Event details).
+5. **Event details color dot alignment.** Addressed by `fix-mobile-a11y-device-findings` (the
+   dot sits in a first-line strut). At 2x, the color dot centers on a three-line title
+   instead of aligning with the first line.
 6. **Multi-day personal events** are not drawn in the week view. This is known
    (`docs/mobile/architecture-book/calendar.md:147`) and is listed here only for completeness.
-7. **Color swatch labels read hex codes.** The personal-event color swatches announce
+7. **Color swatch labels read hex codes.** Addressed by `fix-mobile-a11y-device-findings`
+   (translated FR/EN names, radio/checked on Android). The personal-event color swatches announce
    "Color #E91E63", which a screen-reader user can't use. They need color names (FR/EN).
 
 The environment picker lives on Settings › Developer (`/developer`, Backend section). It was

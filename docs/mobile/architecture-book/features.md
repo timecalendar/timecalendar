@@ -66,7 +66,18 @@ seconds so Cancel works. See ADR [064](./decisions/064-in-house-component-galler
   field's accessible name is "label, value" (`personalEvents.form.dateTimeAccessibilityLabel`),
   because TalkBack reads the button's content description instead of its child text. The Delete label uses
   `destructive`.
-- `onboarding/index` keeps its branded safe-area composition. Every ordinary pushed child uses
+  The field text, its accessible name and the list ranges follow the device 12/24-hour setting
+  through `formatShortDateTime(…, uses24HourClock)`; the iOS picker receives
+  `toPickerLocale(locale, region, uses24HourClock)` (for example `fr_FR@hours=h12`), so it reads
+  in the app language with the device hour cycle. Color swatches announce translated names
+  (`SWATCH_NAME_KEYS`) as radios on Android and selected buttons on iOS
+  (`ui/color-swatch-picker.test.tsx`).
+- Home's brand lockup renders the app name as a one-line `title2` header capped at
+  `WordmarkMaxFontScale` (`ui/home-screen.test.tsx`).
+- `onboarding/index` keeps its branded safe-area composition. Each welcome page wraps its content
+  in a vertical ScrollView that centers when the content fits and scrolls when it does not; at
+  accessibility text sizes the illustration takes half its height, and page titles cap at
+  `WordmarkMaxFontScale` (`ui/welcome-screen.test.tsx`). Every ordinary pushed child uses
   compact native chrome and one shared page frame; form screens retain their keyboard/scroll owners,
   School retains its virtualized list and native search, and QR retains its full-bleed camera below
   the header. These presentation bounds do not change step order, validation, or routing.
@@ -78,6 +89,8 @@ seconds so Cancel works. See ADR [064](./decisions/064-in-house-component-galler
   management the picker opens as the first screen of the nested onboarding Stack: Android's native
   back walks up to the parent Stack, while UIKit shows no back there, so iOS alone adds a native
   bar-button back that dismisses the onboarding Stack.
+- Calendar event details center the decorative color dot on the first title line through a
+  hidden `title`-step strut (`ui/event-details-screen.test.tsx`).
 - `calendar-sources` keeps the QR camera full bleed and bounds permission, viewfinder, guidance,
   import, and recovery content with readable lanes. iCal form and state content is readable;
   user-calendar collection content is standard; its first-content inset belongs to the populated

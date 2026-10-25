@@ -27,7 +27,7 @@ See proposal.md for the device evidence. These code facts shape the approach:
   `uses24hourClock: true`, and suites spy on them per case.
 - The iOS field is `@expo/ui`'s SwiftUI `DatePicker` (compact). With no `locale` prop it uses the
   device locale and the device hour cycle. Its `locale` prop sets `environment(\.locale,
-  Locale(identifier:))`. The app has an in-app language preference (`settings.languagePreference`).
+Locale(identifier:))`. The app has an in-app language preference (`settings.languagePreference`).
 - `ColorSwatchPicker` renders `Pressable` swatches with `accessibilityRole="button"`,
   `accessibilityState={{ selected }}` and the label `"Color #E91E63"`, inside a
   `View accessibilityRole="radiogroup"`. The visible field label "Color" precedes the group.
@@ -74,8 +74,9 @@ content-size category natively (needs a native module for a value RN already exp
 `SwiftSettingsRow` reads `useIsAccessibilityTextSize()`. At accessibility sizes a row with a
 `value` renders `HStack(alignment: center) { VStack(alignment: leading, spacing 2) { label row
 (icon tile + label [+ subtitle]), value [badge] }, Spacer, [chevron] }`: the label gets the full
-width, the value sits under it in `textSecondary`, and the navigation chevron stays trailing. The
-`kind: "value"` row stops using `LabeledContent` at those sizes and uses the same stacked content.
+width, the value sits under it in `textSecondary`, and the navigation chevron stays trailing. The `kind: "value"` row keeps `LabeledContent`, which stays its single accessibility element, with
+the stacked column in its label slot and an empty value slot (`@expo/ui` 56 exposes no
+`accessibilityElement(children:)` modifier, so a bare stack would not combine its texts for VoiceOver).
 Rows without a value and default sizes are unchanged. Accessibility modifiers (identifier, label,
 hint, value) stay on the same outer element, so VoiceOver reads the row the same way at every size.
 
@@ -113,18 +114,21 @@ Alternatives: one ScrollView around the whole pager (fights the pager's gesture 
 scroll position); hiding the illustration (it carries the page's visual identity at default sizes,
 and halving is enough to unclip).
 
-### Decision 5 (ADR 064): icons declare their scaling; Android draws its own glyph box
+### Decision 5 (ADR 065): icons declare their scaling; Android draws its own glyph box
 
 `src/components/icon.tsx` exports `Icon`:
 
 ```ts
 type IconProps = {
-  ios?: SFSymbol
-  android?: MaterialGlyph
-  size: number
-  color: string
-  testID?: string
-} & ({ scaling: "fixed" } | { scaling: "text"; maxFontSizeMultiplier?: number })
+  ios?: SFSymbol;
+  android?: MaterialGlyph;
+  size: number;
+  color: string;
+  testID?: string;
+} & (
+  | { scaling: "fixed" }
+  | { scaling: "text"; maxFontSizeMultiplier?: number }
+);
 ```
 
 - `scaling` is required, so every call site makes the decision at the type level. `"text"` is for
@@ -222,7 +226,7 @@ bottom edge to the baseline, not its center to the line).
 - [The 1.786 threshold is iOS-derived; Android flips only above 1.5] → Android settings rows do
   not use it, and onboarding halving at 1.8–2.0 is the intended behavior. Revisit with the ADR.
 - [Android `Icon` duplicates `SymbolView`'s font rendering] → one file, pinned by the codepoint
-  test; ADR 064 revisits when `expo-symbols` sizes its Android box with the font scale.
+  test; ADR 065 revisits when `expo-symbols` sizes its Android box with the font scale.
 - [`@hours=` keyword ignored by `UIDatePicker` on some iOS version] → the conductor's iOS pass
   checks 12-hour and 24-hour devices in FR and EN; the fallback is to drop the iOS `locale` prop,
   a one-line change in `DateTimeField`.
@@ -233,5 +237,5 @@ bottom edge to the baseline, not its center to the line).
 
 ## Migration Plan
 
-No data or native change; the PR ships as one commit set. Rollback is a revert. ADR 064 is added
+No data or native change; the PR ships as one commit set. Rollback is a revert. ADR 065 is added
 to `decisions/README.md` with the change.

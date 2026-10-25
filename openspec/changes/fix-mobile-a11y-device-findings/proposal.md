@@ -88,4 +88,4 @@ None.
 - Book: `accessibility.md` (icon scaling contract, accessibility-size seam, wordmark cap, settings
   stacking, swatch names, 12/24h), `theming.md` (`Icon`, `WordmarkMaxFontScale`, text-scale seam),
   `lint-format.md` (L9), `features.md` (personal events, Home, onboarding, event details), and a
-  dated `CHANGELOG.md` entry. ADR 064 records the icon scaling and Android glyph rendering decision.
+  dated `CHANGELOG.md` entry. ADR 065 records the icon scaling and Android glyph rendering decision.

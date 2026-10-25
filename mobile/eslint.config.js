@@ -181,7 +181,7 @@ const designDeepImportPattern = {
 }
 
 // L9: every symbol icon declares its text scaling through the Icon primitive
-// (accessibility.md → Icon scaling, ADR 064). Type imports stay allowed.
+// (accessibility.md → Icon scaling, ADR 065). Type imports stay allowed.
 const symbolViewImportPath = {
   name: "expo-symbols",
   importNames: ["SymbolView"],

@@ -57,6 +57,7 @@ decision changes; use Git for its history.
 | [062](./062-calendar-windowed-native-scrollview-paging.md)            | Page the Calendar with a windowed native horizontal ScrollView                                    |
 | [063](./063-platform-type-ramp.md)                                    | Resolve the type ramp per platform in the theme layer                                             |
 | [064](./064-in-house-component-gallery.md)                            | Review components in an in-house on-device gallery, not Storybook                                 |
+| [065](./065-icon-text-scaling.md)                                     | Make icons declare their text scaling, and draw Android glyphs in their own box                   |
 
 > `045` is intentionally left free: the open source-recovery PR carries an ADR
 > numbered `044` that collides with the merged one above and renumbers to `045`
@@ -68,6 +69,9 @@ decision changes; use Git for its history.
 > branch merged `main` and found the reservation above — the collision this note
 > exists to catch, caught by reading the index rather than by git. It has since
 > merged, so `047` is taken, not free. `048` skipped past both.
+>
+> `064` is reserved by the open component-gallery PR (#484,
+> `064-in-house-component-gallery.md`); the icon-scaling ADR took `065`.
 >
 > `049` belongs to [PR #328](https://github.com/timecalendar/timecalendar/pull/328).
 > Its open-PR reservation was detected before the calendar naming/import decisions

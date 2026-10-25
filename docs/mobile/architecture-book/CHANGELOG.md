@@ -1,3 +1,26 @@
+## 2026-10-25 — Accessibility device findings
+
+- ADR [065](./decisions/065-icon-text-scaling.md): icons declare their text scaling, and Android
+  draws its own glyph box. `src/components/icon.tsx` is the only symbol renderer, with a required
+  `scaling: "text" | "fixed"`; proven by `src/components/icon.test.tsx` (sizes per scaling,
+  decorative props, Material codepoint pin).
+- `lint-format.md`: **L9** bans `SymbolView` from `expo-symbols` outside the `Icon` module
+  (`banSymbolView`, exemption block `timecalendar/icon-seam`); type imports stay allowed.
+- `accessibility.md`: new **Icon scaling** section; the accessibility text size seam
+  (`AccessibilityFontScale` 1.786, `useIsAccessibilityTextSize`, `src/theme/text-scale.test.ts`);
+  the brand text cap `WordmarkMaxFontScale` (1.5) on the Home app name and onboarding titles;
+  iOS settings rows stack at accessibility sizes (`native-settings.test.tsx`); swatches announce
+  translated names with radio/checked or button/selected (`color-swatch-picker.test.tsx`);
+  personal-event date/time follows the device 12/24-hour setting (`date-time-field.test.tsx`,
+  `format.test.ts`); the event-details color dot is decorative and first-line aligned
+  (`event-details-screen.test.tsx`).
+- `theming.md`: `WordmarkMaxFontScale` and the `text-scale.ts` exports join the token layer and
+  the `@/theme` surface; `Icon` gets its own bullet; `chrome/native-settings.tsx` records the
+  stacked iOS value rows.
+- `features.md`: personal events (12/24-hour display, iOS picker locale, swatch names), Home app
+  name on `title2`, scrolling onboarding pages with the halved illustration, first-line event
+  color dot.
+
 ## 2026-10-25 — Design-system gallery
 
 - `/developer/gallery` lists every registered fixture as a native settings section with one row

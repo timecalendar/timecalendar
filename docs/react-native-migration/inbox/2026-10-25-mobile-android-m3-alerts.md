@@ -14,14 +14,14 @@ deferred it.
 `alertDialogTheme` under the CNG base theme `Theme.AppCompat.DayNight.NoActionBar`, which gives a
 teal accent and ALL-CAPS buttons. There are six call sites, in three shapes:
 
-| Call site | Shape |
-| --- | --- |
-| `features/personal-events/ui/use-personal-event-delete-confirmation.ts` | Cancel + destructive confirm |
-| `features/calendar-sources/ui/user-calendar-detail-screen.tsx` | Cancel + destructive confirm |
-| `features/environment/ui/use-environment-selector.ts` (confirm) | Cancel + destructive confirm |
-| `features/environment/ui/use-environment-selector.ts` (selector, iOS only) | N choices + Cancel |
-| `features/calendar/ui/event-details-actions.tsx` (hide) | two actions + Cancel |
-| `features/feedback/ui/feedback-screen.tsx` | single-button notice |
+| Call site                                                                  | Shape                        |
+| -------------------------------------------------------------------------- | ---------------------------- |
+| `features/personal-events/ui/use-personal-event-delete-confirmation.ts`    | Cancel + destructive confirm |
+| `features/calendar-sources/ui/user-calendar-detail-screen.tsx`             | Cancel + destructive confirm |
+| `features/environment/ui/use-environment-selector.ts` (confirm)            | Cancel + destructive confirm |
+| `features/environment/ui/use-environment-selector.ts` (selector, iOS only) | N choices + Cancel           |
+| `features/calendar/ui/event-details-actions.tsx` (hide)                    | two actions + Cancel         |
+| `features/feedback/ui/feedback-screen.tsx`                                 | single-button notice         |
 
 **Recommended design** (consistent with ADR 056 / ADR 060 and `theming.md`, where every Compose host
 receives `seedColor = primary`):
