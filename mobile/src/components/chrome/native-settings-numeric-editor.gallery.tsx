@@ -65,7 +65,7 @@ function NumericEditorFixture({ copy }: { copy: Copy }) {
   )
 }
 
-function DefaultFixture() {
+function StandardFixture({ validation = false }: { validation?: boolean }) {
   const { t } = useTranslation()
   return (
     <NumericEditorFixture
@@ -74,21 +74,9 @@ function DefaultFixture() {
         label: t("gallery.numericEditor.fieldLabel"),
         cancelLabel: t("gallery.numericEditor.cancel"),
         submitLabel: t("gallery.numericEditor.submit"),
-      }}
-    />
-  )
-}
-
-function ValidationErrorFixture() {
-  const { t } = useTranslation()
-  return (
-    <NumericEditorFixture
-      copy={{
-        title: t("gallery.numericEditor.editorTitle"),
-        label: t("gallery.numericEditor.fieldLabel"),
-        cancelLabel: t("gallery.numericEditor.cancel"),
-        submitLabel: t("gallery.numericEditor.submit"),
-        validationMessage: t("gallery.numericEditor.validation"),
+        ...(validation
+          ? { validationMessage: t("gallery.numericEditor.validation") }
+          : {}),
       }}
     />
   )
@@ -120,12 +108,12 @@ export default meta
 
 export const Default: Story = {
   name: "gallery.numericEditor.story.default",
-  render: () => <DefaultFixture />,
+  render: () => <StandardFixture />,
 }
 
 export const ValidationError: Story = {
   name: "gallery.numericEditor.story.validationError",
-  render: () => <ValidationErrorFixture />,
+  render: () => <StandardFixture validation />,
 }
 
 export const LongStrings: Story = {

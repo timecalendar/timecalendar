@@ -34,49 +34,30 @@ function Field({ label, testID }: { label: string; testID: string }) {
 }
 
 function Submit({ label }: { label: string }) {
-  const [, setCount] = useState(0)
   return (
     <PrimaryAction
       testID="gallery-keyboard-layout-submit"
       label={label}
-      onPress={() => setCount((value) => value + 1)}
+      onPress={() => {}}
     />
   )
 }
 
-function DefaultFixture() {
+function FormFixture({ fillsViewport = false }: { fillsViewport?: boolean }) {
   const { t } = useTranslation()
   return (
-    <RootPage scrollsUnderHeader>
+    <RootPage
+      scrollsUnderHeader={!fillsViewport}
+      lane={fillsViewport ? "readable" : "standard"}
+      {...(fillsViewport ? { style: styles.fill } : {})}
+    >
       {() => (
         <KeyboardSafeActionLayout
+          scrollsUnderHeader={!fillsViewport}
           testID="gallery-keyboard-layout"
-          contentContainerStyle={styles.content}
-          actionContainerStyle={styles.actions}
-          actions={
-            <Submit label={t("gallery.keyboardSafeActionLayout.submit")} />
+          contentContainerStyle={
+            fillsViewport ? [styles.content, styles.centered] : styles.content
           }
-        >
-          <PageIntro caption={t("gallery.keyboardSafeActionLayout.caption")} />
-          <Field
-            label={t("gallery.keyboardSafeActionLayout.fieldLabel")}
-            testID="gallery-keyboard-layout-input"
-          />
-        </KeyboardSafeActionLayout>
-      )}
-    </RootPage>
-  )
-}
-
-function FillsViewportFixture() {
-  const { t } = useTranslation()
-  return (
-    <RootPage lane="readable" style={styles.fill}>
-      {() => (
-        <KeyboardSafeActionLayout
-          scrollsUnderHeader={false}
-          testID="gallery-keyboard-layout"
-          contentContainerStyle={[styles.content, styles.centered]}
           actionContainerStyle={styles.actions}
           actions={
             <Submit label={t("gallery.keyboardSafeActionLayout.submit")} />
@@ -153,12 +134,12 @@ export default meta
 
 export const Default: Story = {
   name: "gallery.keyboardSafeActionLayout.story.default",
-  render: () => <DefaultFixture />,
+  render: () => <FormFixture />,
 }
 
 export const FillsViewport: Story = {
   name: "gallery.keyboardSafeActionLayout.story.fillsViewport",
-  render: () => <FillsViewportFixture />,
+  render: () => <FormFixture fillsViewport />,
 }
 
 export const LongStrings: Story = {
