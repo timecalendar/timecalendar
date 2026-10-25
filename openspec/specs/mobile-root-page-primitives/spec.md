@@ -2,7 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change establish-mobile-root-page-primitives. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Root pages share a measured frame and optional intro hierarchy
 
 The mobile app SHALL provide shared `RootPage` and `PageIntro` components for user-facing non-tab destinations. `RootPage` SHALL own the themed full-height surface, non-header safe-area edges, consistent vertical rhythm, and one measured `readable` or `standard` lane while leaving scrolling, virtualization, overlays, presentation, and feature state to the consumer. `PageIntro` SHALL support an optional heading and optional caption in source order; a native Stack title SHALL be sufficient as the route heading, and the component SHALL NOT require a second oversized in-content copy of that title.
@@ -27,7 +29,7 @@ The mobile app SHALL provide shared `RootPage` and `PageIntro` components for us
 
 ### Requirement: Every root route has compact native Stack classification
 
-The root Expo Router Stack SHALL use a shared typed options helper for user-facing non-tab destinations. The defaults SHALL show a localized compact native header, disable large titles, use a chevron-only/minimal back affordance that never exposes `(tabs)`, use the active theme's native header surface, and permit a feature to add or override native header actions. The `(tabs)` shell, nested `onboarding` flow, `profile` and `more` compatibility redirects, and `dev-import` transition route SHALL be registered as explicit headerless exceptions; every other root route SHALL inherit the visible defaults or declare a narrower presentation override without losing compact back behavior.
+The root Expo Router Stack SHALL use a shared typed options helper for user-facing non-tab destinations. The defaults SHALL show a localized compact native header, disable large titles, use a chevron-only/minimal back affordance that never exposes `(tabs)`, use the active theme's native header surface, and permit a feature to add or override native header actions. The `(tabs)` shell, nested `onboarding` flow, `profile` and `more` compatibility redirects, `dev-import` transition route, and `calendar-import-result` route SHALL be registered as explicit headerless exceptions, and they SHALL be the only headerless root registrations; every other root route SHALL inherit the visible defaults or declare a narrower presentation override without losing compact back behavior.
 
 #### Scenario: User-facing destination inherits compact chrome
 
@@ -37,9 +39,15 @@ The root Expo Router Stack SHALL use a shared typed options helper for user-faci
 
 #### Scenario: Shell and internal routes stay headerless
 
-- **WHEN** the root layout registers `(tabs)`, `onboarding`, `profile`, `more`, and `dev-import`
+- **WHEN** the root layout registers `(tabs)`, `onboarding`, `profile`, `more`, `dev-import`, and `calendar-import-result`
 - **THEN** each route explicitly sets `headerShown: false`
 - **AND** no route depends accidentally on the Stack default for its exception
+
+#### Scenario: The headerless set is closed
+
+- **WHEN** the root route registrations are compared with the files discovered under `mobile/src/app/`
+- **THEN** exactly `(tabs)`, `onboarding`, `profile`, `more`, `dev-import`, and `calendar-import-result` set `headerShown: false`
+- **AND** no other discovered root route, including any dev-only route, is headerless
 
 #### Scenario: Feature action survives the defaults
 
@@ -161,7 +169,7 @@ Focused component tests SHALL cover measured page framing, optional intro headin
 
 The mobile app SHALL maintain an exhaustive, test-enforced inventory of every top-level route and every child route auto-discovered by the nested onboarding Stack under `mobile/src/app/`. Ordinary non-tab pushes SHALL render one localized compact native header with `headerLargeTitle: false` and `headerBackButtonDisplayMode: "minimal"`, and SHALL use `RootPage` for their themed surface, non-header safe-area edges, shared top rhythm, and one semantic measured lane. Features SHALL retain ownership of localized titles, native header actions, lists, scroll views, keyboard avoidance, refresh, pagination, overlays, and platform presentation.
 
-The top-level `(tabs)` shell, `profile` and `more` redirects, root `onboarding` Stack container, and `dev-import` transition route SHALL remain explicit headerless exceptions. The nested onboarding `index` route SHALL remain an explicit headerless branded-landing exception. The QR camera content MAY remain full-bleed below its visible nested header, and `changelog-sheet` SHALL retain its iOS form-sheet and Android full-screen-modal presentation. No other discovered user-visible route SHALL inherit an untested header or page posture.
+The top-level `(tabs)` shell, `profile` and `more` redirects, root `onboarding` Stack container, `dev-import` transition route, and `calendar-import-result` route SHALL remain explicit headerless exceptions. The nested onboarding `index` route SHALL remain an explicit headerless branded-landing exception. The QR camera content MAY remain full-bleed below its visible nested header, and `changelog-sheet` SHALL retain its iOS form-sheet and Android full-screen-modal presentation. No other discovered user-visible route SHALL inherit an untested header or page posture.
 
 #### Scenario: Ordinary root destinations share compact chrome and rhythm
 
@@ -172,7 +180,7 @@ The top-level `(tabs)` shell, `profile` and `more` redirects, root `onboarding` 
 #### Scenario: Root exceptions are explicit
 
 - **WHEN** the root route inventory is compared with files discovered under `mobile/src/app/`
-- **THEN** `(tabs)`, `profile`, `more`, `onboarding`, and `dev-import` are the explicit headerless registrations
+- **THEN** `(tabs)`, `profile`, `more`, `onboarding`, `dev-import`, and `calendar-import-result` are the explicit headerless registrations
 - **AND** every other top-level file or route group is registered under compact defaults or a narrower tested presentation override
 
 #### Scenario: Nested onboarding classification is explicit
