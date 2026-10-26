@@ -67,14 +67,14 @@ The **server half** is owned by the shared, compose-first lifecycle
 the lifecycle manager, so boot/seed/readiness/teardown/logs are Docker's job,
 not hand-rolled bash. `run_e2e.sh` calls it and owns only the Flutter half.
 
-1. `ci/e2e-server.sh up` — ensures the dummy Firebase key, brings Postgres,
-   Redis, and the **server** up as compose-managed services with
-   `docker compose up --wait` (gated on the server's `/health` healthcheck,
-   itself gated on `postgres`/`redis` being healthy), then seeds
-   `timecalendar_test` via a one-shot `compose run --rm server npm run db:init`
-   (drop, migrate, load every `**/fixtures/*.yml`, then the guarded
-   E2E-calendar seed step `server/src/scripts/seed-e2e-calendar.ts`). The API
-   serves on host port 3005.
+1. `ci/e2e-server.sh up` — ensures the dummy Firebase key, brings Postgres and
+   Redis up healthy with `docker compose up --wait`, seeds `timecalendar_test`
+   via a one-shot `compose run --rm server npm run db:init` (drop, migrate, load
+   every `**/fixtures/*.yml`, then the guarded E2E-calendar seed step
+   `server/src/scripts/seed-e2e-calendar.ts`), and only then brings the
+   **server** up with `docker compose up --wait` (gated on its `/health`
+   healthcheck). The server reads the database at bootstrap, so it must never
+   start before the seed. The API serves on host port 3005.
 2. Resolves an Android device from `flutter devices`; exits fast with a clear
    message if none is connected.
 3. Runs **each** `integration_test/*_flow_test.dart` file as its own

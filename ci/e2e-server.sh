@@ -9,8 +9,12 @@
 # readiness polling, or log-file juggling. See add-mobile-test-harness design
 # D3/D4 for the rationale and the --native seam.
 #
+# Both modes seed before the server process starts: server components read the
+# database during application bootstrap, so the schema must already be
+# migrated and seeded when the server boots.
+#
 # Usage:
-#   ci/e2e-server.sh up   [--native]   boot + seed a healthy stack on port 3005
+#   ci/e2e-server.sh up   [--native]   seed, then boot a healthy stack on port 3005
 #   ci/e2e-server.sh down [--native]   stop and remove everything it started
 #   ci/e2e-server.sh logs [--native]   print the server's logs
 #
@@ -100,18 +104,22 @@ up_compose() {
     log "using prebuilt server image: $E2E_SERVER_IMAGE"
   fi
 
+  log "bringing up Postgres and Redis (compose up --wait)…"
+  compose up --wait postgres redis
+
+  # The export-guide catalogue snapshot taken at bootstrap keeps an empty
+  # schema's state for the life of the process. The one-shot runs inside the
+  # compose network and inherits DATABASE_URL (…@postgres:5432/…) from the
+  # service env.
+  log "seeding the timecalendar_test database (db:init)…"
+  # shellcheck disable=SC2086  # build_flag is intentionally word-split (may be empty)
+  compose run --rm $build_flag server npm run db:init
+
   # Name `server` explicitly so compose brings up only it and its depends_on
   # (postgres, redis) — not the base file's nginx, which e2e doesn't need (it
   # binds 1443 and needs certs).
-  log "bringing up Postgres, Redis, and the server (compose up --wait)…"
-  # shellcheck disable=SC2086  # build_flag is intentionally word-split (may be empty)
-  compose up --wait $build_flag server
-
-  # One-shot seed: drop + migrate + seed timecalendar_test. Runs inside the
-  # compose network, so it inherits DATABASE_URL (…@postgres:5432/…) from the
-  # service env.
-  log "seeding the timecalendar_test database (db:init)…"
-  compose run --rm server npm run db:init
+  log "starting the server (compose up --wait)…"
+  compose up --wait server
 
   log "stack up — API serving on http://localhost:$BACKEND_PORT"
 }
@@ -177,8 +185,11 @@ down_native() {
 }
 
 logs_native() {
-  [ -f "$NATIVE_LOG_FILE" ] && cat "$NATIVE_LOG_FILE" || \
+  if [ -f "$NATIVE_LOG_FILE" ]; then
+    cat "$NATIVE_LOG_FILE"
+  else
     log "no native log file at $NATIVE_LOG_FILE."
+  fi
 }
 
 # --- Argument parsing --------------------------------------------------------

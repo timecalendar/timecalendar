@@ -29,8 +29,11 @@ appId: fr.samuelprak.timecalendar.dev
     visible:
       id: "user-calendar-visibility-e2e0e2e0-0000-4000-8000-000000000001"
     timeout: 30000
+# On iOS the identifier spans the whole SwiftUI Toggle row, and only the
+# trailing switch flips it; a centred tap lands on the label.
 - tapOn:
     id: "user-calendar-visibility-e2e0e2e0-0000-4000-8000-000000000001"
+    point: "90%,50%"
 
 # Re-enter Agenda cold: the schedule is absent, but the list itself is present.
 - runFlow: helpers/open-calendar-agenda.yaml
@@ -56,6 +59,7 @@ appId: fr.samuelprak.timecalendar.dev
     timeout: 30000
 - tapOn:
     id: "user-calendar-visibility-e2e0e2e0-0000-4000-8000-000000000001"
+    point: "90%,50%"
 - runFlow: helpers/open-calendar-agenda.yaml
 - extendedWaitUntil:
     visible: "E2E Hide Control(,.*)?"

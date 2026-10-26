@@ -1,0 +1,7 @@
+entity: FeatureFlag
+items:
+  exportGuidesV1:
+    key: export-guides-v1
+    name: Export guides v1
+    description: Serves the per-school calendar export guides (GET /v1/export-guides).
+    enabled: true

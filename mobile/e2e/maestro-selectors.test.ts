@@ -284,6 +284,18 @@ describe("Maestro journey contracts", () => {
     ).toBe(true)
   })
 
+  it("waits for the iOS deep-link prompt before its optional confirm", () => {
+    expect(
+      containsOrdered(flow("helpers/confirm-ios-deep-link.yaml"), [
+        "platform: iOS",
+        'visible: "Open in .*"',
+        "optional: true",
+        'text: "Open"',
+        "optional: true",
+      ]),
+    ).toBe(true)
+  })
+
   it("keeps the real listed-school import path and synced detail proof", () => {
     const yaml = flow("01-fresh-user-import.yaml")
     expect(yaml.split(OPEN_AGENDA_FLOW)).toHaveLength(2)
@@ -293,10 +305,13 @@ describe("Maestro journey contracts", () => {
         '- tapOn: "My Gaming Academia"',
         'id: "onboarding-programme-input"',
         '- inputText: "E2E Programme"',
-        'id: "onboarding-connect-continue"',
+        'id: "export-guide-page"',
+        'while:\n      notVisible:\n        id: "onboarding-import-url"',
+        'id: "export-guide-next"',
         'id: "onboarding-import-url"',
         '- inputText: "http://127.0.0.1:3005/__e2e/ical/import.ics"',
         'id: "ical-url-submit"',
+        'visible:\n      id: "calendar-import-result-calendar"',
         OPEN_AGENDA_FLOW,
         'id: "agenda-section-list"',
         'visible:\n        id: "calendar-empty-refresh"',
@@ -305,7 +320,9 @@ describe("Maestro journey contracts", () => {
         '- assertVisible: "Room E2E Import"',
       ]),
     ).toBe(true)
+    expect(yaml).not.toContain("ical-url-content")
     expect(yaml).not.toContain("dev-import")
+    expect(yaml).not.toContain("onboarding-connect-continue")
   })
 
   it("creates, edits, cold-reopens, and deletes through Calendar", () => {
@@ -338,7 +355,7 @@ describe("Maestro journey contracts", () => {
     const openCalendar =
       '- tapOn:\n    id: "user-calendar-row-e2e0e2e0-0000-4000-8000-000000000001"'
     const toggle =
-      '- tapOn:\n    id: "user-calendar-visibility-e2e0e2e0-0000-4000-8000-000000000001"'
+      '- tapOn:\n    id: "user-calendar-visibility-e2e0e2e0-0000-4000-8000-000000000001"\n    point: "90%,50%"'
     expect(yaml.split(openCalendar)).toHaveLength(3)
     expect(yaml.split(toggle)).toHaveLength(3)
     expect(yaml.split(OPEN_AGENDA_FLOW)).toHaveLength(3)

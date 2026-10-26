@@ -3,7 +3,6 @@ import { router } from "expo-router"
 import type { ReactNode } from "react"
 import { StyleSheet } from "react-native"
 
-import { resolveKeyboardAvoidingBehavior } from "@/components/keyboard-avoiding-behavior"
 import { useImportDraft } from "@/features/onboarding/draft"
 import { clearSelection } from "@/features/school-selection"
 import { usePlatform } from "@/test-support/platform"
@@ -172,9 +171,7 @@ describe("InstitutionNameScreen", () => {
         )
         const cta = view.getByTestId("onboarding-institution-continue")
 
-        expect(avoiding.props.behavior).toBe(
-          resolveKeyboardAvoidingBehavior("ios"),
-        )
+        expect(avoiding.props.behavior).toBe("height")
         expect(scroll.props.keyboardShouldPersistTaps).toBe("handled")
         expect(
           StyleSheet.flatten(scroll.props.contentContainerStyle),
@@ -200,18 +197,19 @@ describe("InstitutionNameScreen", () => {
     describe("on Android", () => {
       usePlatform("android")
 
-      it("keeps the sticky action on the measured keyboard-safe path", async () => {
+      it("keeps the sticky action on the keyboard-inset path", async () => {
         const view = await render(<InstitutionNameScreen />)
-        const avoiding = view.getByTestId("keyboard-avoiding-layout")
+        const region = view.getByTestId(
+          "onboarding-institution-keyboard-layout",
+        )
         const scroll = view.getByTestId("keyboard-scroll-layout")
         const actions = view.getByTestId(
           "onboarding-institution-keyboard-layout-actions",
         )
         const cta = view.getByTestId("onboarding-institution-continue")
 
-        expect(avoiding.props.behavior).toBe(
-          resolveKeyboardAvoidingBehavior("android"),
-        )
+        expect(view.queryByTestId("keyboard-avoiding-layout")).toBeNull()
+        expect(region).toContainElement(actions)
         expect(scroll.props.keyboardShouldPersistTaps).toBe("handled")
         expect(
           scroll.queryAll(

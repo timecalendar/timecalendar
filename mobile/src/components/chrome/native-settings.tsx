@@ -312,19 +312,17 @@ export function NativeSettingsSection(props: NativeSettingsSectionProps) {
   return <ComposeSettingsSection {...props} />
 }
 
+// SwiftUI applies a Section's accessibilityIdentifier to every row inside it,
+// replacing the rows' own identifiers, so iOS sections carry none.
 function SwiftSettingsSection({
   title,
   footer,
-  testID: sectionTestID,
   children,
 }: NativeSettingsSectionProps) {
   return (
     <SwiftSection
       {...(title ? { title } : {})}
       {...(footer ? { footer: <SwiftText>{footer}</SwiftText> } : {})}
-      {...(sectionTestID
-        ? { modifiers: [accessibilityIdentifier(sectionTestID)] }
-        : {})}
     >
       {children}
     </SwiftSection>
@@ -384,13 +382,12 @@ export function NativeSettingsAlert(props: NativeSettingsAlertProps) {
 function SwiftSettingsAlert({
   title,
   message,
-  testID: alertTestID,
   messageTestID,
   action,
 }: NativeSettingsAlertProps) {
   const theme = useTheme()
   return (
-    <SwiftSection modifiers={[accessibilityIdentifier(alertTestID)]}>
+    <SwiftSection>
       <HStack alignment="firstTextBaseline" spacing={12}>
         <SwiftImage
           systemName="exclamationmark.triangle.fill"

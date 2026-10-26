@@ -23,9 +23,11 @@ process-global state into one another.
 
 The app SHALL have an end-to-end test that exercises the onboarding screens and
 entry into the add-school flow against the live backend. The flow SHALL be
-deterministic: it MUST NOT depend on outbound DNS resolution, and a failed
-school-logo image load MUST degrade gracefully to a placeholder rather than
-surface a reported `FlutterError` that fails the test.
+deterministic: its outcome MUST NOT depend on whether a school-logo image
+loads, and a failed school-logo image load MUST degrade gracefully to a
+placeholder rather than surface a reported `FlutterError` that fails the test.
+Seeded logo URLs use the same first-party asset origin as export-guide images,
+so loading one may need outbound DNS resolution.
 
 #### Scenario: A new user walks onboarding to school selection
 
@@ -36,7 +38,7 @@ surface a reported `FlutterError` that fails the test.
 
 - **WHEN** a seeded school's logo URL cannot be loaded
 - **THEN** the `SchoolItem` widget renders the `assets/images/school.png` placeholder via an image error builder, no `FlutterError` is reported, and the onboarding flow continues to pass
-- **AND** the seeded logo URLs resolve without any outbound DNS lookup, so the flow's outcome does not depend on emulator network behaviour
+- **AND** the flow's outcome is the same whether or not the logo host resolves, so it does not depend on emulator network behaviour
 
 ### Requirement: Calendar, event-details and settings smoke flow
 

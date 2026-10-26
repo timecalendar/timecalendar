@@ -275,7 +275,7 @@ describe("native settings chrome on ios", () => {
         }}
       />,
     )
-    expect(view.getByTestId("alert")).toBeOnTheScreen()
+    expect(view.queryByTestId("alert")).toBeNull()
     expect(
       view.getByTestId("swiftui-image-exclamationmark.triangle.fill").props
         .modifiers,
@@ -288,6 +288,23 @@ describe("native settings chrome on ios", () => {
     expect(action.props.accessibilityLabel).toBe("Retry the thing")
     await fireEvent.press(action)
     expect(onPress).toHaveBeenCalledTimes(1)
+  })
+
+  it("keeps a row's own testID inside a section with a testID", async () => {
+    const view = await render(
+      <NativeSettingsHost>
+        <NativeSettingsSection title="Section" testID="section">
+          <NativeSettingsRow
+            kind="value"
+            label="Value"
+            value="Read only"
+            testID="row"
+          />
+        </NativeSettingsSection>
+      </NativeSettingsHost>,
+    )
+    expect(view.getByTestId("row")).toBeOnTheScreen()
+    expect(view.queryByTestId("section")).toBeNull()
   })
 
   it("renders an alert without an action", async () => {

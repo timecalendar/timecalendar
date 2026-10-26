@@ -1,5 +1,6 @@
-import { type ReactNode, useRef, useState } from "react"
+import { type ReactNode, useContext, useEffect, useRef, useState } from "react"
 import {
+  Keyboard,
   KeyboardAvoidingView,
   type LayoutChangeEvent,
   Platform,
@@ -9,13 +10,10 @@ import {
   View,
   type ViewStyle,
 } from "react-native"
+import { SafeAreaInsetsContext } from "react-native-safe-area-context"
 
 import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { headerScrollProps } from "@/components/header-scroll-props"
-import {
-  resolveKeyboardAvoidingBehavior,
-  resolveKeyboardVerticalOffset,
-} from "@/components/keyboard-avoiding-behavior"
 import { type ResponsiveLane, Spacing } from "@/theme"
 
 type KeyboardSafeActionLayoutProps = {
@@ -46,15 +44,80 @@ export function KeyboardSafeActionLayout({
 }: KeyboardSafeActionLayoutProps) {
   const { laneStyle, onLayout } = useAdaptiveLayout(lane)
   const ownerRef = useRef<View>(null)
+  const keyboardTopRef = useRef<number | null>(null)
   const [keyboardVerticalOffset, setKeyboardVerticalOffset] = useState(0)
-  const handleLayout = (event: LayoutChangeEvent) => {
-    onLayout(event)
-    ownerRef.current?.measureInWindow((_x, y) => {
-      if (Number.isFinite(y) && y >= 0) {
-        setKeyboardVerticalOffset(resolveKeyboardVerticalOffset(Platform.OS, y))
-      }
+  const [keyboardOverlap, setKeyboardOverlap] = useState<number | null>(null)
+  // Android measureInWindow starts below the status bar (the visible frame's
+  // top), while keyboardDidShow reports the keyboard top in screen coordinates;
+  // under edge-to-edge the safe-area top is that status bar.
+  const statusBar = useContext(SafeAreaInsetsContext)?.top ?? 0
+  const keyboardInset =
+    keyboardOverlap === null ? 0 : Math.max(0, keyboardOverlap + statusBar)
+
+  const measureKeyboardInset = () => {
+    ownerRef.current?.measureInWindow((_x, y, _width, height) => {
+      const keyboardTop = keyboardTopRef.current
+      if (keyboardTop === null || !Number.isFinite(y + height)) return
+      setKeyboardOverlap(y + height - keyboardTop)
     })
   }
+
+  useEffect(() => {
+    if (Platform.OS !== "android") return
+    const show = Keyboard.addListener("keyboardDidShow", (event) => {
+      keyboardTopRef.current = event.endCoordinates.screenY
+      measureKeyboardInset()
+    })
+    const hide = Keyboard.addListener("keyboardDidHide", () => {
+      keyboardTopRef.current = null
+      setKeyboardOverlap(null)
+    })
+    return () => {
+      show.remove()
+      hide.remove()
+    }
+  }, [])
+
+  const handleLayout = (event: LayoutChangeEvent) => {
+    onLayout(event)
+    if (Platform.OS === "android") {
+      if (keyboardTopRef.current !== null) measureKeyboardInset()
+      return
+    }
+    ownerRef.current?.measureInWindow((_x, y) => {
+      if (Number.isFinite(y) && y >= 0) setKeyboardVerticalOffset(y)
+    })
+  }
+
+  const body = (
+    <>
+      <ScrollView
+        {...headerScrollProps(scrollsUnderHeader)}
+        testID={
+          contentTestID ??
+          (testID === undefined ? undefined : `${testID}-content`)
+        }
+        style={styles.scroller}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={[
+          laneStyle,
+          styles.content,
+          contentContainerStyle,
+        ]}
+      >
+        {children}
+      </ScrollView>
+      <View
+        testID={
+          actionsTestID ??
+          (testID === undefined ? undefined : `${testID}-actions`)
+        }
+        style={[laneStyle, actionContainerStyle]}
+      >
+        {actions}
+      </View>
+    </>
+  )
 
   return (
     <View
@@ -63,38 +126,25 @@ export function KeyboardSafeActionLayout({
       onLayout={handleLayout}
       style={styles.owner}
     >
-      <KeyboardAvoidingView
-        testID={testID}
-        behavior={resolveKeyboardAvoidingBehavior(Platform.OS)}
-        keyboardVerticalOffset={keyboardVerticalOffset}
-        style={styles.owner}
-      >
-        <ScrollView
-          {...headerScrollProps(scrollsUnderHeader)}
-          testID={
-            contentTestID ??
-            (testID === undefined ? undefined : `${testID}-content`)
-          }
-          style={styles.scroller}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={[
-            laneStyle,
-            styles.content,
-            contentContainerStyle,
-          ]}
-        >
-          {children}
-        </ScrollView>
+      {/* Not KeyboardAvoidingView on Android: its keyboardDidHide screenY is the
+          visible height, not a Y, so no static offset fits open and close. */}
+      {Platform.OS === "android" ? (
         <View
-          testID={
-            actionsTestID ??
-            (testID === undefined ? undefined : `${testID}-actions`)
-          }
-          style={[laneStyle, actionContainerStyle]}
+          testID={testID}
+          style={[styles.owner, { paddingBottom: keyboardInset }]}
         >
-          {actions}
+          {body}
         </View>
-      </KeyboardAvoidingView>
+      ) : (
+        <KeyboardAvoidingView
+          testID={testID}
+          behavior="height"
+          keyboardVerticalOffset={keyboardVerticalOffset}
+          style={styles.owner}
+        >
+          {body}
+        </KeyboardAvoidingView>
+      )}
     </View>
   )
 }

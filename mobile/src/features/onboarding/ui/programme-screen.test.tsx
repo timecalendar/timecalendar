@@ -67,9 +67,9 @@ const screenOptions = () =>
     }[]
   }
 
-const expectStickyProgrammeCta = async () => {
+const expectStickyProgrammeCta = async (regionTestID: string) => {
   const view = await render(<ProgrammeScreen />)
-  const avoiding = view.getByTestId("keyboard-avoiding-layout")
+  const avoiding = view.getByTestId(regionTestID)
   const scroll = view.getByTestId("keyboard-scroll-layout")
   const actions = view.getByTestId(
     "onboarding-programme-keyboard-layout-actions",
@@ -92,7 +92,7 @@ const expectStickyProgrammeCta = async () => {
   expect(actions).toContainElement(cta)
   expect(scroll).not.toContainElement(cta)
 
-  return { avoiding, scroll, cta }
+  return { view, avoiding, scroll, cta }
 }
 
 beforeEach(() => {
@@ -252,7 +252,9 @@ describe("ProgrammeScreen", () => {
     usePlatform("ios")
 
     it("keeps Continue as the sole sticky sibling after the scroll", async () => {
-      const { avoiding, scroll, cta } = await expectStickyProgrammeCta()
+      const { avoiding, scroll, cta } = await expectStickyProgrammeCta(
+        "keyboard-avoiding-layout",
+      )
 
       expect(avoiding.props.behavior).toBe("height")
       expect(
@@ -287,10 +289,12 @@ describe("ProgrammeScreen", () => {
   describe("on Android", () => {
     usePlatform("android")
 
-    it("keeps the sticky CTA on the resize-driven path", async () => {
-      const { avoiding, cta } = await expectStickyProgrammeCta()
+    it("keeps the sticky CTA on the keyboard-inset path", async () => {
+      const { view, cta } = await expectStickyProgrammeCta(
+        "onboarding-programme-keyboard-layout",
+      )
 
-      expect(avoiding.props.behavior).toBe("height")
+      expect(view.queryByTestId("keyboard-avoiding-layout")).toBeNull()
       expect(StyleSheet.flatten(cta.props.style)).toMatchObject({
         minHeight: 48,
         backgroundColor: Colors.light.primaryStrong,

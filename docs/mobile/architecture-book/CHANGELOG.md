@@ -16,6 +16,55 @@
   UTC-midnight day in Android date mode ([features.md](./features.md), ADR
   [066](./decisions/066-device-local-date-picker-seam-and-timezone-ci.md)).
 
+## 2026-10-26 — E2E server seeds before it boots
+
+- `ci/e2e-server.sh` compose mode brings up Postgres and Redis, runs the one-shot `db:init`, and
+  only then starts the server, because the server reads the database at bootstrap (spec
+  `e2e-server-lifecycle`). Proven by `ci/test-e2e-server.sh` (job `test-e2e-server` in
+  `ci-build-deploy.yml`). `app/integration_test/README.md` and `docs/agent-dev-environment.md`
+  describe this order.
+- The seed enables `export-guides-v1` in every environment
+  (`server/src/modules/feature-flag/fixtures/feature-flag.fixtures.yml`, proven by
+  `feature-flag.fixtures.test.ts`), so onboarding reaches the export guide against a fresh stack.
+- The server test environment serves public assets on the dev bucket origin
+  (`server/src/config/environments/test.ts`), the exact first-party origin the dev-variant client
+  accepts in `EXPORT_GUIDE_ASSET_ORIGINS`, so the e2e backend's export guide parses. The mobile
+  allow-list has no test origin. Proven by `server/src/config/environments/test-env.test.ts` (test
+  origin equals development origin). A local `server/export-guide-catalogues/` written under another
+  origin is stale and must be deleted.
+- `01-fresh-user-import.yaml` follows the app's route for the seeded school, which has no intranet
+  URL: programme, export guide, URL import. A capped
+  `repeat … while notVisible onboarding-import-url` loop taps `export-guide-next` without a
+  hard-coded page count.
+  `maestro-selectors.test.ts` pins the order and forbids `onboarding-connect-continue`
+  ([testing.md](./testing.md), `mobile/e2e/README.md`).
+- `KeyboardSafeActionLayout` keeps its sibling action region (`ical-url-submit`,
+  `personal-event-save`, the onboarding Continue) right above the keyboard. iOS wraps body and
+  actions in `KeyboardAvoidingView` (`behavior="height"`) offset by the owner's measured window Y,
+  because the view compares its parent-relative frame with the keyboard's window Y. Android pads
+  the region itself and does not use `KeyboardAvoidingView`: there `measureInWindow` starts below
+  the status bar (the visible frame's top) while `keyboardDidShow` reports the keyboard top in
+  screen coordinates, so the padding is `max(0, ownerY + ownerHeight - (keyboardTop - safeAreaTop))`
+  (the safe-area top is the status bar under SDK 56's forced edge-to-edge), recomputed on owner
+  layout while the keyboard is up (a resizing window yields ~0) and `0` after `keyboardDidHide`.
+  `keyboard-safe-action-layout.test.tsx` pins that arithmetic with a modelled status bar; the
+  Android Maestro lane taps the actions with the keyboard open. Neither sees the keyboard window,
+  so the real overlap is a device check (inbox).
+- `helpers/confirm-ios-deep-link.yaml` waits up to 20 s for the iOS "Open in …?" prompt before
+  its optional tap: on a loaded simulator the prompt appeared after the tap had given up and
+  covered the app for the rest of the flow.
+- On iOS, `NativeSettingsSection` and `NativeSettingsAlert` carry no accessibility identifier,
+  because SwiftUI applies a Section's identifier to every row in it. Row testIDs reach Maestro,
+  which flow `03-calendar-visibility` needs for `user-calendar-row-*` and
+  `user-calendar-visibility-*`. Android keeps section and alert testIDs
+  ([theming.md](./theming.md) → Identifiers, pinned by `native-settings.test.tsx`).
+- Flow `03-calendar-visibility` taps the visibility switch at `point: "90%,50%"` of its element.
+  On iOS a `NativeSettingsSwitchRow` identifier covers the whole SwiftUI `Toggle` row, and only
+  the trailing switch flips it; a centred tap lands on the label and leaves the calendar shown.
+- Flow `01-fresh-user-import` waits for `calendar-import-result-calendar` after Import before
+  `stopApp`. `ical-url-content` unmounts as soon as the request starts, so waiting for it to vanish
+  let `stopApp` kill the import before the calendar was persisted.
+
 ## 2026-10-25 — Gallery fixtures for shared components
 
 - The gallery holds one fixture per shared primitive: `root-page`, `keyboard-safe-action-layout`,

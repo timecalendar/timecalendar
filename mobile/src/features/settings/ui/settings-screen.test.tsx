@@ -54,16 +54,24 @@ describe.each(["ios", "android"] as const)(
           ? "swiftui-form-scroll-owner"
           : "compose-lazy-column-scroll-owner"
       expect(view.getAllByTestId(owner)).toHaveLength(1)
-      expect(
-        view
-          .getAllByTestId(/^settings-section-/)
-          .map((node) => node.props.testID),
-      ).toEqual([
-        "settings-section-events",
-        "settings-section-preferences",
-        "settings-section-app",
-        "settings-section-support",
-      ])
+      if (platform === "android") {
+        expect(
+          view
+            .getAllByTestId(/^settings-section-/)
+            .map((node) => node.props.testID),
+        ).toEqual([
+          "settings-section-events",
+          "settings-section-preferences",
+          "settings-section-app",
+          "settings-section-support",
+        ])
+      } else {
+        expect(
+          view
+            .getAllByText(/^(Events|Preferences|App|Support)$/)
+            .map((node) => node.props.children),
+        ).toEqual(["Events", "Preferences", "App", "Support"])
+      }
       for (const id of [
         "settings-activity",
         "settings-personal-events",
@@ -135,7 +143,7 @@ it("preserves loading, empty, populated, badge, and developer states", async () 
   await view.rerender(<SettingsScreen />)
   expect(view.getByText("2 calendars")).toBeOnTheScreen()
   expect(view.getByText("99+")).toBeOnTheScreen()
-  expect(view.getByTestId("settings-section-developer")).toBeOnTheScreen()
+  expect(view.getByText("Developer")).toBeOnTheScreen()
   for (const id of [
     "settings-section-environment",
     "settings-environment",
@@ -150,12 +158,12 @@ it("preserves loading, empty, populated, badge, and developer states", async () 
 it("shows the developer row on preview builds", async () => {
   mockCapability = "preview"
   const view = await render(<SettingsScreen />)
-  expect(view.getByTestId("settings-section-developer")).toBeOnTheScreen()
+  expect(view.getByText("Developer")).toBeOnTheScreen()
   expect(view.getByTestId("settings-developer")).toBeOnTheScreen()
 })
 
 it("hides the developer section in production", async () => {
   const view = await render(<SettingsScreen />)
-  expect(view.queryByTestId("settings-section-developer")).toBeNull()
+  expect(view.queryByText("Developer")).toBeNull()
   expect(view.queryByTestId("settings-developer")).toBeNull()
 })

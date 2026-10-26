@@ -46,7 +46,11 @@ describe.each(["ios", "android"] as const)(
         <NotificationSyncStatus status={{ state: "error" }} retry={retry} />,
       )
 
-      expect(view.getByTestId("notifications-sync-error")).toBeOnTheScreen()
+      if (platform === "android") {
+        expect(view.getByTestId("notifications-sync-error")).toBeOnTheScreen()
+      } else {
+        expect(view.queryByTestId("notifications-sync-error")).toBeNull()
+      }
       expect(view.getByTestId("notifications-sync-message")).toHaveTextContent(
         "Notification settings are saved on this device but not yet remotely.",
       )

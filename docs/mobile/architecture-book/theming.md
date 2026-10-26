@@ -245,6 +245,11 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
     Android: one 20dp-rounded `errorContainer` ListItem (`titleMedium` title, `bodyMedium` message in
     `onErrorContainer`) with an optional trailing TextButton. Both announce `title. message` through
     the platform announcer on mount. Settled or in-progress states render nothing.
+  - **Identifiers:** on iOS, `NativeSettingsSection` and `NativeSettingsAlert` take a `testID` but
+    apply no accessibility identifier, because SwiftUI applies a Section's identifier to every row
+    in it and replaces the rows' own. Rows, switches, alert messages, and alert actions keep their
+    identifiers, so Maestro selects rows and never sections on iOS. Android sections and alerts
+    carry their `testID`. Pinned by `native-settings.test.tsx`.
   - **`NativeSettingsHeader`** (`chrome/native-settings-header.tsx`) is the centered brand header
     for a page's top: the 88pt app icon (continuous rounded square on iOS, circle on Android), the
     app name as a `ThemedText` heading, a tagline, optional secondary detail, and an optional

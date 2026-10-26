@@ -4,7 +4,8 @@ The native daily/manual smoke pack contains exactly three cross-platform user
 journeys, executed lexically from `mobile/.maestro/*.yaml`:
 
 1. `01-fresh-user-import.yaml` — a fresh student selects the live seeded school,
-   enters a programme, follows Connect and URL import, imports the harness-owned
+   enters a programme, pages through the export guide (the seeded school has no
+   intranet URL, so Connect is skipped) into URL import, imports the harness-owned
    iCalendar URL through the real backend, then opens the synced event details.
 2. `02-personal-event.yaml` — create, edit, cold-reopen, and delete a personal
    event from the shipped Calendar/Agenda surface through the real SQLite store.

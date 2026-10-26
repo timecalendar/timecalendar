@@ -49,6 +49,19 @@ jobs:
     - name: Test pre-commit hook wiring
       run: ./ci/test-git-hooks.sh
 
+  test-e2e-server:
+    name: Test e2e server lifecycle
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v6
+
+    # A fake docker records ci/e2e-server.sh's compose calls; no Docker or Node
+    # needed. Guards the seed-before-boot order on every push, not only nightly.
+    - name: Test compose seed-then-serve order
+      run: ./ci/test-e2e-server.sh
+
   scan-disclosure:
     name: Scan branch for disclosures
     runs-on: ubuntu-latest
