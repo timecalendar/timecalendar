@@ -42,7 +42,6 @@ import { homeEventOpenLabel } from "./event-accessibility"
 // math) at the Flutter-parity 70px/hour zoom. The hour window is the dynamic range
 // from the home `dynamicHourRange` selector. A brand now-indicator shows only when
 // the displayed day is today. Reuses MIN_TILE_WIDTH text-hiding for narrow columns.
-// Each tile is an EventSurface → onPressEvent.
 
 // Flutter home zoom (`hourHeight = 70`) — a home concern passed as `pixelsPerHour`,
 // not a grid constant (the day/week DEFAULT_PIXELS_PER_HOUR = 60 stays).

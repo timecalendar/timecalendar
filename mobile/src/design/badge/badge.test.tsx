@@ -268,13 +268,18 @@ describe.each(["light", "dark"] as const)(
 )
 
 it("throws for the onEventSurface tone outside an event surface", async () => {
-  jest.spyOn(console, "error").mockImplementation(() => undefined)
-  await expect(
-    render(
-      <Badge label="2/5" tone="onEventSurface" accessibilityLabel={null} />,
-    ),
-  ).rejects.toThrow("inside an EventSurface")
-  jest.mocked(console.error).mockRestore()
+  const consoleError = jest
+    .spyOn(console, "error")
+    .mockImplementation(() => undefined)
+  try {
+    await expect(
+      render(
+        <Badge label="2/5" tone="onEventSurface" accessibilityLabel={null} />,
+      ),
+    ).rejects.toThrow("inside an EventSurface")
+  } finally {
+    consoleError.mockRestore()
+  }
 })
 
 it("rejects a missing accessibility choice, a color and a font style", () => {

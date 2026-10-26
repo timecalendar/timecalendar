@@ -1,3 +1,5 @@
+import { contrastRatio } from "@/theme/contrast"
+
 export const EventFallbackColor = "#64748B"
 
 export type EventAppearanceScheme = "light" | "dark"
@@ -38,29 +40,12 @@ function compositeRgb(foreground: Rgb, background: Rgb, alpha: number): Rgb {
   ) as unknown as Rgb
 }
 
-function linearChannel(channel: number): number {
-  const value = channel / 255
-  return value <= 0.04045
-    ? value / 12.92
-    : Math.pow((value + 0.055) / 1.055, 2.4)
-}
-
-function relativeLuminance(rgb: Rgb): number {
-  return (
-    0.2126 * linearChannel(rgb[0]) +
-    0.7152 * linearChannel(rgb[1]) +
-    0.0722 * linearChannel(rgb[2])
-  )
-}
-
-function contrastRatio(left: Rgb, right: Rgb): number {
-  const a = relativeLuminance(left)
-  const b = relativeLuminance(right)
-  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
+function rgbContrast(left: Rgb, right: Rgb): number {
+  return contrastRatio(rgbToHex(left), rgbToHex(right))
 }
 
 function contrastingEndpoint(background: Rgb): Rgb {
-  return contrastRatio(BLACK, background) >= contrastRatio(WHITE, background)
+  return rgbContrast(BLACK, background) >= rgbContrast(WHITE, background)
     ? BLACK
     : WHITE
 }
@@ -69,7 +54,7 @@ function boundaryAccent(source: Rgb, canvas: Rgb, foreground: Rgb): Rgb {
   let accent = source
   for (
     let step = 5;
-    contrastRatio(accent, canvas) < 3 && step <= 100;
+    rgbContrast(accent, canvas) < 3 && step <= 100;
     step += 5
   ) {
     accent = compositeRgb(foreground, source, step / 100)

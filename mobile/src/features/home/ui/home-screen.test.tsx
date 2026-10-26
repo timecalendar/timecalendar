@@ -275,6 +275,16 @@ describe("HomeScreen", () => {
     expectEventSurface(card)
   })
 
+  it("top-aligns upcoming cards instead of stretching them to the tallest", async () => {
+    mockUseCalendarEvents.mockReturnValue([todayEvent()])
+    await render(<HomeScreen />)
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("upcoming-scroller").props.contentContainerStyle,
+      ).alignItems,
+    ).toBe("flex-start")
+  })
+
   it("shows partial and complete progress for personal and synced upcoming/timed events", async () => {
     const personal = todayEvent({ id: "personal-1" })
     const synced = todayEvent({

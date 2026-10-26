@@ -17,12 +17,8 @@ import { Spacing } from "@/theme"
 
 import { homeEventOpenLabel } from "./event-accessibility"
 
-// The home upcoming scroller (D6) — PRESENTATIONAL (70% floor): a horizontal RN-core
-// ScrollView of the displayed day's events as EventSurface cards (title +
-// formatTimeRange + location). A few events per day, so a core horizontal list
-// suffices (no FlashList — R-2, same reasoning as the agenda's SectionList). Each
-// card → the screen's origin-keyed onPressEvent. Renders nothing when the day is
-// empty (the empty state is the header line).
+// A few events per day, so a core horizontal list suffices (no FlashList — R-2, same
+// reasoning as the agenda's SectionList).
 
 const CARD_WIDTH = 200
 
@@ -117,6 +113,7 @@ function UpcomingCard({
 
 const styles = StyleSheet.create({
   content: {
+    alignItems: "flex-start",
     gap: Spacing.two,
     paddingVertical: Spacing.one,
   },

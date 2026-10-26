@@ -29,13 +29,8 @@ import { Layout, Radii, Spacing, useTheme } from "@/theme"
 // SectionList (zero new dep — D4) of day-grouped events as a designed brand surface
 // (R-3). The screen owns the read + the resolved locale; this maps events → day
 // sections via the pure groupEventsByDay seam, formats headers/times via the pure
-// date-fns formatter, and renders day headers + EventSurface tiles. Each tile is a
-// touchable (accessibilityRole="button" + a translated label incl. a view-details
-// hint + onPress) → the screen-provided onPressEvent, which routes synced events to
-// the read-only details screen and personal events to their edit form (D2/D4). A
-// now/upcoming indicator marks the first event ending after now. The screen passes a
-// `refreshControl` (a RefreshControl wired to the sync orchestrator) so the agenda is
-// pull-to-refresh.
+// date-fns formatter. The screen-provided onPressEvent routes synced events to the
+// read-only details screen and personal events to their edit form (D2/D4).
 
 interface AgendaSection {
   day: Date
