@@ -32,10 +32,19 @@ AX5 or font scale 2.0.
 
 None of the Android parts of #485 were checked on a device: the 2.0 icon boxes, the Android
 date field following 12h, TalkBack radio/checked swatches and the event-details dot at 2x. The
-Windows PC (`ssh pc`) was unreachable. An EAS cloud `development` APK (build
-`172f895d-41fc-4f91-bd0d-fd0ba38d1a4d`) was installed on the Pixel_10 emulator. After
-`pm clear` it stays on a blank screen: the root layout's bootstrap gates render `null` and
-nothing mounts. `origin/main` JS does the same, so the cause is the build or emulator setup, not
-#485. Before clearing data, the app rendered Home at font scale 1.0. Next: run the Android checks
-above on the OnePlus (adb 86fa07cc) or the PC emulator at `font_scale 2.0`, and find out which gate
-blocks a fresh install of the EAS development APK.
+Windows PC (`ssh pc`) was unreachable. The EAS cloud `development` APK (build
+`172f895d-41fc-4f91-bd0d-fd0ba38d1a4d`) works on the Pixel_10 emulator.
+
+The blank screen after `pm clear` is a development-build artefact, not an app bug. Logcat on
+`origin/main` JS shows that every gate settles and Home mounts. The wait is long: about 37 seconds
+from `Running "main"` to the first app log (`01:09:17.7` → `01:09:54.7`). A warm relaunch without
+clearing data takes the same time (`01:08:04` → `01:08:40`), and so does a run with no debugger
+attached. During that time Hermes interprets the development bundle under the emulator, and the
+root gates render nothing. On iOS, a newly created simulator with the app freshly installed
+renders Home within 13 seconds of the bundle being served. Release builds with
+`clearState: true` (`ci-mobile-e2e`) get past startup on both platforms. `mobile/EAS.md`
+("Opening a development build on a fresh install") documents the launch commands and how long to
+wait.
+
+Next: run the Android checks above on the OnePlus (adb 86fa07cc) or the PC emulator at
+`font_scale 2.0`. Give each cold launch about 40 seconds before the first screenshot.
