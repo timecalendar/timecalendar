@@ -35,8 +35,8 @@ services:
         condition: service_healthy
     healthcheck:
       # node:24 ships global fetch — no dependency on curl being in the image.
-      # /health pings the DB connection (200 when reachable); the schema is
-      # empty until the one-shot seed runs, which is fine for readiness.
+      # /health pings the DB connection (200 when reachable). ci/e2e-server.sh
+      # migrates and seeds the schema before this service starts.
       test:
         - CMD
         - node

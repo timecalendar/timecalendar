@@ -424,10 +424,11 @@ ci/e2e-server.sh down [--native]   # stop and remove everything it started
 ci/e2e-server.sh logs [--native]
 ```
 
-- **compose mode (default):** `docker compose up --wait` brings up Postgres, Redis,
-  and the server (built from source unless `E2E_SERVER_IMAGE` points at a prebuilt
-  image, as CI does); then a one-shot seed `db:init` into the isolated
-  **`timecalendar_test`** database; mints the dummy Firebase key first.
+- **compose mode (default):** mints the dummy Firebase key, brings up Postgres and
+  Redis with `docker compose up --wait`, runs a one-shot seed `db:init` into the
+  isolated **`timecalendar_test`** database, then brings up the server (built from
+  source unless `E2E_SERVER_IMAGE` points at a prebuilt image, as CI does). The
+  server reads the database at bootstrap, so it starts only after the seed.
 - **`--native` mode:** for Docker-less hosts (e.g. GitHub macOS runners) — the
   caller provisions Postgres/Redis, the script seeds, mints the key, boots the
   server as a pid-tracked process, and waits on `/health`. Only service

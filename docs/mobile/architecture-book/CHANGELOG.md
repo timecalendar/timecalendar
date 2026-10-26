@@ -16,6 +16,17 @@
   UTC-midnight day in Android date mode ([features.md](./features.md), ADR
   [066](./decisions/066-device-local-date-picker-seam-and-timezone-ci.md)).
 
+## 2026-10-26 — E2E server seeds before it boots
+
+- `ci/e2e-server.sh` compose mode brings up Postgres and Redis, runs the one-shot `db:init`, and
+  only then starts the server, because the server reads the database at bootstrap (spec
+  `e2e-server-lifecycle`). Proven by `ci/test-e2e-server.sh` (job `test-e2e-server` in
+  `ci-build-deploy.yml`). `app/integration_test/README.md` and `docs/agent-dev-environment.md`
+  describe this order. `testing.md` is unchanged: it delegates the lifecycle to the spec.
+- The seed enables `export-guides-v1` in every environment
+  (`server/src/modules/feature-flag/fixtures/feature-flag.fixtures.yml`, proven by
+  `feature-flag.fixtures.test.ts`), so onboarding reaches the export guide against a fresh stack.
+
 ## 2026-10-25 — Gallery fixtures for shared components
 
 - The gallery holds one fixture per shared primitive: `root-page`, `keyboard-safe-action-layout`,
