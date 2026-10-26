@@ -19,6 +19,14 @@ color, never brand pink. Screens never set `headerStyle`, `headerShadowVisible`,
 `headerTransparent`, or a tint on header items themselves; the onboarding Stack uses the same
 builder.
 
+Header actions are declared through `useHeaderActions` from `@/components/chrome`, spread into the
+screen's one `Stack.Screen options`: native bar button items on iOS, Material 3 top-app-bar icon
+and text buttons on Android, tinted `text` by the chrome. Screens set no `headerRight`,
+`headerLeft`, `unstable_headerRightItems`, `unstable_headerLeftItems` or navigation-bar
+`Stack.Toolbar` themselves (`local/no-ad-hoc-header-action`, one allowlisted file: the calendar
+view menu). See [theming.md → Header and floating actions](./theming.md#header-and-floating-actions--useheaderactions-floatingaction-srccomponentschrome)
+and ADR [075](./decisions/075-header-and-floating-actions.md).
+
 iOS reads a minimal back button's accessible label from the previous screen's title, which falls
 back to the route name. The `(tabs)` registration therefore carries `title: t("common.back")`, so
 every sibling pushed from a tab announces "Back" / "Retour", never "(tabs)", while the chevron
@@ -34,8 +42,8 @@ scroll by the header height. Such a page drops `scrollsUnderHeader` and its scro
 `headerScrollProps(false)` (inset `never`, no bounce); a list toggles both on whether it has rows
 (`headerScrollProps(hasRows)`); `KeyboardSafeActionLayout` takes `scrollsUnderHeader={false}`. `(tabs)`, `onboarding`, `profile`, `more`,
 `dev-import` and `calendar-import-result` are explicit headerless exceptions. The route-structure test enumerates top-level
-siblings so a new route cannot inherit either posture accidentally. Features still own localized
-`Stack.Screen` titles and native header actions. See ADR [054](./decisions/054-shared-root-page-semantics.md).
+siblings so a new route cannot inherit either posture accidentally. Features own localized
+`Stack.Screen` titles and declare header actions through `useHeaderActions`. See ADR [054](./decisions/054-shared-root-page-semantics.md).
 
 Root content uses `RootPage` for safe areas, the header overlap inset, vertical rhythm, and a
 measured lane.

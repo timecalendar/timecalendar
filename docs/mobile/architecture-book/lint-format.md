@@ -8,7 +8,7 @@ The exact rules and their options live in `mobile/eslint.config.js` (named block
 `timecalendar/environment-home`, `timecalendar/design-home`, `timecalendar/fixtures`,
 `timecalendar/design-tests`, `timecalendar/design-fixtures`, `timecalendar/chrome-fixtures`,
 `timecalendar/icon-seam`, `timecalendar/raw-button`, `timecalendar/ad-hoc-status`,
-`timecalendar/ad-hoc-separator`, `timecalendar/raw-event-color`, `timecalendar/raw-text-input`,
+`timecalendar/ad-hoc-separator`, `timecalendar/header-action`, `timecalendar/raw-event-color`, `timecalendar/raw-text-input`,
 `timecalendar/retired-list-names`,
 `timecalendar/calendar-sources-is-a-leaf`, `timecalendar/storage-seams`,
 `timecalendar/swiftui-identifiers`, and `timecalendar/tests`). The config is the source of
@@ -300,7 +300,7 @@ truth; this file carries the caveats the config can't (R-1).
   `tools/eslint-rules/raw-button-allowlist.js`, each annotated with
   the slice that migrates it. `raw-button-allowlist.test.js` lints every entry with only this rule
   and fails on a stale entry (no report: remove it), a missing file, a duplicate, or a list longer
-  than `RAW_BUTTON_ALLOWLIST_CEILING` (13); migrating a file means deleting its entry and lowering the
+  than `RAW_BUTTON_ALLOWLIST_CEILING` (9); migrating a file means deleting its entry and lowering the
   ceiling. `no-raw-button.test.js` is the RuleTester suite. **Caveats:** a role passed as a
   variable, text wrapped in a layout `View`, a function child and `Animated` pressables are not
   inspected (rows and tiles legitimately use `Pressable`; review covers the rest). The rule has its
@@ -364,6 +364,22 @@ truth; this file carries the caveats the config can't (R-1).
   `src/features/settings/ui/timezone-chooser-screen.tsx` fails `npm run lint` naming the rule; a
   migrated file added to the allowlist fails the contract test; re-adding `school-row.tsx` to the
   raw-button allowlist fails its test (stale and over the ceiling).
+- **Header actions — `local/no-ad-hoc-header-action`** (`tools/eslint-rules/no-ad-hoc-header-action.js`,
+  block `timecalendar/header-action`, `files: ["src/**/*.{ts,tsx}"]`): an object property keyed
+  (identifier or string) `headerRight`, `headerLeft`, `unstable_headerRightItems` or
+  `unstable_headerLeftItems` is an error, and so is a `Stack.Toolbar` whose `placement` is
+  anything but the literal `"bottom"` (an expression, `"left"`, `"right"`, a bare attribute). A
+  `Stack.Toolbar` with no placement or `placement="bottom"` is the iOS bottom toolbar and passes.
+  Header actions are `useHeaderActions` from `@/components/chrome`
+  ([theming.md](./theming.md) → Header and floating actions, ADR [075](./decisions/075-header-and-floating-actions.md)).
+  Ignored: `src/components/chrome/**` (the seam and the root screen options), tests, and the files
+  in `tools/eslint-rules/header-action-allowlist.js`, each annotated with its migrating slice (the
+  calendar view menu, 5.10). `header-action-allowlist.test.js` fails on a stale entry, a missing
+  file, a duplicate, or a list longer than its ceiling (1). `no-ad-hoc-header-action.test.js` is
+  the RuleTester suite. **Caveats:** a computed key (`[key]: …`) and options spread from another
+  module are not seen; review covers them. Inject-and-revert proof: `headerRight: () => null` in
+  the changelog sheet's `Stack.Screen` options and `<Stack.Toolbar placement="left" />` in
+  `src/features/settings/ui/timezone-chooser-screen.tsx` each fail `npm run lint` naming the rule.
 - **Event colors — `local/no-raw-event-color`** (`tools/eslint-rules/no-raw-event-color.js`,
   block `timecalendar/raw-event-color`, `files: ["src/**/*.tsx"]`): a non-computed
   `backgroundColor` or `borderColor` style property whose value is a non-computed `.color` member

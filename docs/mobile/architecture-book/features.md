@@ -71,10 +71,12 @@ The registry lists, in this order (paths under `mobile/src/`):
 | `design/list/separator.gallery.tsx`                            | `separator`                      | `insets`                                                                                                                                                                                            |
 | `design/badge/badge.gallery.tsx`                               | `badge`                          | `tones`, `sizes`, `with-icon`, `accessibility`, `long-strings`                                                                                                                                      |
 | `design/color-dot/color-dot.gallery.tsx`                       | `color-dot`                      | `sizes`, `presets`, `rings`, `stack`                                                                                                                                                                |
-| `components/chrome/native-list.gallery.tsx`                    | `native-list`                    | `rows`, `destructive`, `switches`, `choices`, `header-and-alert`, `floating-action` (Android), `radio-dialog` (Android), `long-strings`                                                             |
+| `components/chrome/native-list.gallery.tsx`                    | `native-list`                    | `rows`, `destructive`, `switches`, `choices`, `header-and-alert`, `radio-dialog` (Android), `long-strings`                                                             |
 | `components/chrome/native-text-entry-dialog.gallery.tsx`       | `native-text-entry-dialog`       | `default`, `submit-disabled`, `pending`                                                                                                                                                             |
 | `components/chrome/native-list-numeric-editor.gallery.tsx`     | `native-list-numeric-editor`     | `default`, `validation-error`, `long-strings`                                                                                                                                                       |
 | `components/chrome/menu-view.gallery.tsx`                      | `menu-view`                      | `default`, `states`, `long-strings`                                                                                                                                                                 |
+| `components/chrome/header-action.gallery.tsx`                  | `header-action`                  | `icons`, `text`, `both-sides`, `disabled`, `platform-only`, `long-strings`                                                                                                                          |
+| `components/chrome/floating-action.gallery.tsx`                | `floating-action`                | `default`, `over-list`, `over-scroll`, `long-label`                                                                                                                                                 |
 | `components/chrome/date-time-picker.gallery.tsx`               | `date-time-picker`               | `date`, `time`, `date-time` (iOS), `bounded`, `disabled` (iOS)                                                                                                                                      |
 | `components/chrome/glass-surface.gallery.tsx`                  | `glass-surface`                  | `regular`, `clear`, `interactive-button`, `long-strings`                                                                                                                                            |
 | `theme/tokens.gallery.tsx`                                     | `design-tokens`                  | `colors`, `contrast-pairs`, `spacing`, `radii`, `icon-sizes`, `elevation`                                                                                                                           |
@@ -82,9 +84,12 @@ The registry lists, in this order (paths under `mobile/src/`):
 - Every `long-strings` story draws the shared `gallery.stress.*` copy (a French title of at least 70
   characters, a body of at least 200, an action of at least 40 and a single 25-character word).
 - Stateful fixtures hold their own state and have a colocated `*.gallery.test.tsx`: presses update a
-  visible counter, dialogs close and reopen from a row behind them, menus update their trigger, and
-  the Android date picker writes a pick to its row, the text-field error story toggles its error
-  and hint, and the Android date-time field commits a pick through both dialogs.
+  visible counter, dialogs close and reopen from a row behind them, menus update their trigger,
+  the Android date picker writes a pick to its row, header-action stories name the last action
+  pressed in the page body (each story declares its actions in its own navigation bar through
+  `useHeaderActions`), floating-action stories count presses (on iOS they show an "Android only"
+  caption), the text-field error story toggles its error and hint, and the Android date-time
+  field commits a pick through both dialogs.
 - On iOS the numeric editor story is the full-height SwiftUI form while open and a row while closed;
   on Android the Compose dialog sits over the row. The Android date picker is a row plus the
   `presentation="dialog"` picker opened on mount; iOS renders the compact inline control.
@@ -184,12 +189,27 @@ The registry lists, in this order (paths under `mobile/src/`):
   keyboard-safe owner. Their fields are `TextField`s (Feedback's email moves focus to the message
   on Next through the field `ref`; both are disabled while sending; the institution-name step uses
   the same field) and stay with their validation in the sole scroll body; their semantic
-  filled action is a measured sibling, with Programme Skip still owned by native platform chrome.
+  filled action is a measured sibling. Programme Skip is a right header text action on both
+  platforms (`useHeaderActions`, `onboarding-programme-skip`).
 - `school-selection` lays its list edge to edge (full-bleed lane) like a native plain list: rows
   carry their own horizontal padding and iOS separators inset to the row text. From calendar
   management the picker opens as the first screen of the nested onboarding Stack: Android's native
-  back walks up to the parent Stack, while UIKit shows no back there, so iOS alone adds a native
-  bar-button back that dismisses the onboarding Stack.
+  back walks up to the parent Stack, while UIKit shows no back there, so iOS alone adds a left
+  header action Back (`useHeaderActions`, `platform: "ios"`, `onboarding-school-back`) that
+  dismisses the onboarding Stack.
+- Header actions and floating actions come from `useHeaderActions` and `FloatingAction`
+  ([theming.md](./theming.md) → Header and floating actions, ADR [075](./decisions/075-header-and-floating-actions.md)):
+  - Calendar: right Today (`calendar-today`, when the view can jump to today) and, on iOS, Add
+    (`calendar-add`); Android adds through a `FloatingAction` (`calendar-fab`), and the Android
+    agenda pads its bottom by `Layout.fabClearance`. Both adds are labelled "Add an event". The
+    view menu stays a hand-built `headerLeft` (5.10, the header-action allowlist entry).
+  - Home: an Android `FloatingAction` (`home-add-personal-event`) over the scroll, which pads by
+    `Layout.fabClearance`; iOS keeps its in-content glass "+" (5.9).
+  - Event details: the right text action Edit, Hide or Un-hide (`event-details-action`).
+  - Changelog sheet: the right text action Close with its hint (`changelog-close`).
+  - Timezone chooser: on iOS without the bottom search toolbar, a left text action Close
+    (`timezone-close`); the iOS 26 bottom toolbar stays a `Stack.Toolbar placement="bottom"`.
+  - User calendars, Programme and the school picker: below.
 - Calendar event details center the decorative color dot on the first title line through a
   hidden `title`-step strut (`ui/event-details-screen.test.tsx`).
 - `calendar-sources` keeps the QR camera full bleed and bounds permission, viewfinder, guidance,
@@ -217,8 +237,8 @@ The registry lists, in this order (paths under `mobile/src/`):
 - User-calendar management is two native-list pages. `/user-calendars` lists every held
   calendar in one section as a navigation row: effective name, school (or the personal subtitle),
   and a Shown/Hidden value, with the section footer explaining what a calendar page controls. The
-  add action is the iOS header "+" and, on Android, the seam's Material FAB; the load-gated empty
-  state keeps the FAB. `/user-calendars/[id]` is the calendar's page, titled with its name: a Name
+  add action is an iOS header action and, on Android, a `FloatingAction`, both `user-calendars-add`;
+  the load-gated empty state keeps the FAB. `/user-calendars/[id]` is the calendar's page, titled with its name: a Name
   row opening the rename dialog, the school when present, the labelled "Show in Home and Calendar"
   switch with a footer that says what hiding does, and a destructive Delete row. The explicit
   switch label and footer exist because an unlabelled toggle did not tell students what it
