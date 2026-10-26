@@ -1,4 +1,4 @@
-**For:** whoever runs the device passes, and the owners of `EmptyState` and `MenuView`'s glass
+**For:** whoever runs the device passes, and the owner of `MenuView`'s glass
 trigger (the items below need an iOS simulator or device and an Android build).
 
 # Gallery fixtures for shared components (OpenSpec `mobile-ds-gallery-fixtures`): device findings
@@ -41,20 +41,8 @@ trigger (the items below need an iOS simulator or device and an Android build).
 
 ## Component findings (not fixed by the gallery)
 
-- **`EmptyState` screen variant does not scroll.** `empty-state--long-strings` at AX5 (dark, iOS):
-  the screen variant centers content taller than the viewport, so the artwork rises under the
-  status bar and navigation bar, overlapping the header title, and the bottom is cut with no way to
-  scroll to it. The variant needs a scroll container (or `flexGrow` content in a `ScrollView`)
-  once its content exceeds the viewport.
 - **`MenuView` glass trigger at AX5.** `menu-view--long-strings` at AX5 (iOS): the trigger's glass
   capsule becomes a circle and the wrapped label overflows its background shape. Minor.
-- **`FieldError` is not a field description on device.** The `error-surfaces--field-error` story
-  links its `TextInput` to the `FieldError` through `aria-describedby` and the error's `nativeID`,
-  as the web pattern does. React Native forwards no described-by relation to UIKit or Android
-  views, so VoiceOver and TalkBack do not read the error when the field gains focus; they hear it
-  only through `FieldError`'s alert role, its Android live region and the iOS announcement. Check
-  on device whether the error is reachable from the field; if not, the error-surfaces owner can
-  fold the message into the field's `accessibilityHint` while it is shown.
 
 ## Observations from the fixtures
 

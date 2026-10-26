@@ -181,21 +181,21 @@ why. Docs describe the current state only.
 
 ## 8. ADR, Architecture Book, inbox
 
-- [ ] 8.1 Write `docs/mobile/architecture-book/decisions/069-status-view.md` from `TEMPLATE.md`
+- [x] 8.1 Write `docs/mobile/architecture-book/decisions/069-status-view.md` from `TEMPLATE.md`
       per D12 (re-check open PRs and `decisions/` for a reserved 069 first); add its row to
       `decisions/README.md`.
-- [ ] 8.2 `theming.md`: new section "Status — `StatusView` (`src/design/status/`)" after Buttons:
+- [x] 8.2 `theming.md`: new section "Status — `StatusView` (`src/design/status/`)" after Buttons:
       kinds, presentations table (screen scrolls, section/inline do not; `screen` never inside a
       list or scroll view), media rule and spinner color, artwork off at accessibility sizes,
       actions, layout-only style, gates (tests, coverage tier, `local/no-ad-hoc-status`, gallery
       stories), link to ADR 069. Rewrite any `EmptyState`/`ErrorState` mention as the current
       `StatusView` state.
-- [ ] 8.3 `accessibility.md` → Accessible async status: status semantics (heading titles, loading
+- [x] 8.3 `accessibility.md` → Accessible async status: status semantics (heading titles, loading
       `progressbar` + busy, announcement once per appearance and key, Android live region, iOS
       announcer), field errors through `fieldErrorHint` and why `aria-describedby` is banned; Proof
       in CI names `status-view.test.tsx`, `use-error-announcement.test.ts` and
       `field-error-hint.test.ts`.
-- [ ] 8.4 `lint-format.md` rule inventory: `local/no-ad-hoc-status` with its allowlist, ceiling
+- [x] 8.4 `lint-format.md` rule inventory: `local/no-ad-hoc-status` with its allowlist, ceiling
       test and what it cannot see (plain-text empties outside list slots); the `aria-describedby`
       syntax ban; raw-button ceiling 15. `testing.md`: the two coverage tiers and the allowlist
       contract test. `features.md` → Design system gallery: `status-view` row with its story ids,
@@ -203,11 +203,11 @@ why. Docs describe the current state only.
       selection, Export guides, Calendar sources, Event details and Settings timezone name
       `StatusView` where they describe status UI. `architecture.md` only if its structure bullets
       name `EmptyState` or `ErrorState`.
-- [ ] 8.5 `CHANGELOG.md`: `## 2026-10-26 — StatusView` at the top (primitive, removal of
+- [x] 8.5 `CHANGELOG.md`: `## 2026-10-26 — StatusView` at the top (primitive, removal of
       `EmptyState`/`ErrorState`/`ErrorTextAction`, screen scroll and AX artwork, announcement key,
       field-error hint and `aria-describedby` ban, `local/no-ad-hoc-status` ratchet, gallery, ADR
       069). Verify: `npx prettier --check` on the changed docs; relative links resolve.
-- [ ] 8.6 In `docs/react-native-migration/inbox/2026-10-25-mobile-gallery-fixtures-findings.md`
+- [x] 8.6 In `docs/react-native-migration/inbox/2026-10-25-mobile-gallery-fixtures-findings.md`
       remove the `EmptyState` scroll and `FieldError` description findings (fixed here, re-check
       story `status-view--long-strings` and `error-surfaces--field-error`); leave the other items.
       Keep `docs/react-native-migration/inbox/2026-10-26-mobile-ds-status-view-screen-reader-pass.md`

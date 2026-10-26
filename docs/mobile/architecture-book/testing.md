@@ -5,7 +5,7 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
 ## Unit / component harness — `jest-expo`
 
 - Shared root-page proofs cover compact/tablet measured lanes, caption-only intros, root-route
-  classification, recursive nested-onboarding registration, full-screen and section empty-state composition, local light/dark artwork,
+  classification, recursive nested-onboarding registration, `StatusView` screen and section composition, local light/dark artwork,
   semantic action colors and platform targets, and iOS/Android keyboard-avoidance structure.
   Consumer suites retain responsibility for every feature-owned title/action, content owner,
   loading/empty/error/populated rhythm, Activity pagination, Hidden-event filtering and write
@@ -52,6 +52,17 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   lints each allowlisted file with only `local/no-raw-button` and fails on a stale, missing or
   duplicate entry and on growth past `RAW_BUTTON_ALLOWLIST_CEILING`
   ([lint-format.md](./lint-format.md) → Buttons).
+- **`src/design/status/status-view.tsx` and `src/design/status/field-error-hint.ts` have their own
+  90% lines/branches keys** in `coverageThreshold` (ADR [069](./decisions/069-status-view.md)).
+  The Jest window reports `fontScale` 2, at or above the accessibility text-size threshold, so
+  `StatusView` artwork is not rendered by default; a test that expects artwork mocks
+  `useWindowDimensions` or spies `Dimensions.get` with `fontScale: 1`. The RN mock's
+  `AccessibilityInfo.announceForAccessibilityWithOptions` is one shared `jest.fn`, so an
+  announcement-count assertion calls `mockClear()` after spying.
+- **The ad-hoc-status allowlist is a contract test.**
+  `tools/eslint-rules/ad-hoc-status-allowlist.test.js` lints each allowlisted file with only
+  `local/no-ad-hoc-status` and fails on a stale, missing or duplicate entry and on growth past
+  `AD_HOC_STATUS_ALLOWLIST_CEILING` ([lint-format.md](./lint-format.md) → Status).
 - **Calendar T05 proof** combines total preference/reset tests, pure display-zone civil
   transition tables, one/five/seven-column renderer and stale-event tests, screen/menu/i18n
   integration, and `calendar-owned-shell.contract.test.ts`. Native partial-drag feel, restart,
