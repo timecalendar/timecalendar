@@ -9,7 +9,7 @@ why. Docs describe the current state only.
 
 ## 1. Announcement hook and field-error hint
 
-- [ ] 1.1 In `src/hooks/use-error-announcement.ts` add the optional `key` option (D6): with a key,
+- [x] 1.1 In `src/hooks/use-error-announcement.ts` add the optional `key` option (D6): with a key,
       announce on mount and on key change only, reading the latest message from a ref updated in an
       effect; without a key, behavior is unchanged (chrome callers untouched). Create
       `src/hooks/use-error-announcement.test.ts`: iOS queued announcement on mount; re-announce on
@@ -18,16 +18,16 @@ why. Docs describe the current state only.
       Android `native` uses `announceForAccessibility`. Verify:
       `npx jest src/hooks/use-error-announcement.test.ts --coverage --collectCoverageFrom=src/hooks/use-error-announcement.ts`
       ≥ 90% lines and branches.
-- [ ] 1.2 Create `src/design/status/field-error-hint.ts` exporting `fieldErrorHint(error, hint?)`
+- [x] 1.2 Create `src/design/status/field-error-hint.ts` exporting `fieldErrorHint(error, hint?)`
       (D7) and `field-error-hint.test.ts` (error only, hint only, both → `"<error>. <hint>"`,
       neither → `undefined`, empty-string error treated as none). Verify: `npx jest src/design/status/field-error-hint.test.ts`.
 
 ## 2. `StatusView` primitive
 
-- [ ] 2.1 Add `event_busy` to `MATERIAL_GLYPHS` in `src/design/icon/icon-glyphs.ts` with the
+- [x] 2.1 Add `event_busy` to `MATERIAL_GLYPHS` in `src/design/icon/icon-glyphs.ts` with the
       codepoint from expo-symbols' Material table. Verify: `npx jest src/design/icon` (the codepoint
       pin passes).
-- [ ] 2.2 Create `src/design/status/status-view.tsx` exporting `StatusView`, `StatusViewProps`,
+- [x] 2.2 Create `src/design/status/status-view.tsx` exporting `StatusView`, `StatusViewProps`,
       `StatusAction`, `StatusArtwork`, `StatusSymbol`, `StatusLayoutStyle` per D2–D6: discriminated
       union on `kind`; `screen` = `ScrollView` with `headerScrollProps(false)` and `flexGrow`
       centered content, `section` = `flexGrow` centered `View` with section padding, `inline` =
@@ -41,7 +41,7 @@ why. Docs describe the current state only.
       on Android; `useErrorAnnouncement(spoken, { key: announcementKey ?? kind })`; `style`
       flattened and merged last. Imports across family folders by `@/design/<folder>/<file>`
       (ADR 068). Verify: `npx tsc --noEmit`.
-- [ ] 2.3 Create `src/design/status/status-view.test.tsx`, `describe.each` over iOS and Android:
+- [x] 2.3 Create `src/design/status/status-view.test.tsx`, `describe.each` over iOS and Android:
       each kind × presentation renders its container (a `ScrollView` only for `screen`), media and
       text order; heading role on empty/error titles, none on loading; loading element has role
       `progressbar`, name = title, `busy: true`; spinner, symbol, glyph and artwork hidden from
@@ -55,19 +55,19 @@ why. Docs describe the current state only.
       error `artwork`, and `style={{ backgroundColor: "red" }}`. Verify:
       `npx jest src/design/status/status-view.test.tsx --coverage --collectCoverageFrom=src/design/status/status-view.tsx`
       ≥ 90% lines and branches.
-- [ ] 2.4 In `jest.config.js` add `"src/design/status/status-view.tsx"` and
+- [x] 2.4 In `jest.config.js` add `"src/design/status/status-view.tsx"` and
       `"src/design/status/field-error-hint.ts"` at `{ lines: 90, branches: 90 }` next to the button
       keys; update `jest.config.test.ts` if it pins the keys. Verify: `npx jest jest.config.test.ts`.
 
 ## 3. Error surfaces and the barrel
 
-- [ ] 3.1 In `src/design/status/error-surfaces.tsx`: delete `ErrorState` and `ErrorTextAction`;
+- [x] 3.1 In `src/design/status/error-surfaces.tsx`: delete `ErrorState` and `ErrorTextAction`;
       `ErrorNotice`'s `action` is a `StatusAction` rendered as `Button variant="text"` (`role` →
       `accessibilityRole`); delete `FieldError`'s `nativeID` prop; move the shared
       `StatusAction` type import from `status-view.tsx`. Update `error-surfaces.test.tsx` (remove
       `ErrorState`/`ErrorTextAction` cases, keep notice and field-error cases, notice action is a
       `Button`). Verify: `npx jest src/design/status`.
-- [ ] 3.2 Delete `src/design/status/empty-state.tsx`, `empty-state.test.tsx`,
+- [x] 3.2 Delete `src/design/status/empty-state.tsx`, `empty-state.test.tsx`,
       `empty-state.gallery.tsx`; rename `EmptyStateArtwork` to `StatusArtwork` in
       `empty-state-artwork.ts` (rename the file to `status-artwork.ts` with its test). In
       `src/design/index.ts` export `StatusView` and its types, `fieldErrorHint`, the artwork
@@ -77,12 +77,12 @@ why. Docs describe the current state only.
 
 ## 4. Gallery fixtures and strings
 
-- [ ] 4.1 In `src/i18n/locales/en.json` and `fr.json` add `gallery.statusView.*` (meta title, one
+- [x] 4.1 In `src/i18n/locales/en.json` and `fr.json` add `gallery.statusView.*` (meta title, one
       name per story, loading/empty/error titles and captions, action labels, the artwork-shown /
       artwork-hidden captions, section title) and remove `gallery.emptyState.*` and the
       `gallery.errorSurfaces.*` keys only the deleted state stories used. Verify: `npx jest src/i18n`
       (FR/EN parity).
-- [ ] 4.2 Create `src/design/status/status-view.gallery.tsx` per D10 (meta `status-view`, stories
+- [x] 4.2 Create `src/design/status/status-view.gallery.tsx` per D10 (meta `status-view`, stories
       `LoadingScreen`, `LoadingSection`, `LoadingInline`, `EmptyScreen`, `EmptyScreenArtwork`,
       `EmptySection`, `EmptyInline`, `ErrorScreen`, `ErrorRetryBusy`, `ErrorSection`,
       `LongStrings`; `LongStrings` uses `gallery.stress.*` and captions the artwork branch from
@@ -90,13 +90,13 @@ why. Docs describe the current state only.
       `error-surfaces.gallery.tsx`. Create `status-view.gallery.test.tsx` (retry and secondary
       increment the counter; the busy story ignores presses and exposes busy; long-strings caption
       flips at font scale 2.0). Verify: `npx jest src/design/status/status-view.gallery.test.tsx`.
-- [ ] 4.3 In `error-surfaces.gallery.tsx` drop `State`, `StateBusy` and the `ErrorState` in
+- [x] 4.3 In `error-surfaces.gallery.tsx` drop `State`, `StateBusy` and the `ErrorState` in
       `LongStrings` (long-strings becomes a titled `ErrorNotice` with the stress copy and an action);
       the field-error story drops `aria-describedby`/`nativeID` and passes
       `accessibilityHint={fieldErrorHint(message)}` to its `TextInput`. Update
       `error-surfaces.gallery.test.tsx` (assert the input's hint carries the error). Verify:
       `npx jest src/design/status`.
-- [ ] 4.4 In `src/design/gallery/registry.ts` replace the `empty-state` module with `status-view`
+- [x] 4.4 In `src/design/gallery/registry.ts` replace the `empty-state` module with `status-view`
       (same position). Update `src/features/developer/ui/gallery-index-screen.test.tsx` story ids
       (`empty-state--*`, `error-surfaces--state*` removed; `status-view--*` added). Verify:
       `npx jest src/design src/features/developer` (registry matrix: every story light/dark ×
@@ -105,7 +105,7 @@ why. Docs describe the current state only.
 
 ## 5. Migrate the slice 3.3 call sites (D8)
 
-- [ ] 5.1 School selection: `school-picker-screen.tsx` → `StatusView` `section` for loading,
+- [x] 5.1 School selection: `school-picker-screen.tsx` → `StatusView` `section` for loading,
       error (`onboarding-school-error`, retry `onboarding-school-retry`), no-results
       (`announcementKey="noResults"`, `magnifyingglass`/`search`, missing-school secondary) and
       empty (`announcementKey="empty"`, `graduationcap`/`school`, missing-school secondary);
@@ -117,11 +117,11 @@ why. Docs describe the current state only.
       refetches). Remove `src/features/school-selection/ui/school-picker-screen.tsx` from
       `tools/eslint-rules/raw-button-allowlist.js` and set `RAW_BUTTON_ALLOWLIST_CEILING` to 15.
       Verify: `npx jest src/features/school-selection tools/eslint-rules`.
-- [ ] 5.2 Export guides: `guide-status.tsx` → `RootPage lane="readable"` + `StatusView` `screen`
+- [x] 5.2 Export guides: `guide-status.tsx` → `RootPage lane="readable"` + `StatusView` `screen`
       loading (`exportGuide.loading`) and error (retry `export-guide-retry` busy, Back
       `export-guide-back` secondary); drop the `ScrollView` and row styles. Verify:
       `npx jest src/features/export-guides`.
-- [ ] 5.3 Calendar sources: `import-progress-view.tsx` → `RootPage` + `StatusView` `screen`
+- [x] 5.3 Calendar sources: `import-progress-view.tsx` → `RootPage` + `StatusView` `screen`
       loading (default testID `calendar-import-progress` on the `RootPage`);
       `calendar-import-result-screen.tsx` failure and `qr-import-views.tsx` failure → `StatusView`
       `screen` error with their testIDs (`calendar-import-result-retry`,
@@ -130,30 +130,30 @@ why. Docs describe the current state only.
       non-function `RootPage` child `StatusView` `screen` (`user-calendars-empty`), still gated on
       `loaded`; `ical-url-screen.tsx` notice action `role` → `accessibilityRole`. Verify:
       `npx jest src/features/calendar-sources`.
-- [ ] 5.4 Event details: `event-details-status.tsx` → `StatusView` `screen` loading
+- [x] 5.4 Event details: `event-details-status.tsx` → `StatusView` `screen` loading
       (`eventDetails.loading`) and not-found `empty` with `calendar.badge.exclamationmark` /
       `event_busy`; keep the `event-details-status-responsive-*` testIDs. Verify:
       `npx jest src/features/calendar/ui/event-details`.
-- [ ] 5.5 Timezone chooser: `ListEmptyComponent` → `StatusView` `section` `empty` with
+- [x] 5.5 Timezone chooser: `ListEmptyComponent` → `StatusView` `section` `empty` with
       `magnifyingglass`/`search`, `announcementKey="noResults"`, `testID="timezone-no-results"`.
       Update its test (title is a heading; no re-announcement while typing). Verify:
       `npx jest src/features/settings`.
 
 ## 6. Mechanical renames outside 3.3 and field-error hints
 
-- [ ] 6.1 Rename to `StatusView` (D8, testIDs kept): Home `today-section.tsx` and
+- [x] 6.1 Rename to `StatusView` (D8, testIDs kept): Home `today-section.tsx` and
       `upcoming-section.tsx` (`inline`), `activity-screen.tsx` empty (`section`) and empty-error
       (`screen`, wrapper dropped), `personal-events-list.tsx` (`section`), `hidden-events-screen.tsx`
       (`section`, artwork kept), `environment-runtime-gate.tsx` error (`section` inside its recovery
       `ScrollView`). Spinners in Activity and the environment gate stay. Verify:
       `npx jest src/features/home src/features/activity src/features/personal-events src/features/hidden-events src/features/environment`.
-- [ ] 6.2 Pass `accessibilityHint={fieldErrorHint(error, existingHint)}` on every `TextInput` that
+- [x] 6.2 Pass `accessibilityHint={fieldErrorHint(error, existingHint)}` on every `TextInput` that
       renders a `FieldError`: `feedback-screen.tsx` (email, message),
       `personal-event-fields.tsx` (title), `ical-url-screen.tsx`, `institution-name-screen.tsx`,
       `programme-screen.tsx`. Add one assertion per screen test that the field's hint carries the
       shown error and loses it once fixed. Verify:
       `npx jest src/features/feedback src/features/personal-events src/features/calendar-sources src/features/onboarding`.
-- [ ] 6.3 `grep -rn "EmptyState\|ErrorState\|ErrorTextAction\|ListStatus\|StatusSymbol\|GuideLoading\|aria-describedby" src`
+- [x] 6.3 `grep -rn "EmptyState\|ErrorState\|ErrorTextAction\|ListStatus\|StatusSymbol\|GuideLoading\|aria-describedby" src`
       returns nothing (except `StatusView`'s own symbol type); confirm every migrated testID still
       appears in `src/` and run `npx jest e2e/maestro-selectors.test.ts`. Verify: both clean.
 

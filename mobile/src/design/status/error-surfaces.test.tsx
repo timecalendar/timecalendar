@@ -4,14 +4,9 @@ import { AccessibilityInfo } from "react-native"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { useErrorAnnouncement } from "@/hooks/use-error-announcement"
 import { usePlatform } from "@/test-support/platform"
-import { Colors, Spacing } from "@/theme"
+import { Colors, MinTouchTarget, Spacing } from "@/theme"
 
-import {
-  ErrorNotice,
-  ErrorState,
-  ErrorTextAction,
-  FieldError,
-} from "./error-surfaces"
+import { ErrorNotice, FieldError } from "./error-surfaces"
 
 jest.mock("@/hooks/use-color-scheme", () => ({ useColorScheme: jest.fn() }))
 const scheme = jest.mocked(useColorScheme)
@@ -40,24 +35,15 @@ describe.each(["ios" as const, "android" as const])(
 
     it("announces a field error once and announces changed messages", async () => {
       const view = await render(
-        <FieldError
-          message="Enter a URL"
-          nativeID="url-error"
-          testID="field-error"
-        />,
+        <FieldError message="Enter a URL" testID="field-error" />,
       )
       const error = view.getByRole("alert", { name: "Enter a URL" })
-      expect(error).toHaveProp("nativeID", "url-error")
       expect(error.props.accessibilityLiveRegion).toBe(
         platform === "android" ? "polite" : undefined,
       )
       expect(error).toHaveStyle({ color: Colors.light.error })
       await view.rerender(
-        <FieldError
-          message="Enter a URL"
-          nativeID="url-error"
-          testID="field-error"
-        />,
+        <FieldError message="Enter a URL" testID="field-error" />,
       )
       if (platform === "ios") {
         expect(
@@ -122,7 +108,7 @@ describe.each(["ios" as const, "android" as const])(
         padding: Spacing.three,
       })
       expect(view.getByTestId("retry")).toHaveStyle({
-        minHeight: platform === "ios" ? 44 : 48,
+        minHeight: MinTouchTarget,
       })
       await fireEvent.press(view.getByTestId("retry"))
       expect(retry).toHaveBeenCalledTimes(1)
@@ -135,44 +121,19 @@ describe.each(["ios" as const, "android" as const])(
         )
     })
 
-    it("renders a full error with one filled primary and a quiet secondary", async () => {
-      const retry = jest.fn()
-      const change = jest.fn()
-      const view = await render(
-        <ErrorState
-          title="Import failed"
-          message="Try again or choose another method."
-          primaryAction={{ label: "Retry", onPress: retry, testID: "retry" }}
-          secondaryAction={{
-            label: "Change method",
-            onPress: change,
-            testID: "change",
-          }}
-        />,
-      )
-      expect(view.getAllByRole("button")).toHaveLength(2)
-      expect(view.getByTestId("retry")).toHaveStyle({
-        backgroundColor: Colors.light.primaryStrong,
-      })
-      expect(view.getByTestId("change")).not.toHaveStyle({
-        backgroundColor: Colors.light.primaryStrong,
-      })
-      await fireEvent.press(view.getByTestId("retry"))
-      await fireEvent.press(view.getByTestId("change"))
-      expect(retry).toHaveBeenCalledTimes(1)
-      expect(change).toHaveBeenCalledTimes(1)
-    })
-
     it.each([{ busy: true }, { disabled: true }])(
-      "blocks recovery with state %j",
+      "blocks the notice action with state %j",
       async (state) => {
         const press = jest.fn()
         const view = await render(
-          <ErrorTextAction
-            label="Retry"
-            onPress={press}
-            testID="retry"
-            {...state}
+          <ErrorNotice
+            message="Failed"
+            action={{
+              label: "Retry",
+              onPress: press,
+              testID: "retry",
+              ...state,
+            }}
           />,
         )
         expect(view.getByTestId("retry")).toBeDisabled()
@@ -181,14 +142,17 @@ describe.each(["ios" as const, "android" as const])(
       },
     )
 
-    it("supports a quiet report link and descriptive accessible label", async () => {
+    it("renders a notice link action with a descriptive accessible label", async () => {
       const report = jest.fn()
       const view = await render(
-        <ErrorTextAction
-          role="link"
-          label="Report"
-          accessibilityLabel="Report this failed import"
-          onPress={report}
+        <ErrorNotice
+          message="Import failed"
+          action={{
+            label: "Report",
+            accessibilityLabel: "Report this failed import",
+            accessibilityRole: "link",
+            onPress: report,
+          }}
         />,
       )
       await fireEvent.press(
@@ -215,8 +179,6 @@ describe.each(["ios" as const, "android" as const])(
       expect(view.queryAllByRole("button")).toHaveLength(0)
       await view.rerender(<FieldError message={message} />)
       expect(view.getByText(message)).toHaveStyle({ color: Colors.dark.error })
-      await view.rerender(<ErrorState title="Unavailable" message={message} />)
-      expect(view.queryAllByRole("button")).toHaveLength(0)
     })
   },
 )

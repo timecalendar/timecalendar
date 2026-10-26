@@ -279,8 +279,18 @@ describe("IcalUrlScreen", () => {
     })
 
     expect(getByText("Enter a calendar URL.")).toBeTruthy()
+    expect(getByTestId("ical-url-input")).toHaveProp(
+      "accessibilityHint",
+      "Enter a calendar URL.",
+    )
     expect(mockAddCalendarFromUrl).not.toHaveBeenCalled()
     expect(mockRecordUnknownError).not.toHaveBeenCalled()
+    await act(async () => {
+      fireEvent.changeText(getByTestId("ical-url-input"), "h")
+    })
+    expect(
+      getByTestId("ical-url-input").props.accessibilityHint,
+    ).toBeUndefined()
   })
 
   it("shows the inline invalid error for a non-URL value", async () => {

@@ -5,7 +5,6 @@ import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
-  ScrollView,
   SectionList,
   StyleSheet,
   View,
@@ -13,11 +12,10 @@ import {
 
 import {
   developerActivityArtwork,
-  EmptyState,
   ErrorNotice,
-  ErrorState,
   headerScrollProps,
   RootPage,
+  StatusView,
   ThemedText,
 } from "@/design"
 import {
@@ -122,15 +120,14 @@ export function ActivityScreen() {
               </View>
             </View>
           ) : sections.length === 0 && refreshFailed ? (
-            <ScrollView
-              {...headerScrollProps(false)}
-              contentContainerStyle={[laneStyle, styles.content]}
-            >
-              <ErrorState
+            <View style={[laneStyle, styles.stateLane]}>
+              <StatusView
+                kind="error"
+                presentation="screen"
                 testID="activity-empty-error"
                 title={t("errors.loadTitle")}
-                message={t("activity.error.empty")}
-                primaryAction={{
+                caption={t("activity.error.empty")}
+                action={{
                   label: t("activity.retry"),
                   accessibilityLabel: t("activity.retry.accessibilityLabel"),
                   onPress: refresh,
@@ -138,7 +135,7 @@ export function ActivityScreen() {
                   busy: refreshing,
                 }}
               />
-            </ScrollView>
+            </View>
           ) : (
             <SectionList<ActivityItem, ActivitySection>
               testID="activity-section-list"
@@ -166,7 +163,16 @@ export function ActivityScreen() {
                   />
                 ) : null
               }
-              ListEmptyComponent={<ActivityEmptyState />}
+              ListEmptyComponent={
+                <StatusView
+                  kind="empty"
+                  testID="activity-empty"
+                  presentation="section"
+                  title={t("activity.empty.title")}
+                  caption={t("activity.empty.caption")}
+                  artwork={developerActivityArtwork}
+                />
+              }
               ListFooterComponent={
                 <OlderFooter
                   loading={loadingOlder}
@@ -304,19 +310,6 @@ function ActivityItemRow({
     >
       {content}
     </Pressable>
-  )
-}
-
-function ActivityEmptyState() {
-  const { t } = useTranslation()
-  return (
-    <EmptyState
-      testID="activity-empty"
-      variant="screen"
-      title={t("activity.empty.title")}
-      caption={t("activity.empty.caption")}
-      artwork={developerActivityArtwork}
-    />
   )
 }
 

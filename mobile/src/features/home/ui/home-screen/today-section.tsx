@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { Platform, Pressable, StyleSheet, View } from "react-native"
 
-import { EmptyState, ThemedText } from "@/design"
+import { StatusView, ThemedText } from "@/design"
 import { type CalendarEvent, displayEventTitle } from "@/features/calendar/data"
 import {
   ChecklistProgressIndicator,
@@ -41,8 +41,9 @@ export function TodaySection({
   return (
     <View style={styles.section}>
       {isEmpty ? (
-        <EmptyState
-          variant="section"
+        <StatusView
+          kind="empty"
+          presentation="inline"
           title={t("home.today.title")}
           caption={t("home.today.empty")}
           testID="home-today-empty"

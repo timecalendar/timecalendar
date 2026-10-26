@@ -1,14 +1,13 @@
 import { type BarcodeScanningResult, CameraView } from "expo-camera"
 import { useTranslation } from "react-i18next"
-import { ScrollView, StyleSheet, View } from "react-native"
+import { StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import {
   AdaptiveContent,
   ErrorNotice,
-  ErrorState,
-  headerScrollProps,
   RootPage,
+  StatusView,
   ThemedView,
 } from "@/design"
 import { Radii, Spacing, useTheme } from "@/theme"
@@ -51,29 +50,24 @@ export function QrImportFailureView({
   const { t } = useTranslation()
   return (
     <RootPage lane="readable">
-      {({ laneStyle }) => (
-        <ScrollView
-          {...headerScrollProps(false)}
-          contentContainerStyle={[laneStyle, styles.failureScroll]}
-        >
-          <ErrorState
-            testID="qr-scan-failure"
-            title={t("calendarSources.qrScan.failureTitle")}
-            message={t("calendarSources.qrScan.failure")}
-            primaryAction={{
-              testID: "qr-scan-retry",
-              accessibilityLabel: t("calendarSources.qrScan.retryLabel"),
-              label: t("calendarSources.qrScan.retry"),
-              onPress: retry,
-            }}
-            secondaryAction={{
-              testID: "qr-scan-change-method",
-              label: t("calendarSources.qrScan.changeMethod"),
-              onPress: changeMethod,
-            }}
-          />
-        </ScrollView>
-      )}
+      <StatusView
+        kind="error"
+        presentation="screen"
+        testID="qr-scan-failure"
+        title={t("calendarSources.qrScan.failureTitle")}
+        caption={t("calendarSources.qrScan.failure")}
+        action={{
+          testID: "qr-scan-retry",
+          accessibilityLabel: t("calendarSources.qrScan.retryLabel"),
+          label: t("calendarSources.qrScan.retry"),
+          onPress: retry,
+        }}
+        secondaryAction={{
+          testID: "qr-scan-change-method",
+          label: t("calendarSources.qrScan.changeMethod"),
+          onPress: changeMethod,
+        }}
+      />
     </RootPage>
   )
 }
@@ -129,10 +123,5 @@ const styles = StyleSheet.create({
     height: 240,
     borderWidth: 2,
     borderRadius: Radii.large,
-  },
-  failureScroll: {
-    flexGrow: 1,
-    justifyContent: "center",
-    paddingVertical: Spacing.four,
   },
 })

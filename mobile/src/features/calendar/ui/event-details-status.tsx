@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
-import { ActivityIndicator, StyleSheet, View } from "react-native"
+import { StyleSheet, View } from "react-native"
 
-import { RootPage, ThemedText } from "@/design"
+import { RootPage, StatusView } from "@/design"
 import { Spacing } from "@/theme"
 
 import { EventDetailsHeader } from "./event-details-actions"
@@ -11,14 +11,11 @@ export function EventDetailsLoading() {
 
   return (
     <EventDetailsStatus>
-      <View
-        style={styles.loading}
-        accessibilityLiveRegion="polite"
-        accessibilityRole="text"
-        accessibilityLabel={t("eventDetails.loading")}
-      >
-        <ActivityIndicator />
-      </View>
+      <StatusView
+        kind="loading"
+        presentation="screen"
+        title={t("eventDetails.loading")}
+      />
     </EventDetailsStatus>
   )
 }
@@ -28,13 +25,15 @@ export function EventDetailsNotFound() {
 
   return (
     <EventDetailsStatus>
-      <ThemedText
-        themeColor="textSecondary"
-        accessibilityLiveRegion="polite"
-        accessibilityRole="text"
-      >
-        {t("eventDetails.notFound")}
-      </ThemedText>
+      <StatusView
+        kind="empty"
+        presentation="screen"
+        symbol={{
+          ios: "calendar.badge.exclamationmark",
+          android: "event_busy",
+        }}
+        title={t("eventDetails.notFound")}
+      />
     </EventDetailsStatus>
   )
 }
@@ -61,10 +60,5 @@ const styles = StyleSheet.create({
   lane: {
     flex: 1,
     paddingTop: Spacing.four,
-  },
-  loading: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
   },
 })

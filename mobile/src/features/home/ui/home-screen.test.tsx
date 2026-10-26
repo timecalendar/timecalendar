@@ -163,8 +163,9 @@ describe("HomeScreen", () => {
     expect(appNameStyle.fontSize).not.toBe(21)
     const upcoming = screen.getByTestId("home-upcoming-empty")
     const today = screen.getByTestId("home-today-empty")
-    expect(upcoming.props.accessibilityLiveRegion).toBe("polite")
-    expect(today.props.accessibilityLiveRegion).toBe("polite")
+    const liveRegion = Platform.OS === "android" ? "polite" : undefined
+    expect(upcoming.props.accessibilityLiveRegion).toBe(liveRegion)
+    expect(today.props.accessibilityLiveRegion).toBe(liveRegion)
     expect(StyleSheet.flatten(upcoming.props.style)).toMatchObject({
       alignItems: "flex-start",
       gap: 8,

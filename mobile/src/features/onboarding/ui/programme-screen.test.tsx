@@ -220,6 +220,16 @@ describe("ProgrammeScreen", () => {
     expect(getByText("Use 100 characters or fewer.")).toBeTruthy()
     const error = getByTestId("onboarding-programme-error")
     expect(error.props.accessibilityRole).toBe("alert")
+    expect(getByTestId("onboarding-programme-input")).toHaveProp(
+      "accessibilityHint",
+      "Use 100 characters or fewer.",
+    )
+    await act(async () => {
+      fireEvent.changeText(getByTestId("onboarding-programme-input"), "x")
+    })
+    expect(
+      getByTestId("onboarding-programme-input").props.accessibilityHint,
+    ).toBeUndefined()
     expect(mockSetCalendarName).not.toHaveBeenCalled()
     expect(mockPush).not.toHaveBeenCalled()
   })

@@ -200,7 +200,7 @@ describe("SchoolPickerScreen", () => {
 
     expect(screenOptions().title).toBe("Choose a school")
     expect(screenOptions().headerTitle).toBeUndefined()
-    expect(queryByRole("header")).toBeNull()
+    expect(queryByRole("header", { name: "Choose a school" })).toBeNull()
     expect(screenOptions().headerSearchBarOptions.placeholder).toBe(
       "Search schools",
     )
@@ -279,14 +279,15 @@ describe("SchoolPickerScreen", () => {
       isError: false,
       refetch: jest.fn(),
     })
-    const { getByText } = await render(<SchoolPickerScreen />)
-    expect(getByText("Loading schools…")).toBeTruthy()
+    const { getByRole } = await render(<SchoolPickerScreen />)
+    const progress = getByRole("progressbar", { name: "Loading schools…" })
+    expect(progress.props.accessibilityState).toEqual({ busy: true })
   })
 
   it("shows the empty state when there are no schools", async () => {
     mockUseSchools.mockReturnValue(ready([]))
-    const { getByText } = await render(<SchoolPickerScreen />)
-    expect(getByText("No schools available.")).toBeTruthy()
+    const { getByRole, getByText } = await render(<SchoolPickerScreen />)
+    expect(getByRole("header", { name: "No schools available." })).toBeTruthy()
     expect(getByText("I can't find my school")).toBeTruthy()
   })
 
@@ -523,19 +524,45 @@ describe("SchoolPickerScreen", () => {
 
   it("announces the status to VoiceOver once per state kind, not per query", async () => {
     const announce = jest
-      .spyOn(AccessibilityInfo, "announceForAccessibility")
+      .spyOn(AccessibilityInfo, "announceForAccessibilityWithOptions")
       .mockImplementation(() => undefined)
+    announce.mockClear()
     mockUseSchools.mockReturnValue(
       ready([{ id: "a", name: "Alpha University", imageUrl: "" }]),
     )
     await render(<SchoolPickerScreen />)
 
     await typeSearch("z")
-    expect(announce).toHaveBeenCalledWith("No results for “z”")
-    announce.mockClear()
+    expect(announce).toHaveBeenCalledTimes(1)
+    expect(announce).toHaveBeenCalledWith("No results for “z”", {
+      queue: true,
+    })
     await typeSearch("zz")
-    expect(announce).not.toHaveBeenCalled()
+    expect(announce).toHaveBeenCalledTimes(1)
     announce.mockRestore()
+  })
+
+  describe.each(["ios", "android"] as const)("status glyph on %s", (os) => {
+    usePlatform(os)
+
+    it("hides the no-results symbol from assistive technology", async () => {
+      mockUseSchools.mockReturnValue(
+        ready([{ id: "a", name: "Alpha University", imageUrl: "" }]),
+      )
+      const view = await render(<SchoolPickerScreen />)
+      await typeSearch("zzz")
+      expect(
+        view.getByRole("header", { name: "No results for “zzz”" }),
+      ).toBeTruthy()
+      expect(
+        view.queryByTestId("onboarding-school-no-results-symbol"),
+      ).toBeNull()
+      expect(
+        view.getByTestId("onboarding-school-no-results-symbol", {
+          includeHiddenElements: true,
+        }),
+      ).toBeTruthy()
+    })
   })
 
   it("falls back to the monogram when the logo fails to load", async () => {

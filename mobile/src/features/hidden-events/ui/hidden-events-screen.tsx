@@ -4,11 +4,11 @@ import { ScrollView, StyleSheet, View } from "react-native"
 
 import {
   Button,
-  EmptyState,
   ErrorNotice,
   headerScrollProps,
   noDataArtwork,
   RootPage,
+  StatusView,
   ThemedText,
 } from "@/design"
 import {
@@ -91,9 +91,10 @@ export function HiddenEventsScreen() {
 
             {isEmpty ? (
               <View style={styles.stateLane}>
-                <EmptyState
+                <StatusView
+                  kind="empty"
                   testID="hidden-events-empty"
-                  variant="screen"
+                  presentation="section"
                   title={t("hiddenEvents.empty.title")}
                   caption={t("hiddenEvents.empty.caption")}
                   artwork={noDataArtwork}

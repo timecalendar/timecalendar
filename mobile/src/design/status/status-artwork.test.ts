@@ -1,6 +1,6 @@
-import { developerActivityArtwork, noDataArtwork } from "./empty-state-artwork"
+import { developerActivityArtwork, noDataArtwork } from "./status-artwork"
 
-describe("empty-state artwork", () => {
+describe("status artwork", () => {
   it("resolves all bundled light and dark PNG sources through Metro/Jest", () => {
     expect(developerActivityArtwork.light).toBeDefined()
     expect(developerActivityArtwork.dark).toBeDefined()

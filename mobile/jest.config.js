@@ -131,5 +131,7 @@ module.exports = {
     "src/design/gallery/*.ts": { lines: 90, branches: 90 },
     "src/design/button/button.tsx": { lines: 90, branches: 90 },
     "src/design/button/button-row.tsx": { lines: 90, branches: 90 },
+    "src/design/status/status-view.tsx": { lines: 90, branches: 90 },
+    "src/design/status/field-error-hint.ts": { lines: 90, branches: 90 },
   },
 }

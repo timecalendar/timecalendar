@@ -7,6 +7,7 @@ import {
   Button,
   ErrorNotice,
   FieldError,
+  fieldErrorHint,
   KeyboardSafeActionLayout,
   PageIntro,
   RootPage,
@@ -159,7 +160,7 @@ export default function IcalUrlScreen() {
                       ? {
                           action: {
                             testID: "ical-url-report",
-                            role: "link" as const,
+                            accessibilityRole: "link" as const,
                             label: t("calendarSources.icalUrl.report"),
                             onPress: report,
                           },
@@ -187,6 +188,9 @@ export default function IcalUrlScreen() {
             <TextInput
               testID="ical-url-input"
               accessibilityLabel={t("calendarSources.icalUrl.fieldLabel")}
+              accessibilityHint={fieldErrorHint(
+                errorKey === null ? undefined : t(errorKey),
+              )}
               placeholder={t("calendarSources.icalUrl.placeholder")}
               placeholderTextColor={theme.textSecondary}
               value={url}

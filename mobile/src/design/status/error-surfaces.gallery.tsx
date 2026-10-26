@@ -4,8 +4,8 @@ import { ScrollView, StyleSheet, TextInput, View } from "react-native"
 
 import {
   ErrorNotice,
-  ErrorState,
   FieldError as FieldErrorMessage,
+  fieldErrorHint,
   headerScrollProps,
   RootPage,
   ThemedText,
@@ -13,7 +13,7 @@ import {
 import type { GalleryMeta, GalleryStory } from "@/design/gallery"
 import { Radii, Spacing, useTheme } from "@/theme"
 
-type Story = GalleryStory<ComponentProps<typeof ErrorState>>
+type Story = GalleryStory<ComponentProps<typeof ErrorNotice>>
 
 const FIELD_ERROR_ID = "gallery-error-surfaces-field-error"
 
@@ -28,33 +28,6 @@ function PressCount({ count }: { count: number }) {
     <ThemedText tone="secondary" testID="gallery-error-surfaces-count">
       {t("gallery.pressCount", { count })}
     </ThemedText>
-  )
-}
-
-function StateFixture({ busy = false }: { busy?: boolean }) {
-  const { t } = useTranslation()
-  const [count, press] = usePressCount()
-  return (
-    <RootPage>
-      <ErrorState
-        title={t("gallery.errorSurfaces.stateTitle")}
-        message={t("gallery.errorSurfaces.stateMessage")}
-        primaryAction={{
-          label: t("gallery.errorSurfaces.retry"),
-          onPress: press,
-          busy,
-          testID: "gallery-error-surfaces-primary",
-        }}
-        secondaryAction={{
-          label: t("gallery.errorSurfaces.report"),
-          onPress: press,
-          disabled: busy,
-          testID: "gallery-error-surfaces-secondary",
-        }}
-        testID="gallery-error-surfaces-state"
-      />
-      <PressCount count={count} />
-    </RootPage>
   )
 }
 
@@ -77,7 +50,7 @@ function NoticeFixture({ compact = false }: { compact?: boolean }) {
                 : "gallery.errorSurfaces.retry",
             ),
             onPress: press,
-            role: compact ? "link" : "button",
+            accessibilityRole: compact ? "link" : "button",
             testID: "gallery-error-surfaces-notice-action",
           }}
           testID="gallery-error-surfaces-notice"
@@ -92,6 +65,7 @@ function FieldErrorFixture() {
   const { t } = useTranslation()
   const theme = useTheme()
   const [value, setValue] = useState("")
+  const message = t("gallery.errorSurfaces.fieldMessage")
   return (
     <RootPage>
       <View style={styles.stack}>
@@ -101,7 +75,7 @@ function FieldErrorFixture() {
         <TextInput
           testID="gallery-error-surfaces-input"
           accessibilityLabel={t("gallery.errorSurfaces.fieldLabel")}
-          aria-describedby={FIELD_ERROR_ID}
+          accessibilityHint={fieldErrorHint(message)}
           value={value}
           onChangeText={setValue}
           style={[
@@ -109,11 +83,7 @@ function FieldErrorFixture() {
             { color: theme.text, borderColor: theme.error },
           ]}
         />
-        <FieldErrorMessage
-          nativeID={FIELD_ERROR_ID}
-          testID={FIELD_ERROR_ID}
-          message={t("gallery.errorSurfaces.fieldMessage")}
-        />
+        <FieldErrorMessage testID={FIELD_ERROR_ID} message={message} />
       </View>
     </RootPage>
   )
@@ -129,21 +99,9 @@ function LongStringsFixture() {
           {...headerScrollProps(true)}
           contentContainerStyle={[laneStyle, styles.scroll]}
         >
-          <ErrorState
-            title={t("gallery.stress.title")}
-            message={t("gallery.stress.body")}
-            primaryAction={{
-              label: t("gallery.stress.action"),
-              onPress: press,
-            }}
-            secondaryAction={{
-              label: t("gallery.stress.word"),
-              onPress: press,
-            }}
-          />
           <ErrorNotice
             title={t("gallery.stress.title")}
-            message={t("gallery.stress.body")}
+            message={`${t("gallery.stress.body")} ${t("gallery.stress.word")}`}
             action={{ label: t("gallery.stress.action"), onPress: press }}
           />
           <FieldErrorMessage message={t("gallery.stress.body")} />
@@ -166,31 +124,14 @@ const styles = StyleSheet.create({
   },
 })
 
-const meta: GalleryMeta<ComponentProps<typeof ErrorState>> = {
+const meta: GalleryMeta<ComponentProps<typeof ErrorNotice>> = {
   id: "error-surfaces",
   title: "gallery.errorSurfaces.title",
-  component: ErrorState,
-  stories: [
-    "State",
-    "StateBusy",
-    "Notice",
-    "NoticeCompact",
-    "FieldError",
-    "LongStrings",
-  ],
+  component: ErrorNotice,
+  stories: ["Notice", "NoticeCompact", "FieldError", "LongStrings"],
 }
 
 export default meta
-
-export const State: Story = {
-  name: "gallery.errorSurfaces.story.state",
-  render: () => <StateFixture />,
-}
-
-export const StateBusy: Story = {
-  name: "gallery.errorSurfaces.story.stateBusy",
-  render: () => <StateFixture busy />,
-}
 
 export const Notice: Story = {
   name: "gallery.errorSurfaces.story.notice",

@@ -7,7 +7,7 @@ import {
   type ViewStyle,
 } from "react-native"
 
-import { EmptyState, ThemedText } from "@/design"
+import { StatusView, ThemedText } from "@/design"
 import {
   type CalendarEvent,
   formatFullDay,
@@ -53,8 +53,9 @@ export function UpcomingSection({
     <View style={styles.section}>
       <View style={[laneStyle, styles.sectionHeader]}>
         {isEmpty ? (
-          <EmptyState
-            variant="section"
+          <StatusView
+            kind="empty"
+            presentation="inline"
             title={t("home.upcoming.title")}
             caption={t("home.upcoming.none")}
             testID="home-upcoming-empty"

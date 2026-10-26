@@ -22,18 +22,20 @@ export {
 export { headerScrollProps } from "./layout/header-scroll-props"
 export { KeyboardSafeActionLayout } from "./layout/keyboard-safe-action-layout"
 export { PageIntro, RootPage } from "./layout/root-page"
-export { EmptyState, type EmptyStateArtwork } from "./status/empty-state"
+export { ErrorNotice, FieldError } from "./status/error-surfaces"
+export { fieldErrorHint } from "./status/field-error-hint"
 export {
   developerActivityArtwork,
   noDataArtwork,
-} from "./status/empty-state-artwork"
+} from "./status/status-artwork"
 export {
-  type ErrorAction,
-  ErrorNotice,
-  ErrorState,
-  ErrorTextAction,
-  FieldError,
-} from "./status/error-surfaces"
+  type StatusAction,
+  type StatusArtwork,
+  type StatusLayoutStyle,
+  type StatusSymbol,
+  StatusView,
+  type StatusViewProps,
+} from "./status/status-view"
 export {
   type TextTone,
   ThemedText,

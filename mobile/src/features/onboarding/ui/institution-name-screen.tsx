@@ -6,6 +6,7 @@ import { StyleSheet, TextInput } from "react-native"
 import {
   Button,
   FieldError,
+  fieldErrorHint,
   KeyboardSafeActionLayout,
   PageIntro,
   RootPage,
@@ -93,6 +94,9 @@ export default function InstitutionNameScreen() {
               testID="onboarding-institution-input"
               accessibilityLabel={t("onboarding.institution.fieldLabel")}
               accessibilityLabelledBy="onboarding-institution-label"
+              accessibilityHint={fieldErrorHint(
+                errorKey === null ? undefined : t(errorKey),
+              )}
               placeholder={t("onboarding.institution.placeholder")}
               placeholderTextColor={theme.textSecondary}
               value={name}

@@ -1,9 +1,10 @@
 import { act, fireEvent, render, within } from "@testing-library/react-native"
 import { router, useLocalSearchParams } from "expo-router"
-import { StyleSheet } from "react-native"
+import { AccessibilityInfo, StyleSheet } from "react-native"
 
 import { useSchoolGroups } from "@/features/school-selection/data"
 import { selectGroup, selectSchool } from "@/features/school-selection/store"
+import { usePlatform } from "@/test-support/platform"
 import { resolveResponsiveLayout, Spacing } from "@/theme"
 
 import SchoolGroupPickerScreen from "./school-group-picker-screen"
@@ -183,14 +184,44 @@ describe("SchoolGroupPickerScreen", () => {
       isError: false,
       refetch: jest.fn(),
     })
-    const { getByText } = await render(<SchoolGroupPickerScreen />)
-    expect(getByText("Loading groups…")).toBeTruthy()
+    const { getByRole } = await render(<SchoolGroupPickerScreen />)
+    expect(
+      getByRole("progressbar", { name: "Loading groups…" }).props
+        .accessibilityState,
+    ).toEqual({ busy: true })
   })
 
   it("shows the empty state", async () => {
     mockUseSchoolGroups.mockReturnValue(ready([]))
-    const { getByText } = await render(<SchoolGroupPickerScreen />)
-    expect(getByText("No groups available.")).toBeTruthy()
+    const { getByRole } = await render(<SchoolGroupPickerScreen />)
+    expect(getByRole("header", { name: "No groups available." })).toBeTruthy()
+  })
+
+  describe.each(["ios", "android"] as const)("error state on %s", (os) => {
+    usePlatform(os)
+
+    it("hides the glyph and announces once", async () => {
+      const announce = jest
+        .spyOn(AccessibilityInfo, "announceForAccessibilityWithOptions")
+        .mockImplementation(() => undefined)
+      announce.mockClear()
+      mockUseSchoolGroups.mockReturnValue({
+        groups: [],
+        isLoading: false,
+        isError: true,
+        refetch: jest.fn(),
+      })
+      const view = await render(<SchoolGroupPickerScreen />)
+      await view.rerender(<SchoolGroupPickerScreen />)
+      expect(view.queryByTestId("onboarding-group-error-glyph")).toBeNull()
+      expect(
+        view.getByTestId("onboarding-group-error-glyph", {
+          includeHiddenElements: true,
+        }),
+      ).toBeTruthy()
+      expect(announce).toHaveBeenCalledTimes(os === "ios" ? 1 : 0)
+      announce.mockRestore()
+    })
   })
 
   it("shows the error state with a retry that refetches", async () => {

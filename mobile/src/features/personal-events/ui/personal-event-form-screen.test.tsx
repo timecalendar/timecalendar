@@ -459,7 +459,20 @@ describe("PersonalEventFormScreen", () => {
     })
 
     await waitFor(() => expect(getByText("A title is required.")).toBeTruthy())
+    expect(getByTestId("personal-event-title-input")).toHaveProp(
+      "accessibilityHint",
+      "A title is required.",
+    )
     expect(mockSave).not.toHaveBeenCalled()
+    await act(async () => {
+      fireEvent.changeText(getByTestId("personal-event-title-input"), "Gym")
+    })
+    await act(async () => {
+      fireEvent.press(getByTestId("personal-event-save"))
+    })
+    expect(
+      getByTestId("personal-event-title-input").props.accessibilityHint,
+    ).toBeUndefined()
   })
 
   it("updates the start state when the date control fires onValueChange", async () => {

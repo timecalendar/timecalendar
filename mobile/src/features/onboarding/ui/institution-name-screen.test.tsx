@@ -143,12 +143,19 @@ describe("InstitutionNameScreen", () => {
 
   it("clears the validation message as soon as the field is edited", async () => {
     const { getByTestId, queryByTestId } = await submitWith("")
-    expect(getByTestId("onboarding-institution-error")).toBeTruthy()
+    const error = getByTestId("onboarding-institution-error")
+    expect(getByTestId("onboarding-institution-input")).toHaveProp(
+      "accessibilityHint",
+      error.props.children,
+    )
 
     await act(async () => {
       fireEvent.changeText(getByTestId("onboarding-institution-input"), "É")
     })
     expect(queryByTestId("onboarding-institution-error")).toBeNull()
+    expect(
+      getByTestId("onboarding-institution-input").props.accessibilityHint,
+    ).toBeUndefined()
   })
 
   it("accepts accents and emoji verbatim", async () => {

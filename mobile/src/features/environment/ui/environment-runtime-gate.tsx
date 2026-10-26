@@ -9,7 +9,7 @@ import {
   setBackendRuntimeReady,
   subscribeBackendRuntimeReady,
 } from "@/config/backend-runtime"
-import { ErrorState, ThemedText } from "@/design"
+import { StatusView, ThemedText } from "@/design"
 import { useEffectiveBackendEnvironment } from "@/features/environment/data/store"
 import { recoverBackendEnvironmentSwitch } from "@/features/environment/data/switch"
 import { setCrashlyticsAttributes } from "@/firebase"
@@ -86,10 +86,12 @@ export function EnvironmentRuntimeGate({ children }: PropsWithChildren) {
               </ThemedText>
             </>
           ) : (
-            <ErrorState
+            <StatusView
+              kind="error"
+              presentation="section"
               title={t("environment.recovery.title")}
-              message={t("environment.recovery.body")}
-              primaryAction={{
+              caption={t("environment.recovery.body")}
+              action={{
                 label: t("environment.recovery.retry"),
                 testID: "backend-environment-retry",
                 onPress: () => {

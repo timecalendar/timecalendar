@@ -10,8 +10,8 @@ import * as icon from "@/design/icon/icon.gallery"
 import * as adaptiveContent from "@/design/layout/adaptive-content.gallery"
 import * as keyboardSafeActionLayout from "@/design/layout/keyboard-safe-action-layout.gallery"
 import * as rootPage from "@/design/layout/root-page.gallery"
-import * as emptyState from "@/design/status/empty-state.gallery"
 import * as errorSurfaces from "@/design/status/error-surfaces.gallery"
+import * as statusView from "@/design/status/status-view.gallery"
 import * as themedText from "@/design/text/themed-text.gallery"
 import * as themedView from "@/design/text/themed-view.gallery"
 import * as designTokens from "@/theme/tokens.gallery"
@@ -25,7 +25,7 @@ export const galleryModules: readonly GalleryModule[] = [
   themedText,
   themedView,
   icon,
-  emptyState,
+  statusView,
   errorSurfaces,
   button,
   buttonRow,

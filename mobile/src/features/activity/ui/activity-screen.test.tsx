@@ -6,7 +6,7 @@ import {
   waitFor,
 } from "@testing-library/react-native"
 import { router } from "expo-router"
-import { Platform, StyleSheet } from "react-native"
+import { Dimensions, Platform, StyleSheet } from "react-native"
 
 import type { ActivityLog, ActivityState } from "@/features/activity/data"
 import i18n from "@/i18n"
@@ -133,7 +133,11 @@ describe.each([
     })
 
     it("renders the exact illustrated empty title and caption", async () => {
+      const window = jest
+        .spyOn(Dimensions, "get")
+        .mockReturnValue({ width: 750, height: 1334, scale: 2, fontScale: 1 })
       await render(<ActivityScreen />)
+      window.mockRestore()
       expect(screen.getByText(emptyTitle)).toBeTruthy()
       expect(screen.getByText(emptyCaption)).toBeTruthy()
       expect(

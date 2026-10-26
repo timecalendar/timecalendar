@@ -6,7 +6,7 @@ import {
   userEvent,
   within,
 } from "@testing-library/react-native"
-import { StyleSheet } from "react-native"
+import { Dimensions, StyleSheet } from "react-native"
 
 import { useSyncedEvents } from "@/features/calendar/data"
 import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
@@ -108,7 +108,11 @@ describe("HiddenEventsScreen", () => {
   )
 
   it("renders the empty state when nothing is hidden", async () => {
+    const window = jest
+      .spyOn(Dimensions, "get")
+      .mockReturnValue({ width: 750, height: 1334, scale: 2, fontScale: 1 })
     await render(<HiddenEventsScreen />)
+    window.mockRestore()
     expect(screen.getByText("No hidden events")).toBeTruthy()
     expect(screen.getByText("Events you hide will appear here.")).toBeTruthy()
     expect(

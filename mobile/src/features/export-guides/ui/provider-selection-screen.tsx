@@ -18,7 +18,7 @@ import {
 } from "@/features/onboarding/draft"
 import { Radii, Spacing, useTheme } from "@/theme"
 
-import { GuideBlockingError, GuideLoading } from "./guide-status"
+import { GuideBlockingError, GuideProgress } from "./guide-status"
 import { emitExportGuideEvent } from "./telemetry"
 import { useExportGuideLoad } from "./use-export-guide-load"
 
@@ -82,7 +82,7 @@ export default function ProviderSelectionScreen() {
     return (
       <>
         {header}
-        <GuideLoading />
+        <GuideProgress />
       </>
     )
 

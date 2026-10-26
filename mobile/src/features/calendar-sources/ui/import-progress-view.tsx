@@ -1,7 +1,4 @@
-import { ActivityIndicator, StyleSheet, View } from "react-native"
-
-import { RootPage, ThemedText } from "@/design"
-import { Spacing, useTheme } from "@/theme"
+import { RootPage, StatusView } from "@/design"
 
 interface ImportProgressViewProps {
   message: string
@@ -12,25 +9,9 @@ export function ImportProgressView({
   message,
   testID = "calendar-import-progress",
 }: ImportProgressViewProps) {
-  const theme = useTheme()
   return (
     <RootPage testID={testID} lane="readable">
-      <View style={styles.content} accessibilityLiveRegion="polite">
-        <ActivityIndicator color={theme.primary} accessible={false} />
-        <ThemedText accessibilityRole="text" style={styles.centered}>
-          {message}
-        </ThemedText>
-      </View>
+      <StatusView kind="loading" presentation="screen" title={message} />
     </RootPage>
   )
 }
-
-const styles = StyleSheet.create({
-  content: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.three,
-  },
-  centered: { textAlign: "center" },
-})
