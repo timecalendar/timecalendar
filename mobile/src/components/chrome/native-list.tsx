@@ -2,9 +2,6 @@ import {
   AlertDialog,
   Badge as MaterialBadge,
   Column,
-  FloatingActionButton,
-  Host as ComposeHost,
-  type HostProps as ComposeHostProps,
   Icon as MaterialIcon,
   LazyColumn,
   ListItem,
@@ -71,30 +68,38 @@ import {
 } from "react"
 import { Platform, StyleSheet } from "react-native"
 
+import {
+  SeededComposeHost,
+  useResolvedScheme,
+} from "@/components/chrome/compose-host"
 import { composeSemantics } from "@/components/chrome/compose-semantics"
+import {
+  materialSymbolSource,
+  type NativeIcon,
+} from "@/components/chrome/native-icons"
 import {
   NativeListContext,
   useAssertOutsideNativeList,
 } from "@/components/chrome/native-list-context"
 import {
-  materialSymbolSource,
-  type NativeListIcon,
-} from "@/components/chrome/native-list-icons"
-import {
   type ListRowPosition,
   listRowPosition,
 } from "@/design/list/list-row-position"
 import { joinRowName } from "@/design/list/row-name"
-import { useColorScheme } from "@/hooks/use-color-scheme"
 import { useErrorAnnouncement } from "@/hooks/use-error-announcement"
-import { ListGeometry, useIsAccessibilityTextSize, useTheme } from "@/theme"
+import {
+  Layout,
+  ListGeometry,
+  useIsAccessibilityTextSize,
+  useTheme,
+} from "@/theme"
 
 export type NativeListRowProps = {
   kind: "navigation" | "action" | "value"
   label: string
   accessibilityLabel?: string | undefined
   testID: string
-  icon?: NativeListIcon | undefined
+  icon?: NativeIcon | undefined
   hint?: string | undefined
   subtitle?: string | undefined
   value?: string | undefined
@@ -114,13 +119,6 @@ type NativeListProps = PropsWithChildren<{
   reservesFloatingAction?: boolean | undefined
 }>
 
-type NativeListFloatingActionProps = {
-  label: string
-  icon: NativeListIcon
-  testID: string
-  onPress: () => void
-}
-
 type NativeListChoiceRowProps = {
   label: string
   selected: boolean
@@ -133,7 +131,7 @@ type NativeListSwitchRowProps = {
   label: string
   value: boolean
   testID: string
-  icon?: NativeListIcon | undefined
+  icon?: NativeIcon | undefined
   switchTestID?: string
   onValueChange: (value: boolean) => void
 }
@@ -177,7 +175,6 @@ const SegmentContext = createContext<Segment>({
 })
 
 const LIST_BOTTOM_PADDING = 24
-const FAB_CLEARANCE = 88
 const UNBREAKABLE_WORD_MIN_SCALE = 0.5
 
 const segmentCorners: Record<ListRowPosition, { top: number; bottom: number }> =
@@ -233,26 +230,6 @@ function listItemColors(palette: MaterialColors) {
   }
 }
 
-function useResolvedScheme(): "light" | "dark" {
-  return useColorScheme() === "dark" ? "dark" : "light"
-}
-
-function ComposeListHost({
-  children,
-  ...props
-}: Pick<
-  ComposeHostProps,
-  "children" | "matchContents" | "style" | "useViewportSizeMeasurement"
->) {
-  const colorScheme = useResolvedScheme()
-  const theme = useTheme()
-  return (
-    <ComposeHost {...props} colorScheme={colorScheme} seedColor={theme.primary}>
-      {children}
-    </ComposeHost>
-  )
-}
-
 export function NativeList({
   children,
   reservesFloatingAction = false,
@@ -270,44 +247,21 @@ export function NativeList({
           <Form modifiers={[tint(theme.primary)]}>{children}</Form>
         </SwiftHost>
       ) : (
-        <ComposeListHost useViewportSizeMeasurement style={styles.fill}>
+        <SeededComposeHost useViewportSizeMeasurement style={styles.fill}>
           <LazyColumn
             contentPadding={{
               top: 0,
               bottom: reservesFloatingAction
-                ? LIST_BOTTOM_PADDING + FAB_CLEARANCE
+                ? Layout.fabClearance
                 : LIST_BOTTOM_PADDING,
             }}
             modifiers={[fillMaxSize()]}
           >
             {children}
           </LazyColumn>
-        </ComposeListHost>
+        </SeededComposeHost>
       )}
     </NativeListContext.Provider>
-  )
-}
-
-// iOS adds through the navigation bar; only Material pages carry a FAB.
-export function NativeListFloatingAction({
-  label,
-  icon,
-  testID: fabTestID,
-  onPress,
-}: NativeListFloatingActionProps) {
-  if (Platform.OS === "ios") return null
-  return (
-    <ComposeListHost matchContents style={styles.floatingAction}>
-      <FloatingActionButton onClick={onPress} modifiers={[testID(fabTestID)]}>
-        <FloatingActionButton.Icon>
-          <MaterialIcon
-            source={materialSymbolSource(icon.android)}
-            contentDescription={label}
-            size={24}
-          />
-        </FloatingActionButton.Icon>
-      </FloatingActionButton>
-    </ComposeListHost>
   )
 }
 
@@ -512,7 +466,7 @@ function activateRow(props: NativeListRowProps) {
   }
 }
 
-function SwiftIconTile({ icon }: { icon: NativeListIcon }) {
+function SwiftIconTile({ icon }: { icon: NativeIcon }) {
   const theme = useTheme()
   return (
     <SwiftImage
@@ -551,7 +505,7 @@ function SwiftRowLabel({
   detail,
 }: {
   label: string
-  icon?: NativeListIcon | undefined
+  icon?: NativeIcon | undefined
   subtitle?: string | undefined
   destructive?: boolean | undefined
   titleModifiers?: SwiftModifierConfig[] | undefined
@@ -813,7 +767,7 @@ function SwiftListRow(props: NativeListRowProps) {
   )
 }
 
-function ComposeLeadingIcon({ icon }: { icon: NativeListIcon }) {
+function ComposeLeadingIcon({ icon }: { icon: NativeIcon }) {
   const palette = useMaterialColors()
   return (
     <ListItem.LeadingContent>
@@ -1036,9 +990,9 @@ export function NativeListRadioDialog<Value extends string>(
   useAssertOutsideNativeList("NativeListRadioDialog")
   if (!props.visible || Platform.OS === "ios") return null
   return (
-    <ComposeListHost matchContents>
+    <SeededComposeHost matchContents>
       <ComposeRadioDialog {...props} />
-    </ComposeListHost>
+    </SeededComposeHost>
   )
 }
 
@@ -1103,5 +1057,4 @@ function ComposeRadioDialog<Value extends string>({
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  floatingAction: { position: "absolute", right: 16, bottom: 16 },
 })

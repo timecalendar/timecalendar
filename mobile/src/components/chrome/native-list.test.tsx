@@ -3,13 +3,12 @@ import { fireEvent, render, within } from "@testing-library/react-native"
 import { router } from "expo-router"
 
 import { usePlatform } from "@/test-support/platform"
-import { Colors } from "@/theme"
+import { Colors, Layout } from "@/theme"
 
 import {
   NativeList,
   NativeListAlert,
   NativeListChoiceRow,
-  NativeListFloatingAction,
   NativeListRadioDialog,
   NativeListRow,
   NativeListSection,
@@ -347,7 +346,7 @@ describe("native list chrome on ios", () => {
   })
 })
 
-describe("native list rows with subtitles, destructive actions, and a FAB on ios", () => {
+describe("native list rows with subtitles and destructive actions on ios", () => {
   usePlatform("ios")
 
   it("reads the badge after the name, keeping the value and hint apart", async () => {
@@ -407,18 +406,6 @@ describe("native list rows with subtitles, destructive actions, and a FAB on ios
       within(view.getByTestId("destructive")).getByText("Delete").props
         .foreground,
     ).toBe(Colors.dark.error)
-  })
-
-  it("renders no floating action, since iOS adds through the navigation bar", async () => {
-    const view = await render(
-      <NativeListFloatingAction
-        label="Add"
-        icon={{ ios: "plus", android: "add" }}
-        testID="fab"
-        onPress={jest.fn()}
-      />,
-    )
-    expect(view.queryByTestId("fab")).toBeNull()
   })
 })
 
@@ -667,34 +654,20 @@ describe("native list chrome on android", () => {
     ).toBe("#error")
   })
 
-  it("renders a brand-seeded FAB and reserves list space for it", async () => {
-    const onPress = jest.fn()
+  it("reserves the floating action clearance under a brand-seeded list", async () => {
     const view = await render(
-      <>
-        <NativeList reservesFloatingAction>
-          <NativeListSection>
-            <NativeListRow kind="value" label="Row" testID="row" />
-          </NativeListSection>
-        </NativeList>
-        <NativeListFloatingAction
-          label="Add"
-          icon={{ ios: "plus", android: "add" }}
-          testID="fab"
-          onPress={onPress}
-        />
-      </>,
+      <NativeList reservesFloatingAction>
+        <NativeListSection>
+          <NativeListRow kind="value" label="Row" testID="row" />
+        </NativeListSection>
+      </NativeList>,
     )
     expect(
       view.getByTestId("compose-lazy-column-scroll-owner").props.contentPadding,
-    ).toEqual({ top: 0, bottom: 112 })
-    expect(view.getByLabelText("Add")).toBeTruthy()
-    await fireEvent.press(view.getByTestId("fab"))
-    expect(onPress).toHaveBeenCalledTimes(1)
-    expect(
-      view
-        .getAllByTestId("compose-host")
-        .every((host) => host.props.seedColor === Colors.dark.primary),
-    ).toBe(true)
+    ).toEqual({ top: 0, bottom: Layout.fabClearance })
+    expect(view.getByTestId("compose-host").props.seedColor).toBe(
+      Colors.dark.primary,
+    )
   })
 
   it("keeps the default list padding without a FAB", async () => {

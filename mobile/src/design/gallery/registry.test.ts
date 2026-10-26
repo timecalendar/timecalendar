@@ -23,10 +23,29 @@ const { relative, resolve } = jest.requireActual("node:path") as {
   resolve(...paths: string[]): string
 }
 
-jest.mock("expo-router", () => ({
-  router: { push: jest.fn() },
-  Stack: { Screen: (): ReactNode => null },
-}))
+type HeaderSlot = ((props: object) => ReactNode) | undefined
+
+// Android header actions render in the header slots, so the matrix renders
+// them beside the story to check what TalkBack reaches.
+jest.mock("expo-router", () => {
+  const { createElement: create, Fragment } = jest.requireActual("react")
+  return {
+    router: { push: jest.fn() },
+    Stack: {
+      Screen: ({
+        options,
+      }: {
+        options?: { headerLeft?: HeaderSlot; headerRight?: HeaderSlot }
+      }): ReactNode =>
+        create(
+          Fragment,
+          null,
+          options?.headerLeft?.({}),
+          options?.headerRight?.({}),
+        ),
+    },
+  }
+})
 
 let mockScheme: "light" | "dark" = "light"
 jest.mock("@/hooks/use-color-scheme", () => ({

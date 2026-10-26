@@ -3,6 +3,8 @@ import type { ImageSourcePropType } from "react-native"
 
 const materialSymbols = {
   add: require("@/assets/icons/material/add.xml") as ImageSourcePropType,
+  arrow_back:
+    require("@/assets/icons/material/arrow_back.xml") as ImageSourcePropType,
   calendar_month:
     require("@/assets/icons/material/calendar_month.xml") as ImageSourcePropType,
   developer_mode:
@@ -28,21 +30,22 @@ const materialSymbols = {
   privacy_tip:
     require("@/assets/icons/material/privacy_tip.xml") as ImageSourcePropType,
   public: require("@/assets/icons/material/public.xml") as ImageSourcePropType,
+  today: require("@/assets/icons/material/today.xml") as ImageSourcePropType,
   view_week:
     require("@/assets/icons/material/view_week.xml") as ImageSourcePropType,
   visibility_off:
     require("@/assets/icons/material/visibility_off.xml") as ImageSourcePropType,
 } as const
 
-export type NativeListMaterialSymbol = keyof typeof materialSymbols
+export type NativeMaterialSymbol = keyof typeof materialSymbols
 
-export type NativeListIcon = {
+export type NativeIcon = {
   ios: SFSymbol
-  android: NativeListMaterialSymbol
+  android: NativeMaterialSymbol
 }
 
 export function materialSymbolSource(
-  name: NativeListMaterialSymbol,
+  name: NativeMaterialSymbol,
 ): ImageSourcePropType {
   return materialSymbols[name]
 }
