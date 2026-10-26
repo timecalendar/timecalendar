@@ -61,9 +61,12 @@ function MenuFixture({ variant }: { variant: "default" | "states" | "long" }) {
         ]
       : choiceActions
   const actionTitles = new Map(
-    actions
-      .flatMap((action) => [action, ...(action.subactions ?? [])])
-      .map((action) => [action.id, action.title]),
+    actions.flatMap((action) => [
+      [action.id, action.title] as const,
+      ...(action.subactions ?? []).map(
+        (subaction) => [subaction.id, subaction.title] as const,
+      ),
+    ]),
   )
   const triggerLabel = t("gallery.menuView.triggerLabel", {
     value: labels[choice],

@@ -30,6 +30,11 @@ type Story = GalleryStory<TokenSwatchProps>
 
 const schemes = ["light", "dark"] as const
 
+const pairsByScheme = {
+  light: documentedContrastPairs.filter((pair) => pair.scheme === "light"),
+  dark: documentedContrastPairs.filter((pair) => pair.scheme === "dark"),
+}
+
 const roles = Object.keys(ColorTokens.light) as ThemeColor[]
 
 function TokenSwatch({
@@ -135,52 +140,50 @@ function ContrastPairsFixture() {
           <ThemedText type="sectionTitle">
             {t(`gallery.designTokens.scheme.${scheme}`)}
           </ThemedText>
-          {documentedContrastPairs
-            .filter((pair) => pair.scheme === scheme)
-            .map(({ foreground, background, floor }) => {
-              const palette = ColorTokens[scheme]
-              const ratio = contrastRatio(
-                palette[foreground],
-                palette[background],
-              ).toLocaleString(i18n.language, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })
-              const floorLabel = t(`gallery.designTokens.floor.${floor}`)
-              return (
-                <TokenSwatch
-                  key={`${foreground}-${background}`}
-                  name={t("gallery.designTokens.pairName", {
-                    foreground,
-                    background,
-                  })}
-                  detail={t("gallery.designTokens.pairDetail", {
-                    ratio,
-                    floor: floorLabel,
-                  })}
-                  accessibilityLabel={t("gallery.designTokens.contrastRow", {
-                    foreground,
-                    background,
-                    ratio,
-                    floor: floorLabel,
-                  })}
+          {pairsByScheme[scheme].map(({ foreground, background, floor }) => {
+            const palette = ColorTokens[scheme]
+            const ratio = contrastRatio(
+              palette[foreground],
+              palette[background],
+            ).toLocaleString(i18n.language, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })
+            const floorLabel = t(`gallery.designTokens.floor.${floor}`)
+            return (
+              <TokenSwatch
+                key={`${foreground}-${background}`}
+                name={t("gallery.designTokens.pairName", {
+                  foreground,
+                  background,
+                })}
+                detail={t("gallery.designTokens.pairDetail", {
+                  ratio,
+                  floor: floorLabel,
+                })}
+                accessibilityLabel={t("gallery.designTokens.contrastRow", {
+                  foreground,
+                  background,
+                  ratio,
+                  floor: floorLabel,
+                })}
+              >
+                <View
+                  style={[
+                    styles.sampleTile,
+                    { backgroundColor: palette[background] },
+                  ]}
                 >
-                  <View
-                    style={[
-                      styles.sampleTile,
-                      { backgroundColor: palette[background] },
-                    ]}
+                  <ThemedText
+                    type="headline"
+                    style={{ color: palette[foreground] }}
                   >
-                    <ThemedText
-                      type="headline"
-                      style={{ color: palette[foreground] }}
-                    >
-                      {t("gallery.designTokens.sample")}
-                    </ThemedText>
-                  </View>
-                </TokenSwatch>
-              )
-            })}
+                    {t("gallery.designTokens.sample")}
+                  </ThemedText>
+                </View>
+              </TokenSwatch>
+            )
+          })}
         </View>
       ))}
     </TokenPage>

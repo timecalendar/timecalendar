@@ -44,9 +44,7 @@ function PickerFixture({
   const { t, i18n } = useTranslation()
   const [value, setValue] = useState(initialValue)
   const [open, setOpen] = useState(true)
-  const display = new Intl.DateTimeFormat(i18n.language, formats[mode]).format(
-    value,
-  )
+  const display = value.toLocaleString(i18n.language, formats[mode])
   const range = bounded ? bounds : {}
 
   if (Platform.OS === "ios") {
