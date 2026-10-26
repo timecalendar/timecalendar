@@ -77,6 +77,18 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   accessibility choice, a color prop and non-layout style keys. `src/theme/theme.test.tsx`
   composites each translucent contrast pair over its `over` surface (`pairRatio`) and unit-tests
   `composite`. The raw-event-color allowlist is a contract test like the raw-text-input one below.
+- **`src/components/chrome/header-action.tsx` and `floating-action.tsx` have their own 90%
+  lines/branches keys** in `coverageThreshold` (ADR [075](./decisions/075-header-and-floating-actions.md)).
+  `useHeaderActions` is tested as data on iOS (the bar items through `headerBarItems` /
+  `headerBarItem` from `@/test-support/header-actions`) and by rendering the returned
+  `headerLeft` / `headerRight` on Android (`renderHeaderSide`); `@ts-expect-error` cases pin the
+  required name, the icon-or-label union and the missing tint field. Feature tests that mock
+  `Stack.Screen` render its options through `HeaderActionsPreview`
+  (`@/test-support/header-actions-preview`), which turns iOS bar items into pressables keyed by
+  their identifier. A test that rerenders a header to check a cleared action records options
+  through `mergedScreenOptions()` (`@/test-support/header-actions`), which merges like
+  `setOptions`; a mock that replaces them hides a button that is never cleared. The header-action allowlist is a contract test like the raw-text-input one
+  below.
 - **The raw-text-input allowlist is a contract test.**
   `tools/eslint-rules/raw-text-input-allowlist.test.js` lints each allowlisted file with only
   `local/no-raw-text-input` and fails on a stale, missing or duplicate entry and on growth past
@@ -144,7 +156,12 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   `jest/setup-expo-ui.ts` gives a node a role from `selectable` (radio), `toggleable` (switch) or
   the `timecalendarSemantics` modifier's `role`, and projects that modifier's
   `contentDescription` to `accessibilityLabel`. A bare `clickable` projects as an unlabeled node
-  without a role, which is what TalkBack meets, so the registry a11y check reports it.
+  without a role, which is what TalkBack meets, so the registry a11y check reports it. The Compose
+  `IconButton` and `TextButton` mocks are `button` pressables with `onClick`, `enabled` and
+  `colors`; a `TextButton` takes its accessible name from its `Text` child's
+  `timecalendarSemantics` description, as the M3 button merges it on a device. The gallery
+  registry test renders a story's Android `headerLeft` / `headerRight`, so the a11y matrix sees
+  header actions.
 - **Native settings chrome has a focused contract suite.** It proves SwiftUI versus Material host
   selection, resolved-scheme propagation, one Form/LazyColumn scroll owner, closed row semantics,
   switch single activation, checkmarked/radio selection, and dialog cancellation. Settings, About,
@@ -215,6 +232,10 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   description (the hint "Opens this calendar's settings") on Android inside a
   `runFlow when platform: Android` block, the device proof of the `timecalendarSemantics`
   modifier (ADR [073](./decisions/073-list-row-family.md)). It adds no selector `id`.
+- **Native bar items are selected by label.** An iOS header action is a native `UIBarButtonItem`
+  with no accessibility identifier, so Maestro reaches it by its accessibility label: flow 02 taps
+  `"Add an event"` (the iOS bar item, and the Android FAB's content description) and `"Edit this
+  event"`. `e2e/maestro-selectors.test.ts` pins both steps (ADR [075](./decisions/075-header-and-floating-actions.md)).
 - **Real data and persistence.** The import journey submits the test-only, Swagger-excluded backend fixture at `http://127.0.0.1:3005/__e2e/ical/import.ics`; its next-UTC-day title is date-neutral and the real calendar-create/fetch/parse/persist path owns it. The visibility journey uses the nested seeded-token helper and leaves visibility restored. The personal-event journey writes the real device SQLite database and never drives native date/time pickers.
 - **Process isolation and recovery stay structural (ADR [038](./decisions/038-isolate-maestro-flow-lifecycles.md)).** `run_e2e.sh` boots the shared server lifecycle once, runs each top-level flow in its own Maestro process, stops on the first terminal failure, and tears down once; `--keep-up` remains the debugging escape hatch. iOS may spend up to four whole-flow attempts only on structurally classified startup failures. The classifier and mutation fixtures remain device-free and unchanged in meaning.
 - **The CI iOS simulator runs without apsd.** On GitHub's virtualized macOS runners the simulator's `apsd` cannot get a device certificate and reconnects to APNs in a hot loop; its logging starves the 3-vCPU runner until any request or assertion can stall. `mobile/e2e/quiesce-ios-simulator.sh` disables and boots out `user/foreground/com.apple.apsd` after boot and before install, and fails the step if the daemon is still loaded. Enforced by `test_ci_mobile_e2e.sh` (the call and its order, with mutations) and `test_quiesce_ios_simulator.sh` (the behavior, against a fake `xcrun`). E2E does not cover remote push. Check the label again on each simulator-runtime bump. Retries and longer timeouts are not the fix.

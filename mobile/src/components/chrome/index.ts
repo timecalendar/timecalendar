@@ -5,7 +5,16 @@
 // they churn (they're all alpha), the blast radius is this directory. This is
 // the roadmap step-10 insurance against alpha churn.
 
+export {
+  FloatingAction,
+  type FloatingActionProps,
+} from "@/components/chrome/floating-action"
 export { GlassSurface } from "@/components/chrome/glass-surface"
+export {
+  type HeaderAction,
+  type HeaderActionOptions,
+  useHeaderActions,
+} from "@/components/chrome/header-action"
 export { NativeTabs } from "@/components/chrome/native-tabs"
 export {
   NativeTextEntryDialog,
@@ -45,11 +54,11 @@ export {
   useListPalette,
 } from "@/components/chrome/list-palette"
 export { NativeErrorNotice } from "@/components/chrome/native-error-notice"
+export type { NativeIcon } from "@/components/chrome/native-icons"
 export {
   NativeList,
   NativeListAlert,
   NativeListChoiceRow,
-  NativeListFloatingAction,
   NativeListRadioDialog,
   NativeListRow,
   type NativeListRowProps,
@@ -57,7 +66,6 @@ export {
   NativeListSwitchRow,
 } from "@/components/chrome/native-list"
 export { NativeListHeader } from "@/components/chrome/native-list-header"
-export type { NativeListIcon } from "@/components/chrome/native-list-icons"
 export {
   NativeListNumericEditor,
   type NativeListNumericEditorIds,

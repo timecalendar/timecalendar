@@ -1,9 +1,10 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
-import { router, Stack } from "expo-router"
-import type { ReactElement, ReactNode } from "react"
+import { type NativeStackNavigationOptions, router, Stack } from "expo-router"
+import type { ReactNode } from "react"
 import { StyleSheet } from "react-native"
 
 import { useImportDraft } from "@/features/onboarding/draft"
+import { headerBarItem, renderHeaderSide } from "@/test-support/header-actions"
 import { usePlatform } from "@/test-support/platform"
 import { Colors, MinTouchTarget } from "@/theme"
 
@@ -57,15 +58,7 @@ const mockUseImportDraft = useImportDraft as jest.Mock
 const mockStackScreen = Stack.Screen as unknown as jest.Mock
 
 const screenOptions = () =>
-  mockStackScreen.mock.lastCall?.[0].options as {
-    headerStyle?: unknown
-    headerRight?: () => ReactElement
-    unstable_headerRightItems?: () => {
-      label: string
-      accessibilityLabel: string
-      onPress: () => void
-    }[]
-  }
+  mockStackScreen.mock.lastCall?.[0].options as NativeStackNavigationOptions
 
 const expectStickyProgrammeCta = async (regionTestID: string) => {
   const view = await render(<ProgrammeScreen />)
@@ -286,7 +279,7 @@ describe("ProgrammeScreen", () => {
 
       expect(options.headerStyle).toBeUndefined()
       expect(options.headerRight).toBeUndefined()
-      const [item] = options.unstable_headerRightItems?.() ?? []
+      const item = headerBarItem(options, "right", "onboarding-programme-skip")
       expect(item?.label).toBe("Skip")
       expect(item?.accessibilityLabel).toBe("Skip naming your programme")
 
@@ -315,23 +308,20 @@ describe("ProgrammeScreen", () => {
       expect(cta).toHaveTextContent("Continue")
     })
 
-    it("offers Skip as a headerRight control meeting the 48dp target", async () => {
+    it("offers Skip as a Material text button named by its label", async () => {
       await render(<ProgrammeScreen />)
       const options = screenOptions()
 
       expect(options.unstable_headerRightItems).toBeUndefined()
-      const { getByTestId } = await render(
-        options.headerRight?.() as ReactElement,
-      )
-      const skip = getByTestId("onboarding-programme-skip")
+      const header = await renderHeaderSide(options, "right")
+      const skip = header.getByRole("button", {
+        name: "Skip naming your programme",
+      })
 
-      expect(skip.props.accessibilityRole).toBe("button")
-      expect(skip.props.accessibilityLabel).toBe("Skip naming your programme")
-      expect(skip.props.style).toEqual(
-        expect.objectContaining({ minWidth: 48, minHeight: 48 }),
-      )
+      expect(skip.props.testID).toBe("onboarding-programme-skip")
+      expect(header.getByText("Skip").props.maxLines).toBe(1)
 
-      await act(async () => fireEvent.press(skip))
+      await fireEvent.press(skip)
       expect(mockSetCalendarName).toHaveBeenCalledWith("")
       expect(mockPush).toHaveBeenCalledWith("/onboarding/connect")
     })

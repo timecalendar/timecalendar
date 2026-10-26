@@ -5,13 +5,14 @@ import {
   useLayoutEffect,
   useRef,
 } from "react"
+import { useTranslation } from "react-i18next"
 import { Platform, StyleSheet, Text, useWindowDimensions } from "react-native"
 
+import { type HeaderAction, useHeaderActions } from "@/components/chrome"
 import type { CalendarPageTitleTarget } from "@/features/calendar/renderer"
 import { type CalendarView } from "@/features/settings/prefs"
 import { useTheme } from "@/theme"
 
-import { CalendarHeaderActions } from "./calendar-screen-actions"
 import {
   CalendarAndroidViewMenu,
   CalendarViewMenu,
@@ -43,7 +44,31 @@ export function CalendarScreenHeader({
   onAdd: () => void
   zoom: CalendarZoomMenuState | null
 }) {
+  const { t } = useTranslation()
   const theme = useTheme()
+  const today: HeaderAction[] =
+    onToday === undefined
+      ? []
+      : [
+          {
+            icon: { ios: "calendar", android: "today" },
+            accessibilityLabel: t("calendar.todayLabel"),
+            testID: "calendar-today",
+            onPress: onToday,
+          },
+        ]
+  const headerActions = useHeaderActions({
+    right: [
+      ...today,
+      {
+        icon: { ios: "plus", android: "add" },
+        accessibilityLabel: t("calendar.addLabel"),
+        testID: "calendar-add",
+        platform: "ios",
+        onPress: onAdd,
+      },
+    ],
+  })
   return (
     <Stack.Screen
       options={{
@@ -74,9 +99,7 @@ export function CalendarScreenHeader({
           ) : (
             <CalendarViewMenu view={view} onChange={onViewChange} zoom={zoom} />
           ),
-        headerRight: () => (
-          <CalendarHeaderActions onToday={onToday} onAdd={onAdd} />
-        ),
+        ...headerActions,
       }}
     />
   )

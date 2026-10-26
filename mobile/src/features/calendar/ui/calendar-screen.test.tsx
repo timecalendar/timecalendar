@@ -124,8 +124,11 @@ jest.mock("expo-router", () => {
                   { testID: "calendar-header-title" },
                   title,
                 ),
-          options.headerLeft?.(),
-          options.headerRight?.(),
+          React.createElement(
+            jest.requireActual("@/test-support/header-actions-preview")
+              .HeaderActionsPreview,
+            { options },
+          ),
         )
       },
     },

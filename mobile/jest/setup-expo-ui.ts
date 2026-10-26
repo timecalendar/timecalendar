@@ -778,10 +778,54 @@ jest.mock("@expo/ui/jetpack-compose", () => {
     Suffix: Slot,
     SupportingText: Slot,
   })
+  // An M3 button merges its descendants into one node, so a child label's
+  // semantics description becomes the button's name.
+  const mergedDescription = (children: unknown) =>
+    React.Children.toArray(children)
+      .map(
+        (child: unknown) =>
+          (
+            (
+              child as {
+                props?: {
+                  modifiers?: {
+                    $type: string
+                    contentDescription?: string
+                  }[]
+                }
+              }
+            ).props?.modifiers ?? []
+          ).find((modifier) => modifier.$type === "timecalendarSemantics")
+            ?.contentDescription,
+      )
+      .find((description: unknown) => typeof description === "string")
   function TextButton(props: {
     children?: unknown
     enabled?: boolean
     onClick?: () => void
+    colors?: unknown
+    modifiers?: { $type: string; value: unknown }[]
+  }) {
+    return React.createElement(
+      Pressable,
+      {
+        testID: testID(props.modifiers),
+        accessibilityRole: "button",
+        accessibilityLabel: mergedDescription(props.children),
+        accessibilityState: { disabled: props.enabled === false },
+        disabled: props.enabled === false,
+        colors: props.colors,
+        onPress: props.onClick,
+      },
+      props.children,
+    )
+  }
+  // M3 IconButton is a Role.Button node; its name is the Icon's description.
+  function IconButton(props: {
+    children?: unknown
+    enabled?: boolean
+    onClick?: () => void
+    colors?: unknown
     modifiers?: { $type: string; value: unknown }[]
   }) {
     return React.createElement(
@@ -791,6 +835,7 @@ jest.mock("@expo/ui/jetpack-compose", () => {
         accessibilityRole: "button",
         accessibilityState: { disabled: props.enabled === false },
         disabled: props.enabled === false,
+        colors: props.colors,
         onPress: props.onClick,
       },
       props.children,
@@ -968,6 +1013,7 @@ jest.mock("@expo/ui/jetpack-compose", () => {
   function Text(props: {
     children?: unknown
     color?: string
+    maxLines?: number
     style?: { typography?: string }
     modifiers?: { $type: string; value: unknown }[]
   }) {
@@ -976,6 +1022,7 @@ jest.mock("@expo/ui/jetpack-compose", () => {
       {
         testID: testID(props.modifiers),
         color: props.color,
+        maxLines: props.maxLines,
         typography: props.style?.typography,
       },
       props.children,
@@ -1000,6 +1047,7 @@ jest.mock("@expo/ui/jetpack-compose", () => {
     getMaterialColors,
     Host,
     Icon,
+    IconButton,
     LazyColumn,
     ListItem,
     OutlinedTextField,

@@ -1,12 +1,10 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { StyleSheet, View } from "react-native"
 
 import {
   NativeList,
   NativeListAlert,
   NativeListChoiceRow,
-  NativeListFloatingAction,
   NativeListHeader,
   NativeListRadioDialog,
   NativeListRow,
@@ -184,31 +182,6 @@ function HeaderAndAlertFixture() {
   )
 }
 
-function FloatingActionFixture() {
-  const { t } = useTranslation()
-  const [actions, setActions] = useState(0)
-  return (
-    <View style={styles.fill}>
-      <NativeList reservesFloatingAction>
-        <NativeListSection>
-          <NativeListRow
-            kind="value"
-            label={t("gallery.nativeList.fab.label")}
-            value={String(actions)}
-            testID="gallery-native-list-fab-count"
-          />
-        </NativeListSection>
-      </NativeList>
-      <NativeListFloatingAction
-        label={t("gallery.nativeList.fab.label")}
-        icon={{ ios: "plus", android: "add" }}
-        testID="gallery-native-list-fab"
-        onPress={() => setActions((count) => count + 1)}
-      />
-    </View>
-  )
-}
-
 function RadioDialogFixture() {
   const { t } = useTranslation()
   const [choice, setChoice] = useState<Choice>("first")
@@ -310,7 +283,6 @@ const meta: GalleryMeta<NativeListRowProps> = {
     "Switches",
     "Choices",
     "HeaderAndAlert",
-    "FloatingAction",
     "RadioDialog",
     "LongStrings",
   ],
@@ -343,12 +315,6 @@ export const HeaderAndAlert: Story = {
   render: () => <HeaderAndAlertFixture />,
 }
 
-export const FloatingAction: Story = {
-  name: "gallery.nativeList.story.floatingAction",
-  platforms: ["android"],
-  render: () => <FloatingActionFixture />,
-}
-
 export const RadioDialog: Story = {
   name: "gallery.nativeList.story.radioDialog",
   platforms: ["android"],
@@ -359,5 +325,3 @@ export const LongStrings: Story = {
   name: "gallery.nativeList.story.longStrings",
   render: () => <LongStringsFixture />,
 }
-
-const styles = StyleSheet.create({ fill: { flex: 1 } })

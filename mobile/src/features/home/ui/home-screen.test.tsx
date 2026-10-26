@@ -13,6 +13,7 @@ import { useCalendarEvents, useSyncCalendars } from "@/features/calendar/data"
 import { useChecklistProgress } from "@/features/event-checklists"
 import {
   Colors,
+  Layout,
   resolveResponsiveLayout,
   TypeRamp,
   WordmarkMaxFontScale,
@@ -389,6 +390,16 @@ describe("HomeScreen", () => {
     Platform.OS = "android"
     try {
       await render(<HomeScreen />)
+      expect(
+        screen.getAllByLabelText("Add personal event", {
+          includeHiddenElements: true,
+        }),
+      ).toHaveLength(1)
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId("home-scroll").props.contentContainerStyle,
+        ).paddingBottom,
+      ).toBe(Layout.fabClearance)
       fireEvent.press(screen.getByTestId("home-add-personal-event"))
       expect(mockPush).toHaveBeenCalledWith("/personal-event-form")
     } finally {

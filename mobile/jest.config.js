@@ -144,6 +144,8 @@ module.exports = {
     "src/design/badge/badge.tsx": { lines: 90, branches: 90 },
     "src/design/color-dot/color-dot.tsx": { lines: 90, branches: 90 },
     "src/components/chrome/compose-semantics.ts": { lines: 90, branches: 90 },
+    "src/components/chrome/floating-action.tsx": { lines: 90, branches: 90 },
+    "src/components/chrome/header-action.tsx": { lines: 90, branches: 90 },
     "src/components/chrome/list-palette.ts": { lines: 90, branches: 90 },
   },
 }

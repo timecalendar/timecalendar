@@ -1,12 +1,13 @@
 import { Stack, useRouter } from "expo-router"
 import { useTranslation } from "react-i18next"
-import { Platform, StyleSheet, View } from "react-native"
+import { StyleSheet, View } from "react-native"
 
 import {
+  FloatingAction,
   NativeList,
-  NativeListFloatingAction,
   NativeListRow,
   NativeListSection,
+  useHeaderActions,
 } from "@/components/chrome"
 import { RootPage, StatusView } from "@/design"
 import {
@@ -14,13 +15,11 @@ import {
   useUserCalendars,
   useUserCalendarsLoaded,
 } from "@/features/calendar-sources/data"
-import { useTheme } from "@/theme"
 
 const addIcon = { ios: "plus", android: "add" } as const
 
 export function UserCalendarsScreen() {
   const { t } = useTranslation()
-  const theme = useTheme()
   const router = useRouter()
   const calendars = useUserCalendars()
   const loaded = useUserCalendarsLoaded()
@@ -29,6 +28,17 @@ export function UserCalendarsScreen() {
       pathname: "/onboarding/school",
       params: { source: "calendar-management" },
     })
+  const headerActions = useHeaderActions({
+    right: [
+      {
+        icon: addIcon,
+        accessibilityLabel: t("userCalendars.add"),
+        testID: "user-calendars-add",
+        platform: "ios",
+        onPress: addCalendar,
+      },
+    ],
+  })
 
   return (
     <>
@@ -36,19 +46,7 @@ export function UserCalendarsScreen() {
         options={{
           title: t("userCalendars.title"),
           headerBackButtonDisplayMode: "minimal",
-          ...(Platform.OS === "ios" && {
-            unstable_headerRightItems: () => [
-              {
-                type: "button" as const,
-                label: t("userCalendars.add"),
-                accessibilityLabel: t("userCalendars.add"),
-                icon: { type: "sfSymbol" as const, name: addIcon.ios },
-                tintColor: theme.text,
-                identifier: "user-calendars-add",
-                onPress: addCalendar,
-              },
-            ],
-          }),
+          ...headerActions,
         }}
       />
       <View style={styles.fill}>
@@ -104,9 +102,9 @@ export function UserCalendarsScreen() {
             </NativeListSection>
           </NativeList>
         )}
-        <NativeListFloatingAction
-          label={t("userCalendars.add")}
+        <FloatingAction
           icon={addIcon}
+          label={t("userCalendars.add")}
           testID="user-calendars-add"
           onPress={addCalendar}
         />

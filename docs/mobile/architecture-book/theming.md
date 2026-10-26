@@ -438,13 +438,14 @@ feature that already owns them.
 
 Status artwork is a local light/dark pair selected through the single color-scheme seam, recolored
 to each scheme's exact `primary` accent; the localized text carries meaning and the image remains
-decorative. Filled body/footer actions are `Button variant="filled"`. Platform-native header
-actions and FABs retain their native placement and sizing.
+decorative. Filled body/footer actions are `Button variant="filled"`. Header actions and FABs come
+from `useHeaderActions` and `FloatingAction` ([Header and floating actions](#header-and-floating-actions--useheaderactions-floatingaction-srccomponentschrome)).
 
 Home's true-empty Up next and Today title/caption pairs use `inline` `StatusView`, keeping leading
 alignment, subtitle hierarchy, secondary captions and the shared announcement. Feedback, onboarding Programme, and the personal-event editor compose one readable
 `KeyboardSafeActionLayout`: the fields remain in its sole scroll body and the filled `Button`
-region is a measured sibling above the keyboard. Programme Skip remains native per platform.
+region is a measured sibling above the keyboard. Programme Skip is a header text action on both
+platforms.
 
 The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tabs` is "API subject to change"; `@expo/ui` ships unstable entry points; `expo-glass-effect` is iOS-26-only). The wrapper seam localizes that churn to one directory. Each module is the **single import site** for its alpha API:
 
@@ -486,7 +487,9 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
     kept trailing; the stacked value row is plain text whose label carries the row's
     accessibility, with the visible value hidden. At those sizes a single-word label is one line
     with `minimumScaleFactor` 0.5, so it shrinks instead of breaking mid-word.
-  - **Android:** every Compose Host (list and dialog) receives `seedColor = primary`. Each section is
+  - **Android:** every Compose Host (list, dialog, header action and FAB) is a
+    `SeededComposeHost` (`chrome/compose-host.tsx`, not on the barrel), which passes the
+    app-resolved `colorScheme` and `seedColor = primary`. Each section is
     a `titleSmall`/`primary` heading inset 16dp, then one grouped list: rows are `surfaceContainer`
     segments 2dp apart with 20dp outer and 4dp inner corners chosen by child position, 16dp side
     margins, no dividers, and no chevron. Headlines are `bodyLarge`/`onSurface`, supporting values
@@ -507,10 +510,9 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
     `value` to trailing `labelLarge`/`onSurfaceVariant` text). The default accessibility label reads
     `label, subtitle`. A `destructive` action row labels in `error` (iOS) or Material `error`
     (Android).
-  - **Floating action:** `NativeListFloatingAction` is a Material `FloatingActionButton` in its
-    own seeded Compose host, bottom-right, whose icon carries the label as content description. It
-    renders nothing on iOS, where the page adds through a navigation-bar item. A page that shows it
-    passes `reservesFloatingAction` to `NativeList` so the last row clears the button.
+  - **Floating action:** a page that shows a `FloatingAction` passes `reservesFloatingAction` to
+    `NativeList`, which pads its Android bottom by `Layout.fabClearance` so the last row clears the
+    button ([Header and floating actions](#header-and-floating-actions--useheaderactions-floatingaction-srccomponentschrome)).
   - **Placement:** the standalone native dialogs and editors (`NativeListRadioDialog`,
     `NativeListNumericEditor`, `NativeTextEntryDialog`) each mount their own native host, so
     they render as siblings after `</NativeList>`, never inside it. Nested inside the
@@ -546,9 +548,10 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
     role, so the content is React Native hosted through `RNHostView` (`matchContents`) at a width
     derived from the window, inside a clear, zero-inset Form row on iOS and a centered Row on
     Android. It follows the app theme tokens and the OS font scale.
-  - **Icons:** `NativeListIcon` pairs an SF Symbol with a key of
-    `chrome/native-list-icons.ts`, which maps each Material Symbol name to a committed vector
-    drawable under `mobile/assets/icons/material/`. Adding an Android icon means adding its XML there.
+  - **Icons:** `NativeIcon` pairs an SF Symbol with a key of `chrome/native-icons.ts`, which
+    maps each Material Symbol name to a committed vector drawable under
+    `mobile/assets/icons/material/`. List rows, header actions and the FAB share it. Adding an
+    Android icon means adding its XML there.
   - **Rule:** feature screens never set tint, color, or typography on list rows, sections, or
     footers; the chrome seam owns them. Features pass copy, icons, values, and intent only, and
     render the seam directly: no feature owns a row or section wrapper that another feature
@@ -567,7 +570,54 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
   in a box sized by the required `scaling` (see [Accessibility → Icon
   scaling](./accessibility.md#icon-scaling--encoded-in-icon)). Callers pass the color token; the
   icon carries no tone of its own.
-- **`chrome/index.ts`** — the barrel. Exports `NativeTabs`, `GlassSurface`, `Host`, `Picker`, `DateTimePicker`, `MenuView`, `MenuComponentRef`, and the native list seam: `NativeList`, `NativeListSection`, `NativeListRow` (+ `NativeListRowProps`), `NativeListSwitchRow`, `NativeListChoiceRow`, `NativeListRadioDialog`, `NativeListAlert`, `NativeListFloatingAction`, `NativeListHeader`, `NativeListNumericEditor` (+ its props and ids types), and the `NativeListIcon` type, and `useListPalette` (+ `ListPalette`). It carries no aliases.
+- **`chrome/index.ts`** — the barrel. Exports `NativeTabs`, `GlassSurface`, `Host`, `Picker`, `DateTimePicker`, `MenuView`, `MenuComponentRef`, and the native list seam: `NativeList`, `NativeListSection`, `NativeListRow` (+ `NativeListRowProps`), `NativeListSwitchRow`, `NativeListChoiceRow`, `NativeListRadioDialog`, `NativeListAlert`, `NativeListHeader`, `NativeListNumericEditor` (+ its props and ids types), the header and floating actions: `useHeaderActions` (+ `HeaderAction`, `HeaderActionOptions`) and `FloatingAction` (+ `FloatingActionProps`), the `NativeIcon` type, and `useListPalette` (+ `ListPalette`). It carries no aliases.
+
+## Header and floating actions — useHeaderActions, FloatingAction (src/components/chrome/)
+
+One way to declare a navigation-bar action, one Android floating action. Each renders as the
+platform's own control. See ADR [075](./decisions/075-header-and-floating-actions.md).
+
+- **`useHeaderActions({ left?, right? })`** (`chrome/header-action.tsx`) returns the header slots
+  a screen spreads into its one `Stack.Screen options={{ title, ...headerActions }}`. A
+  `HeaderAction` is an `icon` (`NativeIcon`) or a visible `label`, never both, with a required
+  `accessibilityLabel`, a `testID`, an optional `accessibilityHint`, `disabled`, and `platform`
+  (`"ios"` / `"android"`) for a one-platform action. Only a declared side returns a key:
+  `setOptions` merges into the previous options, so a declared side with no action for this
+  platform returns its key set to `undefined`, which clears a button set by an earlier render
+  (Today on the calendar). An undeclared side returns no key, so a slot the screen sets by hand
+  (the calendar view menu in `headerLeft`) survives the spread whatever its order. On Android a
+  left action renders through `headerLeft`, which replaces the native back arrow: declare a left
+  action only where the screen has no back navigation or the action is the way out.
+- **iOS:** each action is a native `UIBarButtonItem` header item (`unstable_headerLeftItems` /
+  `unstable_headerRightItems`): an SF Symbol (named by `accessibilityLabel`, which also feeds the
+  Large Content Viewer) or the visible label, the hint, `identifier: testID`, `disabled`.
+  Targets, highlight, the Liquid Glass background and Dynamic Type caps are UIKit's.
+- **Android:** `headerLeft` / `headerRight` render a centered Compose `Row` in a
+  `SeededComposeHost`: an icon action is an M3 `IconButton` holding the Material Symbol at 24 dp
+  with the name as content description; a text action is an M3 `TextButton` whose label is one
+  `labelLarge` line with ellipsis. The full name (label, then hint) sits on the label in
+  semantics (accessibility.md → Header and floating actions).
+- **Tint:** the chrome tints every action `text` (`tintColor` on iOS, `contentColor` on Android).
+  `HeaderAction` has no color field.
+- **Create action:** a trailing iOS header item and an Android `FloatingAction`, never both,
+  with one label (calendar, user calendars). Home's iOS add stays an in-content glass button,
+  since `(tabs)` has no header (5.9).
+- **`FloatingAction({ icon, label, testID, onPress })`** (`chrome/floating-action.tsx`) is the
+  Compose M3 `FloatingActionButton` in a `SeededComposeHost`, absolute at the 16 dp margin
+  (`Spacing.three`) bottom right. Its icon carries `label` as content description. Its
+  `primaryContainer` / `onPrimaryContainer` colors, shape and elevation come from the seeded
+  scheme; it has no color, size or variant prop. It renders nothing on iOS.
+- **Clearance:** `Layout.fabClearance` (96: 56 dp FAB, 16 dp margin, 24 dp gap) is the only
+  bottom clearance under a FAB: `NativeList reservesFloatingAction`, Home's Android scroll and the
+  Android agenda list.
+- **Gallery:** `header-action--icons`, `--text`, `--both-sides`, `--disabled`, `--platform-only`,
+  `--long-strings`; `floating-action--default`, `--over-list`, `--over-scroll`, `--long-label`
+  (iOS shows an "Android only" caption).
+- **Gates:** `header-action.test.tsx` and `floating-action.test.tsx` at the 90% per-file tier,
+  the gallery a11y matrix (the registry test renders the Android header slots), and
+  `local/no-ad-hoc-header-action` ([lint-format.md](./lint-format.md) → Header actions).
+- **Deferred:** the calendar view menu is a hand-built `headerLeft` until a header menu item
+  exists (5.10, the one allowlist entry).
 
 ## Lint boundary — the R-1 enforcement
 

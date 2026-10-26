@@ -47,23 +47,6 @@ export function HomeScreenHeader({ onAdd }: { onAdd: () => void }) {
   )
 }
 
-export function HomeAddFab({ onPress }: { onPress: () => void }) {
-  const { t } = useTranslation()
-  const theme = useTheme()
-  return (
-    <Pressable
-      testID="home-add-personal-event"
-      accessibilityRole="button"
-      accessibilityLabel={t("home.addPersonalEvent")}
-      onPress={onPress}
-      android_ripple={{ color: theme.ripple, borderless: true, radius: 28 }}
-      style={[styles.fab, { backgroundColor: theme.primary }]}
-    >
-      <Icon android="add" size={26} color={theme.background} scaling="fixed" />
-    </Pressable>
-  )
-}
-
 const styles = StyleSheet.create({
   header: {
     minHeight: 56,
@@ -89,21 +72,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-  },
-  fab: {
-    position: "absolute",
-    right: Spacing.three,
-    bottom: Spacing.four,
-    width: 56,
-    height: 56,
-    borderRadius: Radii.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 6,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    overflow: "hidden",
   },
 })

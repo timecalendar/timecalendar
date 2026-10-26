@@ -5,13 +5,13 @@ import {
   userEvent,
 } from "@testing-library/react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
-import type { ReactElement } from "react"
 import { Alert, StyleSheet } from "react-native"
 
 import { type EventDetails, useEventDetails } from "@/features/calendar/data"
 import { useUserCalendars } from "@/features/calendar-sources"
 import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
 import { useDisplayZone } from "@/features/settings/prefs"
+import { usePlatform } from "@/test-support/platform"
 import { resolveResponsiveLayout, Spacing, TypeRamp } from "@/theme"
 
 import { EventDetailsScreen } from "./event-details-screen"
@@ -58,13 +58,14 @@ jest.mock("@/features/event-checklists", () => ({
 jest.mock("expo-router", () => ({
   useLocalSearchParams: jest.fn(),
   useRouter: jest.fn(),
-  // Render the headerRight (the hide action lives there) so it is in the tree.
+  // Render the header actions (the hide action lives there) so it is in the tree.
   Stack: {
-    Screen: ({
-      options,
-    }: {
-      options?: { headerRight?: () => ReactElement }
-    }) => (options?.headerRight ? options.headerRight() : null),
+    Screen: ({ options }: { options?: object }) => {
+      const { HeaderActionsPreview } = jest.requireActual(
+        "@/test-support/header-actions-preview",
+      )
+      return <HeaderActionsPreview options={options} />
+    },
   },
 }))
 
@@ -348,214 +349,224 @@ describe("EventDetailsScreen", () => {
   })
 })
 
-describe("EventDetailsScreen hide / un-hide action (hidden-events)", () => {
-  it("offers the hide action for a synced event", async () => {
-    await render(<EventDetailsScreen />)
-    expect(screen.getByLabelText("Hide this event")).toBeTruthy()
-    expect(mockUseHiddenEvents).toHaveBeenCalledTimes(1)
-    expect(mockUseHideActions).toHaveBeenCalledTimes(1)
-  })
+describe.each(["ios", "android"] as const)(
+  "EventDetailsScreen hide / un-hide action (hidden-events) on %s",
+  (platform) => {
+    usePlatform(platform)
 
-  it("offers NO hide action for a personal event (synced-only, Flutter parity)", async () => {
-    mockUseEventDetails.mockReturnValue({
-      event: eventDetails({ kind: "personal", userCalendarId: "" }),
-      loading: false,
+    it("offers the hide action for a synced event", async () => {
+      await render(<EventDetailsScreen />)
+      expect(screen.getByLabelText("Hide this event")).toBeTruthy()
+      expect(mockUseHiddenEvents).toHaveBeenCalledTimes(1)
+      expect(mockUseHideActions).toHaveBeenCalledTimes(1)
     })
-    await render(<EventDetailsScreen />)
-    expect(screen.queryByLabelText("Hide this event")).toBeNull()
-    expect(screen.queryByLabelText("Un-hide this event")).toBeNull()
-  })
 
-  it("hides this instance via the chooser (hideByUid)", async () => {
-    const alertSpy = jest
-      .spyOn(Alert, "alert")
-      .mockImplementation((_title, _msg, buttons) => {
-        // Choose the first option: "Hide this event".
-        buttons?.[0]?.onPress?.()
+    it("offers NO hide action for a personal event (synced-only, Flutter parity)", async () => {
+      mockUseEventDetails.mockReturnValue({
+        event: eventDetails({ kind: "personal", userCalendarId: "" }),
+        loading: false,
       })
-    const back = jest.fn()
-    mockUseRouter.mockReturnValue({ back })
+      await render(<EventDetailsScreen />)
+      expect(screen.queryByLabelText("Hide this event")).toBeNull()
+      expect(screen.queryByLabelText("Un-hide this event")).toBeNull()
+    })
 
-    await render(<EventDetailsScreen />)
-    const user = userEvent.setup()
-    await user.press(screen.getByLabelText("Hide this event"))
+    it("hides this instance via the chooser (hideByUid)", async () => {
+      const alertSpy = jest
+        .spyOn(Alert, "alert")
+        .mockImplementation((_title, _msg, buttons) => {
+          // Choose the first option: "Hide this event".
+          buttons?.[0]?.onPress?.()
+        })
+      const back = jest.fn()
+      mockUseRouter.mockReturnValue({ back })
 
-    expect(hideActions.hideByUid).toHaveBeenCalledWith("ev-1")
-    expect(back).toHaveBeenCalled()
-    alertSpy.mockRestore()
-  })
+      await render(<EventDetailsScreen />)
+      const user = userEvent.setup()
+      await user.press(screen.getByLabelText("Hide this event"))
 
-  it("hides all of the same name via the chooser (hideByName)", async () => {
-    const alertSpy = jest
-      .spyOn(Alert, "alert")
-      .mockImplementation((_title, _msg, buttons) => {
-        // Choose the second option: "Hide all events of the same name".
-        buttons?.[1]?.onPress?.()
+      expect(hideActions.hideByUid).toHaveBeenCalledWith("ev-1")
+      expect(back).toHaveBeenCalled()
+      alertSpy.mockRestore()
+    })
+
+    it("hides all of the same name via the chooser (hideByName)", async () => {
+      const alertSpy = jest
+        .spyOn(Alert, "alert")
+        .mockImplementation((_title, _msg, buttons) => {
+          // Choose the second option: "Hide all events of the same name".
+          buttons?.[1]?.onPress?.()
+        })
+      const back = jest.fn()
+      mockUseRouter.mockReturnValue({ back, push: jest.fn() })
+      await render(<EventDetailsScreen />)
+      const user = userEvent.setup()
+      await user.press(screen.getByLabelText("Hide this event"))
+
+      expect(hideActions.hideByName).toHaveBeenCalledWith("Algorithms")
+      expect(back).toHaveBeenCalled()
+      alertSpy.mockRestore()
+    })
+
+    it("does NOT pop back when the hide write fails (the failure banner stays visible)", async () => {
+      const alertSpy = jest
+        .spyOn(Alert, "alert")
+        .mockImplementation((_title, _msg, buttons) => {
+          buttons?.[0]?.onPress?.()
+        })
+      const back = jest.fn()
+      mockUseRouter.mockReturnValue({ back })
+      // A failed write returns false from the mutator and flips `failed`.
+      mockUseHideActions.mockReturnValue({
+        ...hideActions,
+        hideByUid: jest.fn(() => false),
+        failed: true,
       })
-    const back = jest.fn()
-    mockUseRouter.mockReturnValue({ back, push: jest.fn() })
-    await render(<EventDetailsScreen />)
-    const user = userEvent.setup()
-    await user.press(screen.getByLabelText("Hide this event"))
 
-    expect(hideActions.hideByName).toHaveBeenCalledWith("Algorithms")
-    expect(back).toHaveBeenCalled()
-    alertSpy.mockRestore()
-  })
+      await render(<EventDetailsScreen />)
+      const user = userEvent.setup()
+      await user.press(screen.getByLabelText("Hide this event"))
 
-  it("does NOT pop back when the hide write fails (the failure banner stays visible)", async () => {
-    const alertSpy = jest
-      .spyOn(Alert, "alert")
-      .mockImplementation((_title, _msg, buttons) => {
-        buttons?.[0]?.onPress?.()
+      // The screen stayed mounted so its accessible failure banner is visible.
+      expect(back).not.toHaveBeenCalled()
+      expect(
+        screen.getByText("We couldn't hide this event. Please try again."),
+      ).toBeTruthy()
+      alertSpy.mockRestore()
+    })
+
+    it("offers un-hide and removes the event when it is currently hidden", async () => {
+      mockUseHiddenEvents.mockReturnValue({
+        uidHiddenEvents: ["ev-1"],
+        namedHiddenEvents: [],
       })
-    const back = jest.fn()
-    mockUseRouter.mockReturnValue({ back })
-    // A failed write returns false from the mutator and flips `failed`.
-    mockUseHideActions.mockReturnValue({
-      ...hideActions,
-      hideByUid: jest.fn(() => false),
-      failed: true,
+      await render(<EventDetailsScreen />)
+      const user = userEvent.setup()
+      const unhide = screen.getByLabelText("Un-hide this event")
+      await user.press(unhide)
+
+      expect(hideActions.unhideUid).toHaveBeenCalledWith("ev-1")
     })
 
-    await render(<EventDetailsScreen />)
-    const user = userEvent.setup()
-    await user.press(screen.getByLabelText("Hide this event"))
+    it("un-hides by name when the title is in the named set", async () => {
+      mockUseHiddenEvents.mockReturnValue({
+        uidHiddenEvents: [],
+        namedHiddenEvents: ["Algorithms"],
+      })
+      await render(<EventDetailsScreen />)
+      const user = userEvent.setup()
+      await user.press(screen.getByLabelText("Un-hide this event"))
 
-    // The screen stayed mounted so its accessible failure banner is visible.
-    expect(back).not.toHaveBeenCalled()
-    expect(
-      screen.getByText("We couldn't hide this event. Please try again."),
-    ).toBeTruthy()
-    alertSpy.mockRestore()
-  })
-
-  it("offers un-hide and removes the event when it is currently hidden", async () => {
-    mockUseHiddenEvents.mockReturnValue({
-      uidHiddenEvents: ["ev-1"],
-      namedHiddenEvents: [],
+      expect(hideActions.unhideName).toHaveBeenCalledWith("Algorithms")
     })
-    await render(<EventDetailsScreen />)
-    const user = userEvent.setup()
-    const unhide = screen.getByLabelText("Un-hide this event")
-    await user.press(unhide)
 
-    expect(hideActions.unhideUid).toHaveBeenCalledWith("ev-1")
-  })
+    it("un-hides matching uid and name entries without navigating", async () => {
+      const back = jest.fn()
+      mockUseRouter.mockReturnValue({ back, push: jest.fn() })
+      mockUseHiddenEvents.mockReturnValue({
+        uidHiddenEvents: ["ev-1"],
+        namedHiddenEvents: ["Algorithms"],
+      })
+      await render(<EventDetailsScreen />)
+      const user = userEvent.setup()
+      await user.press(screen.getByLabelText("Un-hide this event"))
 
-  it("un-hides by name when the title is in the named set", async () => {
-    mockUseHiddenEvents.mockReturnValue({
-      uidHiddenEvents: [],
-      namedHiddenEvents: ["Algorithms"],
+      expect(hideActions.unhideUid).toHaveBeenCalledWith("ev-1")
+      expect(hideActions.unhideName).toHaveBeenCalledWith("Algorithms")
+      expect(back).not.toHaveBeenCalled()
     })
-    await render(<EventDetailsScreen />)
-    const user = userEvent.setup()
-    await user.press(screen.getByLabelText("Un-hide this event"))
 
-    expect(hideActions.unhideName).toHaveBeenCalledWith("Algorithms")
-  })
-
-  it("un-hides matching uid and name entries without navigating", async () => {
-    const back = jest.fn()
-    mockUseRouter.mockReturnValue({ back, push: jest.fn() })
-    mockUseHiddenEvents.mockReturnValue({
-      uidHiddenEvents: ["ev-1"],
-      namedHiddenEvents: ["Algorithms"],
+    it("surfaces an accessible failure state when a hide write failed", async () => {
+      mockUseHideActions.mockReturnValue({ ...hideActions, failed: true })
+      await render(<EventDetailsScreen />)
+      expect(
+        screen.getByRole("alert", {
+          name: "We couldn't hide this event. Please try again.",
+        }),
+      ).toBeTruthy()
     })
-    await render(<EventDetailsScreen />)
-    const user = userEvent.setup()
-    await user.press(screen.getByLabelText("Un-hide this event"))
+  },
+)
 
-    expect(hideActions.unhideUid).toHaveBeenCalledWith("ev-1")
-    expect(hideActions.unhideName).toHaveBeenCalledWith("Algorithms")
-    expect(back).not.toHaveBeenCalled()
-  })
+describe.each(["ios", "android"] as const)(
+  "EventDetailsScreen unified surface (both kinds) — checklist + Edit action on %s",
+  (platform) => {
+    usePlatform(platform)
 
-  it("surfaces an accessible failure state when a hide write failed", async () => {
-    mockUseHideActions.mockReturnValue({ ...hideActions, failed: true })
-    await render(<EventDetailsScreen />)
-    expect(
-      screen.getByRole("alert", {
-        name: "We couldn't hide this event. Please try again.",
-      }),
-    ).toBeTruthy()
-  })
-})
-
-describe("EventDetailsScreen unified surface (both kinds) — checklist + Edit action", () => {
-  it("mounts the checklist section for a synced event, keyed on the uid", async () => {
-    await render(<EventDetailsScreen />)
-    expect(screen.getByText("checklist:ev-1")).toBeTruthy()
-  })
-
-  it("mounts the checklist section for a personal event, keyed on the uid", async () => {
-    mockUseEventDetails.mockReturnValue({
-      event: eventDetails({
-        kind: "personal",
-        id: "pers-1",
-        userCalendarId: "",
-      }),
-      loading: false,
+    it("mounts the checklist section for a synced event, keyed on the uid", async () => {
+      await render(<EventDetailsScreen />)
+      expect(screen.getByText("checklist:ev-1")).toBeTruthy()
     })
-    await render(<EventDetailsScreen />)
-    expect(screen.getByText("checklist:pers-1")).toBeTruthy()
-  })
 
-  it("renders a personal event's details (title + date)", async () => {
-    mockUseEventDetails.mockReturnValue({
-      event: eventDetails({
-        kind: "personal",
-        title: "Dentist",
-        userCalendarId: "",
-        tags: [],
-        teachers: [],
-      }),
-      loading: false,
+    it("mounts the checklist section for a personal event, keyed on the uid", async () => {
+      mockUseEventDetails.mockReturnValue({
+        event: eventDetails({
+          kind: "personal",
+          id: "pers-1",
+          userCalendarId: "",
+        }),
+        loading: false,
+      })
+      await render(<EventDetailsScreen />)
+      expect(screen.getByText("checklist:pers-1")).toBeTruthy()
     })
-    await render(<EventDetailsScreen />)
-    expect(screen.getByRole("header", { name: "Dentist" })).toBeTruthy()
-  })
 
-  it("uses the localized presentation fallback without enabling hide-by-name", async () => {
-    const alert = jest.spyOn(Alert, "alert")
-    mockUseEventDetails.mockReturnValue({
-      event: eventDetails({ title: undefined }),
-      loading: false,
+    it("renders a personal event's details (title + date)", async () => {
+      mockUseEventDetails.mockReturnValue({
+        event: eventDetails({
+          kind: "personal",
+          title: "Dentist",
+          userCalendarId: "",
+          tags: [],
+          teachers: [],
+        }),
+        loading: false,
+      })
+      await render(<EventDetailsScreen />)
+      expect(screen.getByRole("header", { name: "Dentist" })).toBeTruthy()
     })
-    await render(<EventDetailsScreen />)
-    expect(screen.getByRole("header", { name: "(No title)" })).toBeTruthy()
 
-    const user = userEvent.setup()
-    await user.press(screen.getByLabelText("Hide this event"))
-    const buttons = alert.mock.calls[0]?.[2] ?? []
-    expect(buttons.map((button) => button.text ?? "")).toEqual([
-      "Hide this event",
-      "Cancel",
-    ])
-  })
+    it("uses the localized presentation fallback without enabling hide-by-name", async () => {
+      const alert = jest.spyOn(Alert, "alert")
+      mockUseEventDetails.mockReturnValue({
+        event: eventDetails({ title: undefined }),
+        loading: false,
+      })
+      await render(<EventDetailsScreen />)
+      expect(screen.getByRole("header", { name: "(No title)" })).toBeTruthy()
 
-  it("offers the Edit action ONLY for a personal event, and it opens the form", async () => {
-    const push = jest.fn()
-    mockUseRouter.mockReturnValue({ back: jest.fn(), push })
-    mockUseEventDetails.mockReturnValue({
-      event: eventDetails({
-        kind: "personal",
-        id: "pers-1",
-        userCalendarId: "",
-      }),
-      loading: false,
+      const user = userEvent.setup()
+      await user.press(screen.getByLabelText("Hide this event"))
+      const buttons = alert.mock.calls[0]?.[2] ?? []
+      expect(buttons.map((button) => button.text ?? "")).toEqual([
+        "Hide this event",
+        "Cancel",
+      ])
     })
-    await render(<EventDetailsScreen />)
 
-    expect(screen.queryByLabelText("Hide this event")).toBeNull()
-    const edit = screen.getByLabelText("Edit this event")
-    const user = userEvent.setup()
-    await user.press(edit)
-    expect(push).toHaveBeenCalledWith("/personal-event-form?uid=pers-1")
-  })
+    it("offers the Edit action ONLY for a personal event, and it opens the form", async () => {
+      const push = jest.fn()
+      mockUseRouter.mockReturnValue({ back: jest.fn(), push })
+      mockUseEventDetails.mockReturnValue({
+        event: eventDetails({
+          kind: "personal",
+          id: "pers-1",
+          userCalendarId: "",
+        }),
+        loading: false,
+      })
+      await render(<EventDetailsScreen />)
 
-  it("offers NO Edit action for a synced event (Edit is personal-only)", async () => {
-    await render(<EventDetailsScreen />)
-    expect(screen.queryByLabelText("Edit this event")).toBeNull()
-  })
-})
+      expect(screen.queryByLabelText("Hide this event")).toBeNull()
+      const edit = screen.getByLabelText("Edit this event")
+      const user = userEvent.setup()
+      await user.press(edit)
+      expect(push).toHaveBeenCalledWith("/personal-event-form?uid=pers-1")
+    })
+
+    it("offers NO Edit action for a synced event (Edit is personal-only)", async () => {
+      await render(<EventDetailsScreen />)
+      expect(screen.queryByLabelText("Edit this event")).toBeNull()
+    })
+  },
+)

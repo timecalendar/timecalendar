@@ -1,3 +1,24 @@
+## 2026-10-26 — Header and floating actions
+
+- `useHeaderActions` and `FloatingAction` live in `src/components/chrome/`: native bar button
+  items on iOS, Material 3 top-app-bar icon and text buttons on Android, one Compose M3 FAB, all
+  in one `SeededComposeHost`, with `Layout.fabClearance` as the one FAB clearance and `NativeIcon`
+  (`native-icons.ts`) as the chrome icon pair ([theming.md](./theming.md) → Header and floating
+  actions, ADR [075](./decisions/075-header-and-floating-actions.md)).
+- Screens declare header actions through `useHeaderActions` and set no header item themselves
+  ([navigation.md](./navigation.md)). A declared side with no action returns its key as
+  `undefined` to clear the merged option; an undeclared side returns no key.
+- A header action requires `accessibilityLabel`; Android text actions are one line with the full
+  name (label, then hint) in semantics ([accessibility.md](./accessibility.md) → Header and
+  floating actions).
+- `local/no-ad-hoc-header-action` reports hand-built header slots and navigation-bar
+  `Stack.Toolbar`s, with its allowlist at ceiling 1, and the raw-button allowlist ceiling is 9
+  ([lint-format.md](./lint-format.md) → Header actions, Buttons).
+- Maestro selects native iOS bar items by accessibility label; flow 02 taps "Add an event"
+  ([testing.md](./testing.md) → E2E).
+- Calendar, Home, event details, the changelog sheet, Programme, user calendars, the school picker
+  and the timezone chooser use the hook and the FAB ([features.md](./features.md)).
+
 ## 2026-10-26 — CI iOS simulator runs without apsd
 
 - The native E2E iOS job runs `mobile/e2e/quiesce-ios-simulator.sh` after `xcrun simctl boot` and

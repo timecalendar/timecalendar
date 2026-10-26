@@ -120,6 +120,28 @@ These rules guard real product touchables (interactive controls declare `accessi
   device, and the wrap at the largest size, are device evidence
   ([inbox note](../../react-native-migration/inbox/2026-10-26-mobile-ds-badge-color-dot-device-pass.md)).
 
+## Header and floating actions — encoded in `useHeaderActions` and `FloatingAction`
+
+- Every `HeaderAction` requires `accessibilityLabel` (a type error without it), including a text
+  action whose visible label is shorter; `accessibilityHint` is optional. A `FloatingAction`
+  requires `label`, which its icon carries as content description.
+- iOS: the action is a native bar item, so VoiceOver reads its label and hint, UIKit sizes the
+  target, and at accessibility text sizes a long press shows the Large Content Viewer with the
+  label. A disabled item is dimmed and inert.
+- Android: the M3 `IconButton` gives a 48 dp minimum target, the FAB is 56 dp. An icon action is
+  named by the icon's content description. A text action's name (label, then hint, joined by a
+  comma, the ADR 073 composition) sits on its label `Text` through `timecalendarSemantics`, so
+  the M3 button merges it into one button node and keeps its click action;
+  `clearAndSetSemantics` on the button itself would clear that action.
+- Android text actions keep one line with an ellipsis: the 64 dp top app bar has no room for a
+  second line, and the full name stays in semantics. This is the one place a label may
+  ellipsize; `header-action--long-strings` shows it.
+- Gates: `header-action.test.tsx`, `floating-action.test.tsx`, the Expo UI mock's `IconButton`
+  and `TextButton` (role `button`, name from the child's semantics) and the registry matrix, with
+  no entry added to `known-a11y-violations.ts`. TalkBack naming, the header layout at font scale
+  2.0 and the Large Content Viewer are device evidence
+  ([inbox note](../../react-native-migration/inbox/2026-10-26-mobile-ds-header-action-device-pass.md)).
+
 ## Accessible async status
 
 - Every loading, empty and error state is `StatusView` (ADR [069](./decisions/069-status-view.md)).

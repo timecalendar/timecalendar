@@ -1,9 +1,9 @@
 import { router, Stack } from "expo-router"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Pressable } from "react-native"
 
-import { Button, ThemedText } from "@/design"
+import { useHeaderActions } from "@/components/chrome"
+import { Button } from "@/design"
 import {
   CHANGELOG_VERSION,
   getChangelogReleasesAfter,
@@ -35,6 +35,18 @@ export function ChangelogSheetScreen() {
 
   useEffect(() => acknowledge, [acknowledge])
 
+  const headerActions = useHeaderActions({
+    right: [
+      {
+        label: t("changelog.close.label"),
+        accessibilityLabel: t("changelog.close.label"),
+        accessibilityHint: t("changelog.close.hint"),
+        testID: "changelog-close",
+        onPress: acknowledgeAndDismiss,
+      },
+    ],
+  })
+
   const footer = (
     <Button
       variant="filled"
@@ -50,18 +62,7 @@ export function ChangelogSheetScreen() {
       <Stack.Screen
         options={{
           title: t("changelog.sheet.title"),
-          headerRight: () => (
-            <Pressable
-              accessibilityHint={t("changelog.close.hint")}
-              accessibilityLabel={t("changelog.close.label")}
-              accessibilityRole="button"
-              hitSlop={12}
-              onPress={acknowledgeAndDismiss}
-              testID="changelog-close"
-            >
-              <ThemedText>{t("changelog.close.label")}</ThemedText>
-            </Pressable>
-          ),
+          ...headerActions,
         }}
       />
       <ChangelogContent

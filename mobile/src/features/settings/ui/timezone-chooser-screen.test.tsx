@@ -69,7 +69,16 @@ jest.mock("expo-router", () => {
   return {
     router: { back: jest.fn() },
     useFocusEffect: jest.fn(),
-    Stack: { Screen: () => null, SearchBar, Toolbar },
+    Stack: {
+      Screen: ({ options }: { options?: object }) => {
+        const { HeaderActionsPreview } = jest.requireActual(
+          "@/test-support/header-actions-preview",
+        )
+        return React.createElement(HeaderActionsPreview, { options })
+      },
+      SearchBar,
+      Toolbar,
+    },
   }
 })
 
@@ -259,6 +268,9 @@ describe("TimezoneChooserScreen", () => {
 
     expect(view.getByTestId("chooser-toolbar-bottom")).toBeTruthy()
     expect(view.getByTestId("toolbar-search-slot")).toBeTruthy()
+    expect(view.queryByTestId("timezone-close")).toBeNull()
+    await fireEvent.press(view.getByTestId("chooser-close"))
+    expect(router.back).toHaveBeenCalledTimes(1)
     expect(
       view.getByTestId("timezone-search").props.allowToolbarIntegration,
     ).toBe(true)
@@ -278,7 +290,8 @@ describe("TimezoneChooserScreen", () => {
     setString(SETTINGS_KEYS.timezone, "Europe/Paris")
     const view = await render(<TimezoneChooserScreen />)
 
-    await fireEvent.press(view.getByTestId("chooser-close"))
+    expect(view.queryByTestId("chooser-toolbar-bottom")).toBeNull()
+    await fireEvent.press(view.getByRole("button", { name: "Close" }))
     expect(router.back).toHaveBeenCalledTimes(1)
     view.unmount()
     expect(getString(SETTINGS_KEYS.timezone)).toBe("Europe/Paris")
@@ -291,6 +304,7 @@ describe("TimezoneChooserScreen", () => {
     const view = await render(<TimezoneChooserScreen />)
 
     expect(view.queryByTestId("chooser-close")).toBeNull()
+    expect(view.queryByTestId("timezone-close")).toBeNull()
     expect(backListener).not.toHaveBeenCalled()
     view.unmount()
     expect(getString(SETTINGS_KEYS.timezone)).toBe("Europe/Paris")

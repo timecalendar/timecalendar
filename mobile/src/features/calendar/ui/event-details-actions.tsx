@@ -1,11 +1,10 @@
 import { Stack, useRouter } from "expo-router"
 import { useTranslation } from "react-i18next"
-import { Alert, Pressable, StyleSheet } from "react-native"
+import { Alert } from "react-native"
 
-import { ThemedText } from "@/design"
+import { useHeaderActions } from "@/components/chrome"
 import type { EventDetails } from "@/features/calendar/data"
 import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
-import { Spacing } from "@/theme"
 
 export interface EventDetailsAction {
   accessibilityLabel: string
@@ -88,38 +87,21 @@ export function EventDetailsHeader({
   action?: EventDetailsAction
 }) {
   const { t } = useTranslation()
-  const title = t("eventDetails.title")
-
-  if (action === undefined) {
-    return <Stack.Screen options={{ title }} />
-  }
-
+  const headerActions = useHeaderActions({
+    right: action
+      ? [
+          {
+            label: action.text,
+            accessibilityLabel: action.accessibilityLabel,
+            testID: "event-details-action",
+            onPress: action.onPress,
+          },
+        ]
+      : [],
+  })
   return (
     <Stack.Screen
-      options={{
-        title,
-        headerRight: () => (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={action.accessibilityLabel}
-            hitSlop={Spacing.two}
-            onPress={action.onPress}
-            style={styles.headerAction}
-          >
-            <ThemedText type="smallBold">{action.text}</ThemedText>
-          </Pressable>
-        ),
-      }}
+      options={{ title: t("eventDetails.title"), ...headerActions }}
     />
   )
 }
-
-const styles = StyleSheet.create({
-  headerAction: {
-    minHeight: 44,
-    minWidth: 44,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: Spacing.two,
-  },
-})

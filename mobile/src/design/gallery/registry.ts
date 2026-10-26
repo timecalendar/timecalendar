@@ -1,5 +1,7 @@
 import * as dateTimePicker from "@/components/chrome/date-time-picker.gallery"
+import * as floatingAction from "@/components/chrome/floating-action.gallery"
 import * as glassSurface from "@/components/chrome/glass-surface.gallery"
+import * as headerAction from "@/components/chrome/header-action.gallery"
 import * as menuView from "@/components/chrome/menu-view.gallery"
 import * as nativeList from "@/components/chrome/native-list.gallery"
 import * as nativeListNumericEditor from "@/components/chrome/native-list-numeric-editor.gallery"
@@ -47,6 +49,8 @@ export const galleryModules: readonly GalleryModule[] = [
   nativeTextEntryDialog,
   nativeListNumericEditor,
   menuView,
+  headerAction,
+  floatingAction,
   dateTimePicker,
   glassSurface,
   designTokens,

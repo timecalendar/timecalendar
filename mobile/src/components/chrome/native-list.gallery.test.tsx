@@ -82,18 +82,6 @@ describe.each(["ios", "android"] as const)(
       ).toHaveTextContent("Version 1.0 · 1")
     })
 
-    it("shows the floating action on Android only", async () => {
-      const view = await renderStory(fixture.FloatingAction)
-      if (platform === "ios") {
-        expect(view.queryByTestId("gallery-native-list-fab")).toBeNull()
-        return
-      }
-      await fireEvent.press(view.getByTestId("gallery-native-list-fab"))
-      expect(
-        view.getByTestId("gallery-native-list-fab-count"),
-      ).toHaveTextContent(/1/)
-    })
-
     it("opens the radio dialog on Android only", async () => {
       const view = await renderStory(fixture.RadioDialog)
       await fireEvent.press(view.getByTestId("gallery-native-list-dialog-open"))

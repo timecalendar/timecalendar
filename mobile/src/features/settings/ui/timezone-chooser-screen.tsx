@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { AppState, FlatList, Keyboard, Platform } from "react-native"
 
+import { useHeaderActions } from "@/components/chrome"
 import { ListRow, ListRowSeparator, StatusView } from "@/design"
 import {
   formatTimezoneOffset,
@@ -46,6 +47,19 @@ export default function TimezoneChooserScreen() {
   const navigating = useRef(false)
   const bottomSearch = supportsBottomSearch()
   const results = searchTimezones(query, locale, pinned)
+  const headerActions = useHeaderActions({
+    left: bottomSearch
+      ? []
+      : [
+          {
+            label: t("settings.close"),
+            accessibilityLabel: t("settings.close"),
+            testID: "timezone-close",
+            platform: "ios",
+            onPress: () => router.back(),
+          },
+        ],
+  })
 
   useFocusEffect(() => {
     navigating.current = false
@@ -87,7 +101,9 @@ export default function TimezoneChooserScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t("settings.timezone.choose") }} />
+      <Stack.Screen
+        options={{ title: t("settings.timezone.choose"), ...headerActions }}
+      />
       <Stack.SearchBar
         allowToolbarIntegration={bottomSearch}
         autoCapitalize="none"
@@ -97,16 +113,6 @@ export default function TimezoneChooserScreen() {
         onClose={() => setQuery("")}
         placeholder={t("settings.timezone.searchPlaceholder")}
       />
-      {Platform.OS === "ios" && !bottomSearch ? (
-        <Stack.Toolbar placement="left">
-          <Stack.Toolbar.Button
-            accessibilityLabel={t("settings.close")}
-            onPress={() => router.back()}
-          >
-            {t("settings.close")}
-          </Stack.Toolbar.Button>
-        </Stack.Toolbar>
-      ) : null}
       {bottomSearch ? (
         <Stack.Toolbar placement="bottom">
           <Stack.Toolbar.SearchBarSlot />

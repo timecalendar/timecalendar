@@ -1,13 +1,9 @@
 import { router, Stack, useLocalSearchParams } from "expo-router"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import {
-  FlatList,
-  Platform,
-  StyleSheet,
-  useWindowDimensions,
-} from "react-native"
+import { FlatList, StyleSheet, useWindowDimensions } from "react-native"
 
+import { useHeaderActions } from "@/components/chrome"
 import {
   Button,
   ErrorNotice,
@@ -64,6 +60,22 @@ export default function SchoolPickerScreen() {
     [schools, filter],
   )
 
+  // UIKit gives a nested stack's first screen no back button; Android's
+  // native one already walks up to the parent stack.
+  const headerActions = useHeaderActions({
+    left: fromCalendarManagement
+      ? [
+          {
+            icon: { ios: "chevron.backward", android: "arrow_back" },
+            accessibilityLabel: t("common.back"),
+            testID: "onboarding-school-back",
+            platform: "ios",
+            onPress: () => router.dismiss(),
+          },
+        ]
+      : [],
+  })
+
   const searching = filter.trim().length > 0
   const browsing = !isLoading && schools.length > 0 && !searching
 
@@ -72,24 +84,7 @@ export default function SchoolPickerScreen() {
       <Stack.Screen
         options={{
           title: t("onboarding.school.title"),
-          // UIKit gives a nested stack's first screen no back button; Android's
-          // native one already walks up to the parent stack.
-          ...(fromCalendarManagement &&
-            Platform.OS === "ios" && {
-              unstable_headerLeftItems: () => [
-                {
-                  type: "button" as const,
-                  label: t("common.back"),
-                  accessibilityLabel: t("common.back"),
-                  icon: {
-                    type: "sfSymbol" as const,
-                    name: "chevron.backward" as const,
-                  },
-                  identifier: "onboarding-school-back",
-                  onPress: () => router.dismiss(),
-                },
-              ],
-            }),
+          ...headerActions,
           headerSearchBarOptions: {
             placeholder: t("onboarding.school.search"),
             onChangeText: (e) => setFilter(e.nativeEvent.text),
