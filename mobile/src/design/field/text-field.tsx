@@ -10,7 +10,7 @@ import {
 } from "react-native"
 
 import type { ButtonLayoutStyle } from "@/design/button/button"
-import { joinSentences } from "@/design/field/field-error-hint"
+import { fieldErrorHint } from "@/design/field/field-error-hint"
 import { FieldError } from "@/design/status/error-surfaces"
 import { ThemedText } from "@/design/text/themed-text"
 import {
@@ -94,15 +94,18 @@ export function useFieldBoxStyle(state: BoxState) {
   const theme = useTheme()
   const border = fieldBorder(state)
   const ios = Platform.OS === "ios"
-  return [
-    styles.box,
-    ios ? styles.iosBox : styles.androidBox,
-    {
-      borderWidth: border.width,
-      borderColor: theme[border.color],
-      backgroundColor: ios ? theme.backgroundElement : "transparent",
-    },
-  ]
+  return {
+    borderWidth: border.width,
+    style: [
+      styles.box,
+      ios ? styles.iosBox : styles.androidBox,
+      {
+        borderWidth: border.width,
+        borderColor: theme[border.color],
+        backgroundColor: ios ? theme.backgroundElement : "transparent",
+      },
+    ],
+  }
 }
 
 type FieldChromeProps = {
@@ -116,6 +119,9 @@ type FieldChromeProps = {
   children: ReactNode
 }
 
+// The error stays at full contrast: it still applies to a field the user
+// cannot edit.
+
 export function FieldChrome({
   label,
   labelNativeID,
@@ -126,26 +132,23 @@ export function FieldChrome({
   style,
   children,
 }: FieldChromeProps) {
+  const dimmed = disabled ? styles.disabled : undefined
   return (
-    <View
-      style={StyleSheet.flatten([
-        styles.root,
-        disabled ? { opacity: StateOpacity.disabled } : null,
-        style,
-      ])}
-    >
+    <View style={StyleSheet.flatten([styles.root, style])}>
       <ThemedText
         type="smallBold"
         nativeID={labelNativeID}
         testID={derived(testID, "label")}
+        style={dimmed}
       >
         {label}
       </ThemedText>
-      {children}
+      <View style={dimmed}>{children}</View>
       {helper ? (
         <ThemedText
           type="small"
           tone="secondary"
+          style={dimmed}
           testID={derived(testID, "helper")}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
@@ -184,8 +187,7 @@ export function TextField({
   const { fontScale } = useWindowDimensions()
   const [focused, setFocused] = useState(false)
   const ios = Platform.OS === "ios"
-  const border = fieldBorder({ focused, error: Boolean(error) })
-  const boxStyle = useFieldBoxStyle({ focused, error: Boolean(error) })
+  const box = useFieldBoxStyle({ focused, error: Boolean(error) })
   const body = TypeRamp.body.style
   const lineHeight = body.lineHeight ?? 0
 
@@ -199,14 +201,14 @@ export function TextField({
       testID={testID}
       style={style}
     >
-      <View testID={derived(testID, "field")} style={boxStyle}>
+      <View testID={derived(testID, "field")} style={box.style}>
         <TextInput
           {...inputProps}
           ref={ref}
           testID={testID}
           accessibilityLabel={accessibilityLabel}
           accessibilityLabelledBy={ios ? undefined : labelNativeID}
-          accessibilityHint={joinSentences(error, helper, hint)}
+          accessibilityHint={fieldErrorHint(error, helper, hint)}
           accessibilityState={{ disabled }}
           editable={!disabled}
           multiline={multiline}
@@ -228,8 +230,8 @@ export function TextField({
           style={{
             color: theme.text,
             fontSize: body.fontSize,
-            paddingHorizontal: FieldInset.horizontal - border.width,
-            paddingVertical: FieldInset.vertical - border.width,
+            paddingHorizontal: FieldInset.horizontal - box.borderWidth,
+            paddingVertical: FieldInset.vertical - box.borderWidth,
             minHeight: multiline
               ? MULTILINE_MIN_LINES * lineHeight * fontScale +
                 2 * FieldInset.vertical
@@ -244,6 +246,7 @@ export function TextField({
 
 const styles = StyleSheet.create({
   root: { gap: Spacing.two },
+  disabled: { opacity: StateOpacity.disabled },
   box: { overflow: "hidden" },
   iosBox: { borderRadius: Radii.medium, borderCurve: "continuous" },
   androidBox: { borderRadius: Radii.small },

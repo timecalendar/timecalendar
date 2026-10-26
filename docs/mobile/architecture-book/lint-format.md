@@ -328,8 +328,9 @@ truth; this file carries the caveats the config can't (R-1).
   annotated with its migrating slice (the inline checklist row editor, 5.8).
   `src/components/chrome/**` is not ignored. `raw-text-input-allowlist.test.js` fails on a stale
   entry, a missing file, a duplicate, or a list longer than `RAW_TEXT_INPUT_ALLOWLIST_CEILING`
-  (1). `no-raw-text-input.test.js` is the RuleTester suite. **Caveats:** a `TextInput` reached
-  through another module's re-export or `require` is invisible to it. Inject-and-revert proof: a
+  (1). `no-raw-text-input.test.js` is the RuleTester suite. **Caveats:** like `no-raw-button`, it
+  does not catch a namespace import (`import * as RN from "react-native"`, then `RN.TextInput`) or a
+  `require`, and a `TextInput` reached through another module's re-export is invisible to it. Inject-and-revert proof: a
   migrated file added to the allowlist fails the contract test naming it; a `TextInput` import in
   `src/features/feedback/ui/feedback-screen.tsx` fails `npm run lint`.
 - **Generated code** (`src/api/generated/`) is exempt from hand-written-code rules but

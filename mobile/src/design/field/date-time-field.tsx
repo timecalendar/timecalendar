@@ -3,7 +3,7 @@ import { useState } from "react"
 import { Platform, Pressable, type StyleProp, StyleSheet } from "react-native"
 
 import { DateTimePicker } from "@/components/chrome"
-import { joinSentences } from "@/design/field/field-error-hint"
+import { fieldErrorHint } from "@/design/field/field-error-hint"
 import {
   FieldChrome,
   FieldInset,
@@ -58,8 +58,9 @@ export function DateTimeField({
   style,
 }: DateTimeFieldProps) {
   const [step, setStep] = useState<AndroidStep>({ kind: "closed" })
+  if (disabled && step.kind !== "closed") setStep({ kind: "closed" })
   const uses24HourClock = useUses24HourClock()
-  const boxStyle = useFieldBoxStyle({ focused: false, error: Boolean(error) })
+  const box = useFieldBoxStyle({ focused: false, error: Boolean(error) })
   const wallClock = toZonedTime(value, zone)
   const commit = (date: Date) => onChange(fromZonedTime(date, zone))
 
@@ -98,11 +99,18 @@ export function DateTimeField({
         testID={testID}
         accessibilityRole="button"
         accessibilityLabel={`${label}, ${display}`}
-        accessibilityHint={joinSentences(error)}
+        accessibilityHint={fieldErrorHint(error)}
         accessibilityState={{ disabled }}
         disabled={disabled}
         onPress={() => setStep({ kind: "date" })}
-        style={StyleSheet.flatten([...boxStyle, styles.row])}
+        style={StyleSheet.flatten([
+          ...box.style,
+          styles.row,
+          {
+            paddingHorizontal: FieldInset.horizontal - box.borderWidth,
+            paddingVertical: FieldInset.vertical - box.borderWidth,
+          },
+        ])}
       >
         <ThemedText>{display}</ThemedText>
       </Pressable>
@@ -144,7 +152,5 @@ const styles = StyleSheet.create({
   row: {
     minHeight: MinTouchTarget,
     justifyContent: "center",
-    paddingHorizontal: FieldInset.horizontal - 1,
-    paddingVertical: FieldInset.vertical - 1,
   },
 })

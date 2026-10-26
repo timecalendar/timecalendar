@@ -46,6 +46,7 @@ text sizes it rose under the header and clipped its actions. `ErrorTextAction` w
 - `EmptyState`, `ErrorState`, `ErrorTextAction` and `ErrorAction` are removed, not aliased.
   `ErrorNotice`'s action is a `StatusAction` rendered as `Button variant="text"`.
 - Field errors fold into the input's `accessibilityHint` through `fieldErrorHint(error, hint)`, which takes `string | null | undefined`.
+  Amended by ADR 070: the helper lives in `src/design/field/` and is off the barrel.
   `FieldError` keeps its alert text and live region and has no `nativeID`. `aria-describedby` is
   a restricted-syntax error as a JSX attribute or an object key.
 - Lint: `local/no-ad-hoc-status` reports a `react-native` `ActivityIndicator` import and a

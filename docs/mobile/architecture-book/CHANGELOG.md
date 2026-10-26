@@ -9,7 +9,8 @@
   not move the text. Input text is the platform body step with no fixed height; multiline is at
   least four lines at the current text size.
 - The field owns its error: `FieldError` below the box, and the input hint is error, helper, own
-  hint. The helper is hidden from assistive technology. `fieldErrorHint` lives in
+  hint. The helper is hidden from assistive technology. Disabled dims the label, box and helper;
+  the error stays at full opacity. `fieldErrorHint` lives in
   `src/design/field/` and is not on the `@/design` barrel
   ([accessibility.md](./accessibility.md) → Fields).
 - `DateTimeField` is a design primitive in `src/design/field/`: the caller passes the label, the

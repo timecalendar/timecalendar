@@ -26,6 +26,8 @@ design layer or the gallery (B-7). The phase 5 form slices need one field primit
   | Error    | 1pt `error` border                                                  | `error` border, 2dp when focused                            |
   | Disabled | label, box and helper at `StateOpacity.disabled`, not editable      | same                                                        |
 
+  The error stays at full opacity when the field is disabled.
+
   The label sits above the box on both platforms; there is no floating label. iOS single-line
   fields show the system clear button while editing; Android shows none.
 
@@ -40,12 +42,14 @@ design layer or the gallery (B-7). The phase 5 form slices need one field primit
 - The field owns its error: it renders `FieldError` below the box and sets the input's hint to
   error, then helper, then its own hint. The helper is hidden from assistive technology. `testID`
   sits on the native input; `-label`, `-helper`, `-error` and `-field` are derived.
-  `fieldErrorHint` is not on the `@/design` barrel, so feature code cannot hand-wire a field error.
+  `fieldErrorHint(error, ...hints)` lives in `src/design/field/field-error-hint.ts` and is not on
+  the `@/design` barrel, so feature code cannot hand-wire a field error.
 - `DateTimeField` lives in `src/design/field/date-time-field.tsx` and imports no feature and no
   translation key. The caller passes `label`, the stored instant, the display `zone`, a
   `formatValue` function and `onChange`. It keeps the device-local picker contract (ADR 066) and
   the display-zone conversion; every picker callback goes through one `onPicked` adapter. The
-  Android row is named `` `${label}, ${formatValue(value)}` `` and its hint carries the error.
+  Android row is named `` `${label}, ${formatValue(value)}` `` and its hint carries the error;
+  becoming disabled while a dialog is open closes it without committing.
   `useUses24HourClock` lives in `src/hooks/`.
 - Lint: `local/no-raw-text-input` reports a value import of `TextInput` from `react-native`
   outside `src/design/` and tests; type-only imports pass. Unmigrated files sit in

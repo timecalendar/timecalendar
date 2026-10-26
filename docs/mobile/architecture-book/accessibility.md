@@ -62,11 +62,13 @@ These rules guard real product touchables (interactive controls declare `accessi
 - `FieldError` announces an error when it appears and again only when its message changes (iOS
   queued announcement, Android polite live region), so typing while the same error stays is
   silent.
-- `disabled` sets `editable={false}` and `{ disabled: true }` and dims the whole field.
+- `disabled` sets `editable={false}` and `{ disabled: true }` and dims the label, box and helper;
+  the error stays at full opacity, still readable.
 - The Android `DateTimeField` row is a `button` named "label, value" whose hint carries the
   error. The iOS SwiftUI picker takes no hint, so its error is announced on appearance and is the
   text stop directly after the picker.
-- Feature code passes `error` to the field; `fieldErrorHint` is not on the `@/design` barrel.
+- Feature code passes `error` to the field; `fieldErrorHint(error, ...hints)`
+  (`src/design/field/field-error-hint.ts`) is not on the `@/design` barrel.
   The screen-reader pass is owner-led
   (`docs/react-native-migration/inbox/2026-10-26-mobile-ds-text-field-screen-reader-pass.md`).
 

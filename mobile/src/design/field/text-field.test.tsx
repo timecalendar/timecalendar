@@ -131,14 +131,33 @@ describe.each(["ios", "android"] as const)("TextField on %s", (os) => {
     expect(input().props.accessibilityHint).toBeUndefined()
   })
 
-  it("disables the input and dims the whole field", async () => {
-    await render(<TextField testID="name" label="Name" disabled />)
+  it("disables the input and dims all but the error", async () => {
+    await render(
+      <TextField
+        testID="name"
+        label="Name"
+        helper="Shown in the list"
+        error="Required"
+        disabled
+      />,
+    )
     expect(input().props.editable).toBe(false)
     expect(input().props.accessibilityState).toEqual({ disabled: true })
-    const root = screen.getByTestId("name-label").parent
-    expect(StyleSheet.flatten(root?.props.style).opacity).toBe(
-      StateOpacity.disabled,
-    )
+    const opacity = (id: string) =>
+      StyleSheet.flatten(
+        screen.getByTestId(id, { includeHiddenElements: true }).props.style,
+      ).opacity
+    expect(opacity("name-label")).toBe(StateOpacity.disabled)
+    expect(opacity("name-helper")).toBe(StateOpacity.disabled)
+    expect(
+      StyleSheet.flatten(screen.getByTestId("name-field").parent?.props.style)
+        .opacity,
+    ).toBe(StateOpacity.disabled)
+    expect(opacity("name-error")).toBeUndefined()
+    expect(
+      StyleSheet.flatten(screen.getByTestId("name-label").parent?.props.style)
+        .opacity,
+    ).toBeUndefined()
   })
 
   it("is editable and enabled by default", async () => {

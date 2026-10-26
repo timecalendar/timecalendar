@@ -217,6 +217,8 @@ helper, error, disabled state and font scaling; the caller owns the value and th
 | Error    | 1pt `error` border                                                   | `error` border (2dp when focused)                                  |
 | Disabled | label, box and helper at `StateOpacity.disabled`, `editable={false}` | same                                                               |
 
+The error stays at full opacity when the field is disabled.
+
 - The label (`smallBold`) sits above the box on both platforms and is required by the type; a
   placeholder is only an example. The helper (`small`, `textSecondary`) and then `FieldError` sit
   below the box. iOS single-line fields show the system clear button while editing; Android none.
@@ -240,7 +242,8 @@ helper, error, disabled state and font scaling; the caller owns the value and th
   read the same. It shares `TextField`'s label, error and disabled chrome (`FieldChrome`, a leaf
   export of `text-field.tsx`). iOS renders the chrome `DateTimePicker` inline; Android renders a
   row drawn like a resting `TextField` that opens the date dialog, then the time dialog, and
-  commits both together. Picker values are device-local (ADR
+  commits both together; becoming disabled while a dialog is open closes it without committing.
+  Picker values are device-local (ADR
   [066](./decisions/066-device-local-date-picker-seam-and-timezone-ci.md)); the field converts to
   and from the display zone, and every picker callback goes through its one `onPicked` adapter.
 - Gates: `text-field.test.tsx`, `date-time-field.test.tsx` and `field-error-hint.test.ts` at 90%

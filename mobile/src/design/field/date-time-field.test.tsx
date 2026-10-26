@@ -207,13 +207,15 @@ describe("DateTimeField on iOS", () => {
     expect(view.getByTestId("field").props.accessibilityHint).toBeUndefined()
   })
 
-  it("passes disabled to the picker and dims the field", async () => {
-    const view = await render(<Field disabled />)
+  it("passes disabled to the picker and dims the label but not the error", async () => {
+    const view = await render(<Field disabled error="Ends before it starts" />)
     expect(view.getByTestId("datetime-disabled")).toHaveTextContent("true")
     expect(
-      StyleSheet.flatten(view.getByTestId("field-label").parent?.props.style)
-        .opacity,
+      StyleSheet.flatten(view.getByTestId("field-label").props.style).opacity,
     ).toBe(StateOpacity.disabled)
+    expect(
+      StyleSheet.flatten(view.getByTestId("field-error").props.style).opacity,
+    ).toBeUndefined()
   })
 
   it("merges the caller's layout style last", async () => {
@@ -398,6 +400,24 @@ describe.each([DEVICE_ZONE, NOUMEA])(
       })
       expect(getByTestId("field").props.accessibilityHint).toBeUndefined()
     })
+
+    it.each(["date", "time"])(
+      "closes the %s dialog without committing when disabled while open",
+      async (openStep) => {
+        const onChange = jest.fn()
+        const view = await render(<Field zone={zone} onChange={onChange} />)
+        await press(view, "field")
+        if (openStep === "time") await press(view, "date-confirm")
+        expect(view.getByTestId(`${openStep}-confirm`)).toBeTruthy()
+
+        await view.rerender(<Field zone={zone} onChange={onChange} disabled />)
+        expectClosed(view.queryByTestId)
+
+        await view.rerender(<Field zone={zone} onChange={onChange} />)
+        expectClosed(view.queryByTestId)
+        expect(onChange).not.toHaveBeenCalled()
+      },
+    )
 
     it("ignores presses while disabled and exposes the state", async () => {
       const { getByTestId, queryByTestId, press } = await renderField({
