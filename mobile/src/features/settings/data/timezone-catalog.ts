@@ -1,4 +1,4 @@
-import { getTimezoneOffset } from "date-fns-tz"
+import { zoneOffsetMinutes } from "@/features/calendar/data/day-key"
 
 import { GENERATED_TIMEZONE_CATALOG } from "./timezone-catalog.generated"
 
@@ -79,7 +79,7 @@ export function formatTimezoneOffset(
   instant: Date,
 ): string | undefined {
   if (!isTimezoneRuntimeSupported(identifier)) return undefined
-  const offsetMinutes = getTimezoneOffset(identifier, instant) / 60_000
+  const offsetMinutes = zoneOffsetMinutes(instant, identifier)
   const sign = offsetMinutes < 0 ? "−" : "+"
   const absolute = Math.abs(offsetMinutes)
   return `UTC${sign}${String(Math.floor(absolute / 60)).padStart(2, "0")}:${String(absolute % 60).padStart(2, "0")}`

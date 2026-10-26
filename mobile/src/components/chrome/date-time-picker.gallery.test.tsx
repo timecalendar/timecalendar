@@ -1,5 +1,6 @@
-import { fireEvent } from "@testing-library/react-native"
+import { fireEvent, render } from "@testing-library/react-native"
 
+import { DateTimePicker } from "@/components/chrome"
 import { renderStory } from "@/test-support/gallery"
 import { usePlatform } from "@/test-support/platform"
 
@@ -16,14 +17,30 @@ describe("date and time picker stories on Android", () => {
   it("opens the dialog on mount and shows a pick on the row", async () => {
     const view = await renderStory(fixture.Date)
     const row = () => view.getByTestId("gallery-date-time-open")
-    expect(row()).toHaveTextContent(
-      new RegExp(format(new Date(2030, 0, 2), { dateStyle: "medium" })),
+    const day = new RegExp(
+      format(new Date(2030, 0, 2), { dateStyle: "medium" }),
+    )
+    expect(row()).toHaveTextContent(day)
+    expect(view.getByTestId("gallery-date-time-picker")).toHaveTextContent(
+      "2030-01-02T00:00:00.000Z",
     )
 
     await fireEvent.press(view.getByTestId("gallery-date-time-picker"))
     expect(view.queryByTestId("gallery-date-time-picker")).toBeNull()
-    expect(row()).toHaveTextContent(
-      new RegExp(format(PICKED, { dateStyle: "medium" })),
+    expect(row()).toHaveTextContent(day)
+  })
+
+  it("opens a late-evening value on its own local day", async () => {
+    const view = await render(
+      <DateTimePicker
+        testID="picker"
+        mode="date"
+        presentation="dialog"
+        value={new Date(2030, 0, 2, 23, 30)}
+      />,
+    )
+    expect(view.getByTestId("picker")).toHaveTextContent(
+      "2030-01-02T00:00:00.000Z",
     )
   })
 

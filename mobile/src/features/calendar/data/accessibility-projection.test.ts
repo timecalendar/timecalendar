@@ -36,7 +36,7 @@ function weekPage(
   }
 }
 
-function projection(events = accessibilityProbeFixture()) {
+function projection(events = accessibilityProbeFixture("UTC")) {
   return projectCalendarAccessibilityEntries(weekPage(events))
 }
 
@@ -62,7 +62,7 @@ describe("projectCalendarAccessibilityEntries", () => {
       "synced:probe-next-date",
     ]
     expect(projection().map(({ key }) => key)).toEqual(expected)
-    expect(projection([...accessibilityProbeFixture()].reverse())).toEqual(
+    expect(projection([...accessibilityProbeFixture("UTC")].reverse())).toEqual(
       projection(),
     )
   })
@@ -91,11 +91,11 @@ describe("projectCalendarAccessibilityEntries", () => {
   it("rejects neighbour pages and duplicate identities across dates", () => {
     expect(() =>
       projectCalendarAccessibilityEntries(
-        weekPage(accessibilityProbeFixture(), -1),
+        weekPage(accessibilityProbeFixture("UTC"), -1),
       ),
     ).toThrow("committed page")
 
-    const committed = weekPage(accessibilityProbeFixture())
+    const committed = weekPage(accessibilityProbeFixture("UTC"))
     const first = committed.columns[0]!.tiles[0]!
     const duplicatePage = {
       ...committed,

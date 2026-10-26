@@ -28,9 +28,13 @@ export {
 // from the `@expo/ui/community/datetime-picker` subpath — `@expo/ui`'s OWN
 // SwiftUI/Compose control, NOT `@react-native-community/datetimepicker` (it only
 // mirrors the RNC prop types), so no new dependency. Same wrapper, same ADR-010
-// universal posture; the control choice is recorded in ADR 012.
+// universal posture; the control choice is recorded in ADR 012. The exported
+// `DateTimePicker` is the device-local wrapper (date-time-picker.tsx, ADR 066).
 export {
   DateTimePicker,
+  type DateTimePickerProps,
+} from "@/components/chrome/date-time-picker"
+export {
   Host,
   type MenuComponentRef,
   MenuView,

@@ -96,4 +96,37 @@ jobs:
       # same `npm test -- --coverage` entrypoint as local — the gate is in config.
       - name: Test
         working-directory: ./mobile
+        env:
+          TZ: UTC
         run: npm test -- --coverage
+
+  # The unit suite passes in any process zone (testing.md → Time zones). These
+  # legs run it under the largest positive offset, the largest negative offset
+  # and a half-hour offset with DST, beside the UTC coverage run above.
+  test-mobile-timezones:
+    name: Run mobile tests in ${{ matrix.tz }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tz: [Pacific/Kiritimati, Pacific/Pago_Pago, America/St_Johns]
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./mobile
+        run: npm ci
+
+      - name: Test
+        working-directory: ./mobile
+        env:
+          TZ: ${{ matrix.tz }}
+        run: npm test
