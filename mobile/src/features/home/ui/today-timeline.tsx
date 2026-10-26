@@ -2,14 +2,12 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
   type LayoutChangeEvent,
-  Platform,
-  Pressable,
   StyleSheet,
   useWindowDimensions,
   View,
 } from "react-native"
 
-import { ThemedText } from "@/design"
+import { EventSurface, EventSurfaceText, ThemedText } from "@/design"
 import {
   addDaysInZone,
   type AppLocale,
@@ -32,11 +30,9 @@ import {
   type ChecklistProgressMap,
 } from "@/features/event-checklists"
 import { type HourRange } from "@/features/home/data"
-import { useColorScheme } from "@/hooks/use-color-scheme"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { MinTouchTarget, Radii, Spacing, useTheme } from "@/theme"
 
 import { homeEventOpenLabel } from "./event-accessibility"
-import { eventSurfaceColor } from "./event-surface"
 
 // The home today mini-timeline (D5) — PRESENTATIONAL (70% floor) and the FIRST
 // RENDERING consumer of the salvaged overlap engine (ADR 019's salvage payoff). A
@@ -46,12 +42,10 @@ import { eventSurfaceColor } from "./event-surface"
 // math) at the Flutter-parity 70px/hour zoom. The hour window is the dynamic range
 // from the home `dynamicHourRange` selector. A brand now-indicator shows only when
 // the displayed day is today. Reuses MIN_TILE_WIDTH text-hiding for narrow columns.
-// A designed brand surface from @/theme (R-3). Each tile a Pressable → onPressEvent.
 
 // Flutter home zoom (`hourHeight = 70`) — a home concern passed as `pixelsPerHour`,
 // not a grid constant (the day/week DEFAULT_PIXELS_PER_HOUR = 60 stays).
 const HOME_PIXELS_PER_HOUR = 70
-const MIN_TARGET_SIZE = Platform.OS === "android" ? 48 : 44
 
 // Day bounds + minute positioning on the DISPLAY zone's wall clock (timezone
 // design D4) — instant arithmetic stays on real timestamps, only the
@@ -113,7 +107,7 @@ function homeOverlapLayout(input: {
       input.displayZone,
     )
     const height = eventHeight(geometry.durationMinutes, HOME_PIXELS_PER_HOUR)
-    return width < MIN_TARGET_SIZE || height < MIN_TARGET_SIZE
+    return width < MinTouchTarget || height < MinTouchTarget
   })
   return { placed, usesReflowedList }
 }
@@ -139,7 +133,6 @@ export function TodayTimeline({
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
-  const scheme = useColorScheme() === "dark" ? "dark" : "light"
   const { fontScale } = useWindowDimensions()
 
   // Overlap columns are device-independent FRACTIONS (startX/endX); only the px
@@ -192,10 +185,11 @@ export function TodayTimeline({
         const location = event.location ?? ""
         const progress = checklistProgress.get(event.id)
         return (
-          <Pressable
+          <EventSurface
             key={event.id}
+            eventColor={event.color}
+            density="compact"
             testID={`today-tile-${event.id}`}
-            accessibilityRole="button"
             accessibilityLabel={homeEventOpenLabel(t, event, time, progress)}
             accessibilityHint={
               event.userCalendarId !== undefined
@@ -203,28 +197,20 @@ export function TodayTimeline({
                 : t("home.event.hint.edit")
             }
             onPress={() => onPressEvent(event)}
-            android_ripple={{ color: theme.ripple, foreground: true }}
-            style={({ pressed }) => [
-              styles.reflowedEvent,
-              {
-                backgroundColor: eventSurfaceColor(event.color, scheme),
-              },
-              Platform.OS === "ios" && pressed && styles.iosPressed,
-            ]}
           >
-            <ThemedText type="small" themeColor="textSecondary">
+            <EventSurfaceText type="callout" numberOfLines={2}>
               {time}
-            </ThemedText>
-            <ThemedText type="smallBold">
+            </EventSurfaceText>
+            <EventSurfaceText type="label" numberOfLines={3}>
               {displayEventTitle(event.title, t("calendar.event.noTitle"))}
-            </ThemedText>
+            </EventSurfaceText>
             {location.length > 0 && (
-              <ThemedText type="small" themeColor="textSecondary">
+              <EventSurfaceText type="callout" numberOfLines={2}>
                 {location}
-              </ThemedText>
+              </EventSurfaceText>
             )}
             <ChecklistProgressIndicator progress={progress} />
-          </Pressable>
+          </EventSurface>
         )
       })}
     </View>
@@ -317,10 +303,12 @@ export function TodayTimeline({
               const progress = checklistProgress.get(event.id)
 
               return (
-                <Pressable
+                <EventSurface
                   key={event.id}
+                  eventColor={event.color}
+                  placement="absolute"
+                  density="compact"
                   testID={`today-tile-${event.id}`}
-                  accessibilityRole="button"
                   accessibilityLabel={homeEventOpenLabel(
                     t,
                     event,
@@ -333,35 +321,20 @@ export function TodayTimeline({
                       : t("home.event.hint.edit")
                   }
                   onPress={() => onPressEvent(event)}
-                  android_ripple={{ color: theme.ripple, foreground: true }}
-                  style={({ pressed }) => [
-                    styles.tile,
-                    {
-                      top,
-                      left,
-                      width,
-                      height,
-                      backgroundColor: eventSurfaceColor(event.color, scheme),
-                    },
-                    Platform.OS === "ios" && pressed && styles.iosPressed,
-                  ]}
+                  style={{ top, left, width, height }}
                 >
                   {showText && (
                     <>
-                      <ThemedText type="small" numberOfLines={2}>
+                      <EventSurfaceText type="callout" numberOfLines={2}>
                         {displayEventTitle(
                           event.title,
                           t("calendar.event.noTitle"),
                         )}
-                      </ThemedText>
+                      </EventSurfaceText>
                       {location.length > 0 && (
-                        <ThemedText
-                          type="small"
-                          themeColor="textSecondary"
-                          numberOfLines={1}
-                        >
+                        <EventSurfaceText type="callout" numberOfLines={1}>
                           {location}
-                        </ThemedText>
+                        </EventSurfaceText>
                       )}
                     </>
                   )}
@@ -369,7 +342,7 @@ export function TodayTimeline({
                     progress={progress}
                     variant="compact"
                   />
-                </Pressable>
+                </EventSurface>
               )
             })}
 
@@ -419,12 +392,6 @@ const styles = StyleSheet.create({
     right: 0,
     height: StyleSheet.hairlineWidth,
   },
-  tile: {
-    position: "absolute",
-    padding: Spacing.two,
-    borderRadius: Radii.large,
-    overflow: "hidden",
-  },
   nowIndicator: {
     position: "absolute",
     left: 0,
@@ -435,12 +402,4 @@ const styles = StyleSheet.create({
   reflowedList: {
     gap: Spacing.two,
   },
-  reflowedEvent: {
-    minHeight: MIN_TARGET_SIZE,
-    padding: Spacing.two,
-    borderRadius: Radii.large,
-    justifyContent: "center",
-    overflow: "hidden",
-  },
-  iosPressed: { opacity: 0.62 },
 })

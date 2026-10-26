@@ -14,6 +14,7 @@ import { useChecklistProgress } from "@/features/event-checklists"
 import {
   Colors,
   Layout,
+  resolveEventAppearance,
   resolveResponsiveLayout,
   TypeRamp,
   WordmarkMaxFontScale,
@@ -96,6 +97,31 @@ function todayEvent(overrides = {}) {
     canceled: false,
     userCalendarId: undefined,
     ...overrides,
+  }
+}
+
+const lightAppearance = resolveEventAppearance({
+  color: "#1E88E5",
+  scheme: "light",
+  increasedContrast: false,
+})
+
+type HostNode = ReturnType<typeof screen.getByRole>
+
+function expectEventSurface(tile: HostNode) {
+  const [stripe] = tile.children as HostNode[]
+  expect(StyleSheet.flatten(stripe!.props.style)).toMatchObject({
+    position: "absolute",
+    width: 3,
+    backgroundColor: lightAppearance.accent,
+  })
+  expect(StyleSheet.flatten(tile.props.style).backgroundColor).toBe(
+    lightAppearance.surface,
+  )
+  for (const text of within(tile).getAllByText(/Algorithms|Room A1/)) {
+    expect(StyleSheet.flatten(text.props.style).color).toBe(
+      lightAppearance.foreground,
+    )
   }
 }
 
@@ -239,6 +265,26 @@ describe("HomeScreen", () => {
     expect(screen.getByRole("header", { name: "Today" })).toBeTruthy()
   })
 
+  it("draws the upcoming card as an event surface with its label and hint", async () => {
+    mockUseCalendarEvents.mockReturnValue([todayEvent()])
+    await render(<HomeScreen />)
+    const card = screen.getByTestId("upcoming-card-ev-1")
+    expect(card.props.accessibilityRole).toBe("button")
+    expect(card.props.accessibilityLabel).toMatch(/^Algorithms, .+ Room A1$/)
+    expect(card.props.accessibilityHint).toBe("Edit this event")
+    expectEventSurface(card)
+  })
+
+  it("top-aligns upcoming cards instead of stretching them to the tallest", async () => {
+    mockUseCalendarEvents.mockReturnValue([todayEvent()])
+    await render(<HomeScreen />)
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("upcoming-scroller").props.contentContainerStyle,
+      ).alignItems,
+    ).toBe("flex-start")
+  })
+
   it("shows partial and complete progress for personal and synced upcoming/timed events", async () => {
     const personal = todayEvent({ id: "personal-1" })
     const synced = todayEvent({
@@ -379,6 +425,14 @@ describe("HomeScreen", () => {
         "Algorithms, All day Room A1. 1 of 1 checklist items completed",
       ),
     ).toHaveLength(1)
+    const item = screen.getByRole("button", {
+      name: "Algorithms, All day Room A1. 1 of 1 checklist items completed",
+    })
+    expect(item.props.accessibilityHint).toBe("Edit this event")
+    expect(within(screen.getByTestId("home-all-day")).getByRole("button")).toBe(
+      item,
+    )
+    expectEventSurface(item)
     expect(
       screen.getByText("1/1", { includeHiddenElements: true }),
     ).toBeTruthy()

@@ -1,9 +1,9 @@
 import { act, renderHook, waitFor } from "@testing-library/react-native"
 import { AccessibilityInfo } from "react-native"
 
-import { useCalendarIncreasedContrast } from "./use-increased-contrast"
+import { useIncreasedContrast } from "./use-increased-contrast"
 
-describe("useCalendarIncreasedContrast", () => {
+describe("useIncreasedContrast", () => {
   afterEach(() => {
     jest.restoreAllMocks()
   })
@@ -21,7 +21,7 @@ describe("useCalendarIncreasedContrast", () => {
       listener = callback
       return { remove }
     }) as unknown as typeof AccessibilityInfo.addEventListener)
-    const view = await renderHook(() => useCalendarIncreasedContrast("android"))
+    const view = await renderHook(() => useIncreasedContrast("android"))
     await waitFor(() => expect(view.result.current).toBe(true))
     expect(view.result.current).toBe(true)
     await act(() => listener?.(false))
@@ -33,9 +33,7 @@ describe("useCalendarIncreasedContrast", () => {
   it("falls back to false on unsupported platforms", async () => {
     const read = jest.spyOn(AccessibilityInfo, "isHighTextContrastEnabled")
     read.mockClear()
-    const { result } = await renderHook(() =>
-      useCalendarIncreasedContrast("ios"),
-    )
+    const { result } = await renderHook(() => useIncreasedContrast("ios"))
     expect(result.current).toBe(false)
     expect(read).not.toHaveBeenCalled()
   })
@@ -47,9 +45,7 @@ describe("useCalendarIncreasedContrast", () => {
     jest
       .spyOn(AccessibilityInfo, "addEventListener")
       .mockReturnValue({ remove: jest.fn() } as never)
-    const { result } = await renderHook(() =>
-      useCalendarIncreasedContrast("android"),
-    )
+    const { result } = await renderHook(() => useIncreasedContrast("android"))
     await waitFor(() => expect(read).toHaveBeenCalledTimes(1))
     expect(result.current).toBe(false)
   })
@@ -65,7 +61,7 @@ describe("useCalendarIncreasedContrast", () => {
     jest
       .spyOn(AccessibilityInfo, "addEventListener")
       .mockReturnValue({ remove } as never)
-    const view = await renderHook(() => useCalendarIncreasedContrast("android"))
+    const view = await renderHook(() => useIncreasedContrast("android"))
     await view.unmount()
     await act(() => resolveRead?.(true))
     expect(remove).toHaveBeenCalledTimes(1)
@@ -81,7 +77,7 @@ describe("useCalendarIncreasedContrast", () => {
     jest
       .spyOn(AccessibilityInfo, "addEventListener")
       .mockReturnValue({ remove: jest.fn() } as never)
-    const view = await renderHook(() => useCalendarIncreasedContrast("android"))
+    const view = await renderHook(() => useIncreasedContrast("android"))
     await view.unmount()
     await act(() => rejectRead?.(new Error("late unavailable")))
   })
@@ -93,7 +89,7 @@ describe("useCalendarIncreasedContrast", () => {
     jest
       .spyOn(AccessibilityInfo, "addEventListener")
       .mockReturnValue({ remove: jest.fn() } as never)
-    const { result } = await renderHook(() => useCalendarIncreasedContrast())
+    const { result } = await renderHook(() => useIncreasedContrast())
     expect(result.current).toBe(false)
   })
 })

@@ -908,9 +908,9 @@ module.exports = defineConfig([
     },
   },
   {
-    // Event colors enter UI through ColorDot (ADR 074). The allowlist holds the
-    // files not yet migrated; raw-event-color-allowlist.test.js keeps it
-    // shrinking.
+    // Event colors enter UI through ColorDot and event tiles through
+    // EventSurface (ADR 074, ADR 076). The allowlist holds the files not yet
+    // migrated; raw-event-color-allowlist.test.js keeps it shrinking.
     name: "timecalendar/raw-event-color",
     files: ["src/**/*.tsx"],
     ignores: [

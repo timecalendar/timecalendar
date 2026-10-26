@@ -120,6 +120,27 @@ These rules guard real product touchables (interactive controls declare `accessi
   device, and the wrap at the largest size, are device evidence
   ([inbox note](../../react-native-migration/inbox/2026-10-26-mobile-ds-badge-color-dot-device-pass.md)).
 
+## Event tiles — encoded in `EventSurface`
+
+- An `EventSurface` is one pressable element with the `button` role. `accessibilityLabel` is
+  required (a type error without it) and `accessibilityHint` optional; its text lines are
+  `accessible={false}`, so a tile is one VoiceOver or TalkBack stop.
+- Callers build the label with the existing builders: Home passes `homeEventOpenLabel` with the
+  `home.event.hint.details` / `home.event.hint.edit` hint, the agenda its
+  `calendar.agenda.event.openLabel` / `openLabelWithProgress` composition. Each label begins with
+  the event title, so Maestro's title-anchored name selectors match.
+- Tile text is `EventSurfaceText` in the resolver's foreground, which meets 4.5:1 on the surface
+  for every palette color and a 216-color sRGB grid in both schemes and both contrast policies
+  (`src/theme/event-appearance.test.ts`). The checklist pill on a tile draws in the same
+  foreground (`Badge` tone `onEventSurface`), with complete and partial told apart by glyph.
+- `numberOfLines` is a required prop, so a tile line is always capped (an uncapped iOS `Text`
+  clips a long last word). There is no `adjustsFontSizeToFit`: tile text grows with the OS text
+  size and wraps up to its cap.
+- Gates: `event-surface.test.tsx` and the registry matrix (the event-surface stories add no entry
+  to `known-a11y-violations.ts`). TalkBack announcements and the high-text-contrast outline are
+  device evidence
+  ([inbox note](../../react-native-migration/inbox/2026-10-26-mobile-ds-event-surface-device-pass.md)).
+
 ## Header and floating actions — encoded in `useHeaderActions` and `FloatingAction`
 
 - Every `HeaderAction` requires `accessibilityLabel` (a type error without it), including a text

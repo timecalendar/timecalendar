@@ -3,6 +3,7 @@ import { renderHook } from "@testing-library/react-native"
 import { useHiddenEvents } from "@/features/hidden-events/data"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import i18n from "@/i18n"
+import { resolveEventAppearance } from "@/theme"
 
 import type {
   CalendarWindowSnapshot,
@@ -10,7 +11,6 @@ import type {
   PageStatus,
 } from "./calendar-window-store"
 import { epochDayOfKey } from "./epoch-day"
-import { resolveEventAppearance } from "./event-color"
 import { pageIndexOfDay, type PageSpace } from "./page-index"
 import {
   createPagePresentationCache,

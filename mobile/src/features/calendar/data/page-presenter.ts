@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 
 import { useHiddenEvents } from "@/features/hidden-events/data"
 import { useColorScheme } from "@/hooks/use-color-scheme"
+import { useIncreasedContrast } from "@/hooks/use-increased-contrast"
 
 import {
   type CalendarWindowSnapshot,
@@ -19,7 +20,6 @@ import {
   type PagePresentationEnvironment,
   type PagePresentationV1,
 } from "./page-presentation"
-import { useCalendarIncreasedContrast } from "./use-increased-contrast"
 import { chunkOfPage } from "./window-chunks"
 
 /** The frozen presentation of a page, built at most once per cache identity. */
@@ -98,7 +98,7 @@ export function usePagePresenter(input: {
 }): PagePresenter {
   const { t } = useTranslation()
   const scheme = useColorScheme() === "dark" ? "dark" : "light"
-  const increasedContrast = useCalendarIncreasedContrast()
+  const increasedContrast = useIncreasedContrast()
   const hidden = useHiddenEvents()
   const [cache] = useState(() => createPagePresentationCache())
   const [filter, setFilter] = useState(() => filterState(hidden, 0))

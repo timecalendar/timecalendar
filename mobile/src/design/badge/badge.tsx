@@ -1,6 +1,7 @@
 import type { SFSymbol } from "expo-symbols"
 import { type StyleProp, StyleSheet, View, type ViewStyle } from "react-native"
 
+import { useEventSurfaceAppearance } from "@/design/event-surface/event-surface-context"
 import { Icon, type MaterialGlyph } from "@/design/icon/icon"
 import { ThemedText } from "@/design/text/themed-text"
 import {
@@ -18,6 +19,7 @@ export type BadgeTone =
   | "positive"
   | "informational"
   | "destructive"
+  | "onEventSurface"
 
 export type BadgeSize = "small" | "medium"
 
@@ -51,7 +53,7 @@ export type BadgeProps = {
 
 type ToneSpec = { fill?: ThemeColor; outline?: true; label: ThemeColor }
 
-const tones: Record<BadgeTone, ToneSpec> = {
+const tones: Record<Exclude<BadgeTone, "onEventSurface">, ToneSpec> = {
   brand: { fill: "primarySoft", label: "onPrimarySoft" },
   neutral: { fill: "backgroundElement", label: "textSecondary" },
   positive: { outline: true, label: "positive" },
@@ -85,9 +87,24 @@ export function Badge({
   style,
 }: BadgeProps) {
   const theme = useTheme()
-  const spec = tones[tone]
+  const surface = useEventSurfaceAppearance()
   const metrics = sizes[size]
-  const labelColor = theme[spec.label]
+  let fill: string | undefined
+  let labelColor: string
+  let outlined = true
+  if (tone === "onEventSurface") {
+    if (surface === undefined) {
+      throw new Error(
+        "Badge tone onEventSurface must be rendered inside an EventSurface",
+      )
+    }
+    labelColor = surface.foreground
+  } else {
+    const spec = tones[tone]
+    fill = spec.fill === undefined ? undefined : theme[spec.fill]
+    outlined = spec.outline === true
+    labelColor = theme[spec.label]
+  }
   const a11y =
     accessibilityLabel === null
       ? ({
@@ -110,8 +127,8 @@ export function Badge({
           paddingHorizontal: metrics.paddingHorizontal,
           paddingVertical: metrics.paddingVertical,
         },
-        spec.fill ? { backgroundColor: theme[spec.fill] } : null,
-        spec.outline ? { borderWidth: 1, borderColor: labelColor } : null,
+        fill === undefined ? null : { backgroundColor: fill },
+        outlined ? { borderWidth: 1, borderColor: labelColor } : null,
         style,
       ])}
     >
@@ -127,9 +144,8 @@ export function Badge({
       <ThemedText
         testID={testID === undefined ? undefined : `${testID}-label`}
         type={metrics.type}
-        themeColor={spec.label}
         numberOfLines={2}
-        style={styles.label}
+        style={[styles.label, { color: labelColor }]}
       >
         {label}
       </ThemedText>

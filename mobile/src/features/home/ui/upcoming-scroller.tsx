@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
-import { Platform, Pressable, ScrollView, StyleSheet } from "react-native"
+import { ScrollView, StyleSheet } from "react-native"
 
-import { ThemedText } from "@/design"
+import { EventSurface, EventSurfaceText } from "@/design"
 import {
   type AppLocale,
   type CalendarEvent,
@@ -13,18 +13,12 @@ import {
   ChecklistProgressIndicator,
   type ChecklistProgressMap,
 } from "@/features/event-checklists"
-import { useColorScheme } from "@/hooks/use-color-scheme"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Spacing } from "@/theme"
 
 import { homeEventOpenLabel } from "./event-accessibility"
-import { eventSurfaceColor } from "./event-surface"
 
-// The home upcoming scroller (D6) — PRESENTATIONAL (70% floor): a horizontal RN-core
-// ScrollView of the displayed day's events as cards (color accent + title +
-// formatTimeRange + location). A few events per day, so a core horizontal list
-// suffices (no FlashList — R-2, same reasoning as the agenda's SectionList). Each
-// card is a Pressable → the screen's origin-keyed onPressEvent. Renders nothing when
-// the day is empty (the empty state is the header line). Themed from @/theme (R-3).
+// A few events per day, so a core horizontal list suffices (no FlashList — R-2, same
+// reasoning as the agenda's SectionList).
 
 const CARD_WIDTH = 200
 
@@ -83,17 +77,15 @@ function UpcomingCard({
   onPress: () => void
 }) {
   const { t } = useTranslation()
-  const theme = useTheme()
-  const scheme = useColorScheme() === "dark" ? "dark" : "light"
   const time = event.allDay
     ? t("home.today.allDay")
     : formatTimeRange(event.startsAt, event.endsAt, locale, zone)
   const location = event.location ?? ""
 
   return (
-    <Pressable
+    <EventSurface
+      eventColor={event.color}
       testID={`upcoming-card-${event.id}`}
-      accessibilityRole="button"
       accessibilityLabel={homeEventOpenLabel(t, event, time, progress)}
       accessibilityHint={
         event.userCalendarId !== undefined
@@ -101,43 +93,29 @@ function UpcomingCard({
           : t("home.event.hint.edit")
       }
       onPress={onPress}
-      android_ripple={{ color: theme.ripple, foreground: true }}
-      style={({ pressed }) => [
-        styles.card,
-        {
-          backgroundColor: eventSurfaceColor(event.color, scheme),
-        },
-        Platform.OS === "ios" && pressed && styles.iosPressed,
-      ]}
+      style={styles.card}
     >
-      <ThemedText type="smallBold" numberOfLines={2}>
+      <EventSurfaceText type="label" numberOfLines={2}>
         {displayEventTitle(event.title, t("calendar.event.noTitle"))}
-      </ThemedText>
-      <ThemedText type="small" themeColor="textSecondary">
+      </EventSurfaceText>
+      <EventSurfaceText type="callout" numberOfLines={2}>
         {time}
-      </ThemedText>
+      </EventSurfaceText>
       {location.length > 0 && (
-        <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+        <EventSurfaceText type="callout" numberOfLines={1}>
           {location}
-        </ThemedText>
+        </EventSurfaceText>
       )}
       <ChecklistProgressIndicator progress={progress} />
-    </Pressable>
+    </EventSurface>
   )
 }
 
 const styles = StyleSheet.create({
   content: {
+    alignItems: "flex-start",
     gap: Spacing.two,
     paddingVertical: Spacing.one,
   },
-  card: {
-    width: CARD_WIDTH,
-    minHeight: Platform.OS === "android" ? 48 : 44,
-    padding: Spacing.three,
-    borderRadius: Radii.large,
-    gap: Spacing.half,
-    overflow: "hidden",
-  },
-  iosPressed: { opacity: 0.62 },
+  card: { width: CARD_WIDTH },
 })

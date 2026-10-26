@@ -1,11 +1,11 @@
 import type { ChecklistProgress } from "@/features/event-checklists"
-
-import { dayKey, minuteOfDayInZone } from "./day-key"
 import {
   type EventAppearance,
   type EventAppearanceScheme,
   resolveEventAppearance,
-} from "./event-color"
+} from "@/theme"
+
+import { dayKey, minuteOfDayInZone } from "./day-key"
 import { displayEventTitle } from "./event-title"
 import { layoutOverlaps, overlapIdentityKey } from "./overlap-layout"
 import { classifyTimedEventSupport } from "./timed-support"

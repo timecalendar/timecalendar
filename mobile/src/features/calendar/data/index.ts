@@ -43,14 +43,6 @@ export {
   weekStartEpochDay,
 } from "./epoch-day"
 export {
-  contrastRatio,
-  type EventAppearance,
-  type EventAppearanceScheme,
-  eventSurfaceColor,
-  parseOpaqueHex,
-  resolveEventAppearance,
-} from "./event-color"
-export {
   CALENDAR_EVENT_REJECTION_REASONS,
   type CalendarEventDecodeResult,
   type CalendarEventRejectionCounts,
@@ -216,7 +208,6 @@ export {
   type TimelineChecklistProgressV1,
 } from "./timeline-presentation"
 export {
-  CALENDAR_EVENT_FALLBACK_COLOR,
   type CalendarEvent,
   type CalendarEventIdentityV1,
   type CalendarEventSource,

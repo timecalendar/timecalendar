@@ -1,4 +1,6 @@
-import { CALENDAR_EVENT_FALLBACK_COLOR } from "./types"
+import { contrastRatio } from "@/theme/contrast"
+
+export const EventFallbackColor = "#64748B"
 
 export type EventAppearanceScheme = "light" | "dark"
 
@@ -16,7 +18,7 @@ type Rgb = readonly [number, number, number]
 const BLACK: Rgb = [0, 0, 0]
 const WHITE: Rgb = [255, 255, 255]
 
-export function parseOpaqueHex(value: unknown): Rgb | undefined {
+function parseOpaqueHex(value: unknown): Rgb | undefined {
   if (typeof value !== "string" || !/^#[0-9A-F]{6}$/i.test(value))
     return undefined
   return [
@@ -26,43 +28,24 @@ export function parseOpaqueHex(value: unknown): Rgb | undefined {
   ]
 }
 
-export function rgbToHex(rgb: Rgb): string {
+const FALLBACK_RGB = parseOpaqueHex(EventFallbackColor)!
+
+function rgbToHex(rgb: Rgb): string {
   return `#${rgb.map((channel) => Math.round(channel).toString(16).padStart(2, "0")).join("")}`.toUpperCase()
 }
 
-export function compositeRgb(
-  foreground: Rgb,
-  background: Rgb,
-  alpha: number,
-): Rgb {
+function compositeRgb(foreground: Rgb, background: Rgb, alpha: number): Rgb {
   return foreground.map((channel, index) =>
     Math.round(channel * alpha + background[index]! * (1 - alpha)),
   ) as unknown as Rgb
 }
 
-function linearChannel(channel: number): number {
-  const value = channel / 255
-  return value <= 0.04045
-    ? value / 12.92
-    : Math.pow((value + 0.055) / 1.055, 2.4)
-}
-
-export function relativeLuminance(rgb: Rgb): number {
-  return (
-    0.2126 * linearChannel(rgb[0]) +
-    0.7152 * linearChannel(rgb[1]) +
-    0.0722 * linearChannel(rgb[2])
-  )
-}
-
-export function contrastRatio(left: Rgb, right: Rgb): number {
-  const brighter = Math.max(relativeLuminance(left), relativeLuminance(right))
-  const darker = Math.min(relativeLuminance(left), relativeLuminance(right))
-  return (brighter + 0.05) / (darker + 0.05)
+function rgbContrast(left: Rgb, right: Rgb): number {
+  return contrastRatio(rgbToHex(left), rgbToHex(right))
 }
 
 function contrastingEndpoint(background: Rgb): Rgb {
-  return contrastRatio(BLACK, background) >= contrastRatio(WHITE, background)
+  return rgbContrast(BLACK, background) >= rgbContrast(WHITE, background)
     ? BLACK
     : WHITE
 }
@@ -71,7 +54,7 @@ function boundaryAccent(source: Rgb, canvas: Rgb, foreground: Rgb): Rgb {
   let accent = source
   for (
     let step = 5;
-    contrastRatio(accent, canvas) < 3 && step <= 100;
+    rgbContrast(accent, canvas) < 3 && step <= 100;
     step += 5
   ) {
     accent = compositeRgb(foreground, source, step / 100)
@@ -84,9 +67,7 @@ export function resolveEventAppearance(input: {
   scheme: EventAppearanceScheme
   increasedContrast: boolean
 }): Readonly<EventAppearance> {
-  const source =
-    parseOpaqueHex(input.color) ??
-    parseOpaqueHex(CALENDAR_EVENT_FALLBACK_COLOR)!
+  const source = parseOpaqueHex(input.color) ?? FALLBACK_RGB
   const canvas = input.scheme === "dark" ? BLACK : WHITE
   const surface = compositeRgb(
     source,
@@ -103,16 +84,4 @@ export function resolveEventAppearance(input: {
     outline: rgbToHex(input.increasedContrast ? foreground : accent),
     increasedContrast: input.increasedContrast,
   })
-}
-
-/** Retained Home surface helper; owned Timeline consumes the full appearance. */
-export function eventSurfaceColor(
-  color: string,
-  scheme: EventAppearanceScheme = "light",
-): string {
-  return resolveEventAppearance({
-    color,
-    scheme,
-    increasedContrast: false,
-  }).surface
 }

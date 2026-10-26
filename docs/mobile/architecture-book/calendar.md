@@ -168,11 +168,14 @@ meaningful visible geometry ([ADR 061](./decisions/061-calendar-conflict-pointer
 Boundary-touching targets stay direct; no z-order guess, hidden event, duplicate semantic target, or
 event-count threshold determines this behavior. Native assistive operation remains final QA evidence.
 
-Imported event colors pass through the Calendar-owned deterministic appearance resolver. It validates
-six-digit sRGB input, composites an opaque scheme-aware surface, selects a foreground with at least
-4.5:1 contrast, and adjusts a source-derived boundary cue to at least 3:1 against the canvas. Android's
-supported high-text-contrast signal strengthens the wash/outline; unsupported platforms deterministically
-use the normal policy. Host tests prove values, geometry, semantics and routing. Physical target feel,
+Imported event colors pass through the theme layer's deterministic appearance resolver
+(`resolveEventAppearance` from `@/theme`, `src/theme/event-appearance.ts`), shared with `EventSurface`
+so the grid, Home and the agenda draw the same colors for one event (ADR
+[076](./decisions/076-event-surface.md)). It validates six-digit sRGB input, composites an opaque
+scheme-aware surface, selects a foreground with at least 4.5:1 contrast, and adjusts a source-derived
+boundary cue to at least 3:1 against the canvas. The high-text-contrast signal is `useIncreasedContrast`
+(`src/hooks/use-increased-contrast.ts`): Android's supported setting strengthens the wash/outline;
+unsupported platforms deterministically use the normal policy. Host tests prove values, geometry, semantics and routing. Physical target feel,
 increased-contrast rendering, VoiceOver and TalkBack remain T28 device evidence.
 Shared time-grid helpers still default to 07:00–21:00; only the owned shell opts into
 explicit full-day bounds. One fling or accessibility action moves one adjacent day or week

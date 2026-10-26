@@ -1,3 +1,21 @@
+## 2026-10-26 — Event surface
+
+- `EventSurface` and `EventSurfaceText` live in `src/design/event-surface/`: the event's resolved
+  tint, a clipped 3-unit accent stripe, `Radii.medium`, no shadow and a 2-unit outline under
+  increased contrast. An event tile's stripe is the one colored leading rail theming allows
+  ([theming.md](./theming.md) → Event tiles, ADR [076](./decisions/076-event-surface.md)).
+- `resolveEventAppearance` and `EventFallbackColor` live in `src/theme/event-appearance.ts`, and
+  `useIncreasedContrast` in `src/hooks/`, shared by the calendar presenters and `EventSurface`
+  ([theming.md](./theming.md), [calendar.md](./calendar.md)).
+- An event tile is one button with a required label, foreground text at 4.5:1 proven per palette
+  color and over an sRGB grid, and type-required line caps
+  ([accessibility.md](./accessibility.md) → Event tiles, [testing.md](./testing.md)).
+- `local/no-raw-event-color` reports per-side border colors and `resolveEventAppearance` calls
+  outside the design, theme and renderer layers, with its allowlist at ceiling 1; the raw-button
+  allowlist ceiling is 5 ([lint-format.md](./lint-format.md) → Event colors, Buttons).
+- Home upcoming cards, all-day items, today-timeline tiles and agenda tiles are `EventSurface`;
+  the checklist pill on a tile is `Badge` tone `onEventSurface` ([features.md](./features.md)).
+
 ## 2026-10-26 — Header and floating actions
 
 - `useHeaderActions` and `FloatingAction` live in `src/components/chrome/`: native bar button

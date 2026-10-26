@@ -300,7 +300,7 @@ truth; this file carries the caveats the config can't (R-1).
   `tools/eslint-rules/raw-button-allowlist.js`, each annotated with
   the slice that migrates it. `raw-button-allowlist.test.js` lints every entry with only this rule
   and fails on a stale entry (no report: remove it), a missing file, a duplicate, or a list longer
-  than `RAW_BUTTON_ALLOWLIST_CEILING` (9); migrating a file means deleting its entry and lowering the
+  than `RAW_BUTTON_ALLOWLIST_CEILING` (5); migrating a file means deleting its entry and lowering the
   ceiling. `no-raw-button.test.js` is the RuleTester suite. **Caveats:** a role passed as a
   variable, text wrapped in a layout `View`, a function child and `Animated` pressables are not
   inspected (rows and tiles legitimately use `Pressable`; review covers the rest). The rule has its
@@ -381,27 +381,35 @@ truth; this file carries the caveats the config can't (R-1).
   the changelog sheet's `Stack.Screen` options and `<Stack.Toolbar placement="left" />` in
   `src/features/settings/ui/timezone-chooser-screen.tsx` each fail `npm run lint` naming the rule.
 - **Event colors — `local/no-raw-event-color`** (`tools/eslint-rules/no-raw-event-color.js`,
-  block `timecalendar/raw-event-color`, `files: ["src/**/*.tsx"]`): a non-computed
-  `backgroundColor` or `borderColor` style property whose value is a non-computed `.color` member
-  (`event.color`, `tag.color`, `item?.color`), unless the object is `theme`, is an error; event and
-  calendar colors enter UI through `ColorDot` from `@/design` (and `EventSurface` later)
-  ([theming.md](./theming.md) → Badges and color dots, ADR [074](./decisions/074-badge-and-color-dot.md)).
+  block `timecalendar/raw-event-color`, `files: ["src/**/*.tsx"]`): two checks, both errors.
+  (1) A non-computed fill or border color style property (`backgroundColor`, `borderColor`,
+  `borderLeftColor`, `borderRightColor`, `borderTopColor`, `borderBottomColor`, `borderStartColor`,
+  `borderEndColor`) whose value is a non-computed `.color` member (`event.color`, `tag.color`,
+  `item?.color`), unless the object is `theme` (message `rawEventColor`). (2) A call to
+  `resolveEventAppearance`, as an identifier or a member ending in it (message
+  `eventAppearanceCall`: "Event tiles are EventSurface from @/design"). Event and calendar colors
+  enter UI through `ColorDot` and event tiles through `EventSurface`, both from `@/design`
+  ([theming.md](./theming.md) → Badges and color dots, Event tiles; ADR
+  [074](./decisions/074-badge-and-color-dot.md), ADR [076](./decisions/076-event-surface.md)).
   Ignored: `src/design/**`, `src/theme/**`, `src/features/calendar/renderer/**` (the owned
   renderer, ADR 033), tests, and the files in `tools/eslint-rules/raw-event-color-allowlist.js`,
   each annotated with its migrating slice (`event-details-content.tsx`, the title dot and
   `TagBubble`, 5.8). `raw-event-color-allowlist.test.js` fails on a stale entry, a missing file, a
   duplicate, or a list longer than its ceiling (1). `no-raw-event-color.test.js` is the RuleTester
-  suite: `color: row.color` (a data-object key, not a fill), `[key]: event.color` and
-  `eventSurfaceColor(event.color, scheme)` pass. **Caveats:** a color reached through a variable
-  or a call is not followed, a `color=` JSX prop is not matched, per-side border keys
-  (`borderLeftColor` and the like, e.g. the agenda stripe, which slice 3.9 `EventSurface` absorbs)
-  are not checked, and `.ts` style helpers are outside `files`, so review checks that new
-  event-color UI uses `ColorDot`. There is no pill or dot shape rule: `borderRadius: Radii.pill`
-  also draws FABs, glass buttons, the now line, the agenda rail and page indicators, so it is no
-  badge signature. Inject-and-revert proof: a `<View style={{ backgroundColor: event.color }} />`
-  in `src/features/personal-events/ui/personal-events-list.tsx` fails `npm run lint` naming the
-  rule; adding that file to the allowlist fails its test (stale and over the ceiling); a `Badge`
-  with no `accessibilityLabel` in a gallery fixture fails `npx tsc --noEmit`.
+  suite: `color: row.color` (a data-object key, not a fill), `[key]: event.color`,
+  `borderLeftColor: theme.primary` and `mix(event.color)` pass; every per-side key on a `.color`
+  member and `resolveEventAppearance(…)` fail. **Caveats:** a color reached through a variable or
+  another helper is not followed, a `color=` JSX prop is not matched, and `.ts` files are outside
+  `files` (the calendar presenters call the resolver there by design), so review checks that new
+  event-color UI uses `ColorDot` or `EventSurface`. There is no pill or dot shape rule:
+  `borderRadius: Radii.pill` also draws FABs, glass buttons, the now line, the agenda now marker
+  and page indicators, so it is no badge signature. Inject-and-revert proof:
+  `borderLeftColor: event.color` in `src/features/calendar/ui/agenda-list.tsx` fails `npm run lint`
+  with `rawEventColor`; a `resolveEventAppearance({ … })` call in
+  `src/features/home/ui/upcoming-scroller.tsx` fails it with `eventAppearanceCall`; adding
+  `agenda-list.tsx` to the allowlist fails its test (stale and over the ceiling); an
+  `EventSurfaceText` without `numberOfLines` or an `EventSurface` without `accessibilityLabel`
+  fails `npx tsc --noEmit`.
 - **L12 — no identifiers on SwiftUI containers** (`local/no-swiftui-container-identifier` in the
   `timecalendar/swiftui-identifiers` block, `src/**`): SwiftUI applies an accessibility identifier
   set on a container to every child and replaces the children's own, so a row inside an identified

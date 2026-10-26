@@ -1,7 +1,12 @@
 import { useTranslation } from "react-i18next"
-import { Platform, Pressable, StyleSheet, View } from "react-native"
+import { StyleSheet, View } from "react-native"
 
-import { StatusView, ThemedText } from "@/design"
+import {
+  EventSurface,
+  EventSurfaceText,
+  StatusView,
+  ThemedText,
+} from "@/design"
 import { type CalendarEvent, displayEventTitle } from "@/features/calendar/data"
 import {
   ChecklistProgressIndicator,
@@ -9,10 +14,8 @@ import {
 } from "@/features/event-checklists"
 import { type HourRange } from "@/features/home/data"
 import { homeEventOpenLabel } from "@/features/home/ui/event-accessibility"
-import { eventSurfaceColor } from "@/features/home/ui/event-surface"
 import { TodayTimeline } from "@/features/home/ui/today-timeline"
-import { useColorScheme } from "@/hooks/use-color-scheme"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Spacing } from "@/theme"
 
 interface TodaySectionProps {
   now: Date
@@ -84,8 +87,6 @@ function AllDayEvents({
   onPressEvent: (event: CalendarEvent) => void
 }) {
   const { t } = useTranslation()
-  const theme = useTheme()
-  const scheme = useColorScheme() === "dark" ? "dark" : "light"
   return (
     <View testID="home-all-day" style={styles.allDayRow}>
       <ThemedText
@@ -100,9 +101,10 @@ function AllDayEvents({
         {events.map((event) => {
           const progress = checklistProgress.get(event.id)
           return (
-            <Pressable
+            <EventSurface
               key={event.id}
-              accessibilityRole="button"
+              eventColor={event.color}
+              density="compact"
               accessibilityLabel={homeEventOpenLabel(
                 t,
                 event,
@@ -115,18 +117,12 @@ function AllDayEvents({
                   : t("home.event.hint.edit")
               }
               onPress={() => onPressEvent(event)}
-              android_ripple={{ color: theme.ripple, foreground: true }}
-              style={({ pressed }) => [
-                styles.allDayEvent,
-                { backgroundColor: eventSurfaceColor(event.color, scheme) },
-                Platform.OS === "ios" && pressed && styles.iosPressed,
-              ]}
             >
-              <ThemedText type="smallBold" numberOfLines={2}>
+              <EventSurfaceText type="label" numberOfLines={2}>
                 {displayEventTitle(event.title, t("calendar.event.noTitle"))}
-              </ThemedText>
+              </EventSurfaceText>
               <ChecklistProgressIndicator progress={progress} />
-            </Pressable>
+            </EventSurface>
           )
         })}
       </View>
@@ -139,12 +135,4 @@ const styles = StyleSheet.create({
   allDayRow: { gap: Spacing.two },
   allDayLabel: { paddingTop: Spacing.one },
   allDayItems: { flex: 1, gap: Spacing.two },
-  allDayEvent: {
-    minHeight: Platform.OS === "android" ? 48 : 44,
-    padding: Spacing.two,
-    borderRadius: Radii.large,
-    justifyContent: "center",
-    overflow: "hidden",
-  },
-  iosPressed: { opacity: 0.62 },
 })

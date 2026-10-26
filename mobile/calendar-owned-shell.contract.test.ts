@@ -299,7 +299,6 @@ describe("owned Calendar paging repository contract", () => {
     const dataRoot = join(root, "src/features/calendar/data")
     const required = [
       "event-decoder.ts",
-      "event-color.ts",
       "event-title.ts",
       "overlap-layout.ts",
       "page-presentation.ts",

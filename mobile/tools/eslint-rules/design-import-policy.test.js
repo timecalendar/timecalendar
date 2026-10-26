@@ -48,6 +48,12 @@ const fileClasses = [
     gallery: false,
   },
   {
+    file: "src/design/event-surface/event-surface.tsx",
+    barrel: false,
+    deep: true,
+    gallery: false,
+  },
+  {
     file: "src/design/icon/icon.tsx",
     barrel: false,
     deep: true,

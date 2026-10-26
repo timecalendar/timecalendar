@@ -3,7 +3,9 @@
 ## Purpose
 
 TBD - created by archiving change add-mobile-calendar-agenda. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Pure day-grouping helper, 90%-gated
 
 The calendar feature `data/` sublayer SHALL own a pure function that groups a flat list of
@@ -115,9 +117,11 @@ The calendar screen SHALL keep the agenda/planning view reachable in place besid
 The calendar feature `ui/` sublayer SHALL provide a presentational agenda list — a React Native
 `SectionList` of day-grouped events — as a designed brand surface themed from `@/theme` tokens (R-3).
 Each day SHALL render a header (the formatted weekday abbreviation + day number); each event SHALL
-render a tile showing its title, its formatted time range, and its location (when present), tinted by
-its `#RRGGBB` color, with a rounded radius and a subtle shadow (Flutter planning-tile parity). A
-now/upcoming indicator (brand `primary`) SHALL mark the current position. The list SHALL be read-only.
+render an event surface tile showing its title, its formatted time range, and its location (when
+present), drawn in the event's resolved surface tint with its resolved accent as a leading stripe,
+with no gray fill and no shadow (the week-grid event look). A now/upcoming indicator (brand
+`primary`) SHALL mark the current position outside the tile. The list SHALL NOT create, edit or
+delete events.
 
 #### Scenario: Day sections with headers
 
@@ -129,7 +133,8 @@ now/upcoming indicator (brand `primary`) SHALL mark the current position. The li
 
 - **WHEN** a day section renders its events
 - **THEN** each event tile shows the title, the formatted `HH:mm – HH:mm` time range, and the location
-  when present, tinted by the event `#RRGGBB` color, with a rounded radius and a subtle shadow
+  when present, in the event's resolved tint with an accent stripe and text in the tile foreground
+- **AND** the tile draws no shadow and no `backgroundElement` fill
 
 #### Scenario: Now/upcoming indicator
 
@@ -139,13 +144,13 @@ now/upcoming indicator (brand `primary`) SHALL mark the current position. The li
 #### Scenario: Theme comes from tokens
 
 - **WHEN** the agenda surface renders
-- **THEN** its colors (surfaces, text, the now-indicator) derive from `@/theme` tokens (R-3)
+- **THEN** its colors (surfaces, text, the now-indicator) derive from `@/theme` tokens and the theme
+  layer's event appearance resolver (R-3)
 
 #### Scenario: Read-only, no write path
 
 - **WHEN** the agenda is used
-- **THEN** it only reads and renders events (no create/edit/delete; no event-details tap-through this
-  ship — the tile is not a dead touchable)
+- **THEN** it does not create, edit or delete events; pressing a tile opens that event's details
 
 #### Scenario: List engine is the zero-dep SectionList
 
@@ -268,4 +273,3 @@ Agenda and retained Calendar summaries SHALL resolve missing, blank, or non-stri
 - **WHEN** a valid Maths event has a usable title
 - **THEN** Agenda displays and announces `Maths` rather than the fallback
 - **AND** no grouping or activation behavior changes
-

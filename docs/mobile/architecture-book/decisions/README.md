@@ -68,6 +68,7 @@ decision changes; use Git for its history.
 | [073](./073-list-row-family.md)                                       | `ListRow` family for RN lists; Android `NativeListRow` semantics through a local Compose modifier |
 | [074](./074-badge-and-color-dot.md)                                   | `Badge` with a closed tone and a required accessibility choice; a decorative `ColorDot`           |
 | [075](./075-header-and-floating-actions.md)                           | `useHeaderActions` renders native header actions per platform; one M3 `FloatingAction`              |
+| [076](./076-event-surface.md)                                        | `EventSurface` draws every event tile: theme-owned resolver, tint, clipped accent stripe          |
 
 > `045` is intentionally left free: the open source-recovery PR carries an ADR
 > numbered `044` that collides with the merged one above and renumbers to `045`

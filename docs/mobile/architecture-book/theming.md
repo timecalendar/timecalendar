@@ -34,21 +34,29 @@ Use a small vocabulary consistently:
 1. **Dot:** identifies a calendar, subject, or event in a list or summary. It is `ColorDot` from
    `@/design` (see [Badges and color dots](#badges-and-color-dots--badge-colordot-srcdesignbadge-srcdesigncolor-dot)).
 2. **Wash:** gives a card, selected item, or contextual header a very pale version of one event
-   color. Text remains on a verified neutral foreground rather than inheriting the event color.
+   color. Text never inherits the event color: on an event tile it is the resolved foreground
+   (black or white), elsewhere a verified neutral foreground.
 3. **Block:** uses the stronger pastel fill for actual event geometry in a timeline or calendar
    grid. This is where the spectrum can be most visible.
 4. **Mosaic:** uses a small, structured group of rounded rectangles derived from the blocks in
    the TimeCalendar logo. It is suitable for a welcome surface or empty state when no real event
    colors are available.
 
-Prefer color that comes from the content. A Home summary can show dots for that day's events,
-and upcoming cards can use their event's pale surface. Event details should feature one
-contextual event color, not a rainbow of unrelated accents.
+Prefer color that comes from the content. A Home summary can show dots for that day's events.
+Home cards, all-day items, today-timeline tiles and agenda tiles are `EventSurface` (see
+[Event tiles](#event-tiles--eventsurface-srcdesignevent-surface)): the event's tint and accent
+stripe, the same look as the week grid. Event details should feature one contextual event color,
+not a rainbow of unrelated accents.
 
 Do **not** add a colored leading rail or rounded left border to generic cards. It reads as a
 decorative template rather than TimeCalendar. Also avoid loose confetti or cake-sprinkle
 shapes. When a decorative composition is useful, use the logo's aligned calendar-block
 geometry instead.
+
+**The event-tile exception.** An event tile's leading stripe is part of the event's color, not
+decoration: it is the resolved `accent`, drawn only by `EventSurface` or the week-grid renderer,
+never from a raw event color in feature UI (`local/no-raw-event-color`, ADR
+[076](./decisions/076-event-surface.md)).
 
 ### Light and dark are equal designs
 
@@ -109,9 +117,10 @@ surfaces and calendar content; native controls are tinted and composed rather th
 - `src/theme/use-theme.ts` owns light/dark resolution: `useTheme()` reads the `@/hooks/use-color-scheme` seam and returns `Colors[scheme]`.
 - **`onPrimarySoft` color role:** the label on the translucent `primarySoft` brand wash (`#AD1457` light / `#FF80AB` dark), the text of the brand `Badge`. `actionText` stays the brand text tone on neutral surfaces. The wash is translucent, so its pairs are composited: a `documentedContrastPairs` row can name the opaque surface it sits on (`over`), and the test composites the wash over that surface before computing the ratio. `onPrimarySoft` on `primarySoft` is checked over `background`, `backgroundElement` and `homeHero` in both schemes (5.79 / 5.10 / 4.88 light, 8.11 / 5.90 / 5.89 dark).
 - **`ColorDotSize`** (`small` 8 / `medium` 12 / `large` 16), the diameters of `ColorDot`.
-- **Home welcome surface:** `homeHero` is a quiet pink paper (`#FCE4EC` light / `#321824` dark) carrying normal `text`; `homeHeroDate` is its stronger eyebrow (`#AD1457` light / `#FF80AB` dark). These are fixed scheme tokens rather than call-site alpha math. Event colors on Home remain non-text accent bars/dots because imported calendar colors cannot guarantee text contrast.
+- **Event appearance resolver (`src/theme/event-appearance.ts`, ADR [076](./decisions/076-event-surface.md)):** `resolveEventAppearance({ color, scheme, increasedContrast })` turns a stored event color into an `EventAppearance`: `surface` (the source composited over the scheme canvas, 35% alpha, 20% under increased contrast), `foreground` (black or white, whichever contrasts more with the surface), `accent` (the source stepped toward the foreground until it reaches 3:1 against the canvas), `outline` (the foreground under increased contrast, the accent otherwise), the normalized `source` and the policy flag. An invalid color resolves as `EventFallbackColor` (`#64748B`). The calendar presenters and `EventSurface` share this one resolver, so the grid and every tile draw the same colors for one event. `src/theme/event-appearance.test.ts` checks, for every personal-event swatch preset and the fallback, and over a 6×6×6 sRGB grid, in light and dark, with increased contrast off and on: foreground on surface ≥ 4.5:1, accent on the canvas ≥ 3:1, every output an opaque `#RRGGBB`.
+- **Home welcome surface:** `homeHero` is a quiet pink paper (`#FCE4EC` light / `#321824` dark) carrying normal `text`; `homeHeroDate` is its stronger eyebrow (`#AD1457` light / `#FF80AB` dark). These are fixed scheme tokens rather than call-site alpha math. An imported event color never colors text directly: on a tile, text is the resolver's foreground.
 - **Single color-scheme seam (C1):** `@/hooks/use-color-scheme` is the **one** scheme source — both `useTheme` _and_ the root `_layout.tsx` read it (never `useColorScheme` from `react-native` directly), so a theme override is a single-file change. The seam resolves the stored theme preference (a `"light"`/`"dark"` override wins, `"system"` falls through to the device scheme), **preserving the `ColorSchemeName` return contract** so `useTheme` / `buildNavTheme` / `theme.test.tsx` are untouched. **Lint-enforced (L1):** `no-restricted-imports` bans `useColorScheme` and `Appearance` from `react-native` everywhere except `src/hooks/use-color-scheme.ts` (block `timecalendar/color-scheme-seam`; see `lint-format.md`).
-- `src/theme/index.ts` re-exports the public surface (`Colors` / `Spacing` / `Radii` / `Fonts` / `MaxContentWidth` / `MinTouchTarget` / `IconSize` / `WordmarkMaxFontScale` / `ChevronMaxFontScale` / `StateOpacity` / `ColorDotSize` / `Elevation` / `Motion` / `Layout` / `AccessibilityFontScale` / `isAccessibilityTextSize` / `useIsAccessibilityTextSize` / `ThemeColor` / `TypeRamp` / `TypeVariant` / `TypeStep` / `useTheme` / `buildNavTheme` / the responsive exports) — **call sites import `@/theme`**, import-source-only. `Fonts.mono` resolves via `Platform.select` (`ios` → `ui-monospace`, `default` → `monospace`).
+- `src/theme/index.ts` re-exports the public surface (`Colors` / `Spacing` / `Radii` / `Fonts` / `MaxContentWidth` / `MinTouchTarget` / `IconSize` / `WordmarkMaxFontScale` / `ChevronMaxFontScale` / `StateOpacity` / `ColorDotSize` / `Elevation` / `Motion` / `Layout` / `AccessibilityFontScale` / `isAccessibilityTextSize` / `useIsAccessibilityTextSize` / `resolveEventAppearance` / `EventAppearance` / `EventAppearanceScheme` / `EventFallbackColor` / `ThemeColor` / `TypeRamp` / `TypeVariant` / `TypeStep` / `useTheme` / `buildNavTheme` / the responsive exports) — **call sites import `@/theme`**, import-source-only. `Fonts.mono` resolves via `Platform.select` (`ios` → `ui-monospace`, `default` → `monospace`).
 - `ThemedText` and `ThemedView` (`src/design/text/`) are imported from `@/design` and read their tokens from `@/theme`. `ThemedText` owns no type scale: it renders the `TypeRamp` step named by `type` (default `body`) and passes the step's `dynamicTypeRamp`; caller `style` and props win. The aliases `default` → `body`, `small` → `callout`, `smallBold` → `label` and `subtitle` → `sectionTitle` resolve inside the component. Color comes from `tone` (`primary` → `text`, `secondary` → `textSecondary`, `action` → `actionText`, `destructive` → `destructive`, `onPrimary` → `onPrimary`; `primary` is the label color, not brand pink, and the union has no brand or tertiary member) or from `themeColor` (any `ThemeColor`); the two props are mutually exclusive at the type level, and with neither the text is `text`. The heading role per step follows [Accessibility](./accessibility.md#the-heading-role-contract--encoded-in-themedtext).
 
 ## Buttons — `Button` and `ButtonRow` (`src/design/button/`)
@@ -337,9 +346,12 @@ from `@/design` (ADR [074](./decisions/074-badge-and-color-dot.md)).
   | `positive`      | none                | 1 unit `positive`        | `positive`      |
   | `informational` | none                | 1 unit `informational`   | `informational` |
   | `destructive`   | none                | 1 unit `destructive`     | `destructive`   |
+  | `onEventSurface` | none               | 1 unit surface foreground | surface foreground |
 
-  Every label is a documented contrast pair at the body floor in both schemes; the brand wash is
-  composited over `background`, `backgroundElement` and `homeHero`.
+  Every token label is a documented contrast pair at the body floor in both schemes; the brand
+  wash is composited over `background`, `backgroundElement` and `homeHero`. `onEventSurface`
+  reads the surrounding `EventSurface` appearance (4.5:1 by the resolver test) and throws outside
+  one.
 - **Badge sizes.** `small` is `ThemedText type="caption"` with `Spacing.two` × `Spacing.half`
   padding; `medium` (the default) is `type="label"` with `Spacing.twoHalf` × `Spacing.one`. Gap
   `Spacing.one`, `Radii.pill`, `alignSelf: "flex-start"`, `maxWidth: "100%"`.
@@ -369,15 +381,61 @@ from `@/design` (ADR [074](./decisions/074-badge-and-color-dot.md)).
   `--sizes`, `--with-icon`, `--accessibility`, `--long-strings`, `color-dot--sizes`, `--presets`,
   `--rings` and `--stack`.
 - **Sites:** the About header caption (brand, small), the inline checklist progress pill
-  (positive or informational with the checked or pending glyph, hidden), the personal-events list
+  (positive or informational with the checked or pending glyph, hidden; `onEventSurface` on a
+  tile), the personal-events list
   dot (large) and the Home welcome summary dots (medium, `homeHero` ring, at most five then `+N`).
 - **Deferred:** the event-details title dot and `TagBubble` (slice 5.8, allowlisted), the calendar
-  view-menu pill (a menu trigger, 5.10), the agenda indicator column (3.9 `EventSurface`), the
-  swatch picker's 48 pt swatches (an input control, 5.3), the onboarding page indicator (a pager,
-  5.1), the checklist `compact` grid-tile variant (renderer-fitted geometry, 3.9/5.11), and
+  view-menu pill (a menu trigger, 5.10), the agenda now marker (brand `primary` beside the tile,
+  not an event color), the swatch picker's 48 pt swatches (an input control, 5.3), the onboarding
+  page indicator (a pager, 5.1), the checklist `compact` grid-tile variant (renderer-fitted
+  geometry, 5.11), and
   `SwiftBadge` / Compose `Badge` in the native list seam (native idiom, stays).
 - **What lint cannot carry:** an event color reached through a variable or a call, or passed as a
   `color=` prop, is not matched. Review checks that new event-color UI uses `ColorDot`.
+
+## Event tiles — EventSurface (src/design/event-surface/)
+
+Every event tile outside the week-grid renderer is `EventSurface` from `@/design`, with its text in
+`EventSurfaceText` (ADR [076](./decisions/076-event-surface.md)).
+
+- **Anatomy.** `eventColor` is the stored color; the primitive resolves it with
+  `resolveEventAppearance` for the `@/hooks/use-color-scheme` scheme and the
+  `useIncreasedContrast()` signal. Fill `surface`; a 3-unit (`EVENT_STRIPE_WIDTH`) leading stripe
+  in `accent`; `Radii.medium` corners; `overflow: "hidden"`; gap `Spacing.half`; no shadow or
+  elevation. Under increased contrast it adds a 2-unit border in `outline` and keeps the stripe.
+  The stripe is an absolutely positioned child clipped by the rounded corners, not
+  `borderLeftWidth`: a leading border on rounded corners tapers into a curved rail. Content
+  padding adds the stripe width on the leading side.
+- **Placement.** `flow` (the default) sets `minHeight: MinTouchTarget` and centers content, which
+  grows with its text. `absolute` sets `position: "absolute"` and no minimum: the caller's `top`,
+  `left`, `width` and `height` (the overlap engine's geometry) own the frame.
+- **Density.** `regular` (the default) pads `Spacing.three` (cards, agenda); `compact` pads
+  `Spacing.two` (all-day items, timeline tiles).
+- **No paint props.** There is no color, radius, border, shadow or padding prop; `style` takes
+  layout keys only (`EventSurfaceLayoutStyle`: insets, size, flex, `alignSelf`, margins) and
+  merges last. A paint key is a `tsc` error.
+- **Press feedback.** iOS dims to `StateOpacity.pressed`; Android shows `theme.ripple` as a
+  foreground ripple.
+- **`EventSurfaceText`.** A `ThemedText` in the resolved `foreground`, with no `tone` or
+  `themeColor`. `numberOfLines` is required; `ellipsizeMode="clip"`, `adjustsFontSizeToFit` and
+  `minimumFontScale` are not props. Titles use `label`, time and location `callout`; hierarchy is
+  the type step, never a gray tone. It throws outside an `EventSurface`.
+- **Context.** `useEventSurfaceAppearance()` (`event-surface-context.ts`, a leaf importing only
+  `react` and `@/theme` types) returns the surrounding appearance or `undefined`. `Badge` tone
+  `onEventSurface` and the checklist indicator read it; inside a surface the inline checklist pill
+  is `onEventSurface` and the compact pill draws border, glyph and count in the foreground.
+- **Sites.** The Home upcoming card (flow, regular, width 200), the Home all-day item (flow,
+  compact), the Home today-timeline tile (absolute, compact; flow, compact in the large-text
+  reflow) and the agenda tile (flow, regular, `flex: 1`, the now marker outside the tile).
+- **Gates:** `src/theme/event-appearance.test.ts` (palette and grid contrast floors);
+  `event-surface.test.tsx` and `event-surface-context.test.ts` at 90% per-file tiers;
+  `badge.test.tsx` (`onEventSurface`); `local/no-raw-event-color` (per-side border colors and
+  `resolveEventAppearance` calls, [lint-format.md](./lint-format.md) → Event colors); the gallery
+  stories `event-surface--palette`, `--placements`, `--increased-contrast`, `--checklist` and
+  `--long-strings`.
+- **Deferred:** the event-details title dot, swatch and `TagBubble` (5.8), the rest of Home (type
+  scale, FAB, raw elements, 5.9), and the week-grid renderer's own tile code, including its compact
+  pill on the tint (5.11).
 
 ## Responsive content lanes — measured owners, semantic caps
 
