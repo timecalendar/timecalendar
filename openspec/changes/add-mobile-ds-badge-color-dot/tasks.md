@@ -80,14 +80,14 @@ Android on the Mac. Land three commits, following the design's Migration Plan.
 
 ## 3. Lint: `local/no-raw-event-color` (D8)
 
-- [ ] 3.1 `tools/eslint-rules/no-raw-event-color.js` per D8, with the rationale header comment
+- [x] 3.1 `tools/eslint-rules/no-raw-event-color.js` per D8, with the rationale header comment
       linking lint-format.md and ADR 074, in the style of `no-ad-hoc-separator.js`. Register it in
       `tools/eslint-rules/index.js`. Add `no-raw-event-color.test.js` (RuleTester): invalid
       `backgroundColor: event.color`, `backgroundColor: tag.color`, `backgroundColor: item?.color`
       and `borderColor: event.color`; valid `backgroundColor: theme.primary`, `backgroundColor: hex`,
       `backgroundColor: eventSurfaceColor(event.color, scheme)`, `color: row.color` and
       `[key]: event.color`. Verify: `npx jest tools/eslint-rules/no-raw-event-color` passes.
-- [ ] 3.2 `tools/eslint-rules/raw-event-color-allowlist.js`
+- [x] 3.2 `tools/eslint-rules/raw-event-color-allowlist.js`
       (`["src/features/calendar/ui/event-details-content.tsx", // 5.8 title dot and TagBubble]`,
       plus `RAW_EVENT_COLOR_ALLOWLIST_CEILING = 1`) and `raw-event-color-allowlist.test.js`
       (missing file, duplicate, ceiling, and a stale entry checked by linting each listed file with
@@ -100,7 +100,7 @@ Android on the Mac. Land three commits, following the design's Migration Plan.
 
 ## 4. Call sites (D6, D7, D9)
 
-- [ ] 4.1 `src/components/chrome/native-list-header.tsx`: replace the caption `View` and
+- [x] 4.1 `src/components/chrome/native-list-header.tsx`: replace the caption `View` and
       `ThemedText` with `Badge` imported from `@/design/badge/badge`, using
       `tone="brand" size="small" label={caption} accessibilityLabel={caption}
       testID={captionTestID}` and a layout style `{ alignSelf: "center", marginTop: Spacing.one }`.
@@ -109,7 +109,7 @@ Android on the Mac. Land three commits, following the design's Migration Plan.
       Check `features/about/ui/about-screen.test.tsx` still finds `about-version` and its text.
       Verify: `npx jest src/components/chrome/native-list-header src/features/about src/design/import-graph.contract`
       passes (no cycle), and `npm run test -- tools/eslint-rules/design-import-policy` passes.
-- [ ] 4.2 `src/features/event-checklists/ui/checklist-progress-indicator.tsx`: the `inline`
+- [x] 4.2 `src/features/event-checklists/ui/checklist-progress-indicator.tsx`: the `inline`
       variant returns the D6 `Badge`. The `compact` path keeps its current drawing and
       identifiers. Delete the styles only `inline` used. Update
       `checklist-progress-indicator.test.tsx`: inline is hidden, its outline and label are
@@ -117,21 +117,21 @@ Android on the Mac. Land three commits, following the design's Migration Plan.
       `checklist-progress-inline-label` text is `completed/total`, and compact assertions stay
       unchanged. Verify: `npx jest src/features/event-checklists src/features/home
       src/features/calendar/ui` passes; owner summaries still carry the progress phrase.
-- [ ] 4.3 `src/features/personal-events/ui/personal-events-list.tsx`: `leading` is
+- [x] 4.3 `src/features/personal-events/ui/personal-events-list.tsx`: `leading` is
       `{ element: <ColorDot color={event.color} size="large" />, width: ColorDotSize.large }`.
       Delete the `SWATCH` constant and the `swatch` style. In `personal-events-list.test.tsx`,
       assert the row's dot fill equals the event color, the dot is hidden, and the row's accessible
       name is exactly the title. Verify: `npx jest src/features/personal-events` passes.
-- [ ] 4.4 `src/features/home/ui/home-screen/welcome-card.tsx`: render each dot as
+- [x] 4.4 `src/features/home/ui/home-screen/welcome-card.tsx`: render each dot as
       `<ColorDot color={event.color} size="medium" ring="homeHero" style={{ marginLeft: index === 0 ? 0 : -Spacing.one }} />`
       and delete the `dot` style. The `#FFFFFF` literal goes with it. Keep the hidden dots
       container, the `+N` text and the count. In `home-screen.test.tsx`, assert seven events render
       five dots with the `homeHero` ring and "+2", and the summary text is unchanged. Verify:
       `npx jest src/features/home` passes.
-- [ ] 4.5 Run `npm run lint`. Verify: it passes with zero warnings, and
+- [x] 4.5 Run `npm run lint`. Verify: it passes with zero warnings, and
       `grep -rnE "(backgroundColor|borderColor): *[A-Za-z_.?]+\.color\b" src --include=*.tsx | grep -v "\.test\."`
       lists only `event-details-content.tsx`.
-- [ ] 4.6 Inject-and-revert proof (record the output for the PR):
+- [x] 4.6 Inject-and-revert proof (record the output for the PR):
       (a) add `<View style={{ backgroundColor: event.color }} />` to
       `src/features/personal-events/ui/personal-events-list.tsx`, and `npm run lint` fails naming
       `local/no-raw-event-color`;
@@ -139,7 +139,7 @@ Android on the Mac. Land three commits, following the design's Migration Plan.
       entry, over ceiling);
       (c) give a `Badge` in a fixture no `accessibilityLabel`, and `npx tsc --noEmit` fails.
       Revert all three. Verify: `git status` is clean for those files afterwards.
-- [ ] 4.7 Selector check. Re-run the 0.1 greps into `/tmp/*.after` and `diff` them. Verify: both
+- [x] 4.7 Selector check. Re-run the 0.1 greps into `/tmp/*.after` and `diff` them. Verify: both
       diffs are empty, and `npx jest e2e/maestro-selectors` passes.
 
 ## 5. CI proof

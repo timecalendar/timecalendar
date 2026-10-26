@@ -16,8 +16,9 @@ import {
   View,
 } from "react-native"
 
+import { Badge } from "@/design/badge/badge"
 import { ThemedText } from "@/design/text/themed-text"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Spacing, useTheme } from "@/theme"
 
 const APP_ICON = require("@/assets/images/icon.png") as ImageSourcePropType
 
@@ -66,15 +67,14 @@ function HeaderContent({
         </ThemedText>
       ) : null}
       {caption ? (
-        <View style={[styles.pill, { backgroundColor: theme.primarySoft }]}>
-          <ThemedText
-            testID={captionTestID}
-            themeColor="actionText"
-            style={styles.caption}
-          >
-            {caption}
-          </ThemedText>
-        </View>
+        <Badge
+          tone="brand"
+          size="small"
+          label={caption}
+          accessibilityLabel={caption}
+          {...(captionTestID === undefined ? {} : { testID: captionTestID })}
+          style={styles.caption}
+        />
       ) : null}
     </View>
   )
@@ -151,16 +151,5 @@ const styles = StyleSheet.create({
     fontWeight: 400,
     textAlign: "center",
   },
-  pill: {
-    marginTop: Spacing.one,
-    paddingHorizontal: 12,
-    paddingVertical: Spacing.one,
-    borderRadius: Radii.pill,
-  },
-  caption: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: 600,
-    textAlign: "center",
-  },
+  caption: { alignSelf: "center", marginTop: Spacing.one },
 })

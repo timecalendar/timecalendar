@@ -20,6 +20,9 @@ const {
   rawButtonAllowlist,
 } = require("./tools/eslint-rules/raw-button-allowlist")
 const {
+  rawEventColorAllowlist,
+} = require("./tools/eslint-rules/raw-event-color-allowlist")
+const {
   rawTextInputAllowlist,
 } = require("./tools/eslint-rules/raw-text-input-allowlist")
 
@@ -885,6 +888,24 @@ module.exports = defineConfig([
     plugins: { local: localRules },
     rules: {
       "local/no-ad-hoc-separator": "error",
+    },
+  },
+  {
+    // Event colors enter UI through ColorDot (ADR 074). The allowlist holds the
+    // files not yet migrated; raw-event-color-allowlist.test.js keeps it
+    // shrinking.
+    name: "timecalendar/raw-event-color",
+    files: ["src/**/*.tsx"],
+    ignores: [
+      "src/design/**",
+      "src/theme/**",
+      "src/features/calendar/renderer/**",
+      "**/*.test.{ts,tsx}",
+      ...rawEventColorAllowlist,
+    ],
+    plugins: { local: localRules },
+    rules: {
+      "local/no-raw-event-color": "error",
     },
   },
   {

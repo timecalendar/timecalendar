@@ -107,6 +107,32 @@ beforeEach(() => {
 })
 
 describe("HomeScreen", () => {
+  it("caps the welcome summary at five ringed color dots and counts the rest", async () => {
+    mockUseCalendarEvents.mockReturnValue(
+      Array.from({ length: 7 }, (_, index) =>
+        todayEvent({ id: `ev-${index}`, color: `#00000${index}` }),
+      ),
+    )
+    await render(<HomeScreen />)
+
+    const hidden = { includeHiddenElements: true }
+    const dots = screen.getAllByTestId(/^home-welcome-dot-\d$/, hidden)
+    expect(dots).toHaveLength(5)
+    dots.forEach((dot, index) => {
+      expect(StyleSheet.flatten(dot.props.style)).toMatchObject({
+        backgroundColor: `#00000${index}`,
+        borderWidth: 2,
+        borderColor: Colors.light.homeHero,
+        marginLeft: index === 0 ? 0 : -4,
+      })
+    })
+    expect(
+      screen.getByTestId("home-welcome-dots-overflow", hidden),
+    ).toHaveTextContent("+2")
+    expect(screen.queryByTestId("home-welcome-dots")).toBeNull()
+    expect(screen.getByText("7 events today")).toBeOnTheScreen()
+  })
+
   it.each([390, 599, 600, 768, 800, 834, 1024])(
     "keeps section gutters inside a full-width scroll area at %ipx",
     async (width) => {
