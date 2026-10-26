@@ -318,6 +318,33 @@ function RowText({
   )
 }
 
+function TrailingValue({
+  interactive,
+  spaced,
+  children,
+}: {
+  interactive: boolean
+  spaced: boolean
+  children: ReactNode
+}) {
+  const style = [
+    styles.trailingValue,
+    spaced ? { marginEnd: trailingGap() } : null,
+  ]
+  if (interactive) return <View style={style}>{children}</View>
+  // A static row's text column already carries the value as its
+  // accessibilityValue, so the visible trailing copy is hidden.
+  return (
+    <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={style}
+    >
+      {children}
+    </View>
+  )
+}
+
 function RowContent({ row, model }: { row: ListRowProps; model: RowModel }) {
   const value = row.value ? (
     <ThemedText
@@ -336,24 +363,6 @@ function RowContent({ row, model }: { row: ListRowProps; model: RowModel }) {
   ) : null
   const chevron =
     model.interactive && row.trailing === "chevron" && Platform.OS === "ios"
-  const trailingValueStyle = [
-    styles.trailingValue,
-    check || chevron ? { marginEnd: trailingGap() } : null,
-  ]
-  // A static row's text column already carries the value as its
-  // accessibilityValue, so the visible trailing copy is hidden.
-  const trailingValue =
-    value && !model.interactive ? (
-      <View
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        style={trailingValueStyle}
-      >
-        {value}
-      </View>
-    ) : value ? (
-      <View style={trailingValueStyle}>{value}</View>
-    ) : null
   return (
     <>
       {row.leading && model.leadingBox !== undefined ? (
@@ -373,7 +382,14 @@ function RowContent({ row, model }: { row: ListRowProps; model: RowModel }) {
           </>
         }
       />
-      {model.stacked ? null : trailingValue}
+      {value && !model.stacked ? (
+        <TrailingValue
+          interactive={model.interactive}
+          spaced={check !== null || chevron}
+        >
+          {value}
+        </TrailingValue>
+      ) : null}
       {model.stacked ? null : check}
       {chevron ? <DisclosureChevron testID={`${row.testID}-chevron`} /> : null}
       {!model.interactive && row.trailing ? (
