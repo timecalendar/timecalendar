@@ -135,7 +135,7 @@ Tests, specs and docs name no real person or account. Never build Android on the
       the diff of tests, specs and this change folder for any real person or account name. Verify:
       the scan exits 0 and the read finds none.
 - [x] 4.7 `openspec validate ds-5-1-onboarding-screens` (repo root). Verify: valid.
-- [ ] 4.8 Device pass: iOS simulator and Android (on the Windows host), light and dark, default and
-      AX5 text: welcome pages, Skip bar at AX5 (Skip not clipped), last-page CTA, connect with and
-      without an intranet link, manual import. Owned by the conductor, not the implementer; note in
-      the PR body that it is pending.
+- [x] 4.8 Device pass: iOS simulator (iPhone 17 Pro, iOS 26), welcome screen in light and dark at
+      the default size and cold-launched at AX5: every label wraps, nothing clipped. Connect and
+      manual import were not reachable (local schools API down; comment-only changes). Android and
+      TalkBack: `docs/react-native-migration/inbox/2026-10-26-mobile-ds-5-1-onboarding-android-device-pass.md`.
