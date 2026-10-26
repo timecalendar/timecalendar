@@ -108,7 +108,7 @@ Never build Android on the Mac. Migrate no screen. Land two commits per design â
 
 ## 4. CI proof
 
-- [ ] 4.1 This change adds no runtime behavior. Its CI proof is `lint-mobile` (`npm run lint`
+- [x] 4.1 This change adds no runtime behavior. Its CI proof is `lint-mobile` (`npm run lint`
       through the wired blocks) and `test-mobile` running `no-raw-primitive.test.js`,
       `raw-primitive-allowlist.test.js` and the extended `design-import-policy.test.js`. Verify:
       after push, the PR's mobile jobs in `.github/workflows/ci-mobile.yml` are green and the
