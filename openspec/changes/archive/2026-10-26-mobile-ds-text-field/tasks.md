@@ -225,7 +225,7 @@ Gallery story ids for the conductor (`timecalendar-dev://developer/gallery/<id>`
 `accessibility-extra-extra-extra-large` (iOS) and font scale 2.0 (Android): nothing clips, the
 field grows.
 
-- [ ] 8.1 iOS simulator pass (conductor): the stories above in light and dark at the default size
+- [x] 8.1 iOS simulator pass (conductor): the stories above in light and dark at the default size
       and AX5 (reopen after a size change); migrated screens: institution name and programme
       (error state), feedback (Next, disabled while sending), iCal URL (error, pending), personal
       event form (title error, range error under Ends, start/end pickers). Record findings in the
