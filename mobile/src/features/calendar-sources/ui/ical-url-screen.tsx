@@ -1,7 +1,6 @@
 import { router, Stack } from "expo-router"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { StyleSheet } from "react-native"
 
 import {
   Button,
@@ -20,7 +19,6 @@ import {
   useProtectedImportRoute,
 } from "@/features/onboarding"
 import { recordUnknownError } from "@/firebase"
-import { Spacing } from "@/theme"
 
 import { ImportProgressView } from "./import-progress-view"
 
@@ -33,34 +31,21 @@ interface FailedIcalAttempt {
   calendarName?: string
 }
 
-// The iCal-URL entry screen (Phase-3 ship 4, rewired by ship 5 / ADR 018) —
-// PRESENTATIONAL (70% floor): a labeled TextField for the calendar URL, a
-// submit control, and accessible loading / server-error-with-retry states over
-// the add operation (mirroring school-selection's read flow per data.md). It
-// posts the URL to the server (POST /calendars), not a client-side .ics parse —
-// Flutter parity (D1).
+// The URL is posted to the server (POST /calendars), not parsed as .ics on the
+// client, for Flutter parity.
 //
-// Two failure classes (D5): an INVALID URL (the pure pre-filter returns a key) is
-// recoverable — shown inline, NOT recordError'd (noise avoidance, like the QR
-// "not a calendar" path); a failure of the create / token-resolve / durable
-// upsert chain is recorded through @/firebase recordError and surfaced as an
-// accessible error with resubmission through Import. On success, the shared
-// addCalendarFromUrl seam has persisted a durable user_calendars row and the
-// screen hands off to the root result.
-//
-// It consumes its sibling data sub-barrel (@/features/calendar-sources/data),
-// never its own feature barrel (B-2) and never the generated hook / firebase
-// seams directly (B-1/B-4 — the data/ layer owns the generated import; the screen
-// uses the @/firebase seam). Tested beside this file; the route
-// (src/app/onboarding/ical-url.tsx) is a thin re-export (route-structure rule).
+// Two failure classes: an invalid URL (the client pre-filter returns a key) is
+// recoverable and shown inline without being recorded, to keep the crash log
+// free of typos; a failure of the create / token-resolve / durable upsert chain
+// is recorded through @/firebase and surfaced with resubmission through Import.
 export default function IcalUrlScreen() {
   const { t } = useTranslation()
   const { addCalendarFromUrl, isPending, isError } = useAddCalendar()
-  // Institution + programme come from the ephemeral journey draft, NOT from the
+  // Institution + programme come from the ephemeral journey draft, not from the
   // persisted school selection: a durable selection would attribute an import
-  // made weeks later to a school the student is no longer importing from
-  // (TIM-391 / design D3, D10). The derivation stays total during guarded
-  // recovery, but no create action is reachable without current completion.
+  // made weeks later to a school the student is no longer importing from. The
+  // derivation stays total during guarded recovery, but no create action is
+  // reachable without current completion.
   const importFields = useImportCreateFields()
   const legal = useProtectedImportRoute("ical", "/onboarding/ical-url")
   const [url, setUrl] = useState("")
@@ -141,13 +126,11 @@ export default function IcalUrlScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("calendarSources.icalUrl.title") }} />
-      <RootPage testID="ical-url-content" lane="readable" style={styles.fill}>
+      <RootPage testID="ical-url-content" lane="readable">
         {() => (
           <KeyboardSafeActionLayout
-            scrollsUnderHeader={false}
+            contentPlacement="center"
             testID="ical-url-keyboard-layout"
-            contentContainerStyle={styles.formContent}
-            actionContainerStyle={styles.actionRegion}
             actions={
               <>
                 {isError && (
@@ -204,19 +187,3 @@ export default function IcalUrlScreen() {
     </>
   )
 }
-
-const styles = StyleSheet.create({
-  fill: {
-    flex: 1,
-  },
-  formContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-    gap: Spacing.three,
-  },
-  actionRegion: {
-    gap: Spacing.two,
-    paddingTop: Spacing.three,
-    paddingBottom: Spacing.four,
-  },
-})

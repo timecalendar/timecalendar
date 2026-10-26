@@ -26,11 +26,10 @@ type KeyboardSafeActionLayoutProps = {
   actionsTestID?: string
   contentContainerStyle?: StyleProp<ViewStyle>
   actionContainerStyle?: StyleProp<ViewStyle>
-  // Pass false when the content fills the viewport (flexGrow): an automatic
-  // header inset on top of a viewport-tall content makes it scroll by the
-  // header height. The enclosing RootPage must then drop scrollsUnderHeader.
-  scrollsUnderHeader?: boolean
-}
+} & (
+  | { contentPlacement?: "top"; scrollsUnderHeader?: boolean }
+  | { contentPlacement: "center"; scrollsUnderHeader?: never }
+)
 
 export function KeyboardSafeActionLayout({
   children,
@@ -41,8 +40,10 @@ export function KeyboardSafeActionLayout({
   actionsTestID,
   contentContainerStyle,
   actionContainerStyle,
-  scrollsUnderHeader = true,
+  contentPlacement = "top",
+  scrollsUnderHeader,
 }: KeyboardSafeActionLayoutProps) {
+  const centered = contentPlacement === "center"
   const { laneStyle, onLayout } = useAdaptiveLayout(lane)
   const ownerRef = useRef<View>(null)
   const keyboardTopRef = useRef<number | null>(null)
@@ -93,7 +94,7 @@ export function KeyboardSafeActionLayout({
   const body = (
     <>
       <ScrollView
-        {...headerScrollProps(scrollsUnderHeader)}
+        {...headerScrollProps(centered ? false : (scrollsUnderHeader ?? true))}
         testID={
           contentTestID ??
           (testID === undefined ? undefined : `${testID}-content`)
@@ -103,6 +104,7 @@ export function KeyboardSafeActionLayout({
         contentContainerStyle={[
           laneStyle,
           styles.content,
+          centered && styles.centered,
           contentContainerStyle,
         ]}
       >
@@ -113,7 +115,7 @@ export function KeyboardSafeActionLayout({
           actionsTestID ??
           (testID === undefined ? undefined : `${testID}-actions`)
         }
-        style={[laneStyle, actionContainerStyle]}
+        style={[laneStyle, styles.actions, actionContainerStyle]}
       >
         {actions}
       </View>
@@ -153,5 +155,11 @@ export function KeyboardSafeActionLayout({
 const styles = StyleSheet.create({
   owner: { flex: 1 },
   scroller: { flex: 1 },
-  content: { paddingTop: Spacing.four },
+  content: { paddingTop: Spacing.four, gap: Spacing.three },
+  centered: { flexGrow: 1, justifyContent: "center" },
+  actions: {
+    gap: Spacing.two,
+    paddingTop: Spacing.three,
+    paddingBottom: Spacing.four,
+  },
 })

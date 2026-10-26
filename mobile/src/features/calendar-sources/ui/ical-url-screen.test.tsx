@@ -180,7 +180,9 @@ describe("IcalUrlScreen", () => {
       maxWidth: layout.contentWidth + 2 * layout.gutter,
       paddingHorizontal: layout.gutter,
       flexGrow: 1,
+      justifyContent: "center",
     })
+    expect(content.props.contentInsetAdjustmentBehavior).toBe("never")
     expect(content.props.keyboardShouldPersistTaps).toBe("handled")
     expect(actions).toContainElement(submit)
     expect(content).not.toContainElement(submit)

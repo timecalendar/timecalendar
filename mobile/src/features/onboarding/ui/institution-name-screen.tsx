@@ -1,7 +1,6 @@
 import { router, Stack } from "expo-router"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { StyleSheet } from "react-native"
 
 import {
   Button,
@@ -16,23 +15,14 @@ import {
   useImportDraft,
 } from "@/features/onboarding/draft"
 import { clearSelection } from "@/features/school-selection"
-import { Spacing } from "@/theme"
 
-import { stepStyles } from "./step-styles"
-
-// The unlisted-institution step (TIM-391) — reached from the school picker's
-// "I can't find my school" action, which used to jump straight to the iCal-URL
-// route and lose the institution entirely.
+// The name is required (unlike the programme name, which Skip may leave empty):
+// it is the only institution signal an unlisted import carries, so an empty one
+// produces a calendar support cannot place.
 //
-// The name is REQUIRED here (unlike the programme name, which Skip may leave
-// empty): this is the only institution signal an unlisted import will ever
-// carry, so an empty one would produce a calendar support cannot place.
-//
-// Submitting also clears the legacy persisted school selection. The draft is the
-// only creation source of truth, but the MMKV selection still exists (the group
-// step writes it), and leaving a stale school id there is exactly how an unlisted
-// import gets attributed to a school the student explicitly said they could not
-// find (design D10).
+// Submitting clears the persisted school selection: the group step still writes
+// it, and a stale school id there would attribute this unlisted import to a
+// school the student said they could not find.
 export default function InstitutionNameScreen() {
   const { t } = useTranslation()
   const { setUnlistedInstitution } = useImportDraft()
@@ -58,17 +48,11 @@ export default function InstitutionNameScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("onboarding.institution.title") }} />
-      <RootPage
-        testID="onboarding-institution-content"
-        lane="readable"
-        style={stepStyles.fill}
-      >
+      <RootPage testID="onboarding-institution-content" lane="readable">
         {() => (
           <KeyboardSafeActionLayout
-            scrollsUnderHeader={false}
+            contentPlacement="center"
             testID="onboarding-institution-keyboard-layout"
-            contentContainerStyle={stepStyles.formContent}
-            actionContainerStyle={styles.actionRegion}
             actions={
               <Button
                 variant="filled"
@@ -102,7 +86,3 @@ export default function InstitutionNameScreen() {
     </>
   )
 }
-
-const styles = StyleSheet.create({
-  actionRegion: { paddingTop: Spacing.three, paddingBottom: Spacing.four },
-})

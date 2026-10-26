@@ -1,6 +1,5 @@
 import { type ComponentProps, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { StyleSheet } from "react-native"
 
 import {
   Button,
@@ -11,7 +10,6 @@ import {
   ThemedText,
 } from "@/design"
 import type { GalleryMeta, GalleryStory } from "@/design/gallery"
-import { Spacing } from "@/theme"
 
 type Story = GalleryStory<ComponentProps<typeof KeyboardSafeActionLayout>>
 
@@ -46,12 +44,8 @@ function FormFixture({ fillsViewport = false }: { fillsViewport?: boolean }) {
     <RootPage scrollsUnderHeader={!fillsViewport}>
       {() => (
         <KeyboardSafeActionLayout
-          scrollsUnderHeader={!fillsViewport}
+          contentPlacement={fillsViewport ? "center" : "top"}
           testID="gallery-keyboard-layout"
-          contentContainerStyle={
-            fillsViewport ? [styles.content, styles.centered] : styles.content
-          }
-          actionContainerStyle={styles.actions}
           actions={
             <Submit label={t("gallery.keyboardSafeActionLayout.submit")} />
           }
@@ -74,8 +68,6 @@ function LongStringsFixture() {
       {() => (
         <KeyboardSafeActionLayout
           testID="gallery-keyboard-layout"
-          contentContainerStyle={styles.content}
-          actionContainerStyle={styles.actions}
           actions={<Submit label={t("gallery.stress.action")} />}
         >
           <PageIntro
@@ -97,16 +89,6 @@ function LongStringsFixture() {
     </RootPage>
   )
 }
-
-const styles = StyleSheet.create({
-  content: { gap: Spacing.three },
-  centered: { flexGrow: 1, justifyContent: "center" },
-  actions: {
-    gap: Spacing.two,
-    paddingTop: Spacing.three,
-    paddingBottom: Spacing.four,
-  },
-})
 
 const meta: GalleryMeta<ComponentProps<typeof KeyboardSafeActionLayout>> = {
   id: "keyboard-safe-action-layout",

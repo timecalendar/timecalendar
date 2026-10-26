@@ -4,6 +4,7 @@ import { DeviceEventEmitter, StyleSheet, Text, View } from "react-native"
 import { SafeAreaInsetsContext } from "react-native-safe-area-context"
 
 import { usePlatform } from "@/test-support/platform"
+import { Spacing } from "@/theme"
 
 import { KeyboardSafeActionLayout } from "./keyboard-safe-action-layout"
 
@@ -76,6 +77,120 @@ describe.each(["ios" as const, "android" as const])(
         StyleSheet.flatten(view.getByTestId("form").props.style),
       ).not.toHaveProperty("position", "absolute")
     })
+
+    it("supplies the form rhythm when the caller passes no style", async () => {
+      const view = await render(
+        <KeyboardSafeActionLayout testID="form" actions={<View />}>
+          <View />
+        </KeyboardSafeActionLayout>,
+      )
+      const content = view.getByTestId("form-content")
+      expect(
+        StyleSheet.flatten(content.props.contentContainerStyle),
+      ).toMatchObject({ paddingTop: Spacing.four, gap: Spacing.three })
+      expect(
+        StyleSheet.flatten(content.props.contentContainerStyle),
+      ).not.toHaveProperty("justifyContent")
+      expect(
+        StyleSheet.flatten(view.getByTestId("form-actions").props.style),
+      ).toMatchObject({
+        gap: Spacing.two,
+        paddingTop: Spacing.three,
+        paddingBottom: Spacing.four,
+      })
+      expect(content).toHaveProp("contentInsetAdjustmentBehavior", "automatic")
+      expect(content).toHaveProp("alwaysBounceVertical", true)
+    })
+
+    it("names the scroller and action region without a root testID", async () => {
+      const view = await render(
+        <KeyboardSafeActionLayout
+          contentTestID="scroller"
+          actionsTestID="actions"
+          actions={<View />}
+        >
+          <View />
+        </KeyboardSafeActionLayout>,
+      )
+      expect(view.getByTestId("scroller")).toBeOnTheScreen()
+      expect(view.getByTestId("actions")).toBeOnTheScreen()
+      expect(view.queryByTestId("undefined-window-owner")).toBeNull()
+    })
+
+    it("lets caller styles override one rhythm value and keep the rest", async () => {
+      const view = await render(
+        <KeyboardSafeActionLayout
+          testID="form"
+          actionContainerStyle={{ paddingBottom: 12 }}
+          actions={<View />}
+        >
+          <View />
+        </KeyboardSafeActionLayout>,
+      )
+      expect(
+        StyleSheet.flatten(view.getByTestId("form-actions").props.style),
+      ).toMatchObject({
+        gap: Spacing.two,
+        paddingTop: Spacing.three,
+        paddingBottom: 12,
+      })
+    })
+
+    it("centres the content and never scrolls it under the header", async () => {
+      const view = await render(
+        <KeyboardSafeActionLayout
+          testID="form"
+          contentPlacement="center"
+          actions={<View />}
+        >
+          <View />
+        </KeyboardSafeActionLayout>,
+      )
+      const content = view.getByTestId("form-content")
+      expect(
+        StyleSheet.flatten(content.props.contentContainerStyle),
+      ).toMatchObject({
+        flexGrow: 1,
+        justifyContent: "center",
+        gap: Spacing.three,
+      })
+      expect(content).toHaveProp("contentInsetAdjustmentBehavior", "never")
+      expect(content).toHaveProp("alwaysBounceVertical", false)
+    })
+
+    it("keeps the top placement under the header unless told otherwise", async () => {
+      const view = await render(
+        <KeyboardSafeActionLayout
+          testID="form"
+          contentPlacement="top"
+          scrollsUnderHeader={false}
+          actions={<View />}
+        >
+          <View />
+        </KeyboardSafeActionLayout>,
+      )
+      const content = view.getByTestId("form-content")
+      expect(content).toHaveProp("contentInsetAdjustmentBehavior", "never")
+      expect(content).toHaveProp("alwaysBounceVertical", false)
+    })
+
+    it("rejects scrollsUnderHeader on a centred form at compile time", async () => {
+      const view = await render(
+        // @ts-expect-error a centred form fills the viewport, so it never scrolls under the header
+        <KeyboardSafeActionLayout
+          testID="form"
+          contentPlacement="center"
+          scrollsUnderHeader
+          actions={<View />}
+        >
+          <View />
+        </KeyboardSafeActionLayout>,
+      )
+      expect(view.getByTestId("form-content")).toHaveProp(
+        "contentInsetAdjustmentBehavior",
+        "never",
+      )
+    })
   },
 )
 
@@ -141,6 +256,13 @@ describe("KeyboardSafeActionLayout keyboard on iOS", () => {
     )
     expect(view.getByTestId("form")).toHaveProp("behavior", "height")
     expect(view.getByTestId("form")).toHaveProp("keyboardVerticalOffset", 97)
+  })
+
+  it("keeps the last offset when the owner's window Y is unmeasurable", async () => {
+    measureOwner(-1, 600)
+    const view = await renderForm()
+    await layoutOwner(view)
+    expect(view.getByTestId("form")).toHaveProp("keyboardVerticalOffset", 0)
   })
 })
 

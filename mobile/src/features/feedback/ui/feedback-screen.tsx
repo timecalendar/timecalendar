@@ -105,7 +105,6 @@ export default function FeedbackScreen() {
             contentTestID="feedback-scroll-owner"
             actionsTestID="feedback-action-region"
             contentContainerStyle={styles.scrollContent}
-            actionContainerStyle={styles.actions}
             actions={
               <>
                 {submitFailed ? (
@@ -125,7 +124,7 @@ export default function FeedbackScreen() {
                   <ThemedText
                     accessibilityLiveRegion="polite"
                     accessibilityRole="text"
-                    themeColor="textSecondary"
+                    tone="secondary"
                   >
                     {t("feedback.sending")}
                   </ThemedText>
@@ -185,5 +184,4 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.four,
   },
   content: { gap: Spacing.four },
-  actions: { gap: Spacing.two, paddingBottom: Spacing.four },
 })
