@@ -138,7 +138,10 @@ it("renders accessible fields and rejects an empty form locally", async () => {
     "Enter your message.",
   )
   expect(sendFeedback).not.toHaveBeenCalled()
-  await fireEvent.changeText(getByTestId("feedback-email-input"), "a@b.co")
+  await fireEvent.changeText(
+    getByTestId("feedback-email-input"),
+    "a@example.fr",
+  )
   expect(
     getByTestId("feedback-email-input").props.accessibilityHint,
   ).toBeUndefined()

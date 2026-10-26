@@ -86,120 +86,178 @@ export type StatusViewProps = Loading | Empty | Failure
 const childID = (testID: string | undefined, suffix: string) =>
   testID === undefined ? {} : { testID: `${testID}-${suffix}` }
 
-export function StatusView(props: StatusViewProps) {
-  const { kind, presentation, title, caption, testID, style } = props
+const liveRegion = () => (Platform.OS === "android" ? "polite" : undefined)
+
+type MessageProps = Empty | Failure
+
+function LoadingBody({
+  title,
+  inline,
+  testID,
+}: {
+  title: string
+  inline: boolean
+  testID: string | undefined
+}) {
+  const theme = useTheme()
+  const progressID = childID(testID, "progress")
+  return (
+    <View
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel={title}
+      accessibilityState={{ busy: true }}
+      accessibilityLiveRegion={liveRegion()}
+      style={inline ? styles.loadingRow : styles.loadingColumn}
+    >
+      <View
+        {...progressID}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <ActivityIndicator
+          size={inline ? "small" : "large"}
+          color={theme.textSecondary}
+        />
+      </View>
+      <ThemedText
+        tone="secondary"
+        style={inline ? styles.shrink : styles.centered}
+      >
+        {title}
+      </ThemedText>
+    </View>
+  )
+}
+
+function LeadingVisual(props: MessageProps) {
   const theme = useTheme()
   const scheme = useColorScheme() === "dark" ? "dark" : "light"
   const accessibilitySize = useIsAccessibilityTextSize()
-  const inline = presentation === "inline"
-  const progressID = childID(testID, "progress")
-  const liveRegion = Platform.OS === "android" ? "polite" : undefined
-
-  useErrorAnnouncement(
-    kind !== "loading" && caption ? `${title}. ${caption}` : title,
-    { key: props.announcementKey ?? kind },
-  )
-
-  let body: ReactNode
-  if (kind === "loading") {
-    body = (
-      <View
-        accessible
-        accessibilityRole="progressbar"
-        accessibilityLabel={title}
-        accessibilityState={{ busy: true }}
-        accessibilityLiveRegion={liveRegion}
-        style={inline ? styles.loadingRow : styles.loadingColumn}
-      >
-        <View
-          {...progressID}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        >
-          <ActivityIndicator
-            size={inline ? "small" : "large"}
-            color={theme.textSecondary}
-          />
-        </View>
-        <ThemedText
-          tone="secondary"
-          style={inline ? styles.shrink : styles.centered}
-        >
-          {title}
-        </ThemedText>
-      </View>
-    )
-  } else {
-    const artwork =
-      kind === "empty" && !accessibilitySize ? props.artwork : undefined
-    const symbol = kind === "empty" ? props.symbol : undefined
-    const textAlign = inline ? undefined : styles.centered
-    const glyphID = childID(testID, "glyph")
-    const symbolID = childID(testID, "symbol")
-    const artworkID = childID(testID, "artwork")
-    const textID = childID(testID, "text")
-    body = (
-      <>
-        {kind === "error" ? (
-          <Icon
-            {...glyphID}
-            ios="exclamationmark.circle"
-            android="error_outline"
-            size={40}
-            color={theme.error}
-            scaling="fixed"
-          />
-        ) : null}
-        {symbol === undefined ? null : (
-          <Icon
-            {...symbolID}
-            {...symbol}
-            size={40}
-            color={theme.textSecondary}
-            scaling="fixed"
-          />
-        )}
-        {artwork === undefined ? null : (
-          <Image
-            {...artworkID}
-            source={artwork[scheme]}
-            contentFit="contain"
-            accessible={false}
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-            style={styles.artwork}
-          />
-        )}
-        {/* accessibilityLiveRegion does not stop Fabric flattening this View away without a testID. */}
-        <View
-          {...textID}
-          collapsable={false}
-          accessibilityLiveRegion={liveRegion}
-          style={[styles.text, inline ? null : styles.fill]}
-        >
-          <ThemedText type="sectionTitle" style={textAlign}>
-            {title}
-          </ThemedText>
-          {caption ? (
-            <ThemedText tone="secondary" style={textAlign}>
-              {caption}
-            </ThemedText>
-          ) : null}
-        </View>
-        {props.action || props.secondaryAction ? (
-          <View style={[styles.actions, inline ? styles.leading : styles.fill]}>
-            {props.action ? (
-              <Button variant="filled" {...props.action} />
-            ) : null}
-            {props.secondaryAction ? (
-              <Button variant="text" {...props.secondaryAction} />
-            ) : null}
-          </View>
-        ) : null}
-      </>
+  if (props.kind === "error") {
+    const glyphID = childID(props.testID, "glyph")
+    return (
+      <Icon
+        {...glyphID}
+        ios="exclamationmark.circle"
+        android="error_outline"
+        size={40}
+        color={theme.error}
+        scaling="fixed"
+      />
     )
   }
+  const { symbol, artwork, testID } = props
+  const symbolID = childID(testID, "symbol")
+  const artworkID = childID(testID, "artwork")
+  return (
+    <>
+      {symbol === undefined ? null : (
+        <Icon
+          {...symbolID}
+          {...symbol}
+          size={40}
+          color={theme.textSecondary}
+          scaling="fixed"
+        />
+      )}
+      {artwork === undefined || accessibilitySize ? null : (
+        <Image
+          {...artworkID}
+          source={artwork[scheme]}
+          contentFit="contain"
+          accessible={false}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={styles.artwork}
+        />
+      )}
+    </>
+  )
+}
 
+function MessageText({
+  title,
+  caption,
+  inline,
+  testID,
+}: {
+  title: string
+  caption: string | undefined
+  inline: boolean
+  testID: string | undefined
+}) {
+  const textAlign = inline ? undefined : styles.centered
+  const textID = childID(testID, "text")
+  return (
+    // accessibilityLiveRegion does not stop Fabric flattening this View away without a testID.
+    <View
+      {...textID}
+      collapsable={false}
+      accessibilityLiveRegion={liveRegion()}
+      style={[styles.text, inline ? null : styles.fill]}
+    >
+      <ThemedText type="sectionTitle" style={textAlign}>
+        {title}
+      </ThemedText>
+      {caption ? (
+        <ThemedText tone="secondary" style={textAlign}>
+          {caption}
+        </ThemedText>
+      ) : null}
+    </View>
+  )
+}
+
+function MessageActions({
+  action,
+  secondaryAction,
+  inline,
+}: {
+  action: StatusAction | undefined
+  secondaryAction: StatusAction | undefined
+  inline: boolean
+}) {
+  if (!action && !secondaryAction) return null
+  return (
+    <View style={[styles.actions, inline ? styles.leading : styles.fill]}>
+      {action ? <Button variant="filled" {...action} /> : null}
+      {secondaryAction ? <Button variant="text" {...secondaryAction} /> : null}
+    </View>
+  )
+}
+
+function MessageBody(props: MessageProps & { inline: boolean }) {
+  const { title, caption, inline, testID } = props
+  return (
+    <>
+      <LeadingVisual {...props} />
+      <MessageText
+        title={title}
+        caption={caption}
+        inline={inline}
+        testID={testID}
+      />
+      <MessageActions
+        action={props.action}
+        secondaryAction={props.secondaryAction}
+        inline={inline}
+      />
+    </>
+  )
+}
+
+function StatusContainer({
+  presentation,
+  testID,
+  style,
+  children,
+}: {
+  presentation: Common["presentation"]
+  testID: string | undefined
+  style: StyleProp<StatusLayoutStyle> | undefined
+  children: ReactNode
+}) {
   if (presentation === "screen") {
     return (
       <ScrollView
@@ -208,21 +266,42 @@ export function StatusView(props: StatusViewProps) {
         style={StyleSheet.flatten([styles.screen, style])}
         contentContainerStyle={styles.screenContent}
       >
-        {body}
+        {children}
       </ScrollView>
     )
   }
-
   return (
     <View
       testID={testID}
       style={StyleSheet.flatten([
-        inline ? styles.inline : styles.section,
+        presentation === "inline" ? styles.inline : styles.section,
         style,
       ])}
     >
-      {body}
+      {children}
     </View>
+  )
+}
+
+export function StatusView(props: StatusViewProps) {
+  const { presentation, title, testID, style } = props
+  const inline = presentation === "inline"
+
+  useErrorAnnouncement(
+    props.kind !== "loading" && props.caption
+      ? `${title}. ${props.caption}`
+      : title,
+    { key: props.announcementKey ?? props.kind },
+  )
+
+  return (
+    <StatusContainer presentation={presentation} testID={testID} style={style}>
+      {props.kind === "loading" ? (
+        <LoadingBody title={title} inline={inline} testID={testID} />
+      ) : (
+        <MessageBody {...props} inline={inline} />
+      )}
+    </StatusContainer>
   )
 }
 
