@@ -7,7 +7,10 @@ import {
 import { Platform, type StyleProp, StyleSheet, View } from "react-native"
 
 import type { ButtonLayoutStyle } from "@/design/button/button"
-import { listRowPosition, ListRowPositionContext } from "@/design/list/list-row"
+import {
+  listRowPosition,
+  ListRowPositionContext,
+} from "@/design/list/list-row-position"
 import { ThemedText } from "@/design/text/themed-text"
 import { ListGeometry, Spacing } from "@/theme"
 
@@ -46,7 +49,7 @@ export function ListSection({
       <View>
         {rows.map((row, index) => (
           <ListRowPositionContext.Provider
-            key={row.key ?? index}
+            key={row.key}
             value={listRowPosition(index, rows.length)}
           >
             {row}

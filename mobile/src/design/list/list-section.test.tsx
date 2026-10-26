@@ -33,14 +33,11 @@ describe.each(["ios", "android"] as const)("ListSection on %s", (platform) => {
       const view = await render(
         <ListSection testID="section">
           {null}
-          {positions.map((_, index) => (
-            <ListRow
-              key={index}
-              label={`Row ${index}`}
-              onPress={jest.fn()}
-              testID={`row-${index}`}
-            />
-          ))}
+          {positions
+            .map((_, index) => `row-${index}`)
+            .map((id) => (
+              <ListRow key={id} label={id} onPress={jest.fn()} testID={id} />
+            ))}
           {false}
         </ListSection>,
       )

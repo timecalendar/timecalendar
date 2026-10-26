@@ -1,6 +1,6 @@
 import { type Href, router } from "expo-router"
 import type { SFSymbol } from "expo-symbols"
-import { createContext, type ReactElement, useContext } from "react"
+import { type ReactElement, type ReactNode, useContext } from "react"
 import {
   Platform,
   Pressable,
@@ -13,6 +13,10 @@ import {
 import { useListPalette } from "@/components/chrome"
 import type { ButtonLayoutStyle } from "@/design/button/button"
 import { Icon, type MaterialGlyph } from "@/design/icon/icon"
+import {
+  type ListRowPosition,
+  ListRowPositionContext,
+} from "@/design/list/list-row-position"
 import { Separator } from "@/design/list/separator"
 import { ThemedText } from "@/design/text/themed-text"
 import {
@@ -24,8 +28,6 @@ import {
   useIsAccessibilityTextSize,
   useTheme,
 } from "@/theme"
-
-export type ListRowPosition = "first" | "middle" | "last" | "single"
 
 export type ListRowLeading =
   | { icon: { ios: SFSymbol; android: MaterialGlyph } }
@@ -69,16 +71,6 @@ type ListRowStatic = {
 }
 
 export type ListRowProps = ListRowBase & (ListRowAction | ListRowStatic)
-
-export const ListRowPositionContext = createContext<ListRowPosition | null>(
-  null,
-)
-
-export function listRowPosition(index: number, count: number): ListRowPosition {
-  if (count === 1) return "single"
-  if (index === 0) return "first"
-  return index === count - 1 ? "last" : "middle"
-}
 
 const LINES = { label: 8, supporting: 8, value: 4, overline: 2 } as const
 const UNBREAKABLE_WORD_MIN_SCALE = 0.5
@@ -213,100 +205,133 @@ function DisclosureChevron({ testID }: { testID: string }) {
   )
 }
 
-export function ListRow(props: ListRowProps) {
+type RowModel = {
+  interactive: boolean
+  disabled: boolean
+  selected: boolean
+  stacked: boolean
+  name: string
+  textColor: string
+  secondaryColor: string
+  leadingBox: number | undefined
+}
+
+function useRowModel(props: ListRowProps, grouped: boolean): RowModel {
   const theme = useTheme()
   const palette = useListPalette()
   const accessibilitySize = useIsAccessibilityTextSize()
-  const contextPosition = useContext(ListRowPositionContext)
-  const position = contextPosition ?? props.position
-  const grouped = position !== undefined
-  const ios = Platform.OS === "ios"
-  const geometry = ios ? ListGeometry.ios : ListGeometry.android
-  const textColor = grouped ? palette.text : theme.text
-  const secondaryColor = grouped ? palette.textSecondary : theme.textSecondary
   const interactive = props.onPress !== undefined || props.href !== undefined
-  const disabled = interactive && props.disabled === true
   const selected = interactive && props.selected === true
-  const stacked = accessibilitySize && Boolean(props.value || selected)
-  const unbreakable = accessibilitySize && !/\s/.test(props.label.trim())
-  const leadingBox = leadingWidth(props.leading)
-  const name = props.accessibilityLabel ?? composedRowLabel(props)
+  return {
+    interactive,
+    disabled: interactive && props.disabled === true,
+    selected,
+    stacked: accessibilitySize && Boolean(props.value || selected),
+    name: props.accessibilityLabel ?? composedRowLabel(props),
+    textColor: grouped ? palette.text : theme.text,
+    secondaryColor: grouped ? palette.textSecondary : theme.textSecondary,
+    leadingBox: leadingWidth(props.leading),
+  }
+}
 
-  const value = props.value ? (
+function RowLabel({ row, model }: { row: ListRowProps; model: RowModel }) {
+  const theme = useTheme()
+  const accessibilitySize = useIsAccessibilityTextSize()
+  const unbreakable = accessibilitySize && !/\s/.test(row.label.trim())
+  return (
+    <ThemedText
+      {...(unbreakable
+        ? {
+            numberOfLines: 1,
+            adjustsFontSizeToFit: true,
+            minimumFontScale: UNBREAKABLE_WORD_MIN_SCALE,
+          }
+        : { numberOfLines: LINES.label })}
+      style={{ color: row.destructive ? theme.destructive : model.textColor }}
+    >
+      {row.label}
+    </ThemedText>
+  )
+}
+
+function keyedLines(lines: readonly (string | undefined)[]) {
+  const seen = new Map<string, number>()
+  return lines.flatMap((line) => {
+    if (!line) return []
+    const occurrence = (seen.get(line) ?? 0) + 1
+    seen.set(line, occurrence)
+    return [{ key: `${line}#${occurrence}`, line }]
+  })
+}
+
+function RowText({
+  row,
+  model,
+  stackedTrailing,
+}: {
+  row: ListRowProps
+  model: RowModel
+  stackedTrailing: ReactNode
+}) {
+  const supporting = keyedLines([row.subtitle, ...(row.details ?? [])])
+  return (
+    <View
+      style={styles.text}
+      {...(model.interactive
+        ? {}
+        : {
+            accessible: true,
+            accessibilityLabel: model.name,
+            ...(row.value ? { accessibilityValue: { text: row.value } } : {}),
+          })}
+    >
+      {row.overline ? (
+        <ThemedText
+          type="label"
+          themeColor={row.overline.tone}
+          numberOfLines={LINES.overline}
+        >
+          {row.overline.text}
+        </ThemedText>
+      ) : null}
+      <RowLabel row={row} model={model} />
+      {supporting.map(({ key, line }) => (
+        <ThemedText
+          key={key}
+          type="callout"
+          numberOfLines={LINES.supporting}
+          style={{ color: model.secondaryColor }}
+        >
+          {line}
+        </ThemedText>
+      ))}
+      {model.stacked ? (
+        <View style={styles.stackedTrailing}>{stackedTrailing}</View>
+      ) : null}
+    </View>
+  )
+}
+
+function RowContent({ row, model }: { row: ListRowProps; model: RowModel }) {
+  const value = row.value ? (
     <ThemedText
       numberOfLines={LINES.value}
       style={[
         styles.value,
-        stacked ? null : styles.trailingValue,
-        { color: secondaryColor },
+        model.stacked ? null : styles.trailingValue,
+        { color: model.secondaryColor },
       ]}
     >
-      {props.value}
+      {row.value}
     </ThemedText>
   ) : null
-  const check = selected ? (
-    <SelectedCheck testID={`${props.testID}-check`} />
+  const check = model.selected ? (
+    <SelectedCheck testID={`${row.testID}-check`} />
   ) : null
-
-  const text = (
-    <View
-      style={styles.text}
-      {...(interactive
-        ? {}
-        : {
-            accessible: true,
-            accessibilityLabel: name,
-            ...(props.value
-              ? { accessibilityValue: { text: props.value } }
-              : {}),
-          })}
-    >
-      {props.overline ? (
-        <ThemedText
-          type="label"
-          themeColor={props.overline.tone}
-          numberOfLines={LINES.overline}
-        >
-          {props.overline.text}
-        </ThemedText>
-      ) : null}
-      <ThemedText
-        {...(unbreakable
-          ? {
-              numberOfLines: 1,
-              adjustsFontSizeToFit: true,
-              minimumFontScale: UNBREAKABLE_WORD_MIN_SCALE,
-            }
-          : { numberOfLines: LINES.label })}
-        style={{ color: props.destructive ? theme.destructive : textColor }}
-      >
-        {props.label}
-      </ThemedText>
-      {[props.subtitle, ...(props.details ?? [])].map((line, index) =>
-        line ? (
-          <ThemedText
-            key={index}
-            type="callout"
-            numberOfLines={LINES.supporting}
-            style={{ color: secondaryColor }}
-          >
-            {line}
-          </ThemedText>
-        ) : null,
-      )}
-      {stacked ? (
-        <View style={styles.stackedTrailing}>
-          {value}
-          {check}
-        </View>
-      ) : null}
-    </View>
-  )
-
   // A static row's text column already carries the value as its
   // accessibilityValue, so the visible trailing copy is hidden.
   const trailingValue =
-    value && !interactive ? (
+    value && !model.interactive ? (
       <View
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
@@ -317,71 +342,102 @@ export function ListRow(props: ListRowProps) {
     ) : (
       value
     )
-
-  const content = (
+  return (
     <>
-      {props.leading && leadingBox !== undefined ? (
+      {row.leading && model.leadingBox !== undefined ? (
         <LeadingSlot
-          leading={props.leading}
-          width={leadingBox}
-          stacked={stacked}
+          leading={row.leading}
+          width={model.leadingBox}
+          stacked={model.stacked}
         />
       ) : null}
-      {text}
-      {stacked ? null : trailingValue}
-      {stacked ? null : check}
-      {interactive && props.trailing === "chevron" ? (
-        <DisclosureChevron testID={`${props.testID}-chevron`} />
+      <RowText
+        row={row}
+        model={model}
+        stackedTrailing={
+          <>
+            {value}
+            {check}
+          </>
+        }
+      />
+      {model.stacked ? null : trailingValue}
+      {model.stacked ? null : check}
+      {model.interactive && row.trailing === "chevron" ? (
+        <DisclosureChevron testID={`${row.testID}-chevron`} />
       ) : null}
-      {!interactive && props.trailing ? (
-        <View style={styles.accessory}>{props.trailing}</View>
+      {!model.interactive && row.trailing ? (
+        <View style={styles.accessory}>{row.trailing}</View>
       ) : null}
     </>
   )
+}
 
+function RowSeparator({
+  testID,
+  position,
+  leadingBox,
+}: {
+  testID: string
+  position: ListRowPosition | undefined
+  leadingBox: number | undefined
+}) {
+  if (Platform.OS !== "ios") return null
+  if (position !== "first" && position !== "middle") return null
+  return (
+    <View style={styles.separator}>
+      <Separator
+        testID={`${testID}-separator`}
+        inset={
+          leadingBox === undefined ? "leading" : { leadingWidth: leadingBox }
+        }
+      />
+    </View>
+  )
+}
+
+function activate(row: ListRowProps) {
+  if (row.href !== undefined) router.push(row.href)
+  else row.onPress?.()
+}
+
+export function ListRow(props: ListRowProps) {
+  const theme = useTheme()
+  const palette = useListPalette()
+  const contextPosition = useContext(ListRowPositionContext)
+  const position = contextPosition ?? props.position
+  const model = useRowModel(props, position !== undefined)
+  const ios = Platform.OS === "ios"
+  const geometry = ios ? ListGeometry.ios : ListGeometry.android
   const contentStyle: ViewStyle = {
     minHeight: geometry.rowMinHeight,
     paddingVertical: geometry.rowPaddingVertical,
     paddingHorizontal: ListGeometry.rowPaddingHorizontal,
   }
-
-  const separator =
-    ios && (position === "first" || position === "middle") ? (
-      <View style={styles.separator}>
-        <Separator
-          testID={`${props.testID}-separator`}
-          inset={
-            leadingBox === undefined ? "leading" : { leadingWidth: leadingBox }
-          }
-        />
-      </View>
-    ) : null
+  const { disabled, selected } = model
 
   return (
     <View
       style={StyleSheet.flatten([
         styles.container,
-        grouped ? { backgroundColor: palette.surface } : null,
+        position ? { backgroundColor: palette.surface } : null,
         position ? groupedShape(position) : null,
         disabled ? { opacity: StateOpacity.disabled } : null,
         props.style,
       ])}
     >
-      {interactive ? (
+      {model.interactive ? (
         <Pressable
           testID={props.testID}
           accessibilityRole="button"
-          accessibilityLabel={name}
+          accessibilityLabel={model.name}
           {...(props.value
             ? { accessibilityValue: { text: props.value } }
             : {})}
           {...(props.hint ? { accessibilityHint: props.hint } : {})}
           accessibilityState={{ selected, disabled }}
           disabled={disabled}
-          onPress={() => {
-            if (props.href !== undefined) router.push(props.href)
-            else props.onPress?.()
-          }}
+          onPress={() => activate(props)}
           android_ripple={
             ios || disabled
               ? undefined
@@ -397,14 +453,18 @@ export function ListRow(props: ListRowProps) {
             ])
           }
         >
-          {content}
+          <RowContent row={props} model={model} />
         </Pressable>
       ) : (
         <View testID={props.testID} style={[styles.content, contentStyle]}>
-          {content}
+          <RowContent row={props} model={model} />
         </View>
       )}
-      {separator}
+      <RowSeparator
+        testID={props.testID}
+        position={position}
+        leadingBox={model.leadingBox}
+      />
     </View>
   )
 }

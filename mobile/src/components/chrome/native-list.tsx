@@ -80,6 +80,10 @@ import {
   materialSymbolSource,
   type NativeListIcon,
 } from "@/components/chrome/native-list-icons"
+import {
+  type SegmentPosition,
+  segmentPosition,
+} from "@/components/chrome/native-list-position"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { useErrorAnnouncement } from "@/hooks/use-error-announcement"
 import { ListGeometry, useIsAccessibilityTextSize, useTheme } from "@/theme"
@@ -164,8 +168,6 @@ type NativeListRadioDialogProps<Value extends string> = {
   onDismiss: () => void
 }
 
-type SegmentPosition = "first" | "middle" | "last" | "single"
-
 type Segment = { position: SegmentPosition; titled: boolean }
 
 const SegmentContext = createContext<Segment>({
@@ -196,12 +198,6 @@ const segmentCorners: Record<SegmentPosition, { top: number; bottom: number }> =
       bottom: ListGeometry.android.outerRadius,
     },
   }
-
-export function segmentPosition(index: number, count: number): SegmentPosition {
-  if (count === 1) return "single"
-  if (index === 0) return "first"
-  return index === count - 1 ? "last" : "middle"
-}
 
 function useSegmentModifiers(): ModifierConfig[] {
   const { position, titled } = useContext(SegmentContext)

@@ -10,12 +10,13 @@ import {
   type TextStyle,
 } from "react-native"
 
-import { segmentPosition } from "@/components/chrome/native-list"
+import { segmentPosition } from "@/components/chrome/native-list-position"
 import { Button } from "@/design/button/button"
 import { usePlatform } from "@/test-support/platform"
 import { Colors, ListGeometry, StateOpacity } from "@/theme"
 
-import { ListRow, listRowPosition, ListRowSeparator } from "./list-row"
+import { ListRow, ListRowSeparator } from "./list-row"
+import { listRowPosition } from "./list-row-position"
 
 jest.mock("expo-router", () => ({ router: { push: jest.fn() } }))
 jest.mock("@/hooks/use-color-scheme", () => ({

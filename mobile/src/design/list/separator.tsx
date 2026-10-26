@@ -1,20 +1,14 @@
 import { Platform, StyleSheet, View } from "react-native"
 
-import { ListGeometry, useTheme } from "@/theme"
+import {
+  type SeparatorInset,
+  separatorInset,
+} from "@/design/list/separator-inset"
+import { useTheme } from "@/theme"
 
 export type SeparatorProps = {
-  inset?: "none" | "leading" | { leadingWidth: number }
+  inset?: SeparatorInset
   testID?: string | undefined
-}
-
-export function separatorInset(inset: SeparatorProps["inset"]): number {
-  if (inset === undefined || inset === "none") return 0
-  if (inset === "leading") return ListGeometry.rowPaddingHorizontal
-  return (
-    ListGeometry.rowPaddingHorizontal +
-    inset.leadingWidth +
-    ListGeometry.leadingGap
-  )
 }
 
 export function Separator({ inset = "none", testID }: SeparatorProps) {

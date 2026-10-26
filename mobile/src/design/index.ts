@@ -34,11 +34,10 @@ export {
   type ListRowLayoutStyle,
   type ListRowLeading,
   type ListRowOverline,
-  type ListRowPosition,
-  listRowPosition,
   type ListRowProps,
   ListRowSeparator,
 } from "./list/list-row"
+export { type ListRowPosition, listRowPosition } from "./list/list-row-position"
 export { ListSection, type ListSectionProps } from "./list/list-section"
 export { Separator, type SeparatorProps } from "./list/separator"
 export { ErrorNotice, FieldError } from "./status/error-surfaces"
