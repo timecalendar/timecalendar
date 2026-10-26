@@ -42,14 +42,46 @@ single effective-zone resolver continues to feed calendar, personal events, and 
 ## Design system gallery
 
 `src/design/gallery/` holds the fixture types, the explicit registry and the story-id helpers,
-exported through the `@/design` barrel. Fixtures are `*.gallery.tsx` files next to their component
-(`src/components/chrome/native-settings.gallery.tsx`,
-`src/components/chrome/native-text-entry-dialog.gallery.tsx`); the developer feature renders them
-at `/developer/gallery`. A fixture meta lists its story export names in display order (`stories`);
-a story that only one platform can render declares `platforms` (the native settings
-`FloatingAction` and `RadioDialog` stories are Android-only). Dialog stories close on Cancel and
-Save and reopen from a row behind them; the pending text-entry story releases its iOS lock after three
-seconds so Cancel works. See ADR [064](./decisions/064-in-house-component-gallery.md).
+exported through the `@/design` barrel. Fixtures are `*.gallery.tsx` files next to their component;
+the developer feature renders them at `/developer/gallery`. A fixture meta lists its story export
+names in display order (`stories`); a story that only one platform can render declares
+`platforms`. Dialog stories close on Cancel and Save and reopen from a row behind them; the pending
+text-entry story releases its iOS lock after three seconds so Cancel works. See ADR
+[064](./decisions/064-in-house-component-gallery.md).
+
+The registry lists, in this order (paths under `mobile/src/`):
+
+| Fixture                                                        | Meta id                          | Stories                                                                                                                                 |
+| -------------------------------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `components/root-page.gallery.tsx`                             | `root-page`                      | `default`, `caption-only`, `scrolls-under-header`, `readable-lane`, `long-strings`                                                      |
+| `components/keyboard-safe-action-layout.gallery.tsx`           | `keyboard-safe-action-layout`    | `default`, `fills-viewport`, `long-strings`                                                                                             |
+| `components/themed-text.gallery.tsx`                           | `themed-text`                    | `ramp`, `tones`, `long-strings`                                                                                                         |
+| `components/empty-state.gallery.tsx`                           | `empty-state`                    | `screen`, `screen-with-artwork`, `section`, `long-strings`                                                                              |
+| `components/error-surfaces.gallery.tsx`                        | `error-surfaces`                 | `state`, `state-busy`, `notice`, `notice-compact`, `field-error`, `long-strings`                                                        |
+| `components/primary-action.gallery.tsx`                        | `primary-action`                 | `default`, `disabled`, `busy`, `long-strings`                                                                                           |
+| `components/chrome/native-settings.gallery.tsx`                | `native-settings`                | `rows`, `destructive`, `switches`, `choices`, `header-and-alert`, `floating-action` (Android), `radio-dialog` (Android), `long-strings` |
+| `components/chrome/native-text-entry-dialog.gallery.tsx`       | `native-text-entry-dialog`       | `default`, `submit-disabled`, `pending`                                                                                                 |
+| `components/chrome/native-settings-numeric-editor.gallery.tsx` | `native-settings-numeric-editor` | `default`, `validation-error`, `long-strings`                                                                                           |
+| `components/chrome/menu-view.gallery.tsx`                      | `menu-view`                      | `default`, `states`, `long-strings`                                                                                                     |
+| `components/chrome/date-time-picker.gallery.tsx`               | `date-time-picker`               | `date`, `time`, `date-time` (iOS), `bounded`, `disabled` (iOS)                                                                          |
+| `components/chrome/glass-surface.gallery.tsx`                  | `glass-surface`                  | `regular`, `clear`, `interactive-button`, `long-strings`                                                                                |
+| `theme/tokens.gallery.tsx`                                     | `design-tokens`                  | `colors`, `contrast-pairs`, `spacing`, `radii`, `icon-sizes`, `elevation`                                                               |
+
+- Every `long-strings` story draws the shared `gallery.stress.*` copy (a French title of at least 70
+  characters, a body of at least 200, an action of at least 40 and a single 25-character word).
+- Stateful fixtures hold their own state and have a colocated `*.gallery.test.tsx`: presses update a
+  visible counter, dialogs close and reopen from a row behind them, menus update their trigger, and
+  the Android date picker writes a pick to its row.
+- On iOS the numeric editor story is the full-height SwiftUI form while open and a row while closed;
+  on Android the Compose dialog sits over the row. The Android date picker is a row plus the
+  `presentation="dialog"` picker opened on mount; iOS renders the compact inline control.
+- `themed-text--ramp` lists every `TypeVariant` with the running platform's size and line height
+  from `TypeRamp`; its step table `satisfies Record<TypeVariant, …>`, so a new step does not compile
+  until it is listed. `design-tokens--colors` draws every `Colors` role in both schemes whatever the
+  app scheme, and `design-tokens--contrast-pairs` draws `documentedContrastPairs` from
+  `src/theme/contrast.ts`, the table the contrast gate asserts.
+- The personal-events `DateTimeField` has no fixture: the registry lives in `src/design/`, which may
+  not import a feature (B-7). It gets one when it moves to `src/design/`.
 
 ## Responsive presentation ownership
 

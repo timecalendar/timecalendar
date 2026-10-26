@@ -99,14 +99,18 @@ jest.mock("@expo/ui/community/datetime-picker", () => {
   function DateTimePicker(props: {
     testID?: string
     value: Date
+    disabled?: boolean
     onValueChange?: (event: unknown, date: Date) => void
   }) {
-    const { testID, value, onValueChange } = props
+    const { testID, value, disabled, onValueChange, ...rest } = props
     return React.createElement(
       Pressable,
       {
+        ...rest,
         testID,
         accessibilityRole: "adjustable",
+        accessibilityState: { disabled: disabled ?? false },
+        disabled,
         onPress: () =>
           onValueChange?.(
             { nativeEvent: { timestamp: 0, utcOffset: 0 } },
@@ -124,7 +128,7 @@ jest.mock("@expo/ui/community/menu", () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require("react")
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { Pressable, Text, View } = require("react-native")
+  const { Platform, Pressable, Text, View } = require("react-native")
 
   const MenuView = React.forwardRef(function MenuView(
     props: {
@@ -141,14 +145,24 @@ jest.mock("@expo/ui/community/menu", () => {
   ) {
     const [expanded, setExpanded] = React.useState(false)
     React.useImperativeHandle(ref, () => ({ show: () => setExpanded(true) }))
+    // iOS: the children are the label of a SwiftUI Menu, itself the button.
+    // Android: the children sit in an accessible={false} Pressable that opens
+    // the menu on press; the children carry their own role.
+    const trigger = React.createElement(
+      Pressable,
+      Platform.OS === "ios"
+        ? { accessibilityRole: "button", onPress: () => setExpanded(true) }
+        : {
+            accessible: false,
+            focusable: false,
+            onPress: () => setExpanded(true),
+          },
+      props.children,
+    )
     return React.createElement(
       View,
       null,
-      React.createElement(
-        Pressable,
-        { onPress: () => setExpanded(true) },
-        props.children,
-      ),
+      trigger,
       expanded &&
         props.actions.map((action) =>
           React.createElement(

@@ -12,10 +12,14 @@ import {
   Motion,
   Spacing,
   StateOpacity,
-  type ThemeColor,
   useTheme,
   WordmarkMaxFontScale,
 } from "@/theme"
+import {
+  contrastFloorRatio,
+  contrastRatio,
+  documentedContrastPairs,
+} from "@/theme/contrast"
 
 // Drive the device color scheme the token layer resolves through.
 const mockUseColorScheme = jest.fn()
@@ -93,75 +97,6 @@ describe("theme", () => {
   })
 })
 
-function relativeLuminance(hex: string) {
-  if (!/^#[0-9a-f]{6}$/i.test(hex)) {
-    throw new Error(`contrastRatio needs an opaque 6-digit hex, got ${hex}`)
-  }
-  const linear = (offset: number) => {
-    const channel = parseInt(hex.slice(offset, offset + 2), 16) / 255
-    return channel <= 0.04045
-      ? channel / 12.92
-      : ((channel + 0.055) / 1.055) ** 2.4
-  }
-  return 0.2126 * linear(1) + 0.7152 * linear(3) + 0.0722 * linear(5)
-}
-
-function contrastRatio(foreground: string, background: string) {
-  const a = relativeLuminance(foreground)
-  const b = relativeLuminance(background)
-  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
-}
-
-type Floor = "body" | "ui"
-type Pair = [foreground: ThemeColor, background: ThemeColor, floor: Floor]
-
-const bothSchemes: Pair[] = [
-  ["text", "background", "body"],
-  ["text", "backgroundElement", "body"],
-  ["text", "backgroundSelected", "body"],
-  ["textSecondary", "background", "body"],
-  ["textSecondary", "backgroundElement", "body"],
-  ["text", "homeHero", "body"],
-  ["homeHeroDate", "homeHero", "body"],
-  ["onPrimary", "primaryStrong", "body"],
-  ["primaryStrong", "background", "ui"],
-  ["actionText", "background", "body"],
-  ["error", "background", "body"],
-  ["error", "backgroundElement", "body"],
-  ["destructive", "backgroundElement", "ui"],
-  ["positive", "background", "body"],
-  ["positive", "backgroundElement", "body"],
-  ["informational", "background", "body"],
-  ["informational", "backgroundElement", "body"],
-  ["outline", "background", "ui"],
-  ["outline", "backgroundElement", "ui"],
-  ["outline", "backgroundSelected", "ui"],
-]
-
-const perScheme: Record<keyof typeof Colors, Pair[]> = {
-  light: [
-    ["primary", "background", "ui"],
-    ["onPrimary", "primary", "ui"],
-  ],
-  dark: [
-    ["primary", "background", "body"],
-    ["logoSurface", "background", "ui"],
-  ],
-}
-
-const documentedPairs = (["light", "dark"] as const).flatMap((scheme) =>
-  [...bothSchemes, ...perScheme[scheme]].map(
-    ([foreground, background, floor]) => ({
-      scheme,
-      foreground,
-      background,
-      floor,
-    }),
-  ),
-)
-
-const floorRatio = { body: 4.5, ui: 3 } as const
-
 describe("contrastRatio", () => {
   it("matches known WCAG ratios", () => {
     expect(contrastRatio("#000000", "#ffffff")).toBeCloseTo(21, 2)
@@ -180,13 +115,13 @@ describe("contrastRatio", () => {
   })
 })
 
-describe.each(documentedPairs)(
+describe.each(documentedContrastPairs)(
   "$scheme $foreground on $background",
   ({ scheme, foreground, background, floor }) => {
     it(`clears the ${floor} contrast floor`, () => {
       expect(
         contrastRatio(Colors[scheme][foreground], Colors[scheme][background]),
-      ).toBeGreaterThanOrEqual(floorRatio[floor])
+      ).toBeGreaterThanOrEqual(contrastFloorRatio[floor])
     })
   },
 )

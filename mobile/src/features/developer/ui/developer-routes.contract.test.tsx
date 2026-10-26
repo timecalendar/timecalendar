@@ -15,11 +15,23 @@ const { relative, resolve } = jest.requireActual("node:path") as {
   resolve(...paths: string[]): string
 }
 
+const mockNavigation = {
+  getState: () => ({
+    index: 1,
+    routes: [
+      { name: "(tabs)", key: "tabs-1" },
+      { name: "developer/gallery/[story]", key: "story-1" },
+    ],
+  }),
+  reset: jest.fn(),
+  addListener: jest.fn(() => () => {}),
+}
 jest.mock("expo-router", () => {
   const { Text: MockText } = jest.requireActual("react-native")
   return {
     router: { push: jest.fn() },
     useLocalSearchParams: () => ({ story: "native-settings--rows" }),
+    useNavigation: () => mockNavigation,
     Redirect: ({ href }: { href: string }) => (
       <MockText testID="redirect">{href}</MockText>
     ),
@@ -82,5 +94,7 @@ it.each(developerRoutes)(
         .queryAllByTestId(/^(gallery|developer)-/)
         .map((node) => node.props.testID),
     }).toEqual({ route, redirect: "/settings", content: [] })
+    expect(mockNavigation.reset).not.toHaveBeenCalled()
+    expect(mockNavigation.addListener).not.toHaveBeenCalled()
   },
 )

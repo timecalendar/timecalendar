@@ -1,5 +1,6 @@
 import { render } from "@testing-library/react-native"
 import { createElement, type ReactNode } from "react"
+import { Pressable, Text, View } from "react-native"
 import type { TestInstance } from "test-renderer"
 
 import { galleryEntries } from "@/design"
@@ -65,7 +66,7 @@ const ACTIVATION_PROPS = [
   "onChange",
 ] as const
 
-function isInteractive(node: TestInstance): boolean {
+function isActivatable(node: TestInstance): boolean {
   return (
     node.type !== "TextInput" &&
     ACTIVATION_PROPS.some((prop) => typeof node.props[prop] === "function")
@@ -94,12 +95,34 @@ function elementIdentifier(node: TestInstance): string {
   return `${String(parent?.props.testID)} > ${kind}`
 }
 
+function missingSemantics(node: TestInstance): string[] {
+  return [
+    ...(node.props.accessibilityRole || node.props.role ? [] : ["role"]),
+    ...(accessibleName(node) ? [] : ["label"]),
+  ]
+}
+
+function isCheckedControl(node: TestInstance): boolean {
+  return (
+    isActivatable(node) &&
+    node.props.accessible !== false &&
+    missingSemantics(node).length === 0
+  )
+}
+
+// An accessible={false} control is no accessibility node (Expo UI's Android
+// MenuView anchor); it passes only when a descendant control carries the
+// semantics, otherwise its activation is unreachable to VoiceOver/TalkBack.
 function accessibilityViolations(root: TestInstance): string[] {
-  const controls = root.queryAll(isInteractive).flatMap((node) => {
-    const problems = [
-      ...(node.props.accessibilityRole || node.props.role ? [] : ["role"]),
-      ...(accessibleName(node) ? [] : ["label"]),
-    ]
+  const controls = root.queryAll(isActivatable).flatMap((node) => {
+    if (node.props.accessible === false) {
+      return node.queryAll(isCheckedControl).length
+        ? []
+        : [
+            `${elementIdentifier(node)} accessible={false} control has no accessible control inside`,
+          ]
+    }
+    const problems = missingSemantics(node)
     return problems.length
       ? [`${elementIdentifier(node)} missing ${problems.join(" and ")}`]
       : []
@@ -156,6 +179,41 @@ describe("gallery registry", () => {
         ),
       ),
     ).toEqual([])
+  })
+
+  it("skips an accessible={false} wrapper only when a descendant control carries the semantics", async () => {
+    const onPress = jest.fn()
+    const anchor = await render(
+      createElement(
+        View,
+        { testID: "anchor" },
+        createElement(
+          Pressable,
+          { accessible: false, onPress },
+          createElement(
+            Pressable,
+            { accessibilityRole: "button", onPress },
+            createElement(Text, null, "Open"),
+          ),
+        ),
+      ),
+    )
+    expect(accessibilityViolations(anchor.container)).toEqual([])
+
+    const bare = await render(
+      createElement(
+        View,
+        { testID: "bare" },
+        createElement(
+          Pressable,
+          { accessible: false, onPress },
+          createElement(Text, null, "Go"),
+        ),
+      ),
+    )
+    expect(accessibilityViolations(bare.container)).toEqual([
+      "bare > View accessible={false} control has no accessible control inside",
+    ])
   })
 
   it("gives every story a render function or args", () => {
