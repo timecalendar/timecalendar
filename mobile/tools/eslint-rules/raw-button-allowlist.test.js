@@ -8,7 +8,7 @@ const localRules = require("./index")
 const { rawButtonAllowlist } = require("./raw-button-allowlist")
 
 // Raising this needs a reason in review: the allowlist only shrinks.
-const RAW_BUTTON_ALLOWLIST_CEILING = 14
+const RAW_BUTTON_ALLOWLIST_CEILING = 13
 
 const root = resolve(__dirname, "../..")
 

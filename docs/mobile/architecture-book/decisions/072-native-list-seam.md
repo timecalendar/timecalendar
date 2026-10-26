@@ -53,6 +53,7 @@ Rejected:
   the gallery.
 - The rule cannot see JSON locale files (an unused `gallery.nativeSettings` key), Maestro YAML,
   Markdown or computed strings (`"native-" + "settings"`). Review covers those.
+- Related: 073 (Android row semantics, shared geometry).
 
 ## Revisit if
 

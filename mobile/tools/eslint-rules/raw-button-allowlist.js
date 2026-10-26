@@ -16,7 +16,6 @@ const rawButtonAllowlist = [
   "src/features/home/ui/upcoming-scroller.tsx", // 5.9 scroller presses
   "src/features/onboarding/ui/programme-screen.tsx", // 3.8 header Skip
   "src/features/school-selection/ui/school-group-picker-screen.tsx", // 5.5 school-group Confirm
-  "src/features/school-selection/ui/school-row.tsx", // 3.6 ListRow
 ]
 
 module.exports = { rawButtonAllowlist }

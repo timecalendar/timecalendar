@@ -23,6 +23,14 @@ appId: fr.samuelprak.timecalendar.dev
     visible:
       id: "user-calendar-row-e2e0e2e0-0000-4000-8000-000000000001"
     timeout: 60000
+# The Compose row's one node carries its name, value and hint for TalkBack.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - assertVisible:
+          id: "user-calendar-row-e2e0e2e0-0000-4000-8000-000000000001"
+          text: ".*Opens this calendar.s settings.*"
 - tapOn:
     id: "user-calendar-row-e2e0e2e0-0000-4000-8000-000000000001"
 - extendedWaitUntil:

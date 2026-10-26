@@ -821,15 +821,19 @@ jest.mock("@expo/ui/jetpack-compose", () => {
     const toggleable = modifierOf(modifiers, "toggleable") as
       | { value: boolean; handler: () => void }
       | undefined
+    // A bare Compose clickable exposes no role to TalkBack, so only selectable,
+    // toggleable and the app's semantics modifier project one.
+    const semantics = modifiers?.find(
+      (modifier) => modifier.$type === "timecalendarSemantics",
+    ) as { contentDescription?: string; role?: string } | undefined
     return {
       testID: testID(modifiers),
       accessibilityRole: selectable
         ? "radio"
         : toggleable
           ? "switch"
-          : click
-            ? "button"
-            : undefined,
+          : semantics?.role,
+      accessibilityLabel: semantics?.contentDescription,
       accessibilityState: {
         selected: selectable?.selected,
         checked: selectable?.selected ?? toggleable?.value,
@@ -903,6 +907,7 @@ jest.mock("@expo/ui/jetpack-compose", () => {
   function useMaterialColors() {
     return palette
   }
+  const getMaterialColors = jest.fn(() => palette)
   function ListItem(props: {
     children?: unknown
     colors?: unknown
@@ -911,7 +916,11 @@ jest.mock("@expo/ui/jetpack-compose", () => {
     const semantics = selectableProps(props.modifiers)
     return React.createElement(
       hostFor(semantics.onPress),
-      { ...semantics, colors: props.colors },
+      {
+        ...semantics,
+        colors: props.colors,
+        modifierTypes: props.modifiers?.map((modifier) => modifier.$type),
+      },
       props.children,
     )
   }
@@ -988,6 +997,7 @@ jest.mock("@expo/ui/jetpack-compose", () => {
     CircularProgressIndicator,
     Column,
     FloatingActionButton,
+    getMaterialColors,
     Host,
     Icon,
     LazyColumn,

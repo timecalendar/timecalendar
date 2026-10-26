@@ -350,6 +350,28 @@ describe("native list chrome on ios", () => {
 describe("native list rows with subtitles, destructive actions, and a FAB on ios", () => {
   usePlatform("ios")
 
+  it("reads the badge after the name, keeping the value and hint apart", async () => {
+    const view = await render(
+      <NativeList>
+        <NativeListSection>
+          <NativeListRow
+            kind="navigation"
+            label="Zone"
+            value="Paris"
+            badge="Unavailable"
+            hint="Opens the chooser"
+            href="/about"
+            testID="row"
+          />
+        </NativeListSection>
+      </NativeList>,
+    )
+    const row = view.getByTestId("row")
+    expect(row.props.accessibilityLabel).toBe("Zone, Unavailable")
+    expect(row.props.accessibilityValue).toEqual({ text: "Paris" })
+    expect(row.props.accessibilityHint).toBe("Opens the chooser")
+  })
+
   it("stacks a secondary subtitle, reads it in the default label, and colors destructive labels", async () => {
     const view = await render(
       <NativeList>
@@ -683,6 +705,113 @@ describe("native list chrome on android", () => {
   })
 })
 
+describe("android row semantics", () => {
+  usePlatform("android")
+
+  it("describes an action row by name, value and hint with the button role", async () => {
+    const view = await render(
+      <NativeList>
+        <NativeListRow
+          kind="action"
+          label="Visible"
+          accessibilityLabel="Name"
+          value="Value"
+          hint="Hint"
+          onPress={jest.fn()}
+          testID="row"
+        />
+      </NativeList>,
+    )
+    const row = view.getByTestId("row")
+    expect(row.props.accessibilityRole).toBe("button")
+    expect(row.props.accessibilityLabel).toBe("Name, Value, Hint")
+  })
+
+  it("names a navigation row by its label and subtitle", async () => {
+    const view = await render(
+      <NativeList>
+        <NativeListRow
+          kind="navigation"
+          label="Label"
+          subtitle="Subtitle"
+          href="/about"
+          testID="row"
+        />
+      </NativeList>,
+    )
+    expect(
+      view.getByRole("button", { name: "Label, Subtitle" }).props.testID,
+    ).toBe("row")
+  })
+
+  it("reads the badge between the value and the hint", async () => {
+    const view = await render(
+      <NativeList>
+        <NativeListRow
+          kind="navigation"
+          label="Activity"
+          value="Today"
+          badge="3"
+          hint="Opens activity"
+          href="/about"
+          testID="row"
+        />
+      </NativeList>,
+    )
+    expect(view.getByTestId("row").props.accessibilityLabel).toBe(
+      "Activity, Today, 3, Opens activity",
+    )
+  })
+
+  it("gives a value row its description and no role", async () => {
+    const view = await render(
+      <NativeList>
+        <NativeListRow
+          kind="value"
+          label="Version"
+          value="4.0.0"
+          testID="row"
+        />
+      </NativeList>,
+    )
+    const row = view.getByTestId("row")
+    expect(row.props.accessibilityLabel).toBe("Version, 4.0.0")
+    expect(row.props.accessibilityRole).toBeUndefined()
+  })
+
+  it("reads only the name when a row has no value or hint", async () => {
+    const view = await render(
+      <NativeList>
+        <NativeListRow
+          kind="action"
+          label="Only"
+          onPress={jest.fn()}
+          testID="row"
+        />
+      </NativeList>,
+    )
+    expect(view.getByTestId("row").props.accessibilityLabel).toBe("Only")
+  })
+
+  it("applies the semantics modifier after the test tag and click action", async () => {
+    const view = await render(
+      <NativeList>
+        <NativeListRow
+          kind="action"
+          label="Ordered"
+          onPress={jest.fn()}
+          testID="row"
+        />
+      </NativeList>,
+    )
+    const types: string[] = view.getByTestId("row").props.modifierTypes
+    expect(types.at(-1)).toBe("timecalendarSemantics")
+    expect(types.indexOf("testID")).toBeLessThan(types.length - 1)
+    expect(types.indexOf("clickable")).toBeLessThan(types.length - 1)
+    expect(types.indexOf("clickable")).toBeGreaterThan(-1)
+  })
+})
+
 describe.each(["ios", "android"] as const)(
   "native list dialog placement on %s",
   (platform) => {
@@ -881,7 +1010,7 @@ describe("iOS list rows at accessibility text sizes", () => {
     expect(large).toEqual([
       {
         id: "nav",
-        accessibilityLabel: "Environment",
+        accessibilityLabel: "Environment, 1",
         accessibilityValue: { text: "Production" },
       },
       {

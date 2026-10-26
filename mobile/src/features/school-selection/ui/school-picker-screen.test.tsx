@@ -84,6 +84,7 @@ const mockDismiss = router.dismiss as jest.Mock
 const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock
 const mockStackScreen = Stack.Screen as unknown as jest.Mock
 const mockUseColorScheme = useColorScheme as jest.Mock
+const hidden = { includeHiddenElements: true }
 
 const screenOptions = () =>
   mockStackScreen.mock.lastCall?.[0].options as {
@@ -475,8 +476,8 @@ describe("SchoolPickerScreen", () => {
     )
     const { getByTestId, queryByTestId } = await render(<SchoolPickerScreen />)
 
-    expect(getByTestId("onboarding-school-logo-a")).toBeTruthy()
-    expect(queryByTestId("onboarding-school-monogram-a")).toBeNull()
+    expect(getByTestId("onboarding-school-logo-a", hidden)).toBeTruthy()
+    expect(queryByTestId("onboarding-school-monogram-a", hidden)).toBeNull()
   })
 
   it("renders the dark logo in dark mode", async () => {
@@ -493,9 +494,9 @@ describe("SchoolPickerScreen", () => {
     )
     const { getByTestId } = await render(<SchoolPickerScreen />)
 
-    expect(getByTestId("onboarding-school-logo-a").props.source).toEqual([
-      { uri: "https://cdn.example/a-dark.png" },
-    ])
+    expect(
+      getByTestId("onboarding-school-logo-a", hidden).props.source,
+    ).toEqual([{ uri: "https://cdn.example/a-dark.png" }])
   })
 
   it("uses the light logo in dark mode when no dark logo exists", async () => {
@@ -507,9 +508,9 @@ describe("SchoolPickerScreen", () => {
     )
     const { getByTestId } = await render(<SchoolPickerScreen />)
 
-    expect(getByTestId("onboarding-school-logo-a").props.source).toEqual([
-      { uri: "https://cdn.example/a.png" },
-    ])
+    expect(
+      getByTestId("onboarding-school-logo-a", hidden).props.source,
+    ).toEqual([{ uri: "https://cdn.example/a.png" }])
   })
 
   it("falls back to the monogram when there is no logo url", async () => {
@@ -518,8 +519,8 @@ describe("SchoolPickerScreen", () => {
     )
     const { getByTestId, getByText } = await render(<SchoolPickerScreen />)
 
-    expect(getByTestId("onboarding-school-monogram-b")).toBeTruthy()
-    expect(getByText("B")).toBeTruthy()
+    expect(getByTestId("onboarding-school-monogram-b", hidden)).toBeTruthy()
+    expect(getByText("B", hidden)).toBeTruthy()
   })
 
   it("announces the status to VoiceOver once per state kind, not per query", async () => {
@@ -540,6 +541,31 @@ describe("SchoolPickerScreen", () => {
     await typeSearch("zz")
     expect(announce).toHaveBeenCalledTimes(1)
     announce.mockRestore()
+  })
+
+  describe.each([
+    ["ios", 1],
+    ["android", 0],
+  ] as const)("row separators on %s", (os, count) => {
+    usePlatform(os)
+
+    it("separates rows with an inset hairline only on iOS", async () => {
+      mockUseSchools.mockReturnValue(
+        ready([
+          { id: "a", name: "Alpha University", imageUrl: "" },
+          { id: "b", name: "Beta College", imageUrl: "" },
+        ]),
+      )
+      const { queryAllByTestId } = await render(<SchoolPickerScreen />)
+
+      const separators = queryAllByTestId("onboarding-school-separator", hidden)
+      expect(separators).toHaveLength(count)
+      if (count) {
+        expect(StyleSheet.flatten(separators[0]!.props.style)).toMatchObject({
+          paddingStart: Spacing.three + 40 + Spacing.three,
+        })
+      }
+    })
   })
 
   describe.each(["ios", "android"] as const)("status glyph on %s", (os) => {
@@ -574,10 +600,10 @@ describe("SchoolPickerScreen", () => {
     const { getByTestId } = await render(<SchoolPickerScreen />)
 
     await act(async () => {
-      fireEvent(getByTestId("onboarding-school-logo-a"), "error", {
+      fireEvent(getByTestId("onboarding-school-logo-a", hidden), "error", {
         nativeEvent: { error: "load failed" },
       })
     })
-    expect(getByTestId("onboarding-school-monogram-a")).toBeTruthy()
+    expect(getByTestId("onboarding-school-monogram-a", hidden)).toBeTruthy()
   })
 })

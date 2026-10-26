@@ -71,6 +71,7 @@ import {
 } from "react"
 import { Platform, StyleSheet } from "react-native"
 
+import { composeSemantics } from "@/components/chrome/compose-semantics"
 import {
   NativeListContext,
   useAssertOutsideNativeList,
@@ -79,9 +80,14 @@ import {
   materialSymbolSource,
   type NativeListIcon,
 } from "@/components/chrome/native-list-icons"
+import {
+  type ListRowPosition,
+  listRowPosition,
+} from "@/design/list/list-row-position"
+import { joinRowName } from "@/design/list/row-name"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { useErrorAnnouncement } from "@/hooks/use-error-announcement"
-import { useIsAccessibilityTextSize, useTheme } from "@/theme"
+import { ListGeometry, useIsAccessibilityTextSize, useTheme } from "@/theme"
 
 export type NativeListRowProps = {
   kind: "navigation" | "action" | "value"
@@ -163,36 +169,36 @@ type NativeListRadioDialogProps<Value extends string> = {
   onDismiss: () => void
 }
 
-type SegmentPosition = "first" | "middle" | "last" | "single"
-
-type Segment = { position: SegmentPosition; titled: boolean }
+type Segment = { position: ListRowPosition; titled: boolean }
 
 const SegmentContext = createContext<Segment>({
   position: "single",
   titled: true,
 })
 
-const OUTER_RADIUS = 20
-const INNER_RADIUS = 4
-const SEGMENT_GAP = 2
-const LIST_INSET = 16
 const LIST_BOTTOM_PADDING = 24
 const FAB_CLEARANCE = 88
 const UNBREAKABLE_WORD_MIN_SCALE = 0.5
 
-const segmentCorners: Record<SegmentPosition, { top: number; bottom: number }> =
+const segmentCorners: Record<ListRowPosition, { top: number; bottom: number }> =
   {
-    first: { top: OUTER_RADIUS, bottom: INNER_RADIUS },
-    middle: { top: INNER_RADIUS, bottom: INNER_RADIUS },
-    last: { top: INNER_RADIUS, bottom: OUTER_RADIUS },
-    single: { top: OUTER_RADIUS, bottom: OUTER_RADIUS },
+    first: {
+      top: ListGeometry.android.outerRadius,
+      bottom: ListGeometry.android.innerRadius,
+    },
+    middle: {
+      top: ListGeometry.android.innerRadius,
+      bottom: ListGeometry.android.innerRadius,
+    },
+    last: {
+      top: ListGeometry.android.innerRadius,
+      bottom: ListGeometry.android.outerRadius,
+    },
+    single: {
+      top: ListGeometry.android.outerRadius,
+      bottom: ListGeometry.android.outerRadius,
+    },
   }
-
-function segmentPosition(index: number, count: number): SegmentPosition {
-  if (count === 1) return "single"
-  if (index === 0) return "first"
-  return index === count - 1 ? "last" : "middle"
-}
 
 function useSegmentModifiers(): ModifierConfig[] {
   const { position, titled } = useContext(SegmentContext)
@@ -201,10 +207,10 @@ function useSegmentModifiers(): ModifierConfig[] {
   const trailing = position === "last" || position === "single"
   return [
     padding(
-      LIST_INSET,
-      leading && !titled ? LIST_INSET : 0,
-      LIST_INSET,
-      trailing ? 0 : SEGMENT_GAP,
+      ListGeometry.android.listInset,
+      leading && !titled ? ListGeometry.android.listInset : 0,
+      ListGeometry.android.listInset,
+      trailing ? 0 : ListGeometry.android.segmentGap,
     ),
     clip(
       Shapes.RoundedCorner({
@@ -341,7 +347,12 @@ function ComposeListSection({
           color={palette.primary}
           style={{ typography: "titleSmall" }}
           modifiers={[
-            padding(LIST_INSET, 24, LIST_INSET, 8),
+            padding(
+              ListGeometry.android.listInset,
+              24,
+              ListGeometry.android.listInset,
+              8,
+            ),
             ...(sectionTestID ? [testID(sectionTestID)] : []),
           ]}
         >
@@ -351,7 +362,7 @@ function ComposeListSection({
       {items.map((child, index) => (
         <SegmentContext.Provider
           key={isValidElement(child) && child.key !== null ? child.key : index}
-          value={{ position: segmentPosition(index, items.length), titled }}
+          value={{ position: listRowPosition(index, items.length), titled }}
         >
           {child}
         </SegmentContext.Provider>
@@ -360,7 +371,14 @@ function ComposeListSection({
         <MaterialText
           color={palette.onSurfaceVariant}
           style={{ typography: "bodySmall" }}
-          modifiers={[padding(LIST_INSET, 8, LIST_INSET, 0)]}
+          modifiers={[
+            padding(
+              ListGeometry.android.listInset,
+              8,
+              ListGeometry.android.listInset,
+              0,
+            ),
+          ]}
         >
           {footer}
         </MaterialText>
@@ -445,8 +463,13 @@ function ComposeListAlert({
         trailingContentColor: palette.onErrorContainer,
       }}
       modifiers={[
-        padding(LIST_INSET, LIST_INSET, LIST_INSET, 0),
-        clip(Shapes.RoundedCorner(OUTER_RADIUS)),
+        padding(
+          ListGeometry.android.listInset,
+          ListGeometry.android.listInset,
+          ListGeometry.android.listInset,
+          0,
+        ),
+        clip(Shapes.RoundedCorner(ListGeometry.android.outerRadius)),
         testID(alertTestID),
       ]}
     >
@@ -722,20 +745,17 @@ export function NativeListRow(props: NativeListRowProps) {
   return <ComposeListRow {...props} />
 }
 
-function defaultAccessibilityLabel({
-  label,
-  subtitle,
-}: Pick<NativeListRowProps, "label" | "subtitle">) {
-  return subtitle ? `${label}, ${subtitle}` : label
+function rowName(
+  props: Pick<NativeListRowProps, "accessibilityLabel" | "label" | "subtitle">,
+) {
+  return props.accessibilityLabel ?? joinRowName([props.label, props.subtitle])
 }
 
 function SwiftListRow(props: NativeListRowProps) {
   const stacked = useIsAccessibilityTextSize() && Boolean(props.value)
   const modifiers = [
     accessibilityIdentifier(props.testID),
-    accessibilityLabel(
-      props.accessibilityLabel ?? defaultAccessibilityLabel(props),
-    ),
+    accessibilityLabel(joinRowName([rowName(props), props.badge])),
     ...(props.hint ? [accessibilityHint(props.hint)] : []),
     ...(props.value ? [accessibilityValue(props.value)] : []),
   ]
@@ -812,6 +832,12 @@ function ComposeListRow(props: NativeListRowProps) {
   const interactive = props.kind !== "value"
   const supporting = props.subtitle ?? props.value
   const trailingValue = props.subtitle ? props.value : undefined
+  const contentDescription = joinRowName([
+    rowName(props),
+    props.value,
+    props.badge,
+    props.hint,
+  ])
   return (
     <ListItem
       colors={listItemColors(palette)}
@@ -819,6 +845,12 @@ function ComposeListRow(props: NativeListRowProps) {
         ...segment,
         testID(props.testID),
         ...(interactive ? [clickable(() => activateRow(props))] : []),
+        // Last, so it clears ListItem's own text while the outer test tag and
+        // click action survive.
+        composeSemantics({
+          contentDescription,
+          ...(interactive ? { role: "button" as const } : {}),
+        }),
       ]}
     >
       {props.icon ? <ComposeLeadingIcon icon={props.icon} /> : null}

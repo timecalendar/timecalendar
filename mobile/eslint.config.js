@@ -11,6 +11,9 @@ const simpleImportSort = require("eslint-plugin-simple-import-sort")
 
 const localRules = require("./tools/eslint-rules")
 const {
+  adHocSeparatorAllowlist,
+} = require("./tools/eslint-rules/ad-hoc-separator-allowlist")
+const {
   adHocStatusAllowlist,
 } = require("./tools/eslint-rules/ad-hoc-status-allowlist")
 const {
@@ -866,6 +869,22 @@ module.exports = defineConfig([
     plugins: { local: localRules },
     rules: {
       "local/no-ad-hoc-status": "error",
+    },
+  },
+  {
+    // List separators are the shared Separator / ListRowSeparator (ADR 073).
+    name: "timecalendar/ad-hoc-separator",
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: [
+      "src/design/**",
+      "src/theme/**",
+      "src/features/calendar/renderer/**",
+      "**/*.test.{ts,tsx}",
+      ...adHocSeparatorAllowlist,
+    ],
+    plugins: { local: localRules },
+    rules: {
+      "local/no-ad-hoc-separator": "error",
     },
   },
   {

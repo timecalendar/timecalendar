@@ -78,6 +78,28 @@ These rules guard real product touchables (interactive controls declare `accessi
   The screen-reader pass is owner-led
   (`docs/react-native-migration/inbox/2026-10-26-mobile-ds-text-field-screen-reader-pass.md`).
 
+## Lists — encoded in `ListRow`
+
+- An activatable row is one element: a `button` whose name is the caller's `accessibilityLabel`,
+  else the overline, label, subtitle and detail lines joined with ", ". Its `value` is the
+  accessibility value, its `hint` the hint, and `selected` and `disabled` are derived into
+  `accessibilityState`, never passed. Leading icons and elements, the chevron and the check are
+  hidden from assistive technology.
+- A static row's text column is one element with the same composed name and value and no role;
+  its trailing accessory (a small text `Button` with its own name) is the next stop, so a screen
+  reader reads the text, then the action.
+- A `ListSection` title is a `header`. A `Separator` is hidden from assistive technology.
+- Rows are at least 44pt (iOS) or 56dp (Android) tall and grow with their text. Line caps are
+  label 8, supporting 8, value 4, overline 2; at accessibility text sizes the value and check
+  stack under the label, and a single-word label shrinks to one line instead of breaking.
+- On Android, a `NativeListRow` from the native seam is one TalkBack node whose content
+  description is the name, then the value, then the badge, then the hint, with `Role.Button` on
+  navigation and action rows (the `timecalendarSemantics` modifier, ADR
+  [073](./decisions/073-list-row-family.md)). VoiceOver reads the iOS row as name and badge,
+  value, button, hint.
+- The screen-reader pass for both is owner-led
+  (`docs/react-native-migration/inbox/2026-10-26-mobile-ds-list-row-device-pass.md`).
+
 ## Accessible async status
 
 - Every loading, empty and error state is `StatusView` (ADR [069](./decisions/069-status-view.md)).
@@ -195,6 +217,14 @@ Android emulators run on the Windows host, not the Mac.
   `src/design/field/date-time-field.test.tsx` proves the Android "label, value" name, its error
   hint and the iOS error text; `src/design/field/field-error-hint.test.ts` proves the hint
   composition.
+- `src/design/list/list-row.test.tsx` proves the composed name, value, hint, derived state, the
+  static row's single text element and accessory stop, and the hidden leading and trailing
+  glyphs on both platforms; `list-section.test.tsx` proves the header role.
+  `src/components/chrome/native-list.test.tsx` ("android row semantics") proves the Android
+  `NativeListRow` description order and button role, and Maestro flow 03 asserts that description
+  on a real Android row. The Expo UI mock (`jest/setup-expo-ui.ts`) derives a role only from
+  `selectable`, `toggleable` and `timecalendarSemantics`, never from a bare `clickable`, so the
+  registry check sees what TalkBack meets.
 
 ## What lint can't encode → prose, each with reason + owner
 
@@ -202,7 +232,7 @@ None of these is a sound lint rule; each is recorded so the owning step/feature 
 
 - **Touch-target minimums (44pt iOS / 48dp Android)** — a runtime layout property, not statically checkable. Owned by interactive controls and the [Definition of Done](./definition-of-done.md) (Accessibility axis).
 - **Meaningful labels** — lint guarantees a label _exists_ on a touchable, never that it's _meaningful_ or correctly translated; human review + the translated-copy rule cover semantics.
-- **Manual screen-reader passes (VoiceOver / TalkBack)** — focus order, grouping, announcement quality: runtime behavior no static tool can assert. Owned by the [Definition of Done](./definition-of-done.md) (Accessibility axis).
+- **Manual screen-reader passes (VoiceOver / TalkBack)** — focus order, grouping, announcement quality: runtime behavior no static tool can assert. Owned by the [Definition of Done](./definition-of-done.md) (Accessibility axis); the list rows' pass is the [list-row device pass](../../react-native-migration/inbox/2026-10-26-mobile-ds-list-row-device-pass.md).
 - **Reduced motion** — **discharged by each animation owner**: Splash handles its own `AccessibilityInfo.isReduceMotionEnabled` branch ([features.md → Splash](./features.md#splash)). The shared `src/hooks/use-reduced-motion.ts` hook reads and subscribes to the live preference for onboarding and Calendar. Calendar pages directly under reduced motion; otherwise Today and deep links animate only the final page. Lint cannot know whether a runtime preference reaches every animation, so each animation owner retains this obligation.
 - **Color contrast** — a theme-token property, not lint-encodable; **discharged by theming**: the AA token pairs are documented in `src/theme/tokens.ts`, listed in `documentedContrastPairs` (`src/theme/contrast.ts`), computed against their floors in `src/theme/theme.test.tsx` and drawn by the `design-tokens--contrast-pairs` gallery story (see [Theming & native-chrome](./theming.md)); the DoD's manual contrast review checks that rendered screens draw those pairs. A call-site checker stays deferred (its trigger is recorded there).
 

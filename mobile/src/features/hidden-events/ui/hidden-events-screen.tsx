@@ -6,10 +6,11 @@ import {
   Button,
   ErrorNotice,
   headerScrollProps,
+  ListRow,
+  ListSection,
   noDataArtwork,
   RootPage,
   StatusView,
-  ThemedText,
 } from "@/design"
 import {
   displayEventTitle,
@@ -19,7 +20,7 @@ import {
 } from "@/features/calendar/data"
 import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
 import { useDisplayZone } from "@/features/settings/prefs"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Spacing } from "@/theme"
 
 // The hidden-events management screen (D7) — PRESENTATIONAL (70% floor). Hide-by-
 // name has no per-event details surface, so un-hide MUST be reachable here. It
@@ -39,7 +40,6 @@ interface UidEntry {
 
 export function HiddenEventsScreen() {
   const { t, i18n } = useTranslation()
-  const theme = useTheme()
   const locale = resolveLocale(i18n.language)
   const displayZone = useDisplayZone()
   const { uidHiddenEvents, namedHiddenEvents } = useHiddenEvents()
@@ -103,42 +103,46 @@ export function HiddenEventsScreen() {
             ) : (
               <>
                 {namedHiddenEvents.length > 0 && (
-                  <View style={styles.section}>
-                    <ThemedText type="subtitle">
-                      {t("hiddenEvents.namedSection")}
-                    </ThemedText>
+                  <ListSection
+                    title={t("hiddenEvents.namedSection")}
+                    testID="hidden-events-name-section"
+                  >
                     {namedHiddenEvents.map((name) => (
-                      <HiddenRow
+                      <ListRow
                         key={`name-${name}`}
-                        title={name}
-                        unhideLabel={t("hiddenEvents.unhideLabel", {
-                          title: name,
-                        })}
-                        onUnhide={() => unhideName(name)}
-                        background={theme.backgroundElement}
+                        label={name}
+                        testID={`hidden-events-name-${name}`}
+                        trailing={
+                          <UnhideButton
+                            title={name}
+                            onUnhide={() => unhideName(name)}
+                          />
+                        }
                       />
                     ))}
-                  </View>
+                  </ListSection>
                 )}
 
                 {uidEntries.length > 0 && (
-                  <View style={styles.section}>
-                    <ThemedText type="subtitle">
-                      {t("hiddenEvents.uidSection")}
-                    </ThemedText>
+                  <ListSection
+                    title={t("hiddenEvents.uidSection")}
+                    testID="hidden-events-uid-section"
+                  >
                     {uidEntries.map((entry) => (
-                      <HiddenRow
+                      <ListRow
                         key={`uid-${entry.uid}`}
-                        title={entry.title}
+                        label={entry.title}
                         subtitle={entry.time}
-                        unhideLabel={t("hiddenEvents.unhideLabel", {
-                          title: entry.title,
-                        })}
-                        onUnhide={() => unhideUid(entry.uid)}
-                        background={theme.backgroundElement}
+                        testID={`hidden-events-uid-${entry.uid}`}
+                        trailing={
+                          <UnhideButton
+                            title={entry.title}
+                            onUnhide={() => unhideUid(entry.uid)}
+                          />
+                        }
                       />
                     ))}
-                  </View>
+                  </ListSection>
                 )}
               </>
             )}
@@ -149,38 +153,22 @@ export function HiddenEventsScreen() {
   )
 }
 
-function HiddenRow({
+function UnhideButton({
   title,
-  subtitle,
-  unhideLabel,
   onUnhide,
-  background,
 }: {
   title: string
-  subtitle?: string
-  unhideLabel: string
   onUnhide: () => void
-  background: string
 }) {
   const { t } = useTranslation()
   return (
-    <View style={[styles.row, { backgroundColor: background }]}>
-      <View style={styles.rowText}>
-        <ThemedText>{title}</ThemedText>
-        {subtitle !== undefined && (
-          <ThemedText type="small" themeColor="textSecondary">
-            {subtitle}
-          </ThemedText>
-        )}
-      </View>
-      <Button
-        variant="text"
-        size="small"
-        label={t("hiddenEvents.unhide")}
-        accessibilityLabel={unhideLabel}
-        onPress={onUnhide}
-      />
-    </View>
+    <Button
+      variant="text"
+      size="small"
+      label={t("hiddenEvents.unhide")}
+      accessibilityLabel={t("hiddenEvents.unhideLabel", { title })}
+      onPress={onUnhide}
+    />
   )
 }
 
@@ -189,25 +177,9 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     paddingTop: Spacing.four,
-    gap: Spacing.four,
     paddingBottom: Spacing.four,
-  },
-  section: {
-    gap: Spacing.two,
   },
   error: {
     marginBottom: Spacing.three,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: Spacing.three,
-    borderRadius: Radii.medium,
-    gap: Spacing.three,
-  },
-  rowText: {
-    flex: 1,
-    gap: Spacing.half,
   },
 })

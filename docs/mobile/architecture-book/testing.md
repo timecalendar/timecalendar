@@ -64,6 +64,12 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   `coverageThreshold` (ADR [070](./decisions/070-text-field.md)). The field tests run both
   platforms with `usePlatform` and drive the font scale by mocking `useWindowDimensions`; the date
   field's fixtures are built in the display zone, so they pass in the time-zone matrix.
+- **`src/design/list/list-row.tsx`, `list-section.tsx`, `separator.tsx`, `list-row-position.ts`,
+  `separator-inset.ts` and the chrome modules `src/components/chrome/compose-semantics.ts`
+  and `list-palette.ts` have their own 90% lines/branches keys** in `coverageThreshold` (ADR [073](./decisions/073-list-row-family.md)).
+  The list tests run both platforms with `usePlatform`; the iOS grouped radius reads
+  `Platform.Version`, a getter, so tests mock it with `jest.spyOn(Platform, "Version", "get")`.
+  The ad-hoc-separator allowlist is a contract test like the raw-text-input one below.
 - **The raw-text-input allowlist is a contract test.**
   `tools/eslint-rules/raw-text-input-allowlist.test.js` lints each allowlisted file with only
   `local/no-raw-text-input` and fails on a stale, missing or duplicate entry and on growth past
@@ -127,6 +133,11 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   modifier arrays from another module). The SwiftUI mock includes `DatePicker`, which keeps its
   `title`, `range`, `displayedComponents` and `modifiers` on the element for assertions. `Group` renders with the fixed `testID` `swiftui-group` so
   tests can read the sheet's modifiers ([theming.md](./theming.md) → Identifiers).
+- **The Expo UI mock derives a Compose role only from real semantics.** `selectableProps` in
+  `jest/setup-expo-ui.ts` gives a node a role from `selectable` (radio), `toggleable` (switch) or
+  the `timecalendarSemantics` modifier's `role`, and projects that modifier's
+  `contentDescription` to `accessibilityLabel`. A bare `clickable` projects as an unlabeled node
+  without a role, which is what TalkBack meets, so the registry a11y check reports it.
 - **Native settings chrome has a focused contract suite.** It proves SwiftUI versus Material host
   selection, resolved-scheme propagation, one Form/LazyColumn scroll owner, closed row semantics,
   switch single activation, checkmarked/radio selection, and dialog cancellation. Settings, About,
@@ -193,6 +204,10 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
 ## E2E — Maestro, real round-trip
 
 - **Three durable journeys, and only three (ADR [057](./decisions/057-three-journey-native-smoke-budget.md)).** The top-level lexical inventory is fresh-user listed-school/programme URL import with a real server round trip and synced details; Calendar-surface personal-event create/edit/restart/delete; and subscribed-calendar hide/restart/restore/restart with rendered schedule proof. Reusable YAML lives only under `mobile/.maestro/helpers/`. A fourth top-level YAML fails baseline CI. Prefer replacing a lower-value journey or adding a deterministic lower-level test; increasing beyond five requires a new board decision.
+- **One Android-only accessibility assertion.** Flow 03 asserts the user-calendar row's content
+  description (the hint "Opens this calendar's settings") on Android inside a
+  `runFlow when platform: Android` block, the device proof of the `timecalendarSemantics`
+  modifier (ADR [073](./decisions/073-list-row-family.md)). It adds no selector `id`.
 - **Real data and persistence.** The import journey submits the test-only, Swagger-excluded backend fixture at `http://127.0.0.1:3005/__e2e/ical/import.ics`; its next-UTC-day title is date-neutral and the real calendar-create/fetch/parse/persist path owns it. The visibility journey uses the nested seeded-token helper and leaves visibility restored. The personal-event journey writes the real device SQLite database and never drives native date/time pickers.
 - **Process isolation and recovery stay structural (ADR [038](./decisions/038-isolate-maestro-flow-lifecycles.md)).** `run_e2e.sh` boots the shared server lifecycle once, runs each top-level flow in its own Maestro process, stops on the first terminal failure, and tears down once; `--keep-up` remains the debugging escape hatch. iOS may spend up to four whole-flow attempts only on structurally classified startup failures. The classifier and mutation fixtures remain device-free and unchanged in meaning.
 - **Baseline gates own inventory and selector integrity.** `mobile/e2e/maestro-selectors.test.ts` recursively scans journeys and helpers, resolves anchored `id:` regexes against literal/object/template-family `testID`s, rejects bare `back` and `hideKeyboard`, enforces cross-platform `"<title>(,.*)?"` selectors, and pins positive anchors before negative outcomes. `mobile/e2e/test_run_e2e.sh` independently proves the exact three-file inventory, lexical process isolation, nested-helper exclusion, teardown, terminal stop, `--keep-up`, and classifier mutations.

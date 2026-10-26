@@ -66,6 +66,9 @@ The registry lists, in this order (paths under `mobile/src/`):
 | `design/button/button-row.gallery.tsx`                         | `button-row`                     | `pair`, `long-strings`                                                                                                                                                                              |
 | `design/field/text-field.gallery.tsx`                          | `text-field`                     | `default`, `helper`, `error`, `disabled`, `multiline`, `keyboard`, `long-strings`                                                                                                                   |
 | `design/field/date-time-field.gallery.tsx`                     | `date-time-field`                | `default`, `error`, `disabled`, `long-strings`                                                                                                                                                      |
+| `design/list/list-row.gallery.tsx`                             | `list-row`                       | `plain`, `grouped`, `states`, `leading`, `static`, `overline`, `long-strings`                                                                                                                       |
+| `design/list/list-section.gallery.tsx`                         | `list-section`                   | `titled`, `single`, `seam-comparison`, `long-strings`                                                                                                                                               |
+| `design/list/separator.gallery.tsx`                            | `separator`                      | `insets`                                                                                                                                                                                            |
 | `components/chrome/native-list.gallery.tsx`                    | `native-list`                    | `rows`, `destructive`, `switches`, `choices`, `header-and-alert`, `floating-action` (Android), `radio-dialog` (Android), `long-strings`                                                             |
 | `components/chrome/native-text-entry-dialog.gallery.tsx`       | `native-text-entry-dialog`       | `default`, `submit-disabled`, `pending`                                                                                                                                                             |
 | `components/chrome/native-list-numeric-editor.gallery.tsx`     | `native-list-numeric-editor`     | `default`, `validation-error`, `long-strings`                                                                                                                                                       |
@@ -148,6 +151,16 @@ The registry lists, in this order (paths under `mobile/src/`):
   personal events, hidden events and Activity empties use `section`. Activity, the developer
   import and the environment runtime gate keep their own spinners until their slices
   ([lint-format.md](./lint-format.md) → Status).
+- Lists the native seam cannot host render `ListRow` (ADR
+  [073](./decisions/073-list-row-family.md), [theming.md](./theming.md) → Lists), each keeping
+  its testIDs: the Settings timezone chooser (plain rows with a check on the active zone and
+  `ListRowSeparator`), the school picker (plain rows with the logo as leading element and an
+  inset `ListRowSeparator`; the row's name stays the bare school name), hidden events (a
+  `ListSection` per group of static rows with the Unhide button as accessory), Activity (grouped
+  rows with a toned overline; new and changed rows open event details and announce their change
+  lines, cancelled rows are static), personal events (grouped rows with the color swatch, opened
+  through `router.push`) and export-guide provider selection (grouped rows with the thumbnail).
+  The dormant school-group picker keeps its own tree rows.
 - Home's brand lockup renders the app name as a one-line `title2` header capped at
   `WordmarkMaxFontScale` (`ui/home-screen.test.tsx`).
 - `onboarding/index` keeps its branded safe-area composition. Each welcome page wraps its content

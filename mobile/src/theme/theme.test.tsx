@@ -9,6 +9,7 @@ import {
   Elevation,
   IconSize,
   Layout,
+  ListGeometry,
   Motion,
   Spacing,
   StateOpacity,
@@ -214,5 +215,32 @@ describe("GlassSurface", () => {
     )
 
     expect(getByText("under glass")).toBeTruthy()
+  })
+})
+
+describe("ListGeometry", () => {
+  it("pins the list geometry shared by the native seam and the design rows", () => {
+    expect(ListGeometry).toEqual({
+      rowPaddingHorizontal: 16,
+      leadingGap: 16,
+      ios: {
+        rowMinHeight: 44,
+        rowPaddingVertical: 12,
+        leadingIconTile: 29,
+        trailingGap: 8,
+        groupedRadius: { glass: 26, legacy: 10 },
+      },
+      android: {
+        rowMinHeight: 56,
+        rowPaddingVertical: 8,
+        leadingIcon: 24,
+        trailingGap: 16,
+        outerRadius: 20,
+        innerRadius: 4,
+        segmentGap: 2,
+        listInset: 16,
+      },
+    })
+    expect(ListGeometry.ios.groupedRadius).toEqual({ glass: 26, legacy: 10 })
   })
 })
