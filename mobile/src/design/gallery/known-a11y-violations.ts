@@ -19,25 +19,25 @@ const ANDROID_SWITCH_ROW_REASON =
 // entry that no longer reproduces, so the list can only shrink.
 export const knownA11yViolations: readonly KnownA11yViolation[] = [
   {
-    story: "native-settings--switches",
+    story: "native-list--switches",
     platform: "android",
-    element: "gallery-native-settings-switch-on > switch",
+    element: "gallery-native-list-switch-on > switch",
     problem: "missing label",
     reason: ANDROID_SWITCH_ROW_REASON,
     inbox: ANDROID_SWITCH_ROW_INBOX,
   },
   {
-    story: "native-settings--switches",
+    story: "native-list--switches",
     platform: "android",
-    element: "gallery-native-settings-switch-off > switch",
+    element: "gallery-native-list-switch-off > switch",
     problem: "missing label",
     reason: ANDROID_SWITCH_ROW_REASON,
     inbox: ANDROID_SWITCH_ROW_INBOX,
   },
   {
-    story: "native-settings--long-strings",
+    story: "native-list--long-strings",
     platform: "android",
-    element: "gallery-native-settings-long-switch > switch",
+    element: "gallery-native-list-long-switch > switch",
     problem: "missing label",
     reason: ANDROID_SWITCH_ROW_REASON,
     inbox: ANDROID_SWITCH_ROW_INBOX,

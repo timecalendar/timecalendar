@@ -2,9 +2,9 @@ import { router, Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
 
 import {
-  NativeSettingsChoiceRow,
-  NativeSettingsHost,
-  NativeSettingsSection,
+  NativeList,
+  NativeListChoiceRow,
+  NativeListSection,
 } from "@/components/chrome"
 import { useNotificationPreferences } from "@/features/notifications/data"
 
@@ -24,10 +24,10 @@ export function NotificationDaysAheadScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("notifications.days.title") }} />
-      <NativeSettingsHost>
-        <NativeSettingsSection>
+      <NativeList>
+        <NativeListSection>
           {NOTIFICATION_DAY_CHOICES.map(({ value, days }) => (
-            <NativeSettingsChoiceRow
+            <NativeListChoiceRow
               key={value}
               label={
                 days === null
@@ -49,12 +49,12 @@ export function NotificationDaysAheadScreen() {
               }}
             />
           ))}
-        </NativeSettingsSection>
+        </NativeListSection>
         <NotificationSyncStatus
           status={preferences.status}
           retry={preferences.retry}
         />
-      </NativeSettingsHost>
+      </NativeList>
     </>
   )
 }

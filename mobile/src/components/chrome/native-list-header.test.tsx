@@ -3,7 +3,7 @@ import { render } from "@testing-library/react-native"
 import { usePlatform } from "@/test-support/platform"
 import { Colors } from "@/theme"
 
-import { NativeSettingsHeader } from "./native-settings-header"
+import { NativeListHeader } from "./native-list-header"
 
 jest.mock("@/hooks/use-color-scheme", () => ({
   useColorScheme: () => "dark",
@@ -12,12 +12,12 @@ jest.mock("@/hooks/use-color-scheme", () => ({
 describe.each([
   ["ios", "swiftui-rn-host"],
   ["android", "compose-rn-host"],
-] as const)("NativeSettingsHeader on %s", (platform, hostID) => {
+] as const)("NativeListHeader on %s", (platform, hostID) => {
   usePlatform(platform)
 
   it("hosts the icon, a heading name, readable copy, and a brand caption", async () => {
     const view = await render(
-      <NativeSettingsHeader
+      <NativeListHeader
         title="TimeCalendar"
         tagline="Tagline"
         detail="Detail"
@@ -39,7 +39,7 @@ describe.each([
 
   it("omits the optional detail and caption", async () => {
     const view = await render(
-      <NativeSettingsHeader
+      <NativeListHeader
         title="TimeCalendar"
         tagline="Tagline"
         testID="header"

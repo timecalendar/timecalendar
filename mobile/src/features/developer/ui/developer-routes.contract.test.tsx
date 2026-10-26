@@ -30,7 +30,7 @@ jest.mock("expo-router", () => {
   const { Text: MockText } = jest.requireActual("react-native")
   return {
     router: { push: jest.fn() },
-    useLocalSearchParams: () => ({ story: "native-settings--rows" }),
+    useLocalSearchParams: () => ({ story: "native-list--rows" }),
     useNavigation: () => mockNavigation,
     Redirect: ({ href }: { href: string }) => (
       <MockText testID="redirect">{href}</MockText>

@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react-native"
 import { usePlatform } from "@/test-support/platform"
 import { Colors } from "@/theme"
 
-import { NativeSettingsHost } from "./native-settings"
+import { NativeList } from "./native-list"
 import { NativeTextEntryDialog } from "./native-text-entry-dialog"
 
 const onCancel = jest.fn()
@@ -255,26 +255,26 @@ describe.each(["ios", "android"] as const)(
   (platform) => {
     usePlatform(platform)
 
-    it("rejects rendering inside NativeSettingsHost", async () => {
+    it("rejects rendering inside NativeList", async () => {
       const consoleError = jest
         .spyOn(console, "error")
         .mockImplementation(() => {})
       await expect(
         render(
-          <NativeSettingsHost>
+          <NativeList>
             <NativeTextEntryDialog {...props} />
-          </NativeSettingsHost>,
+          </NativeList>,
         ),
       ).rejects.toThrow(
-        "NativeTextEntryDialog must render outside NativeSettingsHost; place it after </NativeSettingsHost>.",
+        "NativeTextEntryDialog must render outside NativeList; place it after </NativeList>.",
       )
       consoleError.mockRestore()
     })
 
-    it("renders as a sibling after NativeSettingsHost", async () => {
+    it("renders as a sibling after NativeList", async () => {
       const view = await render(
         <>
-          <NativeSettingsHost />
+          <NativeList />
           <NativeTextEntryDialog {...props} />
         </>,
       )

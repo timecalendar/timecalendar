@@ -16,7 +16,7 @@ import { usePlatform } from "@/test-support/platform"
 
 import { UserCalendarDetailScreen } from "./user-calendar-detail-screen"
 
-// Per-calendar settings page rendered through the real native-settings seam
+// Per-calendar settings page rendered through the real native-list seam
 // (Jest stubs for SwiftUI/Compose), theme, and i18n. The reactive read and the
 // action hooks are mocked so rename, optimistic visibility, confirm-gated
 // delete, and the write-failure alert are provable without SQLite.

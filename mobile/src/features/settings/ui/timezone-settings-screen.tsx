@@ -2,10 +2,10 @@ import { Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
 
 import {
-  NativeSettingsHost,
-  NativeSettingsRow,
-  NativeSettingsSection,
-  NativeSettingsSwitchRow,
+  NativeList,
+  NativeListRow,
+  NativeListSection,
+  NativeListSwitchRow,
 } from "@/components/chrome"
 import {
   restoreManualTimezone,
@@ -31,9 +31,9 @@ export default function TimezoneSettingsScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("settings.timezone.title") }} />
-      <NativeSettingsHost>
-        <NativeSettingsSection testID="settings-timezone-section">
-          <NativeSettingsSwitchRow
+      <NativeList>
+        <NativeListSection testID="settings-timezone-section">
+          <NativeListSwitchRow
             label={t("settings.timezone.useDevice")}
             value={automatic}
             testID="settings-timezone-device-row"
@@ -43,7 +43,7 @@ export default function TimezoneSettingsScreen() {
             }
           />
           {automatic ? (
-            <NativeSettingsRow
+            <NativeListRow
               kind="value"
               label={t("settings.timezone.effective")}
               value={displayZone}
@@ -51,7 +51,7 @@ export default function TimezoneSettingsScreen() {
             />
           ) : (
             <>
-              <NativeSettingsRow
+              <NativeListRow
                 kind="navigation"
                 label={t("settings.timezone.manual")}
                 value={manualIdentifier}
@@ -63,7 +63,7 @@ export default function TimezoneSettingsScreen() {
                 testID="settings-timezone-manual-row"
               />
               {usesFallback ? (
-                <NativeSettingsRow
+                <NativeListRow
                   kind="value"
                   label={t("settings.timezone.fallback")}
                   value={displayZone}
@@ -72,8 +72,8 @@ export default function TimezoneSettingsScreen() {
               ) : null}
             </>
           )}
-        </NativeSettingsSection>
-      </NativeSettingsHost>
+        </NativeListSection>
+      </NativeList>
     </>
   )
 }

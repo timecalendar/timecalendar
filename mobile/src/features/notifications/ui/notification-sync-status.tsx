@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
 
-import { NativeSettingsAlert } from "@/components/chrome"
+import { NativeListAlert } from "@/components/chrome"
 import type { NotificationSyncStatus as SyncStatus } from "@/features/notifications/data"
 
 export function NotificationSyncStatus({
@@ -13,7 +13,7 @@ export function NotificationSyncStatus({
   const { t } = useTranslation()
   if (status.state !== "error") return null
   return (
-    <NativeSettingsAlert
+    <NativeListAlert
       title={t("errors.syncTitle")}
       message={t("notifications.sync.error")}
       testID="notifications-sync-error"

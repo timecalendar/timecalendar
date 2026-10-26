@@ -2,9 +2,9 @@ import { router, Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
 
 import {
-  NativeSettingsChoiceRow,
-  NativeSettingsHost,
-  NativeSettingsSection,
+  NativeList,
+  NativeListChoiceRow,
+  NativeListSection,
 } from "@/components/chrome"
 import { useNotificationPreferences } from "@/features/notifications/data"
 
@@ -17,10 +17,10 @@ export function NotificationFrequencyScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("notifications.frequency.title") }} />
-      <NativeSettingsHost>
-        <NativeSettingsSection>
+      <NativeList>
+        <NativeListSection>
           {NOTIFICATION_FREQUENCIES.map(({ value, labelKey }) => (
-            <NativeSettingsChoiceRow
+            <NativeListChoiceRow
               key={value}
               label={t(labelKey)}
               selected={preferences.frequency === value}
@@ -32,12 +32,12 @@ export function NotificationFrequencyScreen() {
               }}
             />
           ))}
-        </NativeSettingsSection>
+        </NativeListSection>
         <NotificationSyncStatus
           status={preferences.status}
           retry={preferences.retry}
         />
-      </NativeSettingsHost>
+      </NativeList>
     </>
   )
 }

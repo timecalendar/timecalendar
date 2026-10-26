@@ -6,9 +6,9 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import {
-  NativeSettingsAlert,
-  NativeSettingsHeader,
-  NativeSettingsHost,
+  NativeList,
+  NativeListAlert,
+  NativeListHeader,
 } from "@/components/chrome"
 import { readApplicationInfo } from "@/features/about/data"
 import {
@@ -151,8 +151,8 @@ export function AboutScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("about.title") }} />
-      <NativeSettingsHost>
-        <NativeSettingsHeader
+      <NativeList>
+        <NativeListHeader
           title={t("app.name")}
           tagline={t("about.blurb.access")}
           detail={t("about.blurb.created")}
@@ -161,7 +161,7 @@ export function AboutScreen() {
           captionTestID="about-version"
         />
         {linkFailed ? (
-          <NativeSettingsAlert
+          <NativeListAlert
             title={t("errors.openLinkTitle")}
             message={t("about.linkError")}
             testID="about-link-error-section"
@@ -179,7 +179,7 @@ export function AboutScreen() {
             ))}
           </SettingsSection>
         ))}
-      </NativeSettingsHost>
+      </NativeList>
     </>
   )
 }

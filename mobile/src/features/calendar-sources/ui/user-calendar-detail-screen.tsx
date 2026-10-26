@@ -4,11 +4,11 @@ import { useTranslation } from "react-i18next"
 import { AccessibilityInfo, Alert } from "react-native"
 
 import {
-  NativeSettingsAlert,
-  NativeSettingsHost,
-  NativeSettingsRow,
-  NativeSettingsSection,
-  NativeSettingsSwitchRow,
+  NativeList,
+  NativeListAlert,
+  NativeListRow,
+  NativeListSection,
+  NativeListSwitchRow,
 } from "@/components/chrome"
 import {
   effectiveCalendarName,
@@ -38,7 +38,7 @@ export function UserCalendarDetailScreen() {
     return (
       <>
         <Stack.Screen options={{ title: "" }} />
-        <NativeSettingsHost />
+        <NativeList />
       </>
     )
   }
@@ -77,17 +77,17 @@ export function UserCalendarDetailScreen() {
       <Stack.Screen
         options={{ title: name, headerBackButtonDisplayMode: "minimal" }}
       />
-      <NativeSettingsHost>
+      <NativeList>
         {failed ? (
-          <NativeSettingsAlert
+          <NativeListAlert
             title={t("userCalendars.errorTitle")}
             message={t("userCalendars.error")}
             testID="user-calendars-write-error"
             messageTestID="user-calendars-write-error-message"
           />
         ) : null}
-        <NativeSettingsSection testID="user-calendar-details">
-          <NativeSettingsRow
+        <NativeListSection testID="user-calendar-details">
+          <NativeListRow
             kind="action"
             label={t("userCalendars.detail.name")}
             value={name}
@@ -96,16 +96,16 @@ export function UserCalendarDetailScreen() {
             testID="user-calendar-rename"
           />
           {calendar.schoolName ? (
-            <NativeSettingsRow
+            <NativeListRow
               kind="value"
               label={t("userCalendars.detail.school")}
               value={calendar.schoolName}
               testID="user-calendar-school"
             />
           ) : null}
-        </NativeSettingsSection>
-        <NativeSettingsSection footer={t("userCalendars.visibilityFooter")}>
-          <NativeSettingsSwitchRow
+        </NativeListSection>
+        <NativeListSection footer={t("userCalendars.visibilityFooter")}>
+          <NativeListSwitchRow
             label={t("userCalendars.visibilityShort")}
             value={visibleFromOperation(
               calendar.visible,
@@ -115,17 +115,17 @@ export function UserCalendarDetailScreen() {
             testID={`user-calendar-visibility-row-${calendar.id}`}
             switchTestID={`user-calendar-visibility-${calendar.id}`}
           />
-        </NativeSettingsSection>
-        <NativeSettingsSection>
-          <NativeSettingsRow
+        </NativeListSection>
+        <NativeListSection>
+          <NativeListRow
             kind="action"
             destructive
             label={t("userCalendars.delete.row")}
             onPress={confirmDelete}
             testID="user-calendar-delete"
           />
-        </NativeSettingsSection>
-      </NativeSettingsHost>
+        </NativeListSection>
+      </NativeList>
       {renaming ? (
         <RenameCalendarDialog
           calendar={calendar}

@@ -73,7 +73,7 @@ const fileClasses = [
     gallery: false,
   },
   {
-    file: "src/components/chrome/native-settings.tsx",
+    file: "src/components/chrome/native-list.tsx",
     barrel: false,
     deep: true,
     gallery: false,

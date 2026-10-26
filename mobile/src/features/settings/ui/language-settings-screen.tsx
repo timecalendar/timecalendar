@@ -2,9 +2,9 @@ import { Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
 
 import {
-  NativeSettingsChoiceRow,
-  NativeSettingsHost,
-  NativeSettingsSection,
+  NativeList,
+  NativeListChoiceRow,
+  NativeListSection,
 } from "@/components/chrome"
 import {
   type LanguagePreference,
@@ -22,10 +22,10 @@ export function LanguageSettingsScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("settings.language.label") }} />
-      <NativeSettingsHost>
-        <NativeSettingsSection>
+      <NativeList>
+        <NativeListSection>
           {options.map((option) => (
-            <NativeSettingsChoiceRow
+            <NativeListChoiceRow
               key={option.value}
               label={option.label}
               selected={language.preference === option.value}
@@ -34,8 +34,8 @@ export function LanguageSettingsScreen() {
               onSelect={() => language.setPreference(option.value)}
             />
           ))}
-        </NativeSettingsSection>
-      </NativeSettingsHost>
+        </NativeListSection>
+      </NativeList>
     </>
   )
 }

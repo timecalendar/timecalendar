@@ -26,7 +26,7 @@ const MAX_WIDTH = 560
 const IOS_ROW_MARGIN = 20
 const ANDROID_LIST_INSET = 16
 
-type NativeSettingsHeaderProps = {
+type NativeListHeaderProps = {
   title: string
   tagline: string
   detail?: string | undefined
@@ -43,7 +43,7 @@ function HeaderContent({
   testID,
   captionTestID,
   width,
-}: NativeSettingsHeaderProps & { width: number }) {
+}: NativeListHeaderProps & { width: number }) {
   const theme = useTheme()
   return (
     <View testID={testID} style={[styles.content, { width }]}>
@@ -80,7 +80,7 @@ function HeaderContent({
   )
 }
 
-export function NativeSettingsHeader(props: NativeSettingsHeaderProps) {
+export function NativeListHeader(props: NativeListHeaderProps) {
   const window = useWindowDimensions()
   if (Platform.OS === "ios") {
     const width = Math.min(window.width - IOS_ROW_MARGIN * 2, MAX_WIDTH)

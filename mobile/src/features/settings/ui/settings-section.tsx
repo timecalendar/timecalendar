@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from "react"
 
-import { NativeSettingsSection } from "@/components/chrome"
+import { NativeListSection } from "@/components/chrome"
 
 interface SettingsSectionProps extends PropsWithChildren {
   title?: string
@@ -9,5 +9,5 @@ interface SettingsSectionProps extends PropsWithChildren {
 }
 
 export function SettingsSection(props: SettingsSectionProps) {
-  return <NativeSettingsSection {...props} />
+  return <NativeListSection {...props} />
 }

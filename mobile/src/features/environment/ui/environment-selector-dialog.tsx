@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
 
-import { NativeSettingsRadioDialog } from "@/components/chrome"
+import { NativeListRadioDialog } from "@/components/chrome"
 
 import type { EnvironmentSelector } from "./use-environment-selector"
 
@@ -13,7 +13,7 @@ export function EnvironmentSelectorDialog({
   if (selector.capability === "production") return null
 
   return (
-    <NativeSettingsRadioDialog
+    <NativeListRadioDialog
       visible={selector.pickerOpen}
       title={t("environment.selector.title")}
       cancelLabel={t("environment.confirm.cancel")}

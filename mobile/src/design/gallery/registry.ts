@@ -1,8 +1,8 @@
 import * as dateTimePicker from "@/components/chrome/date-time-picker.gallery"
 import * as glassSurface from "@/components/chrome/glass-surface.gallery"
 import * as menuView from "@/components/chrome/menu-view.gallery"
-import * as nativeSettings from "@/components/chrome/native-settings.gallery"
-import * as nativeSettingsNumericEditor from "@/components/chrome/native-settings-numeric-editor.gallery"
+import * as nativeList from "@/components/chrome/native-list.gallery"
+import * as nativeListNumericEditor from "@/components/chrome/native-list-numeric-editor.gallery"
 import * as nativeTextEntryDialog from "@/components/chrome/native-text-entry-dialog.gallery"
 import * as button from "@/design/button/button.gallery"
 import * as buttonRow from "@/design/button/button-row.gallery"
@@ -33,9 +33,9 @@ export const galleryModules: readonly GalleryModule[] = [
   buttonRow,
   textField,
   dateTimeField,
-  nativeSettings,
+  nativeList,
   nativeTextEntryDialog,
-  nativeSettingsNumericEditor,
+  nativeListNumericEditor,
   menuView,
   dateTimePicker,
   glassSurface,

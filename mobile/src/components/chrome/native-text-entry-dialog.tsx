@@ -1,6 +1,6 @@
 import { Platform } from "react-native"
 
-import { useAssertOutsideNativeSettingsHost } from "./native-settings-host-context"
+import { useAssertOutsideNativeList } from "./native-list-context"
 import { NativeTextEntryDialogAndroid } from "./native-text-entry-dialog-android"
 import { NativeTextEntryDialogIos } from "./native-text-entry-dialog-ios"
 
@@ -33,7 +33,7 @@ export type NativeTextEntryDialogProps = {
 }
 
 export function NativeTextEntryDialog(props: NativeTextEntryDialogProps) {
-  useAssertOutsideNativeSettingsHost("NativeTextEntryDialog")
+  useAssertOutsideNativeList("NativeTextEntryDialog")
   return Platform.OS === "ios" ? (
     <NativeTextEntryDialogIos {...props} />
   ) : (

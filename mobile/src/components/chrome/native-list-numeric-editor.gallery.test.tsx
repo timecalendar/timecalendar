@@ -3,7 +3,7 @@ import { fireEvent } from "@testing-library/react-native"
 import { renderStory } from "@/test-support/gallery"
 import { usePlatform } from "@/test-support/platform"
 
-import * as fixture from "./native-settings-numeric-editor.gallery"
+import * as fixture from "./native-list-numeric-editor.gallery"
 
 describe.each(["ios", "android"] as const)(
   "numeric editor stories on %s",

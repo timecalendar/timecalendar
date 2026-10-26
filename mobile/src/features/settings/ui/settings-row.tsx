@@ -1,9 +1,9 @@
 import type { Href } from "expo-router"
 
-import { type NativeSettingsIcon, NativeSettingsRow } from "@/components/chrome"
+import { type NativeListIcon, NativeListRow } from "@/components/chrome"
 
 interface SettingsRowBaseProps {
-  icon?: NativeSettingsIcon
+  icon?: NativeListIcon
   label: string
   accessibilityLabel?: string
   testID: string
@@ -48,7 +48,7 @@ export type SettingsRowProps =
 export function SettingsRow(props: SettingsRowProps) {
   if (props.variant === "value") {
     return (
-      <NativeSettingsRow
+      <NativeListRow
         kind="value"
         label={props.label}
         icon={props.icon}
@@ -60,7 +60,7 @@ export function SettingsRow(props: SettingsRowProps) {
   }
   if (props.variant === "action") {
     return (
-      <NativeSettingsRow
+      <NativeListRow
         kind="action"
         label={props.label}
         icon={props.icon}
@@ -74,7 +74,7 @@ export function SettingsRow(props: SettingsRowProps) {
     )
   }
   return (
-    <NativeSettingsRow
+    <NativeListRow
       kind="navigation"
       label={props.label}
       icon={props.icon}

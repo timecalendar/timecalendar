@@ -3,10 +3,10 @@ import { useTranslation } from "react-i18next"
 import { Platform, StyleSheet, View } from "react-native"
 
 import {
-  NativeSettingsFloatingAction,
-  NativeSettingsHost,
-  NativeSettingsRow,
-  NativeSettingsSection,
+  NativeList,
+  NativeListFloatingAction,
+  NativeListRow,
+  NativeListSection,
 } from "@/components/chrome"
 import { RootPage, StatusView } from "@/design"
 import {
@@ -65,8 +65,8 @@ export function UserCalendarsScreen() {
             />
           </RootPage>
         ) : (
-          <NativeSettingsHost reservesFloatingAction>
-            <NativeSettingsSection
+          <NativeList reservesFloatingAction>
+            <NativeListSection
               footer={t("userCalendars.listFooter")}
               testID="user-calendars-list"
             >
@@ -78,7 +78,7 @@ export function UserCalendarsScreen() {
                 const school =
                   calendar.schoolName ?? t("userCalendars.personalSubtitle")
                 return (
-                  <NativeSettingsRow
+                  <NativeListRow
                     key={calendar.id}
                     kind="navigation"
                     href={{
@@ -101,10 +101,10 @@ export function UserCalendarsScreen() {
                   />
                 )
               })}
-            </NativeSettingsSection>
-          </NativeSettingsHost>
+            </NativeListSection>
+          </NativeList>
         )}
-        <NativeSettingsFloatingAction
+        <NativeListFloatingAction
           label={t("userCalendars.add")}
           icon={addIcon}
           testID="user-calendars-add"

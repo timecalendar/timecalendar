@@ -1,10 +1,10 @@
 import { useTranslation } from "react-i18next"
 
 import {
-  NativeSettingsHost,
-  NativeSettingsRow,
-  NativeSettingsSection,
-  NativeSettingsSwitchRow,
+  NativeList,
+  NativeListRow,
+  NativeListSection,
+  NativeListSwitchRow,
 } from "@/components/chrome"
 import { formatUnreadBadge, useActivityState } from "@/features/activity"
 import {
@@ -103,20 +103,20 @@ export function SettingsScreen() {
         : undefined
 
   return (
-    <NativeSettingsHost>
-      <NativeSettingsSection
+    <NativeList>
+      <NativeListSection
         title={t("settingsHub.summary.title")}
         testID="settings-calendar-summary-section"
       >
         {summary.state === "loading" ? (
-          <NativeSettingsRow
+          <NativeListRow
             kind="value"
             label={t("settingsHub.summary.title")}
             icon={calendarsIcon}
             testID="settings-calendar-summary-loading"
           />
         ) : (
-          <NativeSettingsRow
+          <NativeListRow
             kind="navigation"
             href="/user-calendars"
             label={t("settingsHub.summary.manage")}
@@ -126,7 +126,7 @@ export function SettingsScreen() {
             testID="settings-calendar-summary"
           />
         )}
-        <NativeSettingsSwitchRow
+        <NativeListSwitchRow
           label={t("settingsHub.summary.showWeekends")}
           icon={{ ios: "calendar.day.timeline.leading", android: "view_week" }}
           value={showWeekends}
@@ -134,9 +134,9 @@ export function SettingsScreen() {
           testID="settings-show-weekends-row"
           switchTestID="settings-show-weekends-switch"
         />
-      </NativeSettingsSection>
+      </NativeListSection>
       {sections.map((section) => (
-        <NativeSettingsSection
+        <NativeListSection
           key={section}
           title={t(`settingsHub.section.${section}`)}
           testID={`settings-section-${section}`}
@@ -146,7 +146,7 @@ export function SettingsScreen() {
             .map((destination) => {
               const hasUnreadBadge = "unreadBadge" in destination
               return (
-                <NativeSettingsRow
+                <NativeListRow
                   key={destination.href}
                   kind="navigation"
                   href={destination.href}
@@ -162,14 +162,14 @@ export function SettingsScreen() {
                 />
               )
             })}
-        </NativeSettingsSection>
+        </NativeListSection>
       ))}
       {showDeveloperTools ? (
-        <NativeSettingsSection
+        <NativeListSection
           title={t("settingsHub.section.developer")}
           testID="settings-section-developer"
         >
-          <NativeSettingsRow
+          <NativeListRow
             kind="navigation"
             href="/developer"
             label={t("settingsHub.developer.label")}
@@ -177,8 +177,8 @@ export function SettingsScreen() {
             hint={t("settingsHub.developer.hint")}
             testID="settings-developer"
           />
-        </NativeSettingsSection>
+        </NativeListSection>
       ) : null}
-    </NativeSettingsHost>
+    </NativeList>
   )
 }

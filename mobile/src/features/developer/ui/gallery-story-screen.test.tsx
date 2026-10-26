@@ -6,7 +6,7 @@ import { usePlatform } from "@/test-support/platform"
 import { GalleryStoryScreen } from "./gallery-story-screen"
 
 const mockScreenOptions = jest.fn()
-let mockStory = "native-settings--switches"
+let mockStory = "native-list--switches"
 let mockCapability = "preview"
 const mockNavigation = {
   getState: jest.fn(),
@@ -40,7 +40,7 @@ const index = { name: "developer/gallery", key: "gallery-1" }
 const story = { name: "developer/gallery/[story]", key: "story-1" }
 
 beforeEach(() => {
-  mockStory = "native-settings--switches"
+  mockStory = "native-list--switches"
   mockCapability = "preview"
   mockNavigation.getState.mockReturnValue({ index: 1, routes: [tabs, story] })
   mockNavigation.reset.mockClear()
@@ -55,7 +55,7 @@ describe.each(["ios", "android"] as const)(
       await render(<GalleryStoryScreen />)
       expect(mockScreenOptions).toHaveBeenLastCalledWith({ title: "Switches" })
       expect(
-        screen.getByTestId("gallery-native-settings-switch-on"),
+        screen.getByTestId("gallery-native-list-switch-on"),
       ).toBeOnTheScreen()
       expect(screen.queryByTestId("redirect")).toBeNull()
     })
@@ -70,7 +70,7 @@ describe.each(["ios", "android"] as const)(
     })
 
     it("renders an Android-only story only on Android", async () => {
-      mockStory = "native-settings--radio-dialog"
+      mockStory = "native-list--radio-dialog"
       await render(<GalleryStoryScreen />)
       if (platform === "ios") {
         expect(screen.getByTestId("redirect")).toHaveTextContent(
@@ -78,7 +78,7 @@ describe.each(["ios", "android"] as const)(
         )
       } else {
         expect(
-          screen.getByTestId("gallery-native-settings-dialog-open"),
+          screen.getByTestId("gallery-native-list-dialog-open"),
         ).toBeOnTheScreen()
       }
     })

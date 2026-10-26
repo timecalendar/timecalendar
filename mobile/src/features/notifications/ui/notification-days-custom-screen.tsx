@@ -2,7 +2,7 @@ import { router, Stack } from "expo-router"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
-import { NativeSettingsNumericEditor } from "@/components/chrome"
+import { NativeListNumericEditor } from "@/components/chrome"
 import { useNotificationPreferences } from "@/features/notifications/data"
 
 import {
@@ -26,7 +26,7 @@ export function NotificationDaysCustomScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("notifications.custom.title") }} />
-      <NativeSettingsNumericEditor
+      <NativeListNumericEditor
         title={t("notifications.custom.title")}
         label={t("notifications.custom.label")}
         initialValue={String(preferences.nbDaysAhead)}
