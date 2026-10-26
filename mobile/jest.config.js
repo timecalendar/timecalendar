@@ -143,9 +143,5 @@ module.exports = {
     "src/design/list/separator-inset.ts": { lines: 90, branches: 90 },
     "src/components/chrome/compose-semantics.ts": { lines: 90, branches: 90 },
     "src/components/chrome/list-palette.ts": { lines: 90, branches: 90 },
-    "src/components/chrome/native-list-position.ts": {
-      lines: 90,
-      branches: 90,
-    },
   },
 }

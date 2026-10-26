@@ -301,8 +301,8 @@ colors, so an RN list and a `NativeList` on the same page read as one surface.
 - **`Separator`** (`inset`: `"none"`, `"leading"` or `{ leadingWidth }`) is a `separator`-colored
   hairline on iOS and 1dp on Android, hidden from assistive technology. The text-start formula
   `rowPaddingHorizontal + leadingWidth + leadingGap` lives only in `separatorInset`
-  (`separator-inset.ts`). `listRowPosition` (`list-row-position.ts`) and the seam's private
-  `segmentPosition` (`chrome/native-list-position.ts`) agree, which `list-row.test.tsx` asserts.
+  (`separator-inset.ts`). `listRowPosition` (`list-row-position.ts`) is the one first/middle/last/single rule, shared by
+  `ListSection` and the native list seam.
 - **States:** iOS fills the shaped row with `backgroundSelected` on press; Android draws a
   foreground `ripple` clipped by the row shape. `disabled` dims to `StateOpacity.disabled` and
   shows no feedback. `selected` draws an SF `checkmark` or Material `check` in `primary`.

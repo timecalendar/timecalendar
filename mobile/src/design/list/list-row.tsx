@@ -386,11 +386,9 @@ function RowSeparator({
   if (position !== "first" && position !== "middle") return null
   return (
     <View style={styles.separator}>
-      <Separator
+      <ListRowSeparator
         testID={`${testID}-separator`}
-        inset={
-          leadingBox === undefined ? "leading" : { leadingWidth: leadingBox }
-        }
+        leadingWidth={leadingBox}
       />
     </View>
   )
@@ -473,8 +471,8 @@ export function ListRowSeparator({
   leadingWidth,
   testID,
 }: {
-  leadingWidth?: number
-  testID?: string
+  leadingWidth?: number | undefined
+  testID?: string | undefined
 }) {
   if (Platform.OS !== "ios") return null
   return (

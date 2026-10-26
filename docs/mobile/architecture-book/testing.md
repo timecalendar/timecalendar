@@ -65,8 +65,8 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   platforms with `usePlatform` and drive the font scale by mocking `useWindowDimensions`; the date
   field's fixtures are built in the display zone, so they pass in the time-zone matrix.
 - **`src/design/list/list-row.tsx`, `list-section.tsx`, `separator.tsx`, `list-row-position.ts`,
-  `separator-inset.ts` and the chrome modules `src/components/chrome/compose-semantics.ts`,
-  `list-palette.ts` and `native-list-position.ts` have their own 90% lines/branches keys** in `coverageThreshold` (ADR [073](./decisions/073-list-row-family.md)).
+  `separator-inset.ts` and the chrome modules `src/components/chrome/compose-semantics.ts`
+  and `list-palette.ts` have their own 90% lines/branches keys** in `coverageThreshold` (ADR [073](./decisions/073-list-row-family.md)).
   The list tests run both platforms with `usePlatform`; the iOS grouped radius reads
   `Platform.Version`, a getter, so tests mock it with `jest.spyOn(Platform, "Version", "get")`.
   The ad-hoc-separator allowlist is a contract test like the raw-text-input one below.

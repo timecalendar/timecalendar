@@ -81,9 +81,9 @@ import {
   type NativeListIcon,
 } from "@/components/chrome/native-list-icons"
 import {
-  type SegmentPosition,
-  segmentPosition,
-} from "@/components/chrome/native-list-position"
+  type ListRowPosition,
+  listRowPosition,
+} from "@/design/list/list-row-position"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { useErrorAnnouncement } from "@/hooks/use-error-announcement"
 import { ListGeometry, useIsAccessibilityTextSize, useTheme } from "@/theme"
@@ -168,7 +168,7 @@ type NativeListRadioDialogProps<Value extends string> = {
   onDismiss: () => void
 }
 
-type Segment = { position: SegmentPosition; titled: boolean }
+type Segment = { position: ListRowPosition; titled: boolean }
 
 const SegmentContext = createContext<Segment>({
   position: "single",
@@ -179,7 +179,7 @@ const LIST_BOTTOM_PADDING = 24
 const FAB_CLEARANCE = 88
 const UNBREAKABLE_WORD_MIN_SCALE = 0.5
 
-const segmentCorners: Record<SegmentPosition, { top: number; bottom: number }> =
+const segmentCorners: Record<ListRowPosition, { top: number; bottom: number }> =
   {
     first: {
       top: ListGeometry.android.outerRadius,
@@ -361,7 +361,7 @@ function ComposeListSection({
       {items.map((child, index) => (
         <SegmentContext.Provider
           key={isValidElement(child) && child.key !== null ? child.key : index}
-          value={{ position: segmentPosition(index, items.length), titled }}
+          value={{ position: listRowPosition(index, items.length), titled }}
         >
           {child}
         </SegmentContext.Provider>

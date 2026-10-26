@@ -10,7 +10,6 @@ import {
   type TextStyle,
 } from "react-native"
 
-import { segmentPosition } from "@/components/chrome/native-list-position"
 import { Button } from "@/design/button/button"
 import { usePlatform } from "@/test-support/platform"
 import { Colors, ListGeometry, StateOpacity } from "@/theme"
@@ -479,16 +478,6 @@ describe("listRowPosition", () => {
     [2, 3, "last"],
   ] as const)("index %d of %d is %s", (index, count, position) => {
     expect(listRowPosition(index, count)).toBe(position)
-  })
-
-  it("agrees with the native list seam", () => {
-    for (let count = 1; count <= 4; count += 1) {
-      for (let index = 0; index < count; index += 1) {
-        expect(listRowPosition(index, count)).toBe(
-          segmentPosition(index, count),
-        )
-      }
-    }
   })
 })
 
