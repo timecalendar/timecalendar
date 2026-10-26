@@ -15,7 +15,7 @@ call sites rendered `SymbolView` directly, each with an implicit and unrecorded 
 
 ## Decision
 
-- `src/components/icon.tsx` exports `Icon`, the only renderer of a symbol glyph. Its props carry a
+- `src/design/icon/icon.tsx` exports `Icon` (imported from `@/design`), the only renderer of a symbol glyph. Its props carry a
   required discriminated `scaling`:
   - `"text"`: the icon sits beside or inside text. Its rendered size and its box are
     `size × min(fontScale, maxFontSizeMultiplier ?? ∞)`, so the container grows with it. A
@@ -27,11 +27,11 @@ call sites rendered `SymbolView` directly, each with an implicit and unrecorded 
   `allowFontScaling={false}` (one line-level lint exemption: the glyph is drawn like an image and
   keeps its design size below the default text size too) and `"text"` passes the caller's cap.
   Before the font loads the box renders empty at its final size.
-- Android glyphs come from the closed `MATERIAL_GLYPHS` table in `src/components/icon-glyphs.ts` (only the glyphs the app uses);
+- Android glyphs come from the closed `MATERIAL_GLYPHS` table in `src/design/icon/icon-glyphs.ts` (only the glyphs the app uses);
   `icon.test.tsx` pins every codepoint against `expo-symbols`' `symbols.json`.
 - `Icon` is always decorative; the control that contains it owns the accessible name.
 - Lint L9 (`no-restricted-imports`, `importNames: ["SymbolView"]` on `expo-symbols`) applies
-  everywhere except `src/components/icon.tsx` and its test. Symbol name types stay importable.
+  everywhere except `src/design/icon/icon.tsx` and its test (block `timecalendar/icon-seam`). Symbol name types stay importable.
 
 Rejected: patching `expo-symbols` (a patch over a fast-moving package whose fixed box is the
 flaw); an `@expo/ui` Compose `Icon` host per glyph (a native host per icon inside RN pressables,

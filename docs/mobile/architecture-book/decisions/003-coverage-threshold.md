@@ -41,8 +41,8 @@ is reported so the gate has a baseline to land on, but unset.
   the logic paths `src/{features,hooks,storage,db,i18n,firebase,theme}/**`.
 - **Jest glob semantics, recorded so a future editor isn't surprised:** a
   `coverageThreshold` glob key *removes* its matched files from the `global` pool, so
-  `global` measures the **remainder** (the presentational `src/components/**` and the
-  chrome wrappers), not the whole tree. The remainder clears 70% comfortably.
+  `global` measures the **remainder** (presentational feature screens, the `src/design/`
+  primitives and the chrome wrappers), not the whole tree. The remainder clears 70% comfortably.
 - **Exclusions from coverage collection, each with a recorded reason in
   `jest.config.js`** (never a silent skip — the DoD no-third-state rule): type-only
   `*.d.ts`; and the **E2E-covered-not-unit-covered** paths the Architecture Book

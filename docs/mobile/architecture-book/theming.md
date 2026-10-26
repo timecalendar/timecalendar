@@ -109,11 +109,11 @@ surfaces and calendar content; native controls are tinted and composed rather th
 - **Home welcome surface:** `homeHero` is a quiet pink paper (`#FCE4EC` light / `#321824` dark) carrying normal `text`; `homeHeroDate` is its stronger eyebrow (`#AD1457` light / `#FF80AB` dark). These are fixed scheme tokens rather than call-site alpha math. Event colors on Home remain non-text accent bars/dots because imported calendar colors cannot guarantee text contrast.
 - **Single color-scheme seam (C1):** `@/hooks/use-color-scheme` is the **one** scheme source — both `useTheme` _and_ the root `_layout.tsx` read it (never `useColorScheme` from `react-native` directly), so a theme override is a single-file change. The seam resolves the stored theme preference (a `"light"`/`"dark"` override wins, `"system"` falls through to the device scheme), **preserving the `ColorSchemeName` return contract** so `useTheme` / `buildNavTheme` / `theme.test.tsx` are untouched. **Lint-enforced (L1):** `no-restricted-imports` bans `useColorScheme` and `Appearance` from `react-native` everywhere except `src/hooks/use-color-scheme.ts` (block `timecalendar/color-scheme-seam`; see `lint-format.md`).
 - `src/theme/index.ts` re-exports the public surface (`Colors` / `Spacing` / `Radii` / `Fonts` / `MaxContentWidth` / `MinTouchTarget` / `IconSize` / `WordmarkMaxFontScale` / `ChevronMaxFontScale` / `StateOpacity` / `Elevation` / `Motion` / `Layout` / `AccessibilityFontScale` / `isAccessibilityTextSize` / `useIsAccessibilityTextSize` / `ThemeColor` / `TypeRamp` / `TypeVariant` / `TypeStep` / `useTheme` / `buildNavTheme` / the responsive exports) — **call sites import `@/theme`**, import-source-only. `Fonts.mono` resolves via `Platform.select` (`ios` → `ui-monospace`, `default` → `monospace`).
-- `Themed*` consumers import from `@/theme`. `ThemedText` owns no type scale: it renders the `TypeRamp` step named by `type` (default `body`) and passes the step's `dynamicTypeRamp`; caller `style` and props win. The aliases `default` → `body`, `small` → `callout`, `smallBold` → `label` and `subtitle` → `sectionTitle` resolve inside the component. Color comes from `tone` (`primary` → `text`, `secondary` → `textSecondary`, `action` → `actionText`, `destructive` → `destructive`, `onPrimary` → `onPrimary`; `primary` is the label color, not brand pink, and the union has no brand or tertiary member) or from `themeColor` (any `ThemeColor`); the two props are mutually exclusive at the type level, and with neither the text is `text`. The heading role per step follows [Accessibility](./accessibility.md#the-heading-role-contract--encoded-in-themedtext).
+- `ThemedText` and `ThemedView` (`src/design/text/`) are imported from `@/design` and read their tokens from `@/theme`. `ThemedText` owns no type scale: it renders the `TypeRamp` step named by `type` (default `body`) and passes the step's `dynamicTypeRamp`; caller `style` and props win. The aliases `default` → `body`, `small` → `callout`, `smallBold` → `label` and `subtitle` → `sectionTitle` resolve inside the component. Color comes from `tone` (`primary` → `text`, `secondary` → `textSecondary`, `action` → `actionText`, `destructive` → `destructive`, `onPrimary` → `onPrimary`; `primary` is the label color, not brand pink, and the union has no brand or tertiary member) or from `themeColor` (any `ThemeColor`); the two props are mutually exclusive at the type level, and with neither the text is `text`. The heading role per step follows [Accessibility](./accessibility.md#the-heading-role-contract--encoded-in-themedtext).
 
-## Buttons — `Button` (`src/components/button.tsx`)
+## Buttons — `Button` and `ButtonRow` (`src/design/button/`)
 
-Every in-content button is `Button` (ADR [067](./decisions/067-button-family.md)). The caller
+Every in-content button is `Button` from `@/design` (ADR [067](./decisions/067-button-family.md)). The caller
 chooses an intent and a size; the primitive owns colors, geometry, states and press feedback.
 
 | `variant`     | Fill                | Boundary    | Label         | iOS / Material reference              |
@@ -150,6 +150,15 @@ chooses an intent and a size; the primitive owns colors, geometry, states and pr
   `local/no-raw-button` ([lint-format.md](./lint-format.md) → Buttons); the gallery stories
   `button--filled`, `--tonal`, `--outlined`, `--text`, `--destructive`, `--icons`,
   `--long-strings`.
+- **Two buttons side by side are a `ButtonRow`** (`primary`, `secondary`, optional layout-only
+  `style` merged last). Below the accessibility text-size threshold (`useIsAccessibilityTextSize()`,
+  font scale 1.786 = iOS AX1; Android 1.8 and 2.0) the secondary leads at its intrinsic width, at
+  most half the row, and the primary trails, filling the rest; at or above it both stack full
+  width, primary first. The same button instances move between the layouts, so `testID`s and
+  handlers survive a live text-size change. Gates: `button-row.test.tsx` (both platforms, font
+  scales 1.0–3.571, live change, style order) at a 90% per-file coverage tier; the gallery stories
+  `button-row--pair` and `button-row--long-strings`, captioned with the active layout. No lint rule
+  detects a hand-built row of two `Button`s.
 
 ## Responsive content lanes — measured owners, semantic caps
 
@@ -166,8 +175,8 @@ chooses an intent and a size; the primitive owns colors, geometry, states and pr
 - Semantic lanes state intent: `readable` caps usable prose/form content at 640, `standard` caps
   usable lists/cards at 800, and `fullBleed` preserves the complete measured owner width without a
   responsive gutter or cap. Caps apply after both gutters, and capped content is centered.
-- `useAdaptiveLayout(lane)` and `AdaptiveContent` live at
-  `@/components/adaptive-content`. The hook is the escape hatch for list, scroll, and custom
+- `useAdaptiveLayout(lane)` and `AdaptiveContent` (`src/design/layout/adaptive-content.tsx`) are
+  imported from `@/design`. The hook is the escape hatch for list, scroll, and custom
   geometry owners; the component is the owner-plus-inner-view convenience form. Both use the same
   resolver, render a visible compact-width fallback before measurement, and adopt only positive
   widths reported by the attached owner.
@@ -304,7 +313,7 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
     footers; the chrome seam owns them. Features pass copy, icons, values, and intent only.
   - **Numeric editor:** `chrome/native-settings-numeric-editor.tsx` carries the same brand accent
     (iOS Form `tint`, Compose `seedColor`).
-- **`src/components/icon.tsx`** — `Icon`, the only renderer of a symbol glyph (lint L9 bans
+- **`src/design/icon/icon.tsx`** (from `@/design`) — `Icon`, the only renderer of a symbol glyph (lint L9 bans
   `SymbolView` elsewhere, ADR [065](./decisions/065-icon-text-scaling.md)). iOS renders
   `SymbolView`; Android draws the Material Symbols glyph from the closed `MATERIAL_GLYPHS` table (`icon-glyphs.ts`)
   in a box sized by the required `scaling` (see [Accessibility → Icon
@@ -316,6 +325,7 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
 
 - The seam is **structural, not a convention**: `mobile/eslint.config.js` bans `expo-router/unstable-native-tabs`, `expo-glass-effect`, and `@expo/ui` (+ subpaths, regex `^@expo/ui($|/)`) via `no-restricted-imports` everywhere **except** `src/components/chrome/**`, which re-sets the rule without the ban (`banChromeAlpha: false`, mirroring `mutator-owns-fetch` and the storage seams). The message names the `@/components/chrome` seam.
 - **Caveat the lint can't carry:** it catches the static import specifier, not a dynamic `require()` / `import()` evasion — it guards accident, review covers adversaries. The exemption is path-scoped: renaming `chrome/` or adding a new alpha surface without a wrapper requires updating the rule.
+- **Chrome, design, feature boundary ([ADR 068](./decisions/068-design-layer-barrel-and-gallery-entry.md)):** tokens (`@/theme`) ← chrome (`@/components/chrome`) ← design (`@/design`) ← features. Chrome sits below the design layer: a chrome runtime file may import a design leaf by path (`@/design/text/themed-text`), never the `@/design` barrel, because `RootPage` reads `useHeaderOverlapInset` from the chrome barrel and the barrel would close a require cycle. Features and routes import primitives from `@/design` only. Gates: the `no-restricted-imports` design patterns ([lint-format.md](./lint-format.md) → Design layer), `tools/eslint-rules/design-import-policy.test.js`, and `src/design/import-graph.contract.test.ts` (no cycle through `src/design/`).
 
 ## Contrast — documented AA token pairs, computed in CI
 

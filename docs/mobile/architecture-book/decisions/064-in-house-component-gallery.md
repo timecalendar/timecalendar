@@ -22,6 +22,10 @@ on-device Storybook, Storybook for web and an in-house gallery in
   (`id`, `title`, `component`) and one named export per story (`name`, `args`, `render`). Titles and
   story names are typed `gallery.*` translation keys. Story ids are
   `<meta id>--<kebab-case export name>`. Nothing imports Storybook.
+- The gallery runtime (entries, story lookup, `GalleryStoryContent`, fixture types) is the
+  developer-only entry `@/design/gallery` (`src/design/gallery/index.ts`), separate from the
+  primitive barrel `@/design` (ADR [068](./068-design-layer-barrel-and-gallery-entry.md)). Only the
+  developer feature's UI, fixtures (type-only imports) and `src/design/gallery/` import it.
 - `src/design/gallery/registry.ts` lists fixture modules explicitly. `registry.test.ts` fails on an
   orphan or extra fixture, a duplicate id or title, a story without `render` or `args`, a render
   error in light or dark on either platform branch, or an interactive element without a role and

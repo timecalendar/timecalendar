@@ -7,10 +7,10 @@
 // of the Metro route tree because ui/ is not under src/app/).
 //
 // Conventions shown: useTranslation (no hardcoded strings — i18next/no-literal-string
-// lint), ThemedView/ThemedText from @/theme tokens, and an accessible touchable
+// lint), ThemedView/ThemedText from @/design (styled by @/theme tokens), and an accessible touchable
 // (role + translated label; give it a >=44pt/48dp hit area). Drive the feature's logic by
 // importing its SIBLING sub-barrel directly (@/features/<feature>/data | /store | /form),
-// never the feature barrel (B-2). Shared primitives come via @/components/*; native controls
+// never the feature barrel (B-2). Shared primitives come via the @/design barrel; native controls
 // via @/components/chrome (the @expo/ui seam), never @expo/ui directly.
 //
 // References: src/features/settings/ui/settings-screen.tsx,
@@ -19,8 +19,7 @@
 import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet } from "react-native"
 
-import { ThemedText } from "@/components/themed-text"
-import { ThemedView } from "@/components/themed-view"
+import { ThemedText, ThemedView } from "@/design"
 import { Spacing } from "@/theme"
 
 export default function FeatureScreen() {

@@ -21,8 +21,14 @@ these pages describe the system as it is now.
   `store`, `form`, and `ui`; a feature creates only the layers it needs.
 - Shared infrastructure is reached through owned seams such as `@/db`, `@/storage`,
   `@/firebase`, and `@/components/chrome`.
-- The gallery registry, fixture types and story helpers live in `src/design/` behind the
-  `@/design` barrel; `*.gallery.tsx` fixtures live next to the component they exercise.
+- Design primitives live in family folders under `src/design/` (`text/`, `icon/`, `button/`,
+  `status/`, `layout/`) and are imported only through the `@/design` barrel, which exports
+  primitives and their types, never tokens (`@/theme`) or gallery code. The component gallery is
+  the developer-only entry `@/design/gallery`; `*.gallery.tsx` fixtures live next to the component
+  they exercise ([ADR 068](./decisions/068-design-layer-barrel-and-gallery-entry.md)).
+- Layering: `@/theme` ← `@/hooks` ← `@/components/chrome` ← `@/design` ← features. Chrome and
+  design primitives import design leaves by path, never the barrel. `src/components/` holds the app
+  shell (`app-tabs`) and the chrome seam only (`shell.contract.test.ts`).
 - Sublayers import sibling sublayer barrels, never their own feature barrel.
 - Cross-feature dependencies use public barrels and must keep the dependency graph
   acyclic. ESLint enforces the detailed boundaries.

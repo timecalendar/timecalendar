@@ -5,7 +5,9 @@ The exact rules and their options live in `mobile/eslint.config.js` (named block
 `generated-code`, `timecalendar/feature-boundaries`, `timecalendar/chrome-seams`,
 `timecalendar/activity-seam`, `timecalendar/export-guide-seam`,
 `timecalendar/color-scheme-seam`, `timecalendar/developer-tools-home`,
-`timecalendar/design-home`,
+`timecalendar/environment-home`, `timecalendar/design-home`, `timecalendar/fixtures`,
+`timecalendar/design-tests`, `timecalendar/design-fixtures`, `timecalendar/chrome-fixtures`,
+`timecalendar/icon-seam`, `timecalendar/raw-button`,
 `timecalendar/calendar-sources-is-a-leaf`, `timecalendar/storage-seams`, and
 `timecalendar/tests`). The config is the source of
 truth; this file carries the caveats the config can't (R-1).
@@ -63,10 +65,8 @@ truth; this file carries the caveats the config can't (R-1).
     targets the barrel) — a sibling's sub-barrel is untouched. A `ui/` screen consumes
     its siblings' sub-barrels directly (e.g. `personal-event-form-screen` →
     `@/features/personal-events/form`, the school pickers → `…/data` + `/store`).
-  - **B-3** — routes (`src/app/**`) and the shared components remaining in
-    `src/components/**` (shell/primitives — feature screens have moved into
-    `src/features/*/ui/`, governed as sublayers by B-1/B-2) must not import the seams
-    directly. **One scoped exception** (last-write-wins `allow`): the root layout may
+  - **B-3** — routes (`src/app/**`) and `src/components/**` (the app shell and the
+    chrome seam) must not import the seams directly. **One scoped exception** (last-write-wins `allow`): the root layout may
     import `@/db/migrate` — the `void runMigrations()` startup wiring, which is app
     infrastructure, not feature-data access (the `@/db` data surface stays banned).
   - **B-4** — the **ADR-009 infra→feature edge** (`@/hooks/use-color-scheme` and
@@ -105,8 +105,9 @@ truth; this file carries the caveats the config can't (R-1).
   - **B-7 — the design layer knows no product** (the `design` element, `src/design`):
     `src/design/**` may not import a `feature-sublayer`, `feature-barrel`, `route`,
     `generated-api` or `db-seam` element. It consumes shared seams such as `@/theme`,
-    `@/components/chrome`, `@/i18n` and `@/hooks`. The gallery registry imports fixtures from `src/components/**`, which stays
-    allowed.
+    `@/components/chrome`, `@/i18n` and `@/hooks`. The gallery registry imports fixtures from
+    `src/components/chrome/**` and `src/theme/`, which stays allowed. The personal-events
+    `DateTimeField` therefore stays in its feature: it imports `@/features/calendar/data`.
   - **Caveat this block exists to carry (R-1): a flat-config block that adds a ban must
     re-call `restrictedImports([...])`, never list its one pattern alone.** Flat config
     **replaces** a rule's options rather than merging them, and
@@ -198,20 +199,45 @@ truth; this file carries the caveats the config can't (R-1).
   `EnvironmentSelectorDialog` are banned as named imports from
   `@/features/environment` and, by pattern, from `@/features/environment/ui` or any file under it,
   everywhere except `src/features/developer/**` and `src/features/environment/**`. The
-  exemption is the `timecalendar/developer-tools-home` block, which re-calls
-  `restrictedImports([routeEntrypointImportPattern], { banDeveloperTools: false })` for the same
+  exemptions are the `timecalendar/developer-tools-home` block (`src/features/developer/**`, which
+  also lifts the gallery-entry ban) and the `timecalendar/environment-home` block, each re-calling
+  `restrictedImports([routeEntrypointImportPattern], { banDeveloperTools: false, … })` for the same
   route-pattern reason as the color-scheme seam. Same static-import-only caveat as raw-fetch;
   `jest.mock("@/features/environment", …)` factories are not imports and stay free. See
   [navigation.md](./navigation.md) → Developer page.
-- **Design layer: one barrel** (`designDeepImportPattern`, the `banDesignDeepImports` flag of
-  `restrictedImports`): `@/design/<anything>` is banned outside `src/design/**`; code imports
-  `@/design`. The `timecalendar/design-home` block re-calls
-  `restrictedImports([routeEntrypointImportPattern], { banDesignDeepImports: false })` for
-  `src/design/**`, re-including the route pattern for the same reason as the color-scheme seam.
-  Inside `src/design/`, a folder imports its own files relatively and other folders through
-  `@/design/<folder>/…`. Fixtures import only types from `@/design` (`import type`), so the
-  registry → fixture → barrel edge is not a runtime cycle; the registry render test is the
-  backstop. See ADR [064](./decisions/064-in-house-component-gallery.md).
+- **Design layer: one primitive barrel, a developer-only gallery entry** (ADR
+  [068](./decisions/068-design-layer-barrel-and-gallery-entry.md)). Three patterns, each behind a
+  `restrictedImports` flag:
+  - `designDeepImportPattern` (`^@/design/(?!gallery(/|$))`, `banDesignDeepImports`, default on):
+    a path below `@/design/` other than the gallery entry.
+  - `galleryEntryImportPattern` (`^@/design/gallery(/|$)`, `banGalleryEntry`, default on).
+  - `designBarrelImportPattern` (`^@/design$`, `banDesignBarrel`, default off).
+
+  | Files | `@/design` | `@/design/<folder>/…` | `@/design/gallery` | Block |
+  | --- | --- | --- | --- | --- |
+  | features, routes, `components/app-tabs`, `theme`, `hooks`, others | allowed | banned | banned | `architecture`, `routes-not-importable` |
+  | `src/features/developer/**` | allowed | banned | allowed | `developer-tools-home` |
+  | `src/design/**` primitives (not fixtures, tests, `gallery/`) | banned | allowed | banned | `design-home` |
+  | `src/design/icon/icon{,.test}.tsx` | banned | allowed | banned | `icon-seam` (also lifts L9) |
+  | `src/design/**` tests | allowed | allowed | banned | `design-tests` |
+  | `src/design/**` fixtures, `src/design/gallery/**` | allowed | allowed | allowed | `design-fixtures` |
+  | `src/components/chrome/**` runtime files and tests | banned | allowed | banned | `chrome-seams` |
+  | `src/components/chrome/**` fixtures | allowed | allowed | allowed | `chrome-fixtures` |
+  | other `*.gallery.tsx` (`src/theme/tokens.gallery.tsx`) | allowed | banned | allowed | `fixtures` |
+
+  Every block re-calls `restrictedImports([routeEntrypointImportPattern], …)` with its full flag
+  set. Inside `src/design/`, a folder imports its own files relatively and other folders through
+  `@/design/<folder>/<file>`; fixtures import primitives from `@/design` and gallery types from
+  `@/design/gallery` with `import type`. **The R-1 proof is two tests, not inject-and-revert:**
+  `tools/eslint-rules/design-import-policy.test.js` computes the effective
+  `no-restricted-imports` options for one representative file per row (plus an environment file
+  and a route) and asserts which design, route-entrypoint, storage, chrome-seam and `SymbolView`
+  bans apply, so a block that forgets a flag fails naming the file; and
+  `src/design/import-graph.contract.test.ts` walks the value-import graph and fails when the
+  barrel reaches a gallery module, when anything but the developer UI, developer routes, fixtures
+  and the gallery reaches one, or when a require cycle passes through `src/design/`. **Caveat:**
+  the graph test reads static `import`/`export`/`require()`/`import()` with string specifiers; a
+  computed specifier is invisible to it.
 - **L8 — font scaling is never disabled** (`no-restricted-syntax` in
   `timecalendar/architecture`, the `restrictedSyntax` constant): two selectors,
   `JSXAttribute[name.name='allowFontScaling'][value.expression.value=false]` and
@@ -224,12 +250,12 @@ truth; this file carries the caveats the config can't (R-1).
   its files. See [accessibility.md](./accessibility.md).
 - **L9 — icons only through the `Icon` primitive** (`symbolViewImportPath`, appended to `paths`
   by the `banSymbolView` flag of `restrictedImports`): `SymbolView` is banned as a named import
-  from `expo-symbols` everywhere except `src/components/icon.tsx` and
-  `src/components/icon.test.tsx`, so every icon declares its text scaling. Type imports
+  from `expo-symbols` everywhere except `src/design/icon/icon.tsx` and
+  `src/design/icon/icon.test.tsx`, so every icon declares its text scaling. Type imports
   (`SFSymbol`, `AndroidSymbol`, `SymbolWeight`) stay allowed because `importNames` names only the
   component. The exemption is the `timecalendar/icon-seam` block, which re-calls
-  `restrictedImports([routeEntrypointImportPattern], { banSymbolView: false })` for the same
-  route-pattern reason as the color-scheme seam. Same static-import-only caveat as raw-fetch;
+  `restrictedImports([routeEntrypointImportPattern], { banSymbolView: false, … })`; it is the last
+  block for those files, so it restates the design-primitive flags. Same static-import-only caveat as raw-fetch;
   `jest.mock("expo-symbols", …)` factories are not imports. See
   [accessibility.md](./accessibility.md) → Icon scaling and ADR
   [065](./decisions/065-icon-text-scaling.md).
@@ -251,9 +277,9 @@ truth; this file carries the caveats the config can't (R-1).
   `timecalendar/raw-button`, `files: ["src/**/*.tsx"]`): a `Pressable` imported from
   `react-native` (aliases followed) whose `accessibilityRole` or `role` is the literal `"button"`
   or `"link"` and that has a direct `ThemedText`/`Text` child (also inside a top-level `&&`,
-  conditional or fragment) is an error; text buttons are `Button` from `@/components/button`
+  conditional or fragment) is an error; text buttons are `Button` from `@/design`
   ([theming.md](./theming.md) → Buttons, ADR [067](./decisions/067-button-family.md)). Ignored:
-  `src/components/button.tsx`, `src/components/chrome/**`, `src/features/calendar/renderer/**`,
+  `src/design/button/button.tsx`, `src/design/button/button-row.tsx`, `src/components/chrome/**`, `src/features/calendar/renderer/**`,
   tests, and the files listed in `tools/eslint-rules/raw-button-allowlist.js`, each annotated with
   the slice that migrates it. `raw-button-allowlist.test.js` lints every entry with only this rule
   and fails on a stale entry (no report: remove it), a missing file, a duplicate, or a list longer

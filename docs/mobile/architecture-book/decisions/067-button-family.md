@@ -10,14 +10,12 @@ Buttons were local `Pressable`s, each with its own fill, border, label tone, hei
 feedback (`duplication-and-drift.md` §A1–A4). The one shared button, `PrimaryAction`, merged the
 caller's `style` first, so a caller could not lay it out. Every later design-system primitive and
 every phase 5 screen migration needs a fixed answer to: which visual intents exist, what a caller
-may style, where primitives live, and how the backlog of hand-rolled buttons shrinks.
+may style, how two buttons share a row, and how the backlog of hand-rolled buttons shrinks.
 
 ## Decision
 
-- `Button` lives in `src/components/button.tsx` beside `ThemedText` and `Icon`, imported as
-  `@/components/button`. The `@/design` barrel is the gallery runtime, which imports every fixture;
-  exporting a primitive from it would put the gallery on every screen's module-init path and close
-  a cycle through `error-surfaces`.
+- `Button` lives in `src/design/button/button.tsx` and is imported from the `@/design` barrel
+  (ADR [068](./068-design-layer-barrel-and-gallery-entry.md)).
 - `variant` is required and closed. Each variant is a fixed token pairing:
 
   | Variant       | Fill                | Boundary    | Label         |
@@ -32,6 +30,13 @@ may style, where primitives live, and how the backlog of hand-rolled buttons shr
   and wide; `large` is `MinTouchTarget + Spacing.two`. Radius `Radii.large` at every size.
 - `style` is typed `StyleProp<ButtonLayoutStyle>` (margins, flex, alignment, width, position) and
   merges last. Color, height, padding, radius, border and opacity are not in the type.
+- `ButtonRow` (`src/design/button/button-row.tsx`, from `@/design`) is the one way to offer two
+  in-content buttons side by side: `primary` and `secondary` `Button` elements. Below the
+  accessibility text-size threshold (`useIsAccessibilityTextSize()`, font scale 1.786 = iOS AX1;
+  Android 1.8 and 2.0) the secondary sits leading at its intrinsic width up to half the row and the
+  primary trails, filling the rest. At or above it both stack full width, primary first (HIG and
+  Material stacked-action order). The same button instances move between layouts, so `testID`s,
+  handlers and focus survive a live text-size change; reading order equals visual order.
 - `PrimaryAction` is removed, not aliased: its call sites are `Button variant="filled"`.
 - Lint: `react-native`'s `Button` and `Touchable*` are banned imports everywhere.
   `local/no-raw-button` reports a `react-native` `Pressable` with a `button`/`link` role and a
@@ -39,10 +44,11 @@ may style, where primitives live, and how the backlog of hand-rolled buttons shr
   `raw-button-allowlist.test.js` fails on a stale entry, a missing file, or a list longer than its
   pinned ceiling.
 
-Rejected: `Button` in `src/design/` with a barrel split in the same slice; four variants with a
+Rejected: four variants with a
 destructive `tone` flag; a brand-tinted `tonal`; a `PrimaryAction` alias; `no-restricted-syntax`
 for the ratchet (it needs binding resolution, and that rule's options are a shared slot every
-block must spread); banning `Pressable` outright (rows, tiles and chrome use it).
+block must spread); banning `Pressable` outright (rows, tiles and chrome use it); a `ButtonRow`
+that forces its layout through a prop (a test seam in a production primitive).
 
 ## Consequences
 
@@ -50,10 +56,10 @@ A screen picks an intent and a size; it cannot recolor or resize a button. Every
 changes on device (radius 16, a neutral 1dp outline, `actionText` labels, the Android ripple).
 The rule misses text wrapped in a view and `Animated` pressables by design: it guards accident,
 review covers the rest. Each phase 5 slice removes its allowlist entries and lowers the ceiling.
+No lint rule detects a hand-built row of two `Button`s; review and the gallery catch it.
 
 ## Revisit if
 
-- The primitives move into `src/design/` behind a split barrel.
 - A consumer needs a toggle/selected state or an icon-only button.
 - iOS adoption makes the capsule shape the only native-looking button.
 - The allowlist reaches zero: drop the rule's ignores and delete the allowlist test.
