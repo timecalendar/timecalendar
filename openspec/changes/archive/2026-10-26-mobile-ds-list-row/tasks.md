@@ -77,7 +77,7 @@ A, then primitives with lint, then call sites with docs.
       0.1 is unchanged.
 - [ ] 1.7 Native proof: after the branch is pushed, dispatch
       `gh workflow run ci-mobile-e2e.yml -f ref=feat/mobile-ds-list-row` (use
-      `gh auth switch --user samuelprak` if dispatch is refused). Record the run URL. Verify: the
+      switch to an account with write access if dispatch is refused). Record the run URL. Verify: the
       Android job builds and flow 03 passes, including the new assertion. A packageRelease infra
       flake is re-run once before it is treated as a failure. If the run cannot be dispatched, keep
       this box open and note it in the PR body; the inbox note covers the device check.
