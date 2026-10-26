@@ -1,4 +1,4 @@
-import { fieldErrorHint, joinSentences } from "./field-error-hint"
+import { joinSentences } from "./field-error-hint"
 
 it.each([
   ["Enter a URL", undefined, "Enter a URL"],
@@ -10,7 +10,7 @@ it.each([
   [null, "Paste the link", "Paste the link"],
   [null, undefined, undefined],
 ])("folds error %p and hint %p into %p", (error, hint, expected) => {
-  expect(fieldErrorHint(error, hint)).toBe(expected)
+  expect(joinSentences(error, hint)).toBe(expected)
 })
 
 it.each([

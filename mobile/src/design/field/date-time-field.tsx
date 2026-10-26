@@ -3,7 +3,7 @@ import { useState } from "react"
 import { Platform, Pressable, type StyleProp, StyleSheet } from "react-native"
 
 import { DateTimePicker } from "@/components/chrome"
-import { fieldErrorHint } from "@/design/field/field-error-hint"
+import { joinSentences } from "@/design/field/field-error-hint"
 import {
   FieldChrome,
   FieldInset,
@@ -98,7 +98,7 @@ export function DateTimeField({
         testID={testID}
         accessibilityRole="button"
         accessibilityLabel={`${label}, ${display}`}
-        accessibilityHint={fieldErrorHint(error)}
+        accessibilityHint={joinSentences(error)}
         accessibilityState={{ disabled }}
         disabled={disabled}
         onPress={() => setStep({ kind: "date" })}

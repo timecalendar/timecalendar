@@ -1,5 +1,6 @@
 const endsSentence = /[.!?…]$/
 
+/** React Native forwards no described-by relation, so a field speaks its error through its hint. */
 export function joinSentences(
   ...parts: (string | null | undefined)[]
 ): string | undefined {
@@ -8,12 +9,4 @@ export function joinSentences(
   return present.reduce((joined, part) =>
     endsSentence.test(joined) ? `${joined} ${part}` : `${joined}. ${part}`,
   )
-}
-
-/** React Native forwards no described-by relation, so a field speaks its error through its hint. */
-export function fieldErrorHint(
-  error: string | null | undefined,
-  hint?: string,
-): string | undefined {
-  return joinSentences(error, hint)
 }

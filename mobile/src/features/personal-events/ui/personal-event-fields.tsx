@@ -2,15 +2,12 @@ import type { TFunction } from "i18next"
 import { StyleSheet, View } from "react-native"
 
 import { DateTimeField, TextField, ThemedText } from "@/design"
-import {
-  type AppLocale,
-  formatShortDateTime,
-  useUses24HourClock,
-} from "@/features/calendar/data"
+import { type AppLocale, formatShortDateTime } from "@/features/calendar/data"
 import type {
   EventFormErrors,
   EventFormValues,
 } from "@/features/personal-events/form"
+import { useUses24HourClock } from "@/hooks/use-uses-24-hour-clock"
 import { Spacing } from "@/theme"
 
 import { ColorSwatchPicker } from "./color-swatch-picker"

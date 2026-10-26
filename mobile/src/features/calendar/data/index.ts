@@ -246,4 +246,3 @@ export {
   chunkStartOfDay,
   requiredChunks,
 } from "./window-chunks"
-export { useUses24HourClock } from "@/hooks/use-uses-24-hour-clock"
