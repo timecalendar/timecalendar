@@ -84,9 +84,6 @@ type Failure = Common &
 export type StatusViewProps = Loading | Empty | Failure
 
 const childID = (testID: string | undefined, suffix: string) =>
-  testID === undefined ? undefined : `${testID}-${suffix}`
-
-const iconID = (testID: string | undefined, suffix: string) =>
   testID === undefined ? {} : { testID: `${testID}-${suffix}` }
 
 export function StatusView(props: StatusViewProps) {
@@ -95,6 +92,7 @@ export function StatusView(props: StatusViewProps) {
   const scheme = useColorScheme() === "dark" ? "dark" : "light"
   const accessibilitySize = useIsAccessibilityTextSize()
   const inline = presentation === "inline"
+  const progressID = childID(testID, "progress")
 
   useErrorAnnouncement(
     kind !== "loading" && caption ? `${title}. ${caption}` : title,
@@ -112,7 +110,7 @@ export function StatusView(props: StatusViewProps) {
         style={inline ? styles.loadingRow : styles.loadingColumn}
       >
         <View
-          testID={childID(testID, "progress")}
+          {...progressID}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
         >
@@ -123,7 +121,7 @@ export function StatusView(props: StatusViewProps) {
         </View>
         <ThemedText
           tone="secondary"
-          style={[inline ? styles.shrink : styles.centered]}
+          style={inline ? styles.shrink : styles.centered}
         >
           {title}
         </ThemedText>
@@ -134,8 +132,9 @@ export function StatusView(props: StatusViewProps) {
       kind === "empty" && !accessibilitySize ? props.artwork : undefined
     const symbol = kind === "empty" ? props.symbol : undefined
     const textAlign = inline ? undefined : styles.centered
-    const glyphID = iconID(testID, "glyph")
-    const symbolID = iconID(testID, "symbol")
+    const glyphID = childID(testID, "glyph")
+    const symbolID = childID(testID, "symbol")
+    const artworkID = childID(testID, "artwork")
     body = (
       <>
         {kind === "error" ? (
@@ -159,7 +158,7 @@ export function StatusView(props: StatusViewProps) {
         )}
         {artwork === undefined ? null : (
           <Image
-            testID={childID(testID, "artwork")}
+            {...artworkID}
             source={artwork[scheme]}
             contentFit="contain"
             accessible={false}
