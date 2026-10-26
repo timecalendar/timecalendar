@@ -73,6 +73,11 @@ const styleLiteralOptions = {
   radius: true,
 }
 const chromeStyleLiteralOptions = { ...styleLiteralOptions, typography: false }
+const rawPrimitiveOptions = { text: true, modal: true }
+const categoriesOff = (categories, categoryOption) =>
+  Object.fromEntries(
+    categories.map((category) => [categoryOption[category], false]),
+  )
 const chromeDir = "src/components/chrome/"
 
 // The ../* ban below is what makes @/-prefixed boundary patterns sound:
@@ -1030,7 +1035,7 @@ module.exports = defineConfig([
     ignores: ["**/*.test.{ts,tsx}"],
     plugins: { local: localRules },
     rules: {
-      "local/no-raw-primitive": ["error", { text: true, modal: true }],
+      "local/no-raw-primitive": ["error", rawPrimitiveOptions],
     },
   },
   ...rawPrimitiveAllowlist.map(({ path, categories }) => ({
@@ -1041,14 +1046,8 @@ module.exports = defineConfig([
       "local/no-raw-primitive": [
         "error",
         {
-          text: true,
-          modal: true,
-          ...Object.fromEntries(
-            categories.map((category) => [
-              rawPrimitiveCategoryOption[category],
-              false,
-            ]),
-          ),
+          ...rawPrimitiveOptions,
+          ...categoriesOff(categories, rawPrimitiveCategoryOption),
         },
       ],
     },
@@ -1087,12 +1086,7 @@ module.exports = defineConfig([
           ...(path.startsWith(chromeDir)
             ? chromeStyleLiteralOptions
             : styleLiteralOptions),
-          ...Object.fromEntries(
-            categories.map((category) => [
-              styleLiteralCategoryOption[category],
-              false,
-            ]),
-          ),
+          ...categoriesOff(categories, styleLiteralCategoryOption),
         },
       ],
     },

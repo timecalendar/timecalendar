@@ -1,10 +1,4 @@
-/* global __dirname, describe, expect, it */
-const { existsSync } = require("node:fs")
-const { resolve } = require("node:path")
-const { ESLint } = require("eslint")
-const tsParser = require("@typescript-eslint/parser")
-
-const localRules = require("./index")
+const { describeCategoryAllowlist } = require("./category-allowlist-suite")
 const {
   styleLiteralAllowlist,
   styleLiteralCategoryOption,
@@ -19,87 +13,17 @@ const STYLE_LITERAL_ALLOWLIST_CEILING = {
   radiusLiteral: 3,
 }
 
-const root = resolve(__dirname, "../..")
-const paths = styleLiteralAllowlist.map(({ path }) => path)
-
-const eslint = new ESLint({
-  cwd: root,
-  overrideConfigFile: true,
-  overrideConfig: [
-    {
-      files: ["**/*.{ts,tsx}"],
-      languageOptions: {
-        parser: tsParser,
-        parserOptions: { ecmaFeatures: { jsx: true } },
-      },
-      plugins: { local: localRules },
-      rules: {
-        "local/no-style-literals": [
-          "error",
-          {
-            colors: true,
-            typography: true,
-            shadows: true,
-            spacing: true,
-            radius: true,
-          },
-        ],
-      },
-    },
-  ],
-})
-
-describe("style-literal allowlist", () => {
-  it("covers exactly the rule's categories", () => {
-    expect(Object.keys(STYLE_LITERAL_ALLOWLIST_CEILING).sort()).toEqual(
-      Object.keys(styleLiteralCategoryOption).sort(),
-    )
-  })
-
-  it.each(Object.keys(STYLE_LITERAL_ALLOWLIST_CEILING))(
-    "matches its %s ceiling exactly",
-    (category) => {
-      const count = styleLiteralAllowlist.filter(({ categories }) =>
-        categories.includes(category),
-      ).length
-      expect(count).toBe(STYLE_LITERAL_ALLOWLIST_CEILING[category])
-    },
-  )
-
-  it("lists each file once", () => {
-    expect(new Set(paths).size).toBe(paths.length)
-  })
-
-  it("lists only files that exist", () => {
-    expect(paths.filter((path) => !existsSync(resolve(root, path)))).toEqual([])
-  })
-
-  it("lists only the rule's categories", () => {
-    const unknown = styleLiteralAllowlist.flatMap(({ path, categories }) =>
-      categories
-        .filter((category) => !(category in styleLiteralCategoryOption))
-        .map((category) => `${path}:${category}`),
-    )
-    expect(unknown).toEqual([])
-  })
-
-  it("lists only categories the file still violates", async () => {
-    const results = await eslint.lintFiles(paths)
-    const found = new Map(
-      results.map((result) => [
-        result.filePath.slice(root.length + 1),
-        new Set(
-          result.messages
-            .filter((message) => message.ruleId === "local/no-style-literals")
-            .map((message) => message.messageId),
-        ),
-      ]),
-    )
-    const stale = styleLiteralAllowlist.flatMap(({ path, categories }) =>
-      categories
-        .filter((category) => !found.get(path)?.has(category))
-        .map((category) => `${path}:${category}`),
-    )
-    expect(stale).toEqual([])
-  })
+describeCategoryAllowlist({
+  name: "style-literal allowlist",
+  ruleId: "local/no-style-literals",
+  ruleOptions: {
+    colors: true,
+    typography: true,
+    shadows: true,
+    spacing: true,
+    radius: true,
+  },
+  allowlist: styleLiteralAllowlist,
+  categoryOption: styleLiteralCategoryOption,
+  ceiling: STYLE_LITERAL_ALLOWLIST_CEILING,
 })
