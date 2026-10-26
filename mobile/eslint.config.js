@@ -69,7 +69,7 @@ const styleLiteralOptions = {
   radius: true,
 }
 const chromeStyleLiteralOptions = { ...styleLiteralOptions, typography: false }
-const chromeFiles = "src/components/chrome/**"
+const chromeDir = "src/components/chrome/"
 
 // The ../* ban below is what makes @/-prefixed boundary patterns sound:
 // with parent-relative imports banned, the alias is the only way to cross
@@ -971,7 +971,7 @@ module.exports = defineConfig([
   {
     // Chrome mirrors SwiftUI/Compose type, which is not on the RN ramp (ADR 077).
     name: "timecalendar/style-literals-chrome",
-    files: [chromeFiles],
+    files: [`${chromeDir}**`],
     ignores: styleLiteralIgnores,
     plugins: { local: localRules },
     rules: {
@@ -989,7 +989,7 @@ module.exports = defineConfig([
       "local/no-style-literals": [
         "error",
         {
-          ...(path.startsWith("src/components/chrome/")
+          ...(path.startsWith(chromeDir)
             ? chromeStyleLiteralOptions
             : styleLiteralOptions),
           ...Object.fromEntries(
