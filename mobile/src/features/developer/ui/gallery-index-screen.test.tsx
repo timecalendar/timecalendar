@@ -69,9 +69,9 @@ describe.each(["ios", "android"] as const)(
         "button-row",
         "text-field",
         "date-time-field",
-        "native-settings",
+        "native-list",
         "native-text-entry-dialog",
-        "native-settings-numeric-editor",
+        "native-list-numeric-editor",
         "menu-view",
         "date-time-picker",
         "glass-surface",
@@ -79,8 +79,8 @@ describe.each(["ios", "android"] as const)(
       ])
       const androidOnly = [
         "icon--glyphs",
-        "native-settings--floating-action",
-        "native-settings--radio-dialog",
+        "native-list--floating-action",
+        "native-list--radio-dialog",
       ]
       const iosOnly = [
         "date-time-picker--date-time",
@@ -146,20 +146,20 @@ describe.each(["ios", "android"] as const)(
           "date-time-field--error",
           "date-time-field--disabled",
           "date-time-field--long-strings",
-          "native-settings--rows",
-          "native-settings--destructive",
-          "native-settings--switches",
-          "native-settings--choices",
-          "native-settings--header-and-alert",
-          "native-settings--floating-action",
-          "native-settings--radio-dialog",
-          "native-settings--long-strings",
+          "native-list--rows",
+          "native-list--destructive",
+          "native-list--switches",
+          "native-list--choices",
+          "native-list--header-and-alert",
+          "native-list--floating-action",
+          "native-list--radio-dialog",
+          "native-list--long-strings",
           "native-text-entry-dialog--default",
           "native-text-entry-dialog--submit-disabled",
           "native-text-entry-dialog--pending",
-          "native-settings-numeric-editor--default",
-          "native-settings-numeric-editor--validation-error",
-          "native-settings-numeric-editor--long-strings",
+          "native-list-numeric-editor--default",
+          "native-list-numeric-editor--validation-error",
+          "native-list-numeric-editor--long-strings",
           "menu-view--default",
           "menu-view--states",
           "menu-view--long-strings",
@@ -198,11 +198,11 @@ describe.each(["ios", "android"] as const)(
     it("opens a story by id", async () => {
       await render(<GalleryIndexScreen />)
       await fireEvent.press(
-        screen.getByTestId("gallery-story-native-settings--switches"),
+        screen.getByTestId("gallery-story-native-list--switches"),
       )
       expect(router.push).toHaveBeenLastCalledWith({
         pathname: "/developer/gallery/[story]",
-        params: { story: "native-settings--switches" },
+        params: { story: "native-list--switches" },
       })
     })
   },

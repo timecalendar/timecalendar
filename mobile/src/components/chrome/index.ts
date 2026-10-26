@@ -42,20 +42,20 @@ export {
 } from "@/components/chrome/expo-ui"
 export { NativeErrorNotice } from "@/components/chrome/native-error-notice"
 export {
-  NativeSettingsAlert,
-  NativeSettingsChoiceRow,
-  NativeSettingsFloatingAction,
-  NativeSettingsHost,
-  NativeSettingsRadioDialog,
-  NativeSettingsRow,
-  type NativeSettingsRowProps,
-  NativeSettingsSection,
-  NativeSettingsSwitchRow,
-} from "@/components/chrome/native-settings"
-export { NativeSettingsHeader } from "@/components/chrome/native-settings-header"
-export type { NativeSettingsIcon } from "@/components/chrome/native-settings-icons"
+  NativeList,
+  NativeListAlert,
+  NativeListChoiceRow,
+  NativeListFloatingAction,
+  NativeListRadioDialog,
+  NativeListRow,
+  type NativeListRowProps,
+  NativeListSection,
+  NativeListSwitchRow,
+} from "@/components/chrome/native-list"
+export { NativeListHeader } from "@/components/chrome/native-list-header"
+export type { NativeListIcon } from "@/components/chrome/native-list-icons"
 export {
-  NativeSettingsNumericEditor,
-  type NativeSettingsNumericEditorIds,
-  type NativeSettingsNumericEditorProps,
-} from "@/components/chrome/native-settings-numeric-editor"
+  NativeListNumericEditor,
+  type NativeListNumericEditorIds,
+  type NativeListNumericEditorProps,
+} from "@/components/chrome/native-list-numeric-editor"

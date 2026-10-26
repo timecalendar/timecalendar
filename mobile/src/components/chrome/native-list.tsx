@@ -72,23 +72,23 @@ import {
 import { Platform, StyleSheet } from "react-native"
 
 import {
-  NativeSettingsHostContext,
-  useAssertOutsideNativeSettingsHost,
-} from "@/components/chrome/native-settings-host-context"
+  NativeListContext,
+  useAssertOutsideNativeList,
+} from "@/components/chrome/native-list-context"
 import {
   materialSymbolSource,
-  type NativeSettingsIcon,
-} from "@/components/chrome/native-settings-icons"
+  type NativeListIcon,
+} from "@/components/chrome/native-list-icons"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { useErrorAnnouncement } from "@/hooks/use-error-announcement"
 import { useIsAccessibilityTextSize, useTheme } from "@/theme"
 
-export type NativeSettingsRowProps = {
+export type NativeListRowProps = {
   kind: "navigation" | "action" | "value"
   label: string
   accessibilityLabel?: string | undefined
   testID: string
-  icon?: NativeSettingsIcon | undefined
+  icon?: NativeListIcon | undefined
   hint?: string | undefined
   subtitle?: string | undefined
   value?: string | undefined
@@ -98,24 +98,24 @@ export type NativeSettingsRowProps = {
   onPress?: (() => void) | undefined
 }
 
-type NativeSettingsSectionProps = PropsWithChildren<{
+type NativeListSectionProps = PropsWithChildren<{
   title?: string | undefined
   footer?: string | undefined
   testID?: string | undefined
 }>
 
-type NativeSettingsHostProps = PropsWithChildren<{
+type NativeListProps = PropsWithChildren<{
   reservesFloatingAction?: boolean | undefined
 }>
 
-type NativeSettingsFloatingActionProps = {
+type NativeListFloatingActionProps = {
   label: string
-  icon: NativeSettingsIcon
+  icon: NativeListIcon
   testID: string
   onPress: () => void
 }
 
-type NativeSettingsChoiceRowProps = {
+type NativeListChoiceRowProps = {
   label: string
   selected: boolean
   selectedAccessibilityLabel: string
@@ -123,16 +123,16 @@ type NativeSettingsChoiceRowProps = {
   onSelect: () => void
 }
 
-type NativeSettingsSwitchRowProps = {
+type NativeListSwitchRowProps = {
   label: string
   value: boolean
   testID: string
-  icon?: NativeSettingsIcon | undefined
+  icon?: NativeListIcon | undefined
   switchTestID?: string
   onValueChange: (value: boolean) => void
 }
 
-type NativeSettingsAlertProps = {
+type NativeListAlertProps = {
   title: string
   message: string
   testID: string
@@ -147,17 +147,17 @@ type NativeSettingsAlertProps = {
     | undefined
 }
 
-type NativeSettingsRadioDialogOption<Value extends string> = {
+type NativeListRadioDialogOption<Value extends string> = {
   label: string
   value: Value
 }
 
-type NativeSettingsRadioDialogProps<Value extends string> = {
+type NativeListRadioDialogProps<Value extends string> = {
   visible: boolean
   title: string
   cancelLabel: string
   value: Value
-  options: readonly NativeSettingsRadioDialogOption<Value>[]
+  options: readonly NativeListRadioDialogOption<Value>[]
   testID: string
   onSelect: (value: Value) => void
   onDismiss: () => void
@@ -231,7 +231,7 @@ function useResolvedScheme(): "light" | "dark" {
   return useColorScheme() === "dark" ? "dark" : "light"
 }
 
-function ComposeSettingsHost({
+function ComposeListHost({
   children,
   ...props
 }: Pick<
@@ -247,14 +247,14 @@ function ComposeSettingsHost({
   )
 }
 
-export function NativeSettingsHost({
+export function NativeList({
   children,
   reservesFloatingAction = false,
-}: NativeSettingsHostProps) {
+}: NativeListProps) {
   const colorScheme = useResolvedScheme()
   const theme = useTheme()
   return (
-    <NativeSettingsHostContext.Provider value>
+    <NativeListContext.Provider value>
       {Platform.OS === "ios" ? (
         <SwiftHost
           colorScheme={colorScheme}
@@ -264,7 +264,7 @@ export function NativeSettingsHost({
           <Form modifiers={[tint(theme.primary)]}>{children}</Form>
         </SwiftHost>
       ) : (
-        <ComposeSettingsHost useViewportSizeMeasurement style={styles.fill}>
+        <ComposeListHost useViewportSizeMeasurement style={styles.fill}>
           <LazyColumn
             contentPadding={{
               top: 0,
@@ -276,22 +276,22 @@ export function NativeSettingsHost({
           >
             {children}
           </LazyColumn>
-        </ComposeSettingsHost>
+        </ComposeListHost>
       )}
-    </NativeSettingsHostContext.Provider>
+    </NativeListContext.Provider>
   )
 }
 
 // iOS adds through the navigation bar; only Material pages carry a FAB.
-export function NativeSettingsFloatingAction({
+export function NativeListFloatingAction({
   label,
   icon,
   testID: fabTestID,
   onPress,
-}: NativeSettingsFloatingActionProps) {
+}: NativeListFloatingActionProps) {
   if (Platform.OS === "ios") return null
   return (
-    <ComposeSettingsHost matchContents style={styles.floatingAction}>
+    <ComposeListHost matchContents style={styles.floatingAction}>
       <FloatingActionButton onClick={onPress} modifiers={[testID(fabTestID)]}>
         <FloatingActionButton.Icon>
           <MaterialIcon
@@ -301,24 +301,20 @@ export function NativeSettingsFloatingAction({
           />
         </FloatingActionButton.Icon>
       </FloatingActionButton>
-    </ComposeSettingsHost>
+    </ComposeListHost>
   )
 }
 
-export function NativeSettingsSection(props: NativeSettingsSectionProps) {
+export function NativeListSection(props: NativeListSectionProps) {
   if (Platform.OS === "ios") {
-    return <SwiftSettingsSection {...props} />
+    return <SwiftListSection {...props} />
   }
-  return <ComposeSettingsSection {...props} />
+  return <ComposeListSection {...props} />
 }
 
 // SwiftUI applies a Section's accessibilityIdentifier to every row inside it,
 // replacing the rows' own identifiers, so iOS sections carry none.
-function SwiftSettingsSection({
-  title,
-  footer,
-  children,
-}: NativeSettingsSectionProps) {
+function SwiftListSection({ title, footer, children }: NativeListSectionProps) {
   return (
     <SwiftSection
       {...(title ? { title } : {})}
@@ -329,12 +325,12 @@ function SwiftSettingsSection({
   )
 }
 
-function ComposeSettingsSection({
+function ComposeListSection({
   title,
   footer,
   testID: sectionTestID,
   children,
-}: NativeSettingsSectionProps) {
+}: NativeListSectionProps) {
   const palette = useMaterialColors()
   const items = Children.toArray(children)
   const titled = Boolean(title)
@@ -373,18 +369,18 @@ function ComposeSettingsSection({
   )
 }
 
-export function NativeSettingsAlert(props: NativeSettingsAlertProps) {
+export function NativeListAlert(props: NativeListAlertProps) {
   useErrorAnnouncement(`${props.title}. ${props.message}`, { native: true })
-  if (Platform.OS === "ios") return <SwiftSettingsAlert {...props} />
-  return <ComposeSettingsAlert {...props} />
+  if (Platform.OS === "ios") return <SwiftListAlert {...props} />
+  return <ComposeListAlert {...props} />
 }
 
-function SwiftSettingsAlert({
+function SwiftListAlert({
   title,
   message,
   messageTestID,
   action,
-}: NativeSettingsAlertProps) {
+}: NativeListAlertProps) {
   const theme = useTheme()
   return (
     <SwiftSection>
@@ -432,13 +428,13 @@ function SwiftSettingsAlert({
   )
 }
 
-function ComposeSettingsAlert({
+function ComposeListAlert({
   title,
   message,
   testID: alertTestID,
   messageTestID,
   action,
-}: NativeSettingsAlertProps) {
+}: NativeListAlertProps) {
   const palette = useMaterialColors()
   return (
     <ListItem
@@ -485,7 +481,7 @@ function ComposeSettingsAlert({
   )
 }
 
-function activateRow(props: NativeSettingsRowProps) {
+function activateRow(props: NativeListRowProps) {
   if (props.kind === "navigation" && props.href) {
     router.push(props.href)
   } else if (props.kind === "action") {
@@ -493,7 +489,7 @@ function activateRow(props: NativeSettingsRowProps) {
   }
 }
 
-function SwiftIconTile({ icon }: { icon: NativeSettingsIcon }) {
+function SwiftIconTile({ icon }: { icon: NativeListIcon }) {
   const theme = useTheme()
   return (
     <SwiftImage
@@ -532,7 +528,7 @@ function SwiftRowLabel({
   detail,
 }: {
   label: string
-  icon?: NativeSettingsIcon | undefined
+  icon?: NativeListIcon | undefined
   subtitle?: string | undefined
   destructive?: boolean | undefined
   titleModifiers?: SwiftModifierConfig[] | undefined
@@ -595,7 +591,7 @@ function SwiftBadge({ children }: { children: string }) {
 }
 
 type SwiftRowContentProps = Pick<
-  NativeSettingsRowProps,
+  NativeListRowProps,
   "label" | "icon" | "subtitle" | "value" | "badge" | "destructive"
 >
 
@@ -721,19 +717,19 @@ function SwiftActionRowContent({
   )
 }
 
-export function NativeSettingsRow(props: NativeSettingsRowProps) {
-  if (Platform.OS === "ios") return <SwiftSettingsRow {...props} />
-  return <ComposeSettingsRow {...props} />
+export function NativeListRow(props: NativeListRowProps) {
+  if (Platform.OS === "ios") return <SwiftListRow {...props} />
+  return <ComposeListRow {...props} />
 }
 
 function defaultAccessibilityLabel({
   label,
   subtitle,
-}: Pick<NativeSettingsRowProps, "label" | "subtitle">) {
+}: Pick<NativeListRowProps, "label" | "subtitle">) {
   return subtitle ? `${label}, ${subtitle}` : label
 }
 
-function SwiftSettingsRow(props: NativeSettingsRowProps) {
+function SwiftListRow(props: NativeListRowProps) {
   const stacked = useIsAccessibilityTextSize() && Boolean(props.value)
   const modifiers = [
     accessibilityIdentifier(props.testID),
@@ -797,7 +793,7 @@ function SwiftSettingsRow(props: NativeSettingsRowProps) {
   )
 }
 
-function ComposeLeadingIcon({ icon }: { icon: NativeSettingsIcon }) {
+function ComposeLeadingIcon({ icon }: { icon: NativeListIcon }) {
   const palette = useMaterialColors()
   return (
     <ListItem.LeadingContent>
@@ -810,7 +806,7 @@ function ComposeLeadingIcon({ icon }: { icon: NativeSettingsIcon }) {
   )
 }
 
-function ComposeSettingsRow(props: NativeSettingsRowProps) {
+function ComposeListRow(props: NativeListRowProps) {
   const palette = useMaterialColors()
   const segment = useSegmentModifiers()
   const interactive = props.kind !== "value"
@@ -870,7 +866,7 @@ function ComposeSettingsRow(props: NativeSettingsRowProps) {
   )
 }
 
-export function NativeSettingsSwitchRow(props: NativeSettingsSwitchRowProps) {
+export function NativeListSwitchRow(props: NativeListSwitchRowProps) {
   if (Platform.OS === "ios") {
     const { label, icon, value, testID: rowTestID, switchTestID } = props
     return (
@@ -887,17 +883,17 @@ export function NativeSettingsSwitchRow(props: NativeSettingsSwitchRowProps) {
       </SwiftToggle>
     )
   }
-  return <ComposeSettingsSwitchRow {...props} />
+  return <ComposeListSwitchRow {...props} />
 }
 
-function ComposeSettingsSwitchRow({
+function ComposeListSwitchRow({
   label,
   icon,
   value,
   testID: rowTestID,
   switchTestID,
   onValueChange,
-}: NativeSettingsSwitchRowProps) {
+}: NativeListSwitchRowProps) {
   const palette = useMaterialColors()
   const segment = useSegmentModifiers()
   const toggle = () => onValueChange(!value)
@@ -930,18 +926,18 @@ function ComposeSettingsSwitchRow({
   )
 }
 
-export function NativeSettingsChoiceRow(props: NativeSettingsChoiceRowProps) {
-  if (Platform.OS === "ios") return <SwiftSettingsChoiceRow {...props} />
-  return <ComposeSettingsChoiceRow {...props} />
+export function NativeListChoiceRow(props: NativeListChoiceRowProps) {
+  if (Platform.OS === "ios") return <SwiftListChoiceRow {...props} />
+  return <ComposeListChoiceRow {...props} />
 }
 
-function SwiftSettingsChoiceRow({
+function SwiftListChoiceRow({
   label,
   selected,
   selectedAccessibilityLabel,
   testID: rowTestID,
   onSelect,
-}: NativeSettingsChoiceRowProps) {
+}: NativeListChoiceRowProps) {
   const theme = useTheme()
   return (
     <SwiftButton
@@ -970,12 +966,12 @@ function SwiftSettingsChoiceRow({
   )
 }
 
-function ComposeSettingsChoiceRow({
+function ComposeListChoiceRow({
   label,
   selected,
   testID: rowTestID,
   onSelect,
-}: NativeSettingsChoiceRowProps) {
+}: NativeListChoiceRowProps) {
   const palette = useMaterialColors()
   const segment = useSegmentModifiers()
   return (
@@ -1002,15 +998,15 @@ function ComposeSettingsChoiceRow({
   )
 }
 
-export function NativeSettingsRadioDialog<Value extends string>(
-  props: NativeSettingsRadioDialogProps<Value>,
+export function NativeListRadioDialog<Value extends string>(
+  props: NativeListRadioDialogProps<Value>,
 ) {
-  useAssertOutsideNativeSettingsHost("NativeSettingsRadioDialog")
+  useAssertOutsideNativeList("NativeListRadioDialog")
   if (!props.visible || Platform.OS === "ios") return null
   return (
-    <ComposeSettingsHost matchContents>
+    <ComposeListHost matchContents>
       <ComposeRadioDialog {...props} />
-    </ComposeSettingsHost>
+    </ComposeListHost>
   )
 }
 
@@ -1022,7 +1018,7 @@ function ComposeRadioDialog<Value extends string>({
   testID: dialogTestID,
   onSelect,
   onDismiss,
-}: NativeSettingsRadioDialogProps<Value>) {
+}: NativeListRadioDialogProps<Value>) {
   const palette = useMaterialColors()
   return (
     <AlertDialog

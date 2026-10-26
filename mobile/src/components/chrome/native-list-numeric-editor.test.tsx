@@ -3,8 +3,8 @@ import { fireEvent, render } from "@testing-library/react-native"
 import { usePlatform } from "@/test-support/platform"
 import { Colors } from "@/theme"
 
-import { NativeSettingsHost } from "./native-settings"
-import { NativeSettingsNumericEditor } from "./native-settings-numeric-editor"
+import { NativeList } from "./native-list"
+import { NativeListNumericEditor } from "./native-list-numeric-editor"
 
 jest.mock("@/hooks/use-color-scheme", () => ({
   useColorScheme: () => "dark",
@@ -32,11 +32,11 @@ const props = {
 
 beforeEach(() => jest.clearAllMocks())
 
-describe("NativeSettingsNumericEditor on iOS", () => {
+describe("NativeListNumericEditor on iOS", () => {
   usePlatform("ios")
 
   it("owns one form, numeric keyboard, identifiers, and the current native buffer", async () => {
-    const view = await render(<NativeSettingsNumericEditor {...props} />)
+    const view = await render(<NativeListNumericEditor {...props} />)
     expect(view.getByTestId("swiftui-form-scroll-owner").props.tint).toBe(
       Colors.dark.primary,
     )
@@ -53,11 +53,11 @@ describe("NativeSettingsNumericEditor on iOS", () => {
   })
 })
 
-describe("NativeSettingsNumericEditor on Android", () => {
+describe("NativeListNumericEditor on Android", () => {
   usePlatform("android")
 
   it("keeps outside taps inert, maps Back to cancel, and submits the current buffer", async () => {
-    const view = await render(<NativeSettingsNumericEditor {...props} />)
+    const view = await render(<NativeListNumericEditor {...props} />)
     const host = view.getByTestId("compose-host")
     expect(host.props.colorScheme).toBe("dark")
     expect(host.props.seedColor).toBe(Colors.dark.primary)
@@ -77,31 +77,31 @@ describe("NativeSettingsNumericEditor on Android", () => {
 })
 
 describe.each(["ios", "android"] as const)(
-  "NativeSettingsNumericEditor placement on %s",
+  "NativeListNumericEditor placement on %s",
   (platform) => {
     usePlatform(platform)
 
-    it("rejects rendering inside NativeSettingsHost", async () => {
+    it("rejects rendering inside NativeList", async () => {
       const consoleError = jest
         .spyOn(console, "error")
         .mockImplementation(() => {})
       await expect(
         render(
-          <NativeSettingsHost>
-            <NativeSettingsNumericEditor {...props} />
-          </NativeSettingsHost>,
+          <NativeList>
+            <NativeListNumericEditor {...props} />
+          </NativeList>,
         ),
       ).rejects.toThrow(
-        "NativeSettingsNumericEditor must render outside NativeSettingsHost; place it after </NativeSettingsHost>.",
+        "NativeListNumericEditor must render outside NativeList; place it after </NativeList>.",
       )
       consoleError.mockRestore()
     })
 
-    it("renders as a sibling after NativeSettingsHost", async () => {
+    it("renders as a sibling after NativeList", async () => {
       const view = await render(
         <>
-          <NativeSettingsHost />
-          <NativeSettingsNumericEditor {...props} />
+          <NativeList />
+          <NativeListNumericEditor {...props} />
         </>,
       )
       expect(view.getByTestId(ids.field)).toBeTruthy()

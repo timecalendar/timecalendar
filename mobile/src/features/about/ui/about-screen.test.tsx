@@ -1,4 +1,4 @@
-import { fireEvent, render } from "@testing-library/react-native"
+import { fireEvent, render, within } from "@testing-library/react-native"
 import * as Linking from "expo-linking"
 import { router } from "expo-router"
 import * as WebBrowser from "expo-web-browser"
@@ -61,6 +61,38 @@ describe.each(["ios", "android"] as const)("AboutScreen on %s", (platform) => {
     expect(router.push).toHaveBeenCalledWith("/changelog")
     await fireEvent.press(view.getByTestId("about-privacy"))
     expect(WebBrowser.openBrowserAsync).toHaveBeenCalled()
+  })
+
+  it("gives the contact row its address and, on iOS, every row its hint", async () => {
+    const view = await render(<AboutScreen />)
+    expect(
+      within(view.getByTestId("about-contact")).getByText(
+        "hello@timecalendar.app",
+      ),
+    ).toBeOnTheScreen()
+    if (platform !== "ios") return
+    expect(view.getByTestId("about-contact").props.accessibilityValue).toEqual({
+      text: "hello@timecalendar.app",
+    })
+    expect(
+      Object.fromEntries(
+        ["about-privacy", "about-contact", "about-changelog"].map((id) => [
+          id,
+          view.getByTestId(id).props.accessibilityHint,
+        ]),
+      ),
+    ).toEqual({
+      "about-privacy": "Opens the privacy policy in the in-app browser",
+      "about-contact": "Opens your email app to contact TimeCalendar",
+      "about-changelog": "Opens the full release history",
+    })
+    const developerRows = view.getAllByTestId(/^about-developer-/)
+    expect(developerRows).toHaveLength(2)
+    for (const row of developerRows) {
+      expect(row.props.accessibilityHint).toMatch(
+        /^Opens .+’s website in the in-app browser$/,
+      )
+    }
   })
 })
 

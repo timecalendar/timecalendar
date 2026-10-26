@@ -34,15 +34,15 @@ const materialSymbols = {
     require("@/assets/icons/material/visibility_off.xml") as ImageSourcePropType,
 } as const
 
-export type NativeSettingsMaterialSymbol = keyof typeof materialSymbols
+export type NativeListMaterialSymbol = keyof typeof materialSymbols
 
-export type NativeSettingsIcon = {
+export type NativeListIcon = {
   ios: SFSymbol
-  android: NativeSettingsMaterialSymbol
+  android: NativeListMaterialSymbol
 }
 
 export function materialSymbolSource(
-  name: NativeSettingsMaterialSymbol,
+  name: NativeListMaterialSymbol,
 ): ImageSourcePropType {
   return materialSymbols[name]
 }

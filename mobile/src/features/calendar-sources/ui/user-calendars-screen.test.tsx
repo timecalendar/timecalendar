@@ -8,7 +8,7 @@ import { usePlatform } from "@/test-support/platform"
 
 import { UserCalendarsScreen } from "./user-calendars-screen"
 
-// The calendar list rendered through the real native-settings seam (Jest stubs
+// The calendar list rendered through the real native-list seam (Jest stubs
 // for SwiftUI/Compose), theme, and i18n. The reactive read and its loaded flag
 // are mocked so the rows, load-gated empty state, and the platform-specific add
 // affordance are provable without SQLite. Native header items are asserted

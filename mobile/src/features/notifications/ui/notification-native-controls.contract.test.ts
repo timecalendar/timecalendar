@@ -39,7 +39,7 @@ describe("native notification control ownership contract", () => {
       expect(source).not.toMatch(/ScrollView|FlatList|SectionList/)
     }
     expect(
-      read("src/components/chrome/native-settings-numeric-editor.tsx"),
+      read("src/components/chrome/native-list-numeric-editor.tsx"),
     ).toContain('from "@expo/ui/swift-ui"')
   })
 

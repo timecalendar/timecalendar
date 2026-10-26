@@ -8,7 +8,7 @@ The exact rules and their options live in `mobile/eslint.config.js` (named block
 `timecalendar/environment-home`, `timecalendar/design-home`, `timecalendar/fixtures`,
 `timecalendar/design-tests`, `timecalendar/design-fixtures`, `timecalendar/chrome-fixtures`,
 `timecalendar/icon-seam`, `timecalendar/raw-button`, `timecalendar/ad-hoc-status`,
-`timecalendar/raw-text-input`,
+`timecalendar/raw-text-input`, `timecalendar/retired-list-names`,
 `timecalendar/calendar-sources-is-a-leaf`, `timecalendar/storage-seams`,
 `timecalendar/swiftui-identifiers`, and `timecalendar/tests`). The config is the source of
 truth; this file carries the caveats the config can't (R-1).
@@ -362,6 +362,30 @@ truth; this file carries the caveats the config can't (R-1).
   suite-wide Jest mock throws for those ([testing.md](./testing.md)). Re-check the container list
   against the `@expo/ui/swift-ui` exports on each SDK bump. RuleTester cases live in
   `no-swiftui-container-identifier.test.js`. See [theming.md](./theming.md) → Identifiers.
+- **Native list names — `local/no-retired-list-names`** (`tools/eslint-rules/no-retired-list-names.js`,
+  block `timecalendar/retired-list-names`, `files: ["src/**/*.{ts,tsx}"]`, no `ignores`, no
+  allowlist, tests included): the native list seam is `NativeList*` from `@/components/chrome`
+  and features render it directly ([theming.md](./theming.md) → Native-chrome wrapper seam, ADR
+  [072](./decisions/072-native-list-seam.md)). The rule reports four things:
+  1. an identifier (declaration, reference, import, TS type name or JSX tag) starting with
+     `NativeSettings`, `SwiftSettings` or `ComposeSettings` (`openNativeSettings` passes);
+  2. the exact identifiers `SettingsRow`, `SettingsRowProps`, `SettingsSection` and
+     `SettingsSectionProps` (`EnvironmentSettingsRow` passes). The trade-off: those four
+     generic names are unavailable to any future feature, which must pick a more specific one;
+  3. a string or template literal containing `native-settings` or `nativeSettings`: import and
+     export sources, `jest.mock` / `require` paths, testIDs, story ids, i18n keys passed to `t()`
+     and file paths read by contract tests;
+  4. a file whose basename starts with `native-settings` or whose stem is `settings-row` /
+     `settings-section`, so a recreated file fails before anything imports it.
+
+  `no-retired-list-names.test.js` is the RuleTester suite. **Caveats:** it cannot see JSON locale
+  files (an unused `gallery.nativeSettings` key; one used through `t()` is caught), Maestro YAML,
+  Markdown, JSX text children, regex literals, or computed strings (`"native-" + "settings"`);
+  review covers those. Inject-and-revert
+  proof: `export const NativeSettingsRow = NativeListRow` in `src/components/chrome/index.ts`,
+  `testID="gallery-native-settings-rows"` on a row in `native-list.gallery.tsx`, and an empty
+  `src/features/settings/ui/settings-section.tsx` each fail `npm run lint`, naming the file and
+  the rule.
 - **Generated code** (`src/api/generated/`) is exempt from hand-written-code rules but
   still Prettier-formatted; Orval's `afterAllFilesWrite: prettier --write` keeps regen
   output aligned with the committed format.

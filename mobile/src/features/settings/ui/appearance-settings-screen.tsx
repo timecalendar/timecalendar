@@ -4,11 +4,11 @@ import { useTranslation } from "react-i18next"
 import { Platform } from "react-native"
 
 import {
-  NativeSettingsChoiceRow,
-  NativeSettingsHost,
-  NativeSettingsRadioDialog,
-  NativeSettingsRow,
-  NativeSettingsSection,
+  NativeList,
+  NativeListChoiceRow,
+  NativeListRadioDialog,
+  NativeListRow,
+  NativeListSection,
 } from "@/components/chrome"
 import {
   type LanguagePreference,
@@ -40,11 +40,11 @@ export default function AppearanceSettingsScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("settings.title") }} />
-      <NativeSettingsHost>
-        <NativeSettingsSection title={t("settings.theme.label")}>
+      <NativeList>
+        <NativeListSection title={t("settings.theme.label")}>
           {Platform.OS === "ios" ? (
             themeOptions.map((option) => (
-              <NativeSettingsChoiceRow
+              <NativeListChoiceRow
                 key={option.value}
                 label={option.label}
                 selected={theme.preference === option.value}
@@ -54,7 +54,7 @@ export default function AppearanceSettingsScreen() {
               />
             ))
           ) : (
-            <NativeSettingsRow
+            <NativeListRow
               kind="action"
               label={t("settings.theme.label")}
               value={
@@ -64,9 +64,9 @@ export default function AppearanceSettingsScreen() {
               onPress={() => setThemeDialog(true)}
             />
           )}
-        </NativeSettingsSection>
-        <NativeSettingsSection title={t("settings.language.label")}>
-          <NativeSettingsRow
+        </NativeListSection>
+        <NativeListSection title={t("settings.language.label")}>
+          <NativeListRow
             kind={Platform.OS === "ios" ? "navigation" : "action"}
             label={t("settings.language.label")}
             value={
@@ -81,9 +81,9 @@ export default function AppearanceSettingsScreen() {
                 : undefined
             }
           />
-        </NativeSettingsSection>
-      </NativeSettingsHost>
-      <NativeSettingsRadioDialog
+        </NativeListSection>
+      </NativeList>
+      <NativeListRadioDialog
         visible={themeDialog}
         title={t("settings.theme.label")}
         cancelLabel={t("settings.cancel")}
@@ -96,7 +96,7 @@ export default function AppearanceSettingsScreen() {
           setThemeDialog(false)
         }}
       />
-      <NativeSettingsRadioDialog
+      <NativeListRadioDialog
         visible={languageDialog}
         title={t("settings.language.label")}
         cancelLabel={t("settings.cancel")}

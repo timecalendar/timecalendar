@@ -27,7 +27,7 @@ stays text-free. Enforced by `src/components/settings-route-structure.test.ts` (
 Under the transparent iOS bar every page must inset itself: scroll roots set
 `contentInsetAdjustmentBehavior="automatic"` and mark `RootPage scrollsUnderHeader`
 (`KeyboardSafeActionLayout` sets the inset on its own scroller); every other `RootPage` pads by
-`useHeaderOverlapInset()`; the SwiftUI Form in `NativeSettingsHost` insets natively. Content that
+`useHeaderOverlapInset()`; the SwiftUI Form in `NativeList` insets natively. Content that
 fills the viewport (`flexGrow: 1` — a `StatusView presentation="screen"`, a centred form, a full-page
 error) never scrolls under the bar: the automatic inset on top of a viewport-tall content makes it
 scroll by the header height. Such a page drops `scrollsUnderHeader` and its scroller spreads

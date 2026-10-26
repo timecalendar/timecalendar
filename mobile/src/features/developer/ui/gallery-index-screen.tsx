@@ -2,9 +2,9 @@ import { Redirect, Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
 
 import {
-  NativeSettingsHost,
-  NativeSettingsRow,
-  NativeSettingsSection,
+  NativeList,
+  NativeListRow,
+  NativeListSection,
 } from "@/components/chrome"
 import { availableGalleryEntries, type GalleryEntry } from "@/design/gallery"
 import { isDeveloperSurfaceEnabled } from "@/features/developer/access"
@@ -37,15 +37,15 @@ export function GalleryIndexScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("gallery.title") }} />
-      <NativeSettingsHost>
+      <NativeList>
         {galleryFixtures.map((fixture) => (
-          <NativeSettingsSection
+          <NativeListSection
             key={fixture.metaId}
             title={t(fixture.title)}
             testID={`gallery-section-${fixture.metaId}`}
           >
             {fixture.entries.map((entry) => (
-              <NativeSettingsRow
+              <NativeListRow
                 key={entry.id}
                 kind="navigation"
                 label={t(entry.name)}
@@ -57,9 +57,9 @@ export function GalleryIndexScreen() {
                 testID={`gallery-story-${entry.id}`}
               />
             ))}
-          </NativeSettingsSection>
+          </NativeListSection>
         ))}
-      </NativeSettingsHost>
+      </NativeList>
     </>
   )
 }

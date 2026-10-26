@@ -33,9 +33,9 @@ import { useColorScheme } from "@/hooks/use-color-scheme"
 import { useTheme } from "@/theme"
 
 import { NativeErrorNotice } from "./native-error-notice"
-import { useAssertOutsideNativeSettingsHost } from "./native-settings-host-context"
+import { useAssertOutsideNativeList } from "./native-list-context"
 
-export type NativeSettingsNumericEditorIds = {
+export type NativeListNumericEditorIds = {
   container: string
   field: string
   cancel: string
@@ -43,14 +43,14 @@ export type NativeSettingsNumericEditorIds = {
   message: string
 }
 
-export type NativeSettingsNumericEditorProps = {
+export type NativeListNumericEditorProps = {
   title: string
   label: string
   initialValue: string
   cancelLabel: string
   submitLabel: string
   validationMessage?: string | undefined
-  ids: NativeSettingsNumericEditorIds
+  ids: NativeListNumericEditorIds
   onCancel: () => void
   onSubmit: (value: string) => void
 }
@@ -59,7 +59,7 @@ function useResolvedScheme(): "light" | "dark" {
   return useColorScheme() === "dark" ? "dark" : "light"
 }
 
-function IosNumericEditor(props: NativeSettingsNumericEditorProps) {
+function IosNumericEditor(props: NativeListNumericEditorProps) {
   const buffer = useSwiftNativeState(props.initialValue)
   const colorScheme = useResolvedScheme()
   const theme = useTheme()
@@ -107,7 +107,7 @@ function IosNumericEditor(props: NativeSettingsNumericEditorProps) {
   )
 }
 
-function AndroidNumericEditor(props: NativeSettingsNumericEditorProps) {
+function AndroidNumericEditor(props: NativeListNumericEditorProps) {
   const buffer = useComposeNativeState(props.initialValue)
   const colorScheme = useResolvedScheme()
   const theme = useTheme()
@@ -172,10 +172,8 @@ function AndroidNumericEditor(props: NativeSettingsNumericEditorProps) {
   )
 }
 
-export function NativeSettingsNumericEditor(
-  props: NativeSettingsNumericEditorProps,
-) {
-  useAssertOutsideNativeSettingsHost("NativeSettingsNumericEditor")
+export function NativeListNumericEditor(props: NativeListNumericEditorProps) {
+  useAssertOutsideNativeList("NativeListNumericEditor")
   return Platform.OS === "ios" ? (
     <IosNumericEditor {...props} />
   ) : (

@@ -3,15 +3,15 @@ import { useTranslation } from "react-i18next"
 import { Platform } from "react-native"
 
 import {
-  NativeSettingsHost,
-  NativeSettingsNumericEditor,
-  type NativeSettingsNumericEditorProps,
-  NativeSettingsRow,
-  NativeSettingsSection,
+  NativeList,
+  NativeListNumericEditor,
+  type NativeListNumericEditorProps,
+  NativeListRow,
+  NativeListSection,
 } from "@/components/chrome"
 import type { GalleryMeta, GalleryStory } from "@/design/gallery"
 
-type Story = GalleryStory<NativeSettingsNumericEditorProps>
+type Story = GalleryStory<NativeListNumericEditorProps>
 
 const ids = {
   container: "gallery-numeric-editor",
@@ -22,7 +22,7 @@ const ids = {
 } as const
 
 type Copy = Pick<
-  NativeSettingsNumericEditorProps,
+  NativeListNumericEditorProps,
   "title" | "label" | "cancelLabel" | "submitLabel" | "validationMessage"
 >
 
@@ -32,7 +32,7 @@ function NumericEditorFixture({ copy }: { copy: Copy }) {
   const [value, setValue] = useState(() => t("gallery.numericEditor.value"))
 
   const editor = open ? (
-    <NativeSettingsNumericEditor
+    <NativeListNumericEditor
       {...copy}
       initialValue={value}
       ids={ids}
@@ -48,17 +48,17 @@ function NumericEditorFixture({ copy }: { copy: Copy }) {
 
   return (
     <>
-      <NativeSettingsHost>
-        <NativeSettingsSection>
-          <NativeSettingsRow
+      <NativeList>
+        <NativeListSection>
+          <NativeListRow
             kind="action"
             label={t("gallery.numericEditor.open")}
             value={value}
             onPress={() => setOpen(true)}
             testID="gallery-numeric-editor-open"
           />
-        </NativeSettingsSection>
-      </NativeSettingsHost>
+        </NativeListSection>
+      </NativeList>
       {editor}
     </>
   )
@@ -96,10 +96,10 @@ function LongStringsFixture() {
   )
 }
 
-const meta: GalleryMeta<NativeSettingsNumericEditorProps> = {
-  id: "native-settings-numeric-editor",
+const meta: GalleryMeta<NativeListNumericEditorProps> = {
+  id: "native-list-numeric-editor",
   title: "gallery.numericEditor.title",
-  component: NativeSettingsNumericEditor,
+  component: NativeListNumericEditor,
   stories: ["Default", "ValidationError", "LongStrings"],
 }
 

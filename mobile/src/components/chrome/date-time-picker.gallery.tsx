@@ -4,9 +4,9 @@ import { Platform, StyleSheet, View } from "react-native"
 
 import {
   DateTimePicker,
-  NativeSettingsHost,
-  NativeSettingsRow,
-  NativeSettingsSection,
+  NativeList,
+  NativeListRow,
+  NativeListSection,
 } from "@/components/chrome"
 import { RootPage, ThemedText } from "@/design"
 import type { GalleryMeta, GalleryStory } from "@/design/gallery"
@@ -71,17 +71,17 @@ function PickerFixture({
 
   return (
     <>
-      <NativeSettingsHost>
-        <NativeSettingsSection>
-          <NativeSettingsRow
+      <NativeList>
+        <NativeListSection>
+          <NativeListRow
             kind="action"
             label={t("gallery.dateTimePicker.label")}
             value={display}
             onPress={() => setOpen(true)}
             testID="gallery-date-time-open"
           />
-        </NativeSettingsSection>
-      </NativeSettingsHost>
+        </NativeListSection>
+      </NativeList>
       {open ? (
         <DateTimePicker
           testID="gallery-date-time-picker"

@@ -27,7 +27,7 @@ trigger (the items below need an iOS simulator or device and an Android build).
    - Reopening the story, or a cold launch at the same size, renders correctly.
 
    React Native text measurement is not invalidated by a live Dynamic Type change, app-wide. It is
-   neither a gallery nor a `NativeSettingsHeader` defect, and the gallery adds no re-key
+   neither a gallery nor a `NativeListHeader` defect, and the gallery adds no re-key
    workaround: one would hide in the gallery a clip every React Native screen ships. Open: whether
    Android shows the same on a live font-scale change, and a minimal React Native reproduction
    (one `Text` in a `View`, live content-size switch) to decide whether this is a React Native

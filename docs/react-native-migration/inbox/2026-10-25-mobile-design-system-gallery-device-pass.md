@@ -9,8 +9,8 @@ On a development build of `main` once the gallery is merged, follow the device a
 recipe in `docs/mobile/architecture-book/accessibility.md` (Device accessibility recipe) for these
 stories, and record pass or fail per line:
 
-- `native-settings--rows`, `native-settings--switches`, `native-settings--choices`,
-  `native-settings--long-strings`, `native-text-entry-dialog--submit-disabled`.
+- `native-list--rows`, `native-list--switches`, `native-list--choices`,
+  `native-list--long-strings`, `native-text-entry-dialog--submit-disabled`.
 - **Android (Windows host):** each story at `font_scale 2.0` and in night mode, app language
   French. Rows grow without clipping; the long-strings story wraps every label, footer and the
   unbreakable word; the dialog's Save is visibly disabled.
@@ -25,8 +25,8 @@ stories, and record pass or fail per line:
 
 ## Android switch row: two TalkBack stops (known violation)
 
-Every Android `NativeSettingsSwitchRow` (the gallery's `native-settings--switches` and
-`native-settings--long-strings`, and every product switch row such as the calendar-visibility and
+Every Android `NativeListSwitchRow` (the gallery's `native-list--switches` and
+`native-list--long-strings`, and every product switch row such as the calendar-visibility and
 show-weekends rows) gives TalkBack two stops: the toggleable `ListItem` ("<label>, Switch, On/Off")
 and then an unlabeled "Switch" on the trailing thumb. Compose merges a row's descendants into its
 node but stops at a child with its own toggle semantics, and Expo UI's `SwitchView` always passes
@@ -35,8 +35,8 @@ does.
 
 The registry check lists these as known violations in
 `mobile/src/design/gallery/known-a11y-violations.ts` (Android, elements
-`gallery-native-settings-switch-on > switch`, `gallery-native-settings-switch-off > switch`,
-`gallery-native-settings-long-switch > switch`).
+`gallery-native-list-switch-on > switch`, `gallery-native-list-switch-off > switch`,
+`gallery-native-list-long-switch > switch`).
 
 Proposed fix, needing an Android build and a TalkBack check before it lands:
 
@@ -56,11 +56,11 @@ stays green.
 ## Already found on the iOS simulator
 
 The agent device pass (`openspec/changes/archive/2026-10-25-add-mobile-design-system-gallery/evidence.md`,
-section 8.4) found three native-settings seam issues worth deciding on:
+section 8.4) found three native-list seam issues worth deciding on:
 
 - At the largest accessibility text size, a row with a trailing value and badge keeps them beside
   the title, which then wraps two to three characters per line.
-- Changing text size while a native-settings header is on screen keeps its old height and clips it.
+- Changing text size while a native-list header is on screen keeps its old height and clips it.
 - A story opened by deep link has no gallery index beneath it; Back returns to the previous tab.
 
 ## Why
@@ -72,7 +72,7 @@ screen reader or build Android on the Mac.
 ## How to verify
 
 Every line above passes, or each failure is filed as a follow-up against the fixture or the
-native-settings seam. A failure the registry check also sees goes in `known-a11y-violations.ts`
+native-list seam. A failure the registry check also sees goes in `known-a11y-violations.ts`
 with a link to its note, never as a looser check.
 
 ## Blocks

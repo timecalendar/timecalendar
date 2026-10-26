@@ -57,8 +57,9 @@ registry.
 ### Requirement: Stories have stable ids and deep links
 
 A story's id SHALL be `<meta id>--<kebab-case export name>` (for example
-`native-settings--switches`), independent of its translated name, so renaming copy never breaks a
-link. Each story SHALL be reachable at `/developer/gallery/<story id>`, including as a cold deep
+`native-list--switches`), independent of its translated name, so renaming copy never breaks a
+link. A meta id SHALL name the component it documents, so renaming the component renames its
+story ids. Each story SHALL be reachable at `/developer/gallery/<story id>`, including as a cold deep
 link (`timecalendar-dev://developer/gallery/<story id>` on development builds). An id that matches
 no registered story SHALL redirect to the gallery index. A story opened without the gallery index
 directly beneath it, by a cold or a warm deep link, SHALL place the index beneath itself without
@@ -67,7 +68,7 @@ returns to where the app was.
 
 #### Scenario: A deep link opens one story
 
-- **WHEN** a development build opens `timecalendar-dev://developer/gallery/native-settings--switches`
+- **WHEN** a development build opens `timecalendar-dev://developer/gallery/native-list--switches`
 - **THEN** the switches story renders as the screen under a native header titled with its
   translated name
 
@@ -89,24 +90,24 @@ returns to where the app was.
 ### Requirement: The gallery index lists every story in native grouped sections
 
 `/developer/gallery` SHALL render, under the compact native header with a localized title, one
-native settings section per registered fixture module (titled with the fixture's translated
+native list section per registered fixture module (titled with the fixture's translated
 title, in registry order) and one navigation row per story available on the running platform
 (labeled with the story's translated name and a localized hint, in the order the meta's `stories`
 array declares) that opens the story route. Explicit order keeps related states together
 (`Rows`, `Destructive`, `Switches`, `Choices` first) where alphabetical export order would scatter
-them, and module namespaces expose no source order. Rows SHALL follow the native settings row
+them, and module namespaces expose no source order. Rows SHALL follow the native list row
 contract (one focus stop, link/button role, disclosure, decorative icons hidden).
 
 #### Scenario: A platform-scoped story is offered only on its platform
 
 - **WHEN** the index renders on iOS
-- **THEN** the Android-only `native-settings--floating-action` and `native-settings--radio-dialog`
+- **THEN** the Android-only `native-list--floating-action` and `native-list--radio-dialog`
   rows are absent, and opening either story id redirects to `/developer/gallery`
 
 #### Scenario: Activating a story row opens it
 
-- **WHEN** the user activates the index row for `native-settings--switches`
-- **THEN** the app pushes `/developer/gallery/native-settings--switches`
+- **WHEN** the user activates the index row for `native-list--switches`
+- **THEN** the app pushes `/developer/gallery/native-list--switches`
 
 ### Requirement: A story renders as a real screen
 
@@ -162,7 +163,7 @@ the list and on a listed entry that no longer reproduces, so the list only shrin
 
 ### Requirement: Fixtures cover named stress states
 
-The native settings fixture SHALL be split into named stories covering every seam primitive (rows
+The native list fixture SHALL be split into named stories covering every seam primitive (rows
 of each kind, destructive action, switches, choices, header and alert, floating action, radio
 dialog) and SHALL include at least one stress story that renders the longest French copy in row
 labels, subtitles, values, hints and section footers. The native text-entry dialog fixture SHALL
@@ -197,7 +198,7 @@ versus screen). A state that only one platform renders SHALL be declared for tha
 
 #### Scenario: The numeric editor validation state is reviewable
 
-- **WHEN** a reviewer opens `native-settings-numeric-editor--validation-error`
+- **WHEN** a reviewer opens `native-list-numeric-editor--validation-error`
 - **THEN** the native editor shows its validation message, and Cancel closes it and a row behind
   it reopens it
 

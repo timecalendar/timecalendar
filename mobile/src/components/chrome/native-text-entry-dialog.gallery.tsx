@@ -2,9 +2,9 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import {
-  NativeSettingsHost,
-  NativeSettingsRow,
-  NativeSettingsSection,
+  NativeList,
+  NativeListRow,
+  NativeListSection,
   NativeTextEntryDialog,
   type NativeTextEntryDialogProps,
 } from "@/components/chrome"
@@ -53,16 +53,16 @@ function TextEntryFixture({
 
   return (
     <>
-      <NativeSettingsHost>
-        <NativeSettingsSection>
-          <NativeSettingsRow
+      <NativeList>
+        <NativeListSection>
+          <NativeListRow
             kind="action"
             label={t("gallery.textEntryDialog.open")}
             onPress={reopen}
             testID="gallery-text-entry-open"
           />
-        </NativeSettingsSection>
-      </NativeSettingsHost>
+        </NativeListSection>
+      </NativeList>
       {open ? (
         <NativeTextEntryDialog
           title={t("gallery.textEntryDialog.dialogTitle")}

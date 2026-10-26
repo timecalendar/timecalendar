@@ -6,15 +6,15 @@ import { usePlatform } from "@/test-support/platform"
 import { Colors } from "@/theme"
 
 import {
-  NativeSettingsAlert,
-  NativeSettingsChoiceRow,
-  NativeSettingsFloatingAction,
-  NativeSettingsHost,
-  NativeSettingsRadioDialog,
-  NativeSettingsRow,
-  NativeSettingsSection,
-  NativeSettingsSwitchRow,
-} from "./native-settings"
+  NativeList,
+  NativeListAlert,
+  NativeListChoiceRow,
+  NativeListFloatingAction,
+  NativeListRadioDialog,
+  NativeListRow,
+  NativeListSection,
+  NativeListSwitchRow,
+} from "./native-list"
 
 jest.mock("expo-router", () => ({ router: { push: jest.fn() } }))
 
@@ -36,7 +36,7 @@ jest.mock("@/hooks/use-color-scheme", () => ({
 }))
 
 describe.each(["ios", "android"] as const)(
-  "native settings chrome on %s",
+  "native list chrome on %s",
   (platform) => {
     usePlatform(platform)
 
@@ -47,43 +47,43 @@ describe.each(["ios", "android"] as const)(
       const dialogSelect = jest.fn()
       const view = await render(
         <>
-          <NativeSettingsHost>
-            <NativeSettingsSection title="Section" testID="section">
-              <NativeSettingsRow
+          <NativeList>
+            <NativeListSection title="Section" testID="section">
+              <NativeListRow
                 kind="navigation"
                 label="Navigate"
                 href="/about"
                 testID="nav"
               />
-              <NativeSettingsRow
+              <NativeListRow
                 kind="action"
                 label="Act"
                 onPress={action}
                 testID="action"
               />
-              <NativeSettingsRow
+              <NativeListRow
                 kind="value"
                 label="Value"
                 value="Read only"
                 testID="value"
               />
-              <NativeSettingsSwitchRow
+              <NativeListSwitchRow
                 label="Toggle"
                 value
                 onValueChange={toggle}
                 testID="toggle"
                 switchTestID="switch"
               />
-              <NativeSettingsChoiceRow
+              <NativeListChoiceRow
                 label="Choice"
                 selected
                 selectedAccessibilityLabel="Selected"
                 onSelect={select}
                 testID="choice"
               />
-            </NativeSettingsSection>
-          </NativeSettingsHost>
-          <NativeSettingsRadioDialog
+            </NativeListSection>
+          </NativeList>
+          <NativeListRadioDialog
             visible
             title="Dialog"
             cancelLabel="Cancel"
@@ -150,14 +150,14 @@ describe.each(["ios", "android"] as const)(
   },
 )
 
-describe("native settings chrome on ios", () => {
+describe("native list chrome on ios", () => {
   usePlatform("ios")
 
   it("tints the form with the brand and renders icons, footers, and trailing content", async () => {
     const view = await render(
-      <NativeSettingsHost>
-        <NativeSettingsSection title="Section" footer="Footer copy">
-          <NativeSettingsRow
+      <NativeList>
+        <NativeListSection title="Section" footer="Footer copy">
+          <NativeListRow
             kind="navigation"
             icon={{ ios: "info.circle", android: "info" }}
             label="Navigate"
@@ -166,7 +166,7 @@ describe("native settings chrome on ios", () => {
             href="/about"
             testID="nav"
           />
-          <NativeSettingsRow
+          <NativeListRow
             kind="action"
             icon={{ ios: "envelope", android: "mail" }}
             label="Act"
@@ -174,29 +174,29 @@ describe("native settings chrome on ios", () => {
             badge="1"
             testID="action"
           />
-          <NativeSettingsRow
+          <NativeListRow
             kind="value"
             icon={{ ios: "server.rack", android: "dns" }}
             label="Value"
             value="Read only"
             testID="value"
           />
-          <NativeSettingsSwitchRow
+          <NativeListSwitchRow
             icon={{ ios: "person", android: "person" }}
             label="Toggle"
             value={false}
             onValueChange={jest.fn()}
             testID="toggle"
           />
-          <NativeSettingsChoiceRow
+          <NativeListChoiceRow
             label="Choice"
             selected
             selectedAccessibilityLabel="Selected"
             onSelect={jest.fn()}
             testID="choice"
           />
-        </NativeSettingsSection>
-      </NativeSettingsHost>,
+        </NativeListSection>
+      </NativeList>,
     )
     expect(view.getByTestId("swiftui-form-scroll-owner").props.tint).toBe(
       Colors.dark.primary,
@@ -263,7 +263,7 @@ describe("native settings chrome on ios", () => {
   it("renders an alert section with an error glyph, readable copy, and a labelled action", async () => {
     const onPress = jest.fn()
     const view = await render(
-      <NativeSettingsAlert
+      <NativeListAlert
         title="Title"
         message="Message"
         testID="alert"
@@ -293,16 +293,16 @@ describe("native settings chrome on ios", () => {
 
   it("keeps a row's own testID inside a section with a testID", async () => {
     const view = await render(
-      <NativeSettingsHost>
-        <NativeSettingsSection title="Section" testID="section">
-          <NativeSettingsRow
+      <NativeList>
+        <NativeListSection title="Section" testID="section">
+          <NativeListRow
             kind="value"
             label="Value"
             value="Read only"
             testID="row"
           />
-        </NativeSettingsSection>
-      </NativeSettingsHost>,
+        </NativeListSection>
+      </NativeList>,
     )
     expect(view.getByTestId("row")).toBeOnTheScreen()
     expect(view.queryByTestId("section")).toBeNull()
@@ -310,7 +310,7 @@ describe("native settings chrome on ios", () => {
 
   it("renders an alert without an action", async () => {
     const view = await render(
-      <NativeSettingsAlert
+      <NativeListAlert
         title="Title"
         message="Message"
         testID="alert"
@@ -323,14 +323,14 @@ describe("native settings chrome on ios", () => {
   it("omits the checkmark on an unselected choice and never renders the radio dialog", async () => {
     const view = await render(
       <>
-        <NativeSettingsChoiceRow
+        <NativeListChoiceRow
           label="Choice"
           selected={false}
           selectedAccessibilityLabel="Selected"
           onSelect={jest.fn()}
           testID="choice"
         />
-        <NativeSettingsRadioDialog
+        <NativeListRadioDialog
           visible
           title="Dialog"
           cancelLabel="Cancel"
@@ -347,14 +347,14 @@ describe("native settings chrome on ios", () => {
   })
 })
 
-describe("native settings rows with subtitles, destructive actions, and a FAB on ios", () => {
+describe("native list rows with subtitles, destructive actions, and a FAB on ios", () => {
   usePlatform("ios")
 
   it("stacks a secondary subtitle, reads it in the default label, and colors destructive labels", async () => {
     const view = await render(
-      <NativeSettingsHost>
-        <NativeSettingsSection>
-          <NativeSettingsRow
+      <NativeList>
+        <NativeListSection>
+          <NativeListRow
             kind="navigation"
             label="Calendar"
             subtitle="School"
@@ -362,15 +362,15 @@ describe("native settings rows with subtitles, destructive actions, and a FAB on
             href="/about"
             testID="subtitled"
           />
-          <NativeSettingsRow
+          <NativeListRow
             kind="action"
             destructive
             label="Delete"
             onPress={jest.fn()}
             testID="destructive"
           />
-        </NativeSettingsSection>
-      </NativeSettingsHost>,
+        </NativeListSection>
+      </NativeList>,
     )
     const row = view.getByTestId("subtitled")
     expect(row.props.accessibilityLabel).toBe("Calendar, School")
@@ -389,7 +389,7 @@ describe("native settings rows with subtitles, destructive actions, and a FAB on
 
   it("renders no floating action, since iOS adds through the navigation bar", async () => {
     const view = await render(
-      <NativeSettingsFloatingAction
+      <NativeListFloatingAction
         label="Add"
         icon={{ ios: "plus", android: "add" }}
         testID="fab"
@@ -400,14 +400,14 @@ describe("native settings rows with subtitles, destructive actions, and a FAB on
   })
 })
 
-describe("native settings chrome on android", () => {
+describe("native list chrome on android", () => {
   usePlatform("android")
 
   it("seeds every Compose host with the brand color", async () => {
     const view = await render(
       <>
-        <NativeSettingsHost />
-        <NativeSettingsRadioDialog
+        <NativeList />
+        <NativeListRadioDialog
           visible
           title="Dialog"
           cancelLabel="Cancel"
@@ -428,9 +428,9 @@ describe("native settings chrome on android", () => {
 
   it("groups section children into positioned segments with Material text roles", async () => {
     const view = await render(
-      <NativeSettingsHost>
-        <NativeSettingsSection title="Section" footer="Footer" testID="titled">
-          <NativeSettingsRow
+      <NativeList>
+        <NativeListSection title="Section" footer="Footer" testID="titled">
+          <NativeListRow
             kind="navigation"
             icon={{ ios: "info.circle", android: "info" }}
             label="First"
@@ -440,30 +440,30 @@ describe("native settings chrome on android", () => {
             testID="first"
           />
           {null}
-          <NativeSettingsSwitchRow
+          <NativeListSwitchRow
             icon={{ ios: "person", android: "person" }}
             label="Middle"
             value
             onValueChange={jest.fn()}
             testID="middle"
           />
-          <NativeSettingsRow
+          <NativeListRow
             kind="value"
             label="Last"
             value="Plain"
             testID="last"
           />
-        </NativeSettingsSection>
-        <NativeSettingsSection>
-          <NativeSettingsChoiceRow
+        </NativeListSection>
+        <NativeListSection>
+          <NativeListChoiceRow
             label="Single"
             selected={false}
             selectedAccessibilityLabel="Selected"
             onSelect={jest.fn()}
             testID="single"
           />
-        </NativeSettingsSection>
-      </NativeSettingsHost>,
+        </NativeListSection>
+      </NativeList>,
     )
     const title = view.getByTestId("titled")
     expect(title.props.color).toBe("#primary")
@@ -532,7 +532,7 @@ describe("native settings chrome on android", () => {
   it("renders the alert as an error-container card with a trailing text action", async () => {
     const onPress = jest.fn()
     const view = await render(
-      <NativeSettingsAlert
+      <NativeListAlert
         title="Title"
         message="Message"
         testID="alert"
@@ -556,7 +556,7 @@ describe("native settings chrome on android", () => {
     expect(onPress).toHaveBeenCalledTimes(1)
 
     await view.rerender(
-      <NativeSettingsAlert
+      <NativeListAlert
         title="Title"
         message="Message"
         testID="alert"
@@ -570,7 +570,7 @@ describe("native settings chrome on android", () => {
     const select = jest.fn()
     const dismiss = jest.fn()
     const view = await render(
-      <NativeSettingsRadioDialog
+      <NativeListRadioDialog
         visible
         title="Dialog"
         cancelLabel="Cancel"
@@ -599,7 +599,7 @@ describe("native settings chrome on android", () => {
 
   it("renders nothing while the dialog is hidden", async () => {
     const view = await render(
-      <NativeSettingsRadioDialog
+      <NativeListRadioDialog
         visible={false}
         title="Dialog"
         cancelLabel="Cancel"
@@ -615,9 +615,9 @@ describe("native settings chrome on android", () => {
 
   it("puts a subtitle in supporting text, the value in trailing text, and colors destructive headlines", async () => {
     const view = await render(
-      <NativeSettingsHost>
-        <NativeSettingsSection>
-          <NativeSettingsRow
+      <NativeList>
+        <NativeListSection>
+          <NativeListRow
             kind="navigation"
             label="Calendar"
             subtitle="School"
@@ -626,15 +626,15 @@ describe("native settings chrome on android", () => {
             href="/about"
             testID="subtitled"
           />
-          <NativeSettingsRow
+          <NativeListRow
             kind="action"
             destructive
             label="Delete"
             onPress={jest.fn()}
             testID="destructive"
           />
-        </NativeSettingsSection>
-      </NativeSettingsHost>,
+        </NativeListSection>
+      </NativeList>,
     )
     const row = view.getByTestId("subtitled")
     expect(within(row).getByText("School").props.typography).toBe("bodyMedium")
@@ -649,12 +649,12 @@ describe("native settings chrome on android", () => {
     const onPress = jest.fn()
     const view = await render(
       <>
-        <NativeSettingsHost reservesFloatingAction>
-          <NativeSettingsSection>
-            <NativeSettingsRow kind="value" label="Row" testID="row" />
-          </NativeSettingsSection>
-        </NativeSettingsHost>
-        <NativeSettingsFloatingAction
+        <NativeList reservesFloatingAction>
+          <NativeListSection>
+            <NativeListRow kind="value" label="Row" testID="row" />
+          </NativeListSection>
+        </NativeList>
+        <NativeListFloatingAction
           label="Add"
           icon={{ ios: "plus", android: "add" }}
           testID="fab"
@@ -676,7 +676,7 @@ describe("native settings chrome on android", () => {
   })
 
   it("keeps the default list padding without a FAB", async () => {
-    const view = await render(<NativeSettingsHost />)
+    const view = await render(<NativeList />)
     expect(
       view.getByTestId("compose-lazy-column-scroll-owner").props.contentPadding,
     ).toEqual({ top: 0, bottom: 24 })
@@ -684,7 +684,7 @@ describe("native settings chrome on android", () => {
 })
 
 describe.each(["ios", "android"] as const)(
-  "native settings dialog placement on %s",
+  "native list dialog placement on %s",
   (platform) => {
     usePlatform(platform)
 
@@ -696,9 +696,9 @@ describe.each(["ios", "android"] as const)(
           .mockImplementation(() => {})
         await expect(
           render(
-            <NativeSettingsHost>
-              <NativeSettingsSection>
-                <NativeSettingsRadioDialog
+            <NativeList>
+              <NativeListSection>
+                <NativeListRadioDialog
                   visible={visible}
                   title="Dialog"
                   cancelLabel="Cancel"
@@ -708,11 +708,11 @@ describe.each(["ios", "android"] as const)(
                   onSelect={jest.fn()}
                   onDismiss={jest.fn()}
                 />
-              </NativeSettingsSection>
-            </NativeSettingsHost>,
+              </NativeListSection>
+            </NativeList>,
           ),
         ).rejects.toThrow(
-          "NativeSettingsRadioDialog must render outside NativeSettingsHost; place it after </NativeSettingsHost>.",
+          "NativeListRadioDialog must render outside NativeList; place it after </NativeList>.",
         )
         consoleError.mockRestore()
       },
@@ -721,8 +721,8 @@ describe.each(["ios", "android"] as const)(
     it("accepts a radio dialog rendered after the host", async () => {
       const view = await render(
         <>
-          <NativeSettingsHost />
-          <NativeSettingsRadioDialog
+          <NativeList />
+          <NativeListRadioDialog
             visible
             title="Dialog"
             cancelLabel="Cancel"
@@ -739,15 +739,15 @@ describe.each(["ios", "android"] as const)(
   },
 )
 
-describe("iOS settings rows at accessibility text sizes", () => {
+describe("iOS list rows at accessibility text sizes", () => {
   usePlatform("ios")
 
   async function renderRows(fontScale: number) {
     mockFontScale = fontScale
     return render(
-      <NativeSettingsHost>
-        <NativeSettingsSection>
-          <NativeSettingsRow
+      <NativeList>
+        <NativeListSection>
+          <NativeListRow
             kind="navigation"
             label="Environment"
             value="Production"
@@ -755,27 +755,27 @@ describe("iOS settings rows at accessibility text sizes", () => {
             href="/developer"
             testID="nav"
           />
-          <NativeSettingsRow
+          <NativeListRow
             kind="action"
             label="Language"
             value="English"
             onPress={jest.fn()}
             testID="action"
           />
-          <NativeSettingsRow
+          <NativeListRow
             kind="value"
             label="Version"
             value="4.0.0"
             testID="value"
           />
-          <NativeSettingsRow
+          <NativeListRow
             kind="navigation"
             label="About"
             href="/about"
             testID="plain"
           />
-        </NativeSettingsSection>
-      </NativeSettingsHost>,
+        </NativeListSection>
+      </NativeList>,
     )
   }
 
@@ -834,14 +834,14 @@ describe("iOS settings rows at accessibility text sizes", () => {
   it("lets a multi-word label wrap at accessibility sizes", async () => {
     mockFontScale = 3.571
     const view = await render(
-      <NativeSettingsHost>
-        <NativeSettingsRow
+      <NativeList>
+        <NativeListRow
           kind="navigation"
           label="Hidden events"
           href="/hidden-events"
           testID="phrase"
         />
-      </NativeSettingsHost>,
+      </NativeList>,
     )
     const phrase = view.getByText("Hidden events")
     expect(phrase.props.numberOfLines).toBeUndefined()
@@ -907,9 +907,9 @@ describe("SwiftUI container identifiers on ios", () => {
       .mockImplementation(() => {})
     await expect(
       render(
-        <NativeSettingsHost>
+        <NativeList>
           <SwiftSection {...{ testID: "x" }}>{null}</SwiftSection>
-        </NativeSettingsHost>,
+        </NativeList>,
       ),
     ).rejects.toThrow(
       "SwiftUI Section received an accessibility identifier; it cascades onto every child (lint-format.md → L12)",

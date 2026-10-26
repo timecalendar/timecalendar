@@ -6,7 +6,7 @@
 
 At accessibility XXXL on an iPhone 17 (402pt), a multi-word row label whose longest word is
 wider than the label column breaks mid-word: "Appear-ance & language" in Settings, "Naviga-tion
-row" in the settings gallery, "Some-thing went wrong" in `NativeSettingsAlert`. One-word labels
+row" in the settings gallery, "Some-thing went wrong" in `NativeListAlert`. One-word labels
 stay on one line and shrink (`minimumScaleFactor(0.5)`), which `accessibility.md` records.
 
 `@expo/ui` 56 exposes no SwiftUI lever that stops hyphenation for multi-word text, and a

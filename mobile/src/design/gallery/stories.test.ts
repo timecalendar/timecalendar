@@ -16,9 +16,9 @@ const first: GalleryModule = {
     component: Sample,
     stories: ["Switches", "LongStrings"],
   },
-  Switches: { name: "gallery.nativeSettings.story.switches", args: {} },
+  Switches: { name: "gallery.nativeList.story.switches", args: {} },
   LongStrings: {
-    name: "gallery.nativeSettings.story.longStrings",
+    name: "gallery.nativeList.story.longStrings",
     render: () => null,
     platforms: ["android"],
   },
@@ -27,7 +27,7 @@ const first: GalleryModule = {
 const second: GalleryModule = {
   default: {
     id: "other",
-    title: "gallery.nativeSettings.title",
+    title: "gallery.nativeList.title",
     component: Other,
     stories: ["Default"],
   },
@@ -36,13 +36,13 @@ const second: GalleryModule = {
 
 describe("toStoryId", () => {
   it.each([
-    ["Rows", "native-settings--rows"],
-    ["LongStrings", "native-settings--long-strings"],
-    ["HeaderAndAlert", "native-settings--header-and-alert"],
-    ["submitDisabled", "native-settings--submit-disabled"],
-    ["HTMLPreview", "native-settings--html-preview"],
+    ["Rows", "native-list--rows"],
+    ["LongStrings", "native-list--long-strings"],
+    ["HeaderAndAlert", "native-list--header-and-alert"],
+    ["submitDisabled", "native-list--submit-disabled"],
+    ["HTMLPreview", "native-list--html-preview"],
   ])("maps %s to %s", (exportName, id) => {
-    expect(toStoryId("native-settings", exportName)).toBe(id)
+    expect(toStoryId("native-list", exportName)).toBe(id)
   })
 })
 
@@ -58,7 +58,7 @@ describe("buildGalleryEntries", () => {
       id: "sample--switches",
       metaId: "sample",
       title: "gallery.title",
-      name: "gallery.nativeSettings.story.switches",
+      name: "gallery.nativeList.story.switches",
       story: first.Switches,
       component: Sample,
     })

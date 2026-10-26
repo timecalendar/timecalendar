@@ -3,9 +3,9 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import {
-  NativeSettingsHost,
-  NativeSettingsRow,
-  NativeSettingsSection,
+  NativeList,
+  NativeListRow,
+  NativeListSection,
   NativeTextEntryDialog,
 } from "@/components/chrome"
 import { isDevVariant } from "@/config/variant"
@@ -57,19 +57,19 @@ export function DeveloperScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t("developer.title") }} />
-      <NativeSettingsHost>
-        <NativeSettingsSection
+      <NativeList>
+        <NativeListSection
           title={t("developer.section.backend")}
           testID="developer-section-backend"
         >
           <EnvironmentSettingsRow selector={environmentSelector} />
-        </NativeSettingsSection>
+        </NativeListSection>
         {isDevVariant() ? (
-          <NativeSettingsSection
+          <NativeListSection
             title={t("developer.section.testData")}
             testID="developer-section-test-data"
           >
-            <NativeSettingsRow
+            <NativeListRow
               kind="action"
               label={t("developer.devImport.label")}
               hint={t("developer.devImport.hint")}
@@ -77,13 +77,13 @@ export function DeveloperScreen() {
               onPress={openImport}
               testID="developer-dev-import"
             />
-          </NativeSettingsSection>
+          </NativeListSection>
         ) : null}
-        <NativeSettingsSection
+        <NativeListSection
           title={t("developer.section.design")}
           testID="developer-section-design"
         >
-          <NativeSettingsRow
+          <NativeListRow
             kind="navigation"
             href="/developer/gallery"
             label={t("developer.gallery.label")}
@@ -91,8 +91,8 @@ export function DeveloperScreen() {
             icon={{ ios: "square.grid.2x2", android: "grid_view" }}
             testID="developer-gallery"
           />
-        </NativeSettingsSection>
-      </NativeSettingsHost>
+        </NativeListSection>
+      </NativeList>
       <EnvironmentSelectorDialog selector={environmentSelector} />
       {importOpen ? (
         <NativeTextEntryDialog
