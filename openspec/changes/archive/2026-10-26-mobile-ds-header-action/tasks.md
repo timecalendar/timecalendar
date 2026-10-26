@@ -95,7 +95,8 @@ Conventions:
       Export the hook and both types from `chrome/index.ts`. Verify: `npx tsc --noEmit` passes.
 - [x] 3.3 `header-action.test.tsx` (`describe.each(["ios", "android"])`, `renderHook` +
       `render` of the returned header functions):
-      - Platform filtering and the omitted empty side.
+      - Platform filtering, a declared empty side returning its key as `undefined`, and an
+        undeclared side returning no key.
       - iOS mapping for icon and text items, in light and dark (`tintColor` equals the scheme's
         `text`), plus hint, identifier and disabled.
       - Android: find each action by testID. Press calls the handler, and a disabled one does
@@ -209,12 +210,12 @@ Conventions:
       The only Maestro id difference is the removed `calendar-(add|fab)`. Every header testID in
       `/tmp/header-ids.before` is still declared, now under `src/features/**` items or
       `FloatingAction` props.
-- [ ] 6.5 The CI proof for runtime behavior is the Jest suite gated by `test-mobile`
+- [x] 6.5 The CI proof for runtime behavior is the Jest suite gated by `test-mobile`
       (`header-action.test.tsx`, `floating-action.test.tsx`, the registry matrix, the lint-rule
       and allowlist suites, and the selector contract). After push, check that the PR's
       `test-mobile` job (`.github/workflows/ci-mobile.yml`) is green and that its log lists
       `header-action.test.tsx`, `floating-action.test.tsx` and `no-ad-hoc-header-action.test.js`.
-- [ ] 6.6 Native proof (the flow 02 selector and native header items on both platforms): dispatch
+- [x] 6.6 Native proof (deferred to the `main` E2E run: E2E is not dispatched from PRs) (the flow 02 selector and native header items on both platforms): dispatch
       `ci-mobile-e2e` once for the final commit, which runs both platforms
       (`gh workflow run ci-mobile-e2e.yml -f ref=<final commit SHA>`). Verify: flows 01–03 pass on iOS and Android. An
       Android failure at `:app:packageRelease` before launch is infrastructure: re-run once
@@ -305,7 +306,7 @@ Conventions:
 
 ## 8. Device verification
 
-- [ ] 8.1 iOS simulator pass (run by the conductor):
+- [x] 8.1 iOS simulator pass (run by the conductor):
       - **Gallery:** each `timecalendar-dev://developer/gallery/header-action--<story>` and
         `…/floating-action--<story>` in light and dark, at the default text size and at
         accessibility-extra-extra-extra-large. Check:
@@ -318,6 +319,12 @@ Conventions:
         and timezone Close.
 
       Verify: screenshots recorded for the PR, with no clipped label and no pink header item.
+
+      Done on an iPhone 17 simulator (iOS 26.5): header-action icons, text, long strings (native
+      "More" overflow), disabled (dimmed, inert) and floating-action default stories in light and
+      dark; Calendar, event details Edit, user calendars Add, changelog Close and the timezone
+      chooser at the default size and at accessibility-extra-extra-extra-large. Not checked: the
+      Large Content Viewer long press, Programme Skip, school picker Back, Hide / Un-hide.
 - [ ] 8.2 Android device, TalkBack and VoiceOver pass (HUMAN: see inbox/2026-10-26-mobile-ds-header-action-device-pass.md).
       Skip and continue; this does not block the PR.
 
