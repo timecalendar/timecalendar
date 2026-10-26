@@ -226,6 +226,10 @@ jest.mock("@expo/ui/swift-ui/modifiers", () => {
       }),
     },
     tint: (value: unknown) => modifier("tint", value),
+    datePickerStyle: (value: string) => modifier("datePickerStyle", value),
+    environment: (key: string, value: string) =>
+      modifier("environment", { key, value }),
+    labelsHidden: () => modifier("labelsHidden"),
     keyboardType: (value: string) => modifier("keyboardType", value),
     textInputAutocapitalization: (value: string) =>
       modifier("textInputAutocapitalization", value),
@@ -514,6 +518,36 @@ jest.mock("@expo/ui/swift-ui", () => {
       props.children ?? React.createElement(NativeText, null, props.label),
     )
   }
+  function DatePicker(props: {
+    title?: string
+    selection?: Date
+    range?: unknown
+    displayedComponents?: string[]
+    onDateChange?: (date: Date) => void
+    testID?: string
+    modifiers?: { $type: string; value: unknown }[]
+  }) {
+    const disabled = modifierValue(props.modifiers, "disabled") as
+      | boolean
+      | undefined
+    return React.createElement(
+      Pressable,
+      {
+        testID: props.testID,
+        accessibilityRole: "adjustable",
+        accessibilityLabel: props.title,
+        accessibilityState: { disabled: disabled ?? false },
+        disabled,
+        title: props.title,
+        range: props.range,
+        displayedComponents: props.displayedComponents,
+        modifiers: props.modifiers,
+        onPress: () =>
+          props.onDateChange?.(new Date("2030-01-02T03:04:00.000Z")),
+      },
+      React.createElement(NativeText, null, props.selection?.toISOString()),
+    )
+  }
   function Image(props: {
     systemName?: string
     color?: unknown
@@ -568,6 +602,7 @@ jest.mock("@expo/ui/swift-ui", () => {
   return {
     BottomSheet,
     Button,
+    DatePicker,
     Form,
     Group,
     HStack,

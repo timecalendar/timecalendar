@@ -13,7 +13,7 @@ import { DateTimeField, type DateTimeFieldProps } from "./date-time-field"
 // mirror the @expo/ui Android Compose contract (DatePickerView.kt): the date
 // dialog confirms UTC midnight of the picked day, the time dialog confirms the
 // received value with its local hour and minute replaced, and either dialog can
-// be dismissed. `datetime` (iOS) confirms the fixed instant the suite mock uses.
+// be dismissed. The iOS field renders the SwiftUI DatePicker from the suite mock.
 jest.mock("@expo/ui/community/datetime-picker", () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require("react")
@@ -22,12 +22,9 @@ jest.mock("@expo/ui/community/datetime-picker", () => {
 
   function confirmed(mode: string, value: Date): Date {
     if (mode === "date") return new Date(Date.UTC(2030, 0, 2))
-    if (mode === "time") {
-      const date = new Date(value)
-      date.setHours(9, 41, 0, 0)
-      return date
-    }
-    return new Date("2030-01-02T03:04:00.000Z")
+    const date = new Date(value)
+    date.setHours(9, 41, 0, 0)
+    return date
   }
 
   function DateTimePicker(props: {
@@ -37,19 +34,8 @@ jest.mock("@expo/ui/community/datetime-picker", () => {
     onValueChange?: (event: unknown, date: Date) => void
     onDismiss?: () => void
     is24Hour?: boolean
-    locale?: string
-    disabled?: boolean
   }) {
-    const {
-      testID,
-      mode,
-      value,
-      onValueChange,
-      onDismiss,
-      is24Hour,
-      locale,
-      disabled,
-    } = props
+    const { testID, mode, value, onValueChange, onDismiss, is24Hour } = props
     return React.createElement(
       View,
       null,
@@ -89,12 +75,6 @@ jest.mock("@expo/ui/community/datetime-picker", () => {
         Text,
         { testID: `${mode}-is24Hour` },
         String(is24Hour),
-      ),
-      React.createElement(Text, { testID: `${mode}-locale` }, String(locale)),
-      React.createElement(
-        Text,
-        { testID: `${mode}-disabled` },
-        String(disabled),
       ),
     )
   }
@@ -141,6 +121,10 @@ function Field(props: Partial<DateTimeFieldProps>) {
   )
 }
 
+const modifiersOf = (element: {
+  props: { modifiers?: { $type: string; value: unknown }[] }
+}) => element.props.modifiers ?? []
+
 const press = async (
   view: { getByTestId: (id: string) => unknown },
   id: string,
@@ -165,10 +149,27 @@ it("imports no product feature", () => {
 describe("DateTimeField on iOS", () => {
   usePlatform("ios")
 
+  it("lines the picker up with the label and names it by the label", async () => {
+    const view = await render(<Field />)
+    const picker = view.getByTestId("field")
+    expect(picker.props.title).toBe("Starts")
+    expect(picker.props.accessibilityLabel).toBe("Starts")
+    expect(modifiersOf(picker)).toEqual(
+      expect.arrayContaining([
+        { $type: "labelsHidden", value: undefined },
+        {
+          $type: "frame",
+          value: { maxWidth: Infinity, alignment: "leading" },
+        },
+      ]),
+    )
+  })
+
   it("shows the label and reports the inline picker's change (identity under the device zone)", async () => {
     const onChange = jest.fn()
     const view = await render(<Field onChange={onChange} />)
     expect(view.getByTestId("field-label")).toHaveTextContent("Starts")
+    expect(view.getAllByText("Starts")).toHaveLength(1)
 
     await press(view, "field")
 
@@ -193,7 +194,13 @@ describe("DateTimeField on iOS", () => {
   it("leaves the iOS picker on the device language and clock", async () => {
     deviceClock(false)
     const view = await render(<Field />)
-    expect(view.getByTestId("datetime-locale")).toHaveTextContent("undefined")
+    expect(
+      modifiersOf(view.getByTestId("field")).filter(
+        (modifier) =>
+          modifier.$type === "environment" &&
+          (modifier.value as { key: string }).key === "locale",
+      ),
+    ).toEqual([])
   })
 
   it("shows the error as text after the picker, which takes no hint", async () => {
@@ -209,7 +216,10 @@ describe("DateTimeField on iOS", () => {
 
   it("passes disabled to the picker and dims the label but not the error", async () => {
     const view = await render(<Field disabled error="Ends before it starts" />)
-    expect(view.getByTestId("datetime-disabled")).toHaveTextContent("true")
+    expect(modifiersOf(view.getByTestId("field"))).toContainEqual({
+      $type: "disabled",
+      value: true,
+    })
     expect(
       StyleSheet.flatten(view.getByTestId("field-label").props.style).opacity,
     ).toBe(StateOpacity.disabled)

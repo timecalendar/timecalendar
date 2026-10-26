@@ -124,7 +124,8 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   `Section`, `Group`, the stacks and `BottomSheet` throw when given a `testID` or an
   `accessibilityIdentifier` modifier, and `Host` throws for the modifier, because SwiftUI cascades a
   container identifier onto every child. This catches what lint L12 cannot follow (spread props,
-  modifier arrays from another module). `Group` renders with the fixed `testID` `swiftui-group` so
+  modifier arrays from another module). The SwiftUI mock includes `DatePicker`, which keeps its
+  `title`, `range`, `displayedComponents` and `modifiers` on the element for assertions. `Group` renders with the fixed `testID` `swiftui-group` so
   tests can read the sheet's modifiers ([theming.md](./theming.md) → Identifiers).
 - **Native settings chrome has a focused contract suite.** It proves SwiftUI versus Material host
   selection, resolved-scheme propagation, one Form/LazyColumn scroll owner, closed row semantics,

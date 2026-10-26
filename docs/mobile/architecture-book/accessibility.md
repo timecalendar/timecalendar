@@ -67,6 +67,9 @@ These rules guard real product touchables (interactive controls declare `accessi
 - The Android `DateTimeField` row is a `button` named "label, value" whose hint carries the
   error. The iOS SwiftUI picker takes no hint, so its error is announced on appearance and is the
   text stop directly after the picker.
+- The iOS `DateTimeField` picker is named by the field label: the chrome `DateTimePicker` passes
+  it as the SwiftUI `DatePicker` `title` with `labelsHidden()`, so the label is drawn once, above
+  the picker (`date-time-field.test.tsx`).
 - Feature code passes `error` to the field; `fieldErrorHint(error, ...hints)`
   (`src/design/field/field-error-hint.ts`) is not on the `@/design` barrel.
   The screen-reader pass is owner-led

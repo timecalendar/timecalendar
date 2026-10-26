@@ -2,9 +2,13 @@ import type { ComponentProps } from "react"
 import { Platform } from "react-native"
 
 import { composeDayOf, fromComposeDay } from "./compose-date-day"
+import { IosDateTimePicker } from "./date-time-picker-ios"
 import { ExpoDateTimePicker } from "./expo-ui"
 
-export type DateTimePickerProps = ComponentProps<typeof ExpoDateTimePicker>
+export type DateTimePickerProps = ComponentProps<typeof ExpoDateTimePicker> & {
+  alignment?: "leading"
+  accessibilityLabel?: string
+}
 
 // Takes and reports device-local Dates on both platforms, with events that
 // describe the reported Date. The Android date picker speaks UTC-midnight days,
@@ -12,8 +16,26 @@ export type DateTimePickerProps = ComponentProps<typeof ExpoDateTimePicker>
 // event is rebuilt from the converted Date. Invalid and epoch Dates are the
 // Compose "no selection" confirm and pass through with their event, for the
 // consumer to treat as a cancel.
-export function DateTimePicker(props: DateTimePickerProps) {
+//
+// On iOS, `alignment` and `accessibilityLabel` opt into the composed SwiftUI
+// picker, which can hug the leading edge and carry a name; Android ignores them.
+export function DateTimePicker({
+  alignment,
+  accessibilityLabel,
+  ...props
+}: DateTimePickerProps) {
   const { value, mode, onValueChange, onChange } = props
+  if (
+    Platform.OS === "ios" &&
+    (alignment !== undefined || accessibilityLabel !== undefined)
+  )
+    return (
+      <IosDateTimePicker
+        {...props}
+        {...(alignment !== undefined ? { alignment } : {})}
+        {...(accessibilityLabel !== undefined ? { accessibilityLabel } : {})}
+      />
+    )
   if (Platform.OS !== "android" || mode === "time")
     return <ExpoDateTimePicker {...props} />
 

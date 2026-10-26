@@ -240,7 +240,10 @@ The error stays at full opacity when the field is disabled.
   function and `onChange`, and imports no feature and no translation key: the caller formats
   (personal events pass `formatShortDateTime` with the device clock), so the field and the list
   read the same. It shares `TextField`'s label, error and disabled chrome (`FieldChrome`, a leaf
-  export of `text-field.tsx`; the box border and inset live in `field-box.ts`). iOS renders the chrome `DateTimePicker` inline; Android renders a
+  export of `text-field.tsx`; the box border and inset live in `field-box.ts`). iOS renders the chrome `DateTimePicker` inline with `alignment="leading"` and
+  the field label as its `accessibilityLabel`, so the pills start under the label, wrap at
+  accessibility text sizes and the picker is named by the label (gate:
+  `date-time-field.test.tsx`); Android renders a
   row drawn like a resting `TextField` that opens the date dialog, then the time dialog, and
   commits both together; becoming disabled while a dialog is open closes it without committing.
   Picker values are device-local (ADR
@@ -326,6 +329,17 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
 - **`chrome/native-tabs.tsx`** — the only import site for `expo-router/unstable-native-tabs`. Wraps `NativeTabs` so tab-bar colors come from `@/theme`; the `.Trigger` compound parts are re-attached (`Object.assign`) so callers use `NativeTabs.Trigger` / `.Trigger.Label` / `.Trigger.Icon` unchanged.
 - **`chrome/glass-surface.tsx`** — the only import site for `expo-glass-effect`. Centralizes the **Liquid-Glass degradation decision** in one place: `isLiquidGlassAvailable()` → `GlassView` (iOS 26+); else (iOS 16.4–25, Android, Jest) a plain `View` rendering the same children, dropping the glass-only props. `isLiquidGlassAvailable()` is itself alpha, so it lives here too.
 - **`chrome/expo-ui.tsx`** — the only import site for `@expo/ui` (SDK-56 native controls — SwiftUI / Jetpack Compose). Re-exports the **universal** entry's `Host` + `Picker` (the universal `Picker` carries `Picker.Item` as a static compound member), `DateTimePicker` from `@expo/ui/community/datetime-picker`, and the anchored `MenuView` plus its ref type from `@expo/ui/community/menu`. The wrapper is **thin**: it does **not** theme native controls. Operational facts: `@expo/ui` **autolinks** (ships `expo-module.config.json`, no `app.plugin.js`) → **no `app.config.ts` plugin entry**; its babel-plugin is **`Icon`-only** (not added until an `Icon` consumer); its native module has no off-device JS, so Jest needs suite-wide mocks for each imported subpath. See ADR [010](./decisions/010-expo-ui-chrome-wrapper.md) and ADR [012](./decisions/012-personal-event-datetime-picker.md).
+- **`chrome/date-time-picker-ios.tsx`** — private to `date-time-picker.tsx`, not on the barrel.
+  When an iOS caller passes `alignment` or `accessibilityLabel`, the chrome `DateTimePicker`
+  composes `Host matchContents={{ vertical: true }}` and the SwiftUI `DatePicker` from
+  `@expo/ui/swift-ui` here instead of rendering the community component, whose host takes the
+  row's width and centres the pills. It maps every iOS prop the community component reads (display
+  style, mode, range, tint, disabled, locale/color-scheme/time-zone environment, `testID` on the
+  `DatePicker`, `onValueChange` over `onChange`), then adds
+  `frame({ maxWidth: Infinity, alignment: "leading" })` for `alignment="leading"` and
+  `title` + `labelsHidden()` for the name. The `Host` carries no identifier (L12). Gate:
+  `date-time-picker.test.tsx`; on an `@expo/ui` bump, re-read
+  `community/datetime-picker/DateTimePicker.tsx` against this mapping.
 - **`chrome/native-text-entry-dialog*`** — the narrow composed-control exception in ADR
   [056](./decisions/056-compose-native-dialog-behind-chrome.md). One stable contract privately
   adapts SwiftUI and Material 3 text fields, progress, native buttons, observable buffers, keyboard

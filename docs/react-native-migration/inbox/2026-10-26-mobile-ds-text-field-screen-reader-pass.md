@@ -24,11 +24,10 @@ A real VoiceOver (iOS) and TalkBack (Android) pass, in French, on a development 
    the reading contains the new value. `date-time-field--error`: the hint carries the error.
 6. **iOS date-time field error.** `date-time-field--error` on iOS: the error is spoken when it
    appears and is the next stop after the picker (the SwiftUI picker takes no hint).
-7. **iOS date-time field name (known gap).** VoiceOver names the picker "Date and Time Picker":
-   `@expo/ui`'s `DateTimePicker` takes no label, so the field's label is a separate text stop
-   before it and is not part of the picker's name. Verify the label stop is read directly before
-   the picker and that the pair is understandable; record whether the generic name is acceptable
-   or needs an `@expo/ui` label prop.
+7. **iOS date-time field name.** The iOS picker carries the field label as its accessible name
+   (SwiftUI `DatePicker` `title` with `labelsHidden()`). Verify VoiceOver reads the label on the
+   picker's date and time controls, and that the label text stop before the picker plus the named
+   picker is not redundant enough to need hiding the label stop.
 8. **Large text.** At the largest size, `text-field--long-strings` and
    `date-time-field--long-strings`: label, input text, helper and error wrap without clipping; the
    multiline field shows at least four lines.

@@ -51,5 +51,11 @@ describe("on Android", () => {
 
 it("renders the iOS inline picker", async () => {
   const view = await renderStory(fixture.Default)
-  expect(view.getByTestId(ROW).props.accessibilityRole).toBe("adjustable")
+  const picker = view.getByTestId(ROW)
+  expect(picker.props.accessibilityRole).toBe("adjustable")
+  expect(picker.props.title).toBe("Starts")
+  expect(picker.props.modifiers).toContainEqual({
+    $type: "frame",
+    value: { maxWidth: Infinity, alignment: "leading" },
+  })
 })
