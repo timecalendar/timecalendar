@@ -28,8 +28,8 @@ receives `seedColor = primary`):
 
 - A chrome primitive (for example `chrome/native-confirm-dialog.tsx`) with a hook API that returns
   `{ present(options), element }`. On Android, `element` renders an `@expo/ui` Compose
-  `AlertDialog` in its own seeded `Host`. It is a sibling after any `NativeSettingsHost`, and the
-  existing `useAssertOutsideNativeSettingsHost` guard enforces that. Destructive actions use M3
+  `AlertDialog` in its own seeded `Host`. It is a sibling after any `NativeList`, and the
+  existing `useAssertOutsideNativeList` guard enforces that. Destructive actions use M3
   `error`. Back and outside taps dismiss as Cancel. On iOS, `present` calls `Alert.alert`
   (UIAlertController is already native-correct) and `element` is `null`.
 - Compose `AlertDialog` has two button slots. The three-button hide chooser therefore stacks its

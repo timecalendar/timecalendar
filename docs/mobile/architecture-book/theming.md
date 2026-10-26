@@ -347,10 +347,12 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
   insets, selectors, and explicit dismissal. `inputKind: "code"` disables auto-capitalization and
   autocorrect on both platforms for case-sensitive strings (tokens). Features keep validation, data, copy, and lifecycle;
   ordinary controls remain thin re-exports. Native controls follow system appearance and typography.
-- **`chrome/native-settings.tsx`** — the bounded settings-composition exception in ADR
-  [060](./decisions/060-platform-native-settings-composition.md). SwiftUI Form/Section and Material
-  LazyColumn/ListItem remain private; the stable host, section, row, switch, selection, alert,
-  header, and radio-dialog contracts receive the app-resolved light/dark scheme and one brand accent:
+- **`chrome/native-list.tsx`** — the bounded native-list composition exception in ADRs
+  [060](./decisions/060-platform-native-settings-composition.md) and
+  [072](./decisions/072-native-list-seam.md). SwiftUI Form/Section and Material
+  LazyColumn/ListItem remain private; the stable `NativeList` (host), `NativeListSection`,
+  `NativeListRow`, `NativeListSwitchRow`, `NativeListChoiceRow`, `NativeListAlert`,
+  `NativeListHeader`, and `NativeListRadioDialog` contracts receive the app-resolved light/dark scheme and one brand accent:
   - **iOS:** the Form carries `tint(primary)`, so Toggles, checkmarks, and control accents are brand
     pink. Inside a SwiftUI Button, hierarchical `.primary`/`.secondary`/`.tertiary` resolve against
     the tint, so row labels use the concrete `text` token, values `textSecondary`, and the
@@ -379,23 +381,23 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
     `value` to trailing `labelLarge`/`onSurfaceVariant` text). The default accessibility label reads
     `label, subtitle`. A `destructive` action row labels in `error` (iOS) or Material `error`
     (Android).
-  - **Floating action:** `NativeSettingsFloatingAction` is a Material `FloatingActionButton` in its
+  - **Floating action:** `NativeListFloatingAction` is a Material `FloatingActionButton` in its
     own seeded Compose host, bottom-right, whose icon carries the label as content description. It
     renders nothing on iOS, where the page adds through a navigation-bar item. A page that shows it
-    passes `reservesFloatingAction` to `NativeSettingsHost` so the last row clears the button.
-  - **Placement:** the standalone native dialogs and editors (`NativeSettingsRadioDialog`,
-    `NativeSettingsNumericEditor`, `NativeTextEntryDialog`) each mount their own native host, so
-    they render as siblings after `</NativeSettingsHost>`, never inside it. Nested inside the
+    passes `reservesFloatingAction` to `NativeList` so the last row clears the button.
+  - **Placement:** the standalone native dialogs and editors (`NativeListRadioDialog`,
+    `NativeListNumericEditor`, `NativeTextEntryDialog`) each mount their own native host, so
+    they render as siblings after `</NativeList>`, never inside it. Nested inside the
     Compose list host, the dialog window is orphaned: Cancel and input are dead and the window
-    outlives a JS reload. `NativeSettingsHost` provides a private context
-    (`chrome/native-settings-host-context.ts`), and each of the three throws on its first render
+    outlives a JS reload. `NativeList` provides a private context
+    (`chrome/native-list-context.ts`), and each of the three throws on its first render
     inside it, whatever file the misplaced call sits in. A screen whose row lives in a section and
     whose dialog follows the host shares one controller hook between them (`useEnvironmentSelector`
-    on the developer page). Enforced by `native-settings.test.tsx`, `native-settings-numeric-editor.test.tsx`
+    on the developer page). Enforced by `native-list.test.tsx`, `native-list-numeric-editor.test.tsx`
     and `native-text-entry-dialog.test.tsx`.
   - **Help copy** lives in section footers, never as text rows inside a group: one setting per
     section when each needs its own explanation.
-  - **`NativeSettingsAlert`** is the page-level failure pattern and renders first on the page. iOS:
+  - **`NativeListAlert`** is the page-level failure pattern and renders first on the page. iOS:
     its own Section with an `exclamationmark.triangle.fill` glyph in `error`, a `headline`/`text`
     title, a `subheadline`/`textSecondary` message, and an optional tinted Button action row.
     Android: one 20dp-rounded `errorContainer` ListItem (`titleMedium` title, `bodyMedium` message in
@@ -404,26 +406,29 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
   - **Identifiers:** on iOS no chrome SwiftUI container (Form, Section, Group, stacks,
     BottomSheet) carries an accessibility identifier, because SwiftUI applies a container's
     identifier to each child and replaces theirs. Identifiers sit on leaves: rows, switches,
-    buttons, fields, and text. `NativeSettingsSection` and `NativeSettingsAlert` take a `testID` but
+    buttons, fields, and text. `NativeListSection` and `NativeListAlert` take a `testID` but
     apply none on iOS, so Maestro selects rows and never sections; Android sections and alerts
     carry their `testID` (Compose `testTag` does not cascade). The text-entry dialog puts
     `ids.dialog` on its title text on iOS and on the dialog surface on Android, so one selector
     finds it on both, while cancel, submit and the field keep their own ids. Enforced by lint L12
     ([lint-format.md](./lint-format.md)) and the throwing SwiftUI container mocks; pinned by
-    `native-settings.test.tsx` and `native-text-entry-dialog.test.tsx`.
-  - **`NativeSettingsHeader`** (`chrome/native-settings-header.tsx`) is the centered brand header
+    `native-list.test.tsx` and `native-text-entry-dialog.test.tsx`.
+  - **`NativeListHeader`** (`chrome/native-list-header.tsx`) is the centered brand header
     for a page's top: the 88pt app icon (continuous rounded square on iOS, circle on Android), the
     app name as a `ThemedText` heading, a tagline, optional secondary detail, and an optional
     caption pill in `actionText` on `primarySoft`. SwiftUI and Compose text cannot carry a heading
     role, so the content is React Native hosted through `RNHostView` (`matchContents`) at a width
     derived from the window, inside a clear, zero-inset Form row on iOS and a centered Row on
     Android. It follows the app theme tokens and the OS font scale.
-  - **Icons:** `NativeSettingsIcon` pairs an SF Symbol with a key of
-    `chrome/native-settings-icons.ts`, which maps each Material Symbol name to a committed vector
+  - **Icons:** `NativeListIcon` pairs an SF Symbol with a key of
+    `chrome/native-list-icons.ts`, which maps each Material Symbol name to a committed vector
     drawable under `mobile/assets/icons/material/`. Adding an Android icon means adding its XML there.
-  - **Rule:** feature screens never set tint, color, or typography on settings rows, sections, or
-    footers; the chrome seam owns them. Features pass copy, icons, values, and intent only.
-  - **Numeric editor:** `chrome/native-settings-numeric-editor.tsx` carries the same brand accent
+  - **Rule:** feature screens never set tint, color, or typography on list rows, sections, or
+    footers; the chrome seam owns them. Features pass copy, icons, values, and intent only, and
+    render the seam directly: no feature owns a row or section wrapper that another feature
+    imports (ADR [072](./decisions/072-native-list-seam.md)). `local/no-retired-list-names` keeps
+    the retired seam and adapter names out of `src/` ([lint-format.md](./lint-format.md) → Native list names).
+  - **Numeric editor:** `chrome/native-list-numeric-editor.tsx` carries the same brand accent
     (iOS Form `tint`, Compose `seedColor`).
 - **`src/design/icon/icon.tsx`** (from `@/design`) — `Icon`, the only renderer of a symbol glyph (lint L9 bans
   `SymbolView` elsewhere, ADR [065](./decisions/065-icon-text-scaling.md)). iOS renders
@@ -431,7 +436,7 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
   in a box sized by the required `scaling` (see [Accessibility → Icon
   scaling](./accessibility.md#icon-scaling--encoded-in-icon)). Callers pass the color token; the
   icon carries no tone of its own.
-- **`chrome/index.ts`** — the barrel. Exports `NativeTabs`, `GlassSurface`, `Host`, `Picker`, `DateTimePicker`, `MenuView`, and `MenuComponentRef`.
+- **`chrome/index.ts`** — the barrel. Exports `NativeTabs`, `GlassSurface`, `Host`, `Picker`, `DateTimePicker`, `MenuView`, `MenuComponentRef`, and the native list seam: `NativeList`, `NativeListSection`, `NativeListRow` (+ `NativeListRowProps`), `NativeListSwitchRow`, `NativeListChoiceRow`, `NativeListRadioDialog`, `NativeListAlert`, `NativeListFloatingAction`, `NativeListHeader`, `NativeListNumericEditor` (+ its props and ids types), and the `NativeListIcon` type. It carries no aliases.
 
 ## Lint boundary — the R-1 enforcement
 
@@ -452,15 +457,15 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
 ## What CI proves vs. what's manual
 
 - `src/theme/theme.test.tsx` (gated by `test-mobile`: tsc + lint + Jest, R-1) asserts: (a) `useTheme` resolves a token to its expected **light** and **dark** values (mocking `@/hooks/use-color-scheme`), plus the brand **`primary`**, status, `outline` and `scrim` roles per scheme; (b) `GlassSurface` renders its children in Jest, where `isLiquidGlassAvailable()` is `false`, exercising the **fallback** path (a real `View`, not a throw); (c) **`buildNavTheme`** maps `colors.background` / `colors.primary` to the scheme-appropriate `@/theme` tokens for both schemes — the nav↔token contract; (d) every documented opaque contrast pair clears its floor (`documentedContrastPairs`); (e) the `Spacing`, `IconSize`, `StateOpacity`, `Elevation`, `Motion` and `Layout` values, and `MinTouchTarget` per platform (the module re-evaluated under the iOS and Android `Platform` implementations).
-- `src/components/chrome/native-settings.test.tsx` asserts that the same resolved scheme reaches the
+- `src/components/chrome/native-list.test.tsx` asserts that the same resolved scheme reaches the
   SwiftUI and Material hosts, that each platform composition contains one native scroll owner, that
   the brand reaches the iOS Form tint and every Compose `seedColor`, and that icons, footers, segment
   positions, Material text roles, and the radio-dialog structure are wired. Rendered geometry stays
-  device evidence, checked through the native settings stories of `/developer/gallery`.
-- The placement invariant ("native settings dialog placement" in `native-settings.test.tsx`, and
-  the placement cases in `native-settings-numeric-editor.test.tsx` and
+  device evidence, checked through the `native-list` stories of `/developer/gallery`.
+- The placement invariant ("native list dialog placement" in `native-list.test.tsx`, and
+  the placement cases in `native-list-numeric-editor.test.tsx` and
   `native-text-entry-dialog.test.tsx`) asserts that each standalone dialog rejects rendering inside
-  `NativeSettingsHost` on both platforms, a closed radio dialog included, and renders as a sibling
+  `NativeList` on both platforms, a closed radio dialog included, and renders as a sibling
   after it. `features/developer/ui/developer-screen.test.tsx` renders the real environment row and
   dialog through the real host on Android.
 - CI **cannot** prove and is therefore **manual** (DoD / splash visual pass): that Liquid Glass renders on iOS 26+, that the fallback looks right on iOS 16.4–25 / Android, that the contrast pairs read correctly on-device, and that each call site draws a documented pair.

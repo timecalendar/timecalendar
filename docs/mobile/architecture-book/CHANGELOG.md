@@ -1,3 +1,19 @@
+## 2026-10-26 — NativeList seam
+
+- The native grouped list seam is `NativeList*` in `src/components/chrome/native-list*`:
+  `NativeList` (host), `NativeListSection`, `NativeListRow`, `NativeListSwitchRow`,
+  `NativeListChoiceRow`, `NativeListRadioDialog`, `NativeListAlert`, `NativeListFloatingAction`,
+  `NativeListHeader`, `NativeListNumericEditor` and `NativeListIcon`, with no aliases
+  ([theming.md](./theming.md) → Native-chrome wrapper seam, ADR
+  [072](./decisions/072-native-list-seam.md)).
+- About and the environment row render `NativeListRow` and `NativeListSection` directly; Settings
+  exports no row adapter.
+- The gallery ids are `native-list--*` and `native-list-numeric-editor--*`, the fixture testIDs
+  `gallery-native-list-*` and the copy keys `gallery.nativeList.*`.
+- `local/no-retired-list-names` gates the retired seam names, the deleted adapters, the retired
+  strings and file names across `src/`, tests included ([lint-format.md](./lint-format.md) →
+  Native list names).
+
 ## 2026-10-26 — iOS DateTimeField alignment and name
 
 - On iOS the chrome `DateTimePicker` takes the opt-in props `alignment="leading"` and

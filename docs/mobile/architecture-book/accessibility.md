@@ -136,7 +136,7 @@ These rules guard real product touchables (interactive controls declare `accessi
   At accessibility sizes a single-word row label is held to one line with `minimumScaleFactor`
   0.5, so SwiftUI shrinks it instead of hyphenating it mid-word; a multi-word label still wraps,
   and SwiftUI can still hyphenate a word in it that is wider than the row. Android Compose rows do
-  not change (`src/components/chrome/native-settings.test.tsx`).
+  not change (`src/components/chrome/native-list.test.tsx`).
 - The event-details color dot is decorative and centers on the first title line: it sits in a
   hidden strut sized by one `title`-step line (`features/calendar/ui/event-details-screen.test.tsx`).
 - Controlled native text-entry dialogs isolate the background accessibility tree, keep native input
@@ -150,13 +150,13 @@ These rules guard real product touchables (interactive controls declare `accessi
   plural values. The custom-days editor exposes stable field/action/error identifiers and an
   understandable validation message without treating its numeric keyboard as validation. Only a
   synchronization failure is shown and announced: it renders first on the page through
-  `NativeSettingsAlert`, which uses the platform accessibility announcer because SwiftUI/Compose
+  `NativeListAlert`, which uses the platform accessibility announcer because SwiftUI/Compose
   text cannot carry React Native live-region props, with a localized Retry action. Pending,
   waiting, and acknowledged states render and announce nothing; focused tests prove both. Host tests prove the remaining semantics and callbacks; large text,
   focus order, sheet/dialog feel, themes, and VoiceOver/TalkBack announcement quality remain
   owner-led device acceptance.
 
-- The Settings brand header (`NativeSettingsHeader`) hosts React Native text inside the native
+- The Settings brand header (`NativeListHeader`) hosts React Native text inside the native
   list so the app name keeps the `ThemedText` heading role and all copy follows the OS font scale;
   the app icon is hidden from assistive technology.
 
@@ -185,7 +185,7 @@ Android emulators run on the Windows host, not the Mac.
 
 - `src/design/text/themed-text.test.tsx` drives a typed `Record<ThemedTextType, { step; heading }>` table through `it.each`: per accepted `type` it renders through the real accessibility tree and asserts the `header` role is present or absent (a _resolved semantic_, not merely that a prop was passed), plus the rendered ramp style and iOS `dynamicTypeRamp`. It also covers explicit-role-wins. `src/theme/typography.test.ts` pins the ramp values on both platforms. Gated by the `test-mobile` job (tsc + lint + Jest), R-1.
 - `src/design/gallery/registry.test.ts` renders every gallery story on the iOS and Android branches in light and dark, and fails when an interactive host element lacks an accessibility role or a non-empty accessible name (its label, else its merged descendant text or labels), or a text input lacks a label, naming the story, platform and element (its `testID`, else `<nearest ancestor testID> > <role>`). A control nested in another control is checked on its own: Compose stops merging at a child with its own click or toggle semantics, so TalkBack gives it a separate stop. A trailing indicator inside a row control therefore takes no handler (a Material `RadioButton` without `onClick`). An `accessible={false}` control is no accessibility node: it is skipped when a descendant control carries the semantics (role and name), checked on its own (Expo UI's Android `MenuView` anchor, whose child button carries them), and otherwise reported as `accessible={false} control has no accessible control inside`, since its activation is unreachable to VoiceOver and TalkBack. The check reads what the suite-wide native mocks in `jest/setup-expo-ui.ts` project, so a mock that drops a real modifier is fixed in the mock; it proves declared semantics, not announcement quality.
-- **Known violations only shrink.** A violation the product really has and cannot fix yet goes in `src/design/gallery/known-a11y-violations.ts`: one typed entry per story id, platform and element, with the problem, the reason and a link to its `docs/react-native-migration/inbox/` note. The registry check fails on any violation not on the list and on any entry that no longer reproduces or names a story absent from its platform, so a fix must delete its entry and nothing is added silently. The list holds the Android switch row's inner Material `Switch` (`native-settings--switches`, `native-settings--long-strings`): Expo UI's `SwitchView` always passes Compose a non-null `onCheckedChange`, so the unlabeled thumb is a second TalkBack stop inside the toggleable row ([inbox](../../react-native-migration/inbox/2026-10-25-mobile-design-system-gallery-device-pass.md)).
+- **Known violations only shrink.** A violation the product really has and cannot fix yet goes in `src/design/gallery/known-a11y-violations.ts`: one typed entry per story id, platform and element, with the problem, the reason and a link to its `docs/react-native-migration/inbox/` note. The registry check fails on any violation not on the list and on any entry that no longer reproduces or names a story absent from its platform, so a fix must delete its entry and nothing is added silently. The list holds the Android switch row's inner Material `Switch` (`native-list--switches`, `native-list--long-strings`): Expo UI's `SwitchView` always passes Compose a non-null `onCheckedChange`, so the unlabeled thumb is a second TalkBack stop inside the toggleable row ([inbox](../../react-native-migration/inbox/2026-10-25-mobile-design-system-gallery-device-pass.md)).
 
 - `src/design/status/status-view.test.tsx` proves the status roles, the hidden media, the
   `progressbar` busy state, the Android-only live region and the once-per-key announcement on both
