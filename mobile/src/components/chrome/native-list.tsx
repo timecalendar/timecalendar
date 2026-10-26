@@ -71,6 +71,7 @@ import {
 } from "react"
 import { Platform, StyleSheet } from "react-native"
 
+import { composeSemantics } from "@/components/chrome/compose-semantics"
 import {
   NativeListContext,
   useAssertOutsideNativeList,
@@ -812,6 +813,13 @@ function ComposeListRow(props: NativeListRowProps) {
   const interactive = props.kind !== "value"
   const supporting = props.subtitle ?? props.value
   const trailingValue = props.subtitle ? props.value : undefined
+  const contentDescription = [
+    props.accessibilityLabel ?? defaultAccessibilityLabel(props),
+    props.value,
+    props.hint,
+  ]
+    .filter(Boolean)
+    .join(", ")
   return (
     <ListItem
       colors={listItemColors(palette)}
@@ -819,6 +827,12 @@ function ComposeListRow(props: NativeListRowProps) {
         ...segment,
         testID(props.testID),
         ...(interactive ? [clickable(() => activateRow(props))] : []),
+        // Last, so it clears ListItem's own text while the outer test tag and
+        // click action survive.
+        composeSemantics({
+          contentDescription,
+          ...(interactive ? { role: "button" as const } : {}),
+        }),
       ]}
     >
       {props.icon ? <ComposeLeadingIcon icon={props.icon} /> : null}

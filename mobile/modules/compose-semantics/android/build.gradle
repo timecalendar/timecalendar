@@ -1,0 +1,47 @@
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath("org.jetbrains.kotlin.plugin.compose:org.jetbrains.kotlin.plugin.compose.gradle.plugin:${kotlinVersion}")
+  }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'expo-module-gradle-plugin'
+apply plugin: 'org.jetbrains.kotlin.plugin.compose'
+
+group = 'expo.modules.composesemantics'
+version = '0.1.0'
+
+// Autolinking consumes @expo/ui as its prebuilt AAR unless it is forced to build
+// from source, in which case it is the :expo-ui project instead.
+def expoUiPackageJson = ["node", "--print", "require.resolve('@expo/ui/package.json')"]
+  .execute(null, projectDir)
+  .text
+  .trim()
+def expoUiVersion = new groovy.json.JsonSlurper().parse(new File(expoUiPackageJson)).version
+def expoUiProject = rootProject.findProject(':expo-ui')
+
+android {
+  namespace "expo.modules.composesemantics"
+  defaultConfig {
+    versionCode 1
+    versionName "0.1.0"
+  }
+  buildFeatures {
+    compose true
+  }
+  lintOptions {
+    abortOnError false
+  }
+}
+
+dependencies {
+  if (expoUiProject != null) {
+    implementation expoUiProject
+  } else {
+    implementation "expo.modules.ui:expo.modules.ui:${expoUiVersion}"
+  }
+  implementation 'androidx.compose.ui:ui-android:1.10.6'
+}

@@ -683,6 +683,94 @@ describe("native list chrome on android", () => {
   })
 })
 
+describe("android row semantics", () => {
+  usePlatform("android")
+
+  it("describes an action row by name, value and hint with the button role", async () => {
+    const view = await render(
+      <NativeList>
+        <NativeListRow
+          kind="action"
+          label="Visible"
+          accessibilityLabel="Name"
+          value="Value"
+          hint="Hint"
+          onPress={jest.fn()}
+          testID="row"
+        />
+      </NativeList>,
+    )
+    const row = view.getByTestId("row")
+    expect(row.props.accessibilityRole).toBe("button")
+    expect(row.props.accessibilityLabel).toBe("Name, Value, Hint")
+  })
+
+  it("names a navigation row by its label and subtitle", async () => {
+    const view = await render(
+      <NativeList>
+        <NativeListRow
+          kind="navigation"
+          label="Label"
+          subtitle="Subtitle"
+          href="/about"
+          testID="row"
+        />
+      </NativeList>,
+    )
+    expect(
+      view.getByRole("button", { name: "Label, Subtitle" }).props.testID,
+    ).toBe("row")
+  })
+
+  it("gives a value row its description and no role", async () => {
+    const view = await render(
+      <NativeList>
+        <NativeListRow
+          kind="value"
+          label="Version"
+          value="4.0.0"
+          testID="row"
+        />
+      </NativeList>,
+    )
+    const row = view.getByTestId("row")
+    expect(row.props.accessibilityLabel).toBe("Version, 4.0.0")
+    expect(row.props.accessibilityRole).toBeUndefined()
+  })
+
+  it("reads only the name when a row has no value or hint", async () => {
+    const view = await render(
+      <NativeList>
+        <NativeListRow
+          kind="action"
+          label="Only"
+          onPress={jest.fn()}
+          testID="row"
+        />
+      </NativeList>,
+    )
+    expect(view.getByTestId("row").props.accessibilityLabel).toBe("Only")
+  })
+
+  it("applies the semantics modifier after the test tag and click action", async () => {
+    const view = await render(
+      <NativeList>
+        <NativeListRow
+          kind="action"
+          label="Ordered"
+          onPress={jest.fn()}
+          testID="row"
+        />
+      </NativeList>,
+    )
+    const types: string[] = view.getByTestId("row").props.modifierTypes
+    expect(types.at(-1)).toBe("timecalendarSemantics")
+    expect(types.indexOf("testID")).toBeLessThan(types.length - 1)
+    expect(types.indexOf("clickable")).toBeLessThan(types.length - 1)
+    expect(types.indexOf("clickable")).toBeGreaterThan(-1)
+  })
+})
+
 describe.each(["ios", "android"] as const)(
   "native list dialog placement on %s",
   (platform) => {
