@@ -1,17 +1,16 @@
 import { router, Stack } from "expo-router"
 import * as WebBrowser from "expo-web-browser"
 import { useTranslation } from "react-i18next"
-import { Pressable, StyleSheet, View } from "react-native"
+import { StyleSheet, View } from "react-native"
 
-import { Icon } from "@/components/icon"
+import { Button } from "@/components/button"
 import { PageIntro, RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
 import {
   safeIntranetUrl,
   useImportDraft,
   useJourneyGateRoute,
 } from "@/features/onboarding/draft"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Spacing } from "@/theme"
 
 import { stepStyles } from "./step-styles"
 
@@ -35,7 +34,6 @@ import { stepStyles } from "./step-styles"
 // ─────────────────────────────────────────────────────────────────────────────
 export default function ConnectScreen() {
   const { t } = useTranslation()
-  const theme = useTheme()
   const { state, draft, dispatch } = useImportDraft()
   const legal = useJourneyGateRoute(state, "connect")
 
@@ -61,61 +59,39 @@ export default function ConnectScreen() {
         <PageIntro caption={t("onboarding.connect.body")} />
 
         {school !== null && intranetUrl !== null && (
-          <Pressable
+          <Button
+            variant="outlined"
             testID="onboarding-connect-intranet"
+            label={school.name}
             accessibilityRole="link"
             accessibilityLabel={t("onboarding.connect.intranetLabel", {
               institution: school.name,
             })}
-            hitSlop={Spacing.two}
+            icon={{ ios: "arrow.up.right", android: "open_in_new" }}
+            iconPosition="trailing"
             onPress={() => void WebBrowser.openBrowserAsync(intranetUrl)}
-            style={[
-              styles.intranetLink,
-              {
-                backgroundColor: theme.backgroundElement,
-                borderColor: theme.primary,
-              },
-            ]}
-          >
-            <ThemedText type="smallBold">{school.name}</ThemedText>
-            <Icon
-              ios="arrow.up.right"
-              android="open_in_new"
-              size={18}
-              color={theme.primary}
-              scaling="text"
-            />
-          </Pressable>
+            style={styles.stretch}
+          />
         )}
 
         <View style={styles.footer}>
-          <Pressable
+          <Button
+            variant="outlined"
             testID="onboarding-connect-back"
-            accessibilityRole="button"
-            accessibilityLabel={t("common.back")}
-            hitSlop={Spacing.two}
+            label={t("common.back")}
             onPress={() => router.back()}
-            style={[styles.secondary, { borderColor: theme.primary }]}
-          >
-            <ThemedText type="smallBold" themeColor="actionText">
-              {t("common.back")}
-            </ThemedText>
-          </Pressable>
-          <Pressable
+          />
+          <Button
+            variant="filled"
             testID="onboarding-connect-continue"
-            accessibilityRole="button"
+            label={t("onboarding.connect.continue")}
             accessibilityLabel={t("onboarding.connect.continueLabel")}
-            hitSlop={Spacing.two}
             onPress={() => {
               dispatch({ type: "complete-connect" })
               router.push("/onboarding/export-guide/0")
             }}
-            style={[styles.primary, { backgroundColor: theme.primaryStrong }]}
-          >
-            <ThemedText type="smallBold" themeColor="onPrimary">
-              {t("onboarding.connect.continue")}
-            </ThemedText>
-          </Pressable>
+            style={styles.grow}
+          />
         </View>
       </RootPage>
     </>
@@ -128,39 +104,11 @@ const styles = StyleSheet.create({
   safeArea: {
     gap: Spacing.four,
   },
-  intranetLink: {
-    minHeight: 48,
-    flexDirection: "row",
-    gap: Spacing.two,
-    paddingHorizontal: Spacing.four,
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "stretch",
-    borderRadius: Radii.medium,
-    borderWidth: 2,
-  },
-  // The Back/Continue pair stays local and stays together: the outlined-vs-filled
-  // contrast between the two is the thing worth reading side by side.
+  stretch: { alignSelf: "stretch" },
   footer: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.three,
   },
-  secondary: {
-    minHeight: 48,
-    minWidth: 48,
-    paddingHorizontal: Spacing.four,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: Radii.medium,
-    borderWidth: 2,
-  },
-  primary: {
-    flex: 1,
-    minHeight: 48,
-    paddingHorizontal: Spacing.four,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: Radii.medium,
-  },
+  grow: { flex: 1 },
 })

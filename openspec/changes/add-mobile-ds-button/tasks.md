@@ -55,15 +55,15 @@ current state only.
 
 ## 3. Gallery fixture and strings
 
-- [ ] 3.1 In `src/i18n/locales/en.json` and `fr.json` add the D11 `gallery.button.*` keys and
+- [x] 3.1 In `src/i18n/locales/en.json` and `fr.json` add the D11 `gallery.button.*` keys and
       remove `gallery.primaryAction.*`. Verify: FR/EN parity test passes (`npx jest src/i18n`).
-- [ ] 3.2 Create `src/components/button.gallery.tsx` per D11 (meta `button`; stories `Filled`,
+- [x] 3.2 Create `src/components/button.gallery.tsx` per D11 (meta `button`; stories `Filled`,
       `Tonal`, `Outlined`, `Text`, `Destructive`, `Icons`, `LongStrings`) inside `RootPage` with a
       scroll body; testIDs `gallery-button-*`; every label translated, duplicates disambiguated by
       `gallery.button.a11y`. Create `button.gallery.test.tsx` (enabled press increments the
       counter; disabled and busy do not; busy exposes busy+disabled and keeps its label). Verify:
       `npx jest src/components/button.gallery.test.tsx`.
-- [ ] 3.3 In `src/design/gallery/registry.ts` replace the `primaryAction` module with `button`
+- [x] 3.3 In `src/design/gallery/registry.ts` replace the `primaryAction` module with `button`
       (same position). Update `src/features/developer/ui/gallery-index-screen.test.tsx` story ids
       (`primary-action--*` → `button--*`) and any `known-a11y-violations.ts` entry naming
       `primary-action`. Verify: `npx jest src/design src/features/developer` (the registry matrix
@@ -71,7 +71,7 @@ current state only.
 
 ## 4. Migrate `PrimaryAction` and delete it
 
-- [ ] 4.1 Replace `PrimaryAction` with `Button variant="filled"` (same props, D8) in
+- [x] 4.1 Replace `PrimaryAction` with `Button variant="filled"` (same props, D8) in
       `src/components/error-surfaces.tsx`, `src/components/keyboard-safe-action-layout.gallery.tsx`,
       `src/features/feedback/ui/feedback-screen.tsx`,
       `src/features/calendar-sources/ui/ical-url-screen.tsx`,
@@ -81,14 +81,14 @@ current state only.
       `src/features/export-guides/ui/guide-page-screen.tsx`. A caller `style` that is not
       layout-only is a type error: move layout keys into `style`, drop the rest. Verify:
       `npx tsc --noEmit`; `npx jest src/components src/features/feedback src/features/calendar-sources src/features/onboarding src/features/export-guides`.
-- [ ] 4.2 Delete `src/components/primary-action.tsx`, `primary-action.test.tsx`,
+- [x] 4.2 Delete `src/components/primary-action.tsx`, `primary-action.test.tsx`,
       `primary-action.gallery.tsx`, `primary-action.gallery.test.tsx`. Verify:
       `grep -rn "primary-action\|PrimaryAction" src` returns nothing except the `ErrorState`
       `primaryAction` prop; `npx tsc --noEmit`.
 
 ## 5. Migrate the slice 3.1 hand-rolled buttons (D9)
 
-- [ ] 5.1 Onboarding: `welcome-controls.tsx` (Skip `text small`, Next `text small` trailing arrow,
+- [x] 5.1 Onboarding: `welcome-controls.tsx` (Skip `text small`, Next `text small` trailing arrow,
       final CTA `filled large`; drop `CONTROL_MIN_HEIGHT`, `textButton`, `nextButton`, `cta`
       styles), `connect-screen.tsx` (intranet `outlined` + `link` role + trailing icon, Back
       `outlined`, Continue `filled` with `style={{ flex: 1 }}`; drop `hitSlop`, `intranetLink`,
@@ -96,18 +96,18 @@ current state only.
       `outlined` leading icon, hints kept), delete `stepStyles.cta`. Update the colocated tests to
       assert variant tokens (`Colors.light.actionText` on Skip/Next, `primaryStrong` fill on the
       CTA) and roles. Verify: `npx jest src/features/onboarding`.
-- [ ] 5.2 Changelog: `changelog-sheet-screen.tsx` Continue → `filled` with the hint; header Close
+- [x] 5.2 Changelog: `changelog-sheet-screen.tsx` Continue → `filled` with the hint; header Close
       stays (3.8). Verify: `npx jest src/features/changelog`.
-- [ ] 5.3 Personal events: `personal-event-actions.tsx` Save `filled busy={isSaving}`, Delete
+- [x] 5.3 Personal events: `personal-event-actions.tsx` Save `filled busy={isSaving}`, Delete
       `destructive busy={isDeleting}`; `personal-events-list.tsx` Add → `tonal small` with
       `onPress={() => router.push("/personal-event-form")}` and no `Link` (D8). Update the list
       test (assert `router.push` instead of the `Link` stub) and the actions test (Delete exposes
       busy while deleting). Verify: `npx jest src/features/personal-events`.
-- [ ] 5.4 Hidden events: Unhide → `text small` with `accessibilityLabel={unhideLabel}`; drop the
+- [x] 5.4 Hidden events: Unhide → `text small` with `accessibilityLabel={unhideLabel}`; drop the
       `unhide` style. Verify: `npx jest src/features/hidden-events`.
-- [ ] 5.5 Export guides: `guide-page-screen.tsx` Back → `outlined`; drop the `back` style.
+- [x] 5.5 Export guides: `guide-page-screen.tsx` Back → `outlined`; drop the `back` style.
       Verify: `npx jest src/features/export-guides`.
-- [ ] 5.6 Maestro selectors: `grep -rn` each migrated `testID` under `.maestro/` and confirm none
+- [x] 5.6 Maestro selectors: `grep -rn` each migrated `testID` under `.maestro/` and confirm none
       changed; no flow edit expected (`.maestro/02-personal-event.yaml` uses
       `personal-event-delete`). Verify: `npx jest e2e/maestro-selectors.test.ts`.
 

@@ -1,10 +1,9 @@
 import type { TFunction } from "i18next"
-import { Pressable, StyleSheet, View } from "react-native"
+import { StyleSheet, View } from "react-native"
 
+import { Button } from "@/components/button"
 import { ErrorNotice } from "@/components/error-surfaces"
-import { PrimaryAction } from "@/components/primary-action"
-import { ThemedText } from "@/components/themed-text"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Spacing } from "@/theme"
 
 type PersonalEventActionsProps = {
   canDelete: boolean
@@ -27,8 +26,6 @@ export function PersonalEventActions({
   onDelete,
   t,
 }: PersonalEventActionsProps) {
-  const theme = useTheme()
-
   return (
     <View testID="personal-event-actions" style={styles.footer}>
       {(saveFailed || deleteFailed) && (
@@ -41,7 +38,8 @@ export function PersonalEventActions({
         />
       )}
 
-      <PrimaryAction
+      <Button
+        variant="filled"
         testID="personal-event-save"
         label={t("personalEvents.form.save")}
         onPress={onSave}
@@ -49,19 +47,13 @@ export function PersonalEventActions({
       />
 
       {canDelete && (
-        <Pressable
+        <Button
+          variant="destructive"
           testID="personal-event-delete"
-          accessibilityRole="button"
-          accessibilityLabel={t("personalEvents.form.delete")}
-          accessibilityState={{ disabled: isDeleting }}
-          disabled={isDeleting}
+          label={t("personalEvents.form.delete")}
           onPress={onDelete}
-          style={[styles.action, { backgroundColor: theme.backgroundElement }]}
-        >
-          <ThemedText type="smallBold" themeColor="destructive">
-            {t("personalEvents.form.delete")}
-          </ThemedText>
-        </Pressable>
+          busy={isDeleting}
+        />
       )}
     </View>
   )
@@ -72,11 +64,5 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.three,
     paddingBottom: Spacing.four,
     gap: Spacing.three,
-  },
-  action: {
-    minHeight: 48,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: Radii.medium,
   },
 })

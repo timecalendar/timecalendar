@@ -5,7 +5,7 @@ import { StyleSheet } from "react-native"
 
 import { useImportDraft } from "@/features/onboarding/draft"
 import { usePlatform } from "@/test-support/platform"
-import { Colors } from "@/theme"
+import { Colors, MinTouchTarget } from "@/theme"
 
 import ProgrammeScreen from "./programme-screen"
 
@@ -296,7 +296,7 @@ describe("ProgrammeScreen", () => {
 
       expect(view.queryByTestId("keyboard-avoiding-layout")).toBeNull()
       expect(StyleSheet.flatten(cta.props.style)).toMatchObject({
-        minHeight: 48,
+        minHeight: MinTouchTarget,
         backgroundColor: Colors.light.primaryStrong,
       })
       expect(cta.props.accessibilityLabel).toBe(

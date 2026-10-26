@@ -1,8 +1,9 @@
 import { router, Stack } from "expo-router"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Pressable, StyleSheet } from "react-native"
+import { Pressable } from "react-native"
 
+import { Button } from "@/components/button"
 import { ThemedText } from "@/components/themed-text"
 import {
   CHANGELOG_VERSION,
@@ -12,13 +13,11 @@ import {
   getChangelogSeenVersion,
   setChangelogSeenVersion,
 } from "@/features/changelog/store"
-import { Radii, Spacing, useTheme } from "@/theme"
 
 import { ChangelogContent } from "./changelog-content"
 
 export function ChangelogSheetScreen() {
   const { t } = useTranslation()
-  const theme = useTheme()
   const [initialSeenVersion] = useState(
     () => getChangelogSeenVersion() ?? CHANGELOG_VERSION,
   )
@@ -38,20 +37,13 @@ export function ChangelogSheetScreen() {
   useEffect(() => acknowledge, [acknowledge])
 
   const footer = (
-    <Pressable
+    <Button
+      variant="filled"
+      label={t("changelog.continue.label")}
       accessibilityHint={t("changelog.continue.hint")}
-      accessibilityRole="button"
       onPress={acknowledgeAndDismiss}
-      style={({ pressed }) => [
-        styles.continueButton,
-        { backgroundColor: theme.primaryStrong, opacity: pressed ? 0.8 : 1 },
-      ]}
       testID="changelog-continue"
-    >
-      <ThemedText themeColor="onPrimary">
-        {t("changelog.continue.label")}
-      </ThemedText>
-    </Pressable>
+    />
   )
 
   return (
@@ -80,13 +72,3 @@ export function ChangelogSheetScreen() {
     </>
   )
 }
-
-const styles = StyleSheet.create({
-  continueButton: {
-    minHeight: 48,
-    borderRadius: Radii.medium,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: Spacing.four,
-  },
-})

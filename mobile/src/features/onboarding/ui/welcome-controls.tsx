@@ -1,12 +1,9 @@
 import { useTranslation } from "react-i18next"
-import { Platform, Pressable, StyleSheet } from "react-native"
+import { StyleSheet } from "react-native"
 
 import { AdaptiveContent } from "@/components/adaptive-content"
-import { Icon } from "@/components/icon"
-import { ThemedText } from "@/components/themed-text"
-import { Radii, Spacing, useTheme } from "@/theme"
-
-const CONTROL_MIN_HEIGHT = Platform.OS === "ios" ? 44 : 48
+import { Button } from "@/components/button"
+import { Spacing } from "@/theme"
 
 type WelcomeSkipProps = {
   hidden: boolean
@@ -19,17 +16,14 @@ export function WelcomeSkip({ hidden, onPress }: WelcomeSkipProps) {
   return (
     <AdaptiveContent lane="readable" contentContainerStyle={styles.topBar}>
       {!hidden && (
-        <Pressable
+        <Button
+          variant="text"
+          size="small"
           testID="onboarding-skip"
-          accessibilityRole="button"
+          label={t("onboarding.skip")}
           accessibilityLabel={t("onboarding.skipLabel")}
           onPress={onPress}
-          style={styles.textButton}
-        >
-          <ThemedText type="smallBold" themeColor="actionText">
-            {t("onboarding.skip")}
-          </ThemedText>
-        </Pressable>
+        />
       )}
     </AdaptiveContent>
   )
@@ -47,7 +41,6 @@ export function WelcomeFooter({
   onNext,
 }: WelcomeFooterProps) {
   const { t } = useTranslation()
-  const theme = useTheme()
 
   return (
     <AdaptiveContent
@@ -56,36 +49,26 @@ export function WelcomeFooter({
       contentContainerStyle={styles.footer}
     >
       {isLastPage ? (
-        <Pressable
+        <Button
+          variant="filled"
+          size="large"
           testID="onboarding-welcome-cta"
-          accessibilityRole="button"
+          label={t("onboarding.cta")}
           accessibilityLabel={t("onboarding.ctaLabel")}
           onPress={onFinish}
-          style={[styles.cta, { backgroundColor: theme.primaryStrong }]}
-        >
-          <ThemedText type="smallBold" themeColor="onPrimary">
-            {t("onboarding.cta")}
-          </ThemedText>
-        </Pressable>
+          style={styles.cta}
+        />
       ) : (
-        <Pressable
+        <Button
+          variant="text"
+          size="small"
           testID="onboarding-next"
-          accessibilityRole="button"
+          label={t("onboarding.next")}
           accessibilityLabel={t("onboarding.nextLabel")}
+          icon={{ ios: "arrow.forward", android: "arrow_forward" }}
+          iconPosition="trailing"
           onPress={onNext}
-          style={styles.nextButton}
-        >
-          <ThemedText type="smallBold" themeColor="actionText">
-            {t("onboarding.next")}
-          </ThemedText>
-          <Icon
-            ios="arrow.forward"
-            android="arrow_forward"
-            color={theme.primary}
-            size={20}
-            scaling="text"
-          />
-        </Pressable>
+        />
       )}
     </AdaptiveContent>
   )
@@ -97,32 +80,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "flex-end",
   },
-  textButton: {
-    minHeight: CONTROL_MIN_HEIGHT,
-    minWidth: CONTROL_MIN_HEIGHT,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   footer: {
     minHeight: 64,
     justifyContent: "center",
     alignItems: "flex-end",
     paddingBottom: Spacing.four,
   },
-  nextButton: {
-    minHeight: CONTROL_MIN_HEIGHT,
-    minWidth: CONTROL_MIN_HEIGHT,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: Spacing.two,
-  },
-  cta: {
-    width: "100%",
-    minHeight: 48,
-    borderRadius: Radii.medium,
-    paddingHorizontal: Spacing.four,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  cta: { alignSelf: "stretch" },
 })

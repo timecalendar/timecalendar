@@ -15,7 +15,12 @@ import {
   useSaveEvent,
 } from "@/features/personal-events/form"
 import { usePlatform } from "@/test-support/platform"
-import { Colors, resolveResponsiveLayout, Spacing } from "@/theme"
+import {
+  Colors,
+  MinTouchTarget,
+  resolveResponsiveLayout,
+  Spacing,
+} from "@/theme"
 
 import PersonalEventFormScreen from "./personal-event-form-screen"
 
@@ -120,9 +125,9 @@ afterEach(() => {
 
 describe("PersonalEventFormScreen", () => {
   describe.each([
-    ["ios" as const, 44],
-    ["android" as const, 48],
-  ])("shared editor contract on %s", (platform, minimumTarget) => {
+    ["ios" as const, "height"],
+    ["android" as const, "height"],
+  ])("shared editor contract on %s", (platform, behavior) => {
     usePlatform(platform)
 
     it("keeps semantic Save and ordered errors/actions beside the sole scroll body", async () => {
@@ -150,7 +155,7 @@ describe("PersonalEventFormScreen", () => {
       expect(actions).toContainElement(remove)
       expect(within(actions).getAllByRole("button")).toEqual([save, remove])
       expect(StyleSheet.flatten(save.props.style)).toMatchObject({
-        minHeight: minimumTarget,
+        minHeight: MinTouchTarget,
         backgroundColor: Colors.light.primaryStrong,
       })
       expect(save.props.accessibilityState).toEqual({
@@ -583,7 +588,7 @@ describe("PersonalEventFormScreen", () => {
     })
   })
 
-  it("admits one removal while pending and exposes disabled accessibility state", async () => {
+  it("admits one removal while pending and exposes busy accessibility state", async () => {
     let resolveRemoval: ((removed: boolean) => void) | undefined
     mockRemove.mockImplementationOnce(
       () =>
@@ -602,7 +607,10 @@ describe("PersonalEventFormScreen", () => {
       await Promise.resolve()
     })
     expect(deleteButton).toBeDisabled()
-    expect(deleteButton).toHaveProp("accessibilityState", { disabled: true })
+    expect(deleteButton).toHaveProp("accessibilityState", {
+      disabled: true,
+      busy: true,
+    })
 
     await act(async () => {
       confirm?.onPress?.()

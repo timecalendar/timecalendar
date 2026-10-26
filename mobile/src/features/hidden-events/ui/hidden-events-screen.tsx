@@ -1,7 +1,8 @@
 import { Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
-import { Pressable, ScrollView, StyleSheet, View } from "react-native"
+import { ScrollView, StyleSheet, View } from "react-native"
 
+import { Button } from "@/components/button"
 import { EmptyState } from "@/components/empty-state"
 import { noDataArtwork } from "@/components/empty-state-artwork"
 import { ErrorNotice } from "@/components/error-surfaces"
@@ -169,17 +170,13 @@ function HiddenRow({
           </ThemedText>
         )}
       </View>
-      <Pressable
-        accessibilityRole="button"
+      <Button
+        variant="text"
+        size="small"
+        label={t("hiddenEvents.unhide")}
         accessibilityLabel={unhideLabel}
-        hitSlop={Spacing.two}
         onPress={onUnhide}
-        style={styles.unhide}
-      >
-        <ThemedText type="smallBold" themeColor="actionText">
-          {t("hiddenEvents.unhide")}
-        </ThemedText>
-      </Pressable>
+      />
     </View>
   )
 }
@@ -209,11 +206,5 @@ const styles = StyleSheet.create({
   rowText: {
     flex: 1,
     gap: Spacing.half,
-  },
-  unhide: {
-    minHeight: 44,
-    minWidth: 44,
-    justifyContent: "center",
-    alignItems: "flex-end",
   },
 })

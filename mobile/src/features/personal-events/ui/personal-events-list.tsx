@@ -1,7 +1,8 @@
-import { Link, Stack } from "expo-router"
+import { Link, router, Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
 import { FlatList, Pressable, StyleSheet, View } from "react-native"
 
+import { Button } from "@/components/button"
 import { EmptyState } from "@/components/empty-state"
 import { headerScrollProps } from "@/components/header-scroll-props"
 import { RootPage } from "@/components/root-page"
@@ -26,7 +27,6 @@ import { Radii, Spacing, useTheme } from "@/theme"
 // thin over this module (route-structure rule).
 export function PersonalEventsList() {
   const { t } = useTranslation()
-  const theme = useTheme()
   const events = usePersonalEvents()
   const hasEvents = events.length > 0
   const uses24HourClock = useUses24HourClock()
@@ -48,24 +48,13 @@ export function PersonalEventsList() {
             contentContainerStyle={[layout.laneStyle, styles.list]}
             ListHeaderComponent={
               <View style={styles.header}>
-                <Link href="/personal-event-form" asChild>
-                  <Pressable
-                    testID="personal-events-add"
-                    accessibilityRole="button"
-                    accessibilityLabel={t("personalEvents.list.add")}
-                    hitSlop={Spacing.two}
-                    // Flatten: Link asChild forwards through expo-router's radix
-                    // <Slot>, whose dev-only shim throws on an array `style` child.
-                    style={StyleSheet.flatten([
-                      styles.addButton,
-                      { backgroundColor: theme.backgroundElement },
-                    ])}
-                  >
-                    <ThemedText type="smallBold">
-                      {t("personalEvents.list.add")}
-                    </ThemedText>
-                  </Pressable>
-                </Link>
+                <Button
+                  variant="tonal"
+                  size="small"
+                  testID="personal-events-add"
+                  label={t("personalEvents.list.add")}
+                  onPress={() => router.push("/personal-event-form")}
+                />
               </View>
             }
             ListEmptyComponent={
@@ -110,7 +99,8 @@ function EventRow({
         // moves to the hint.
         accessibilityLabel={event.title}
         accessibilityHint={t("personalEvents.list.rowHint")}
-        // Flatten for Link asChild's <Slot> child (see the Add button above).
+        // Flatten: Link asChild forwards through expo-router's radix <Slot>, whose
+        // dev-only shim throws on an array `style` child.
         style={StyleSheet.flatten([
           styles.row,
           { backgroundColor: theme.backgroundElement },
@@ -144,12 +134,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: Spacing.three,
-  },
-  addButton: {
-    minHeight: 48,
-    paddingHorizontal: Spacing.three,
-    justifyContent: "center",
-    borderRadius: Radii.medium,
   },
   list: {
     flexGrow: 1,

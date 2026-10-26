@@ -9,7 +9,7 @@ import {
 } from "@/features/feedback/data"
 import i18n from "@/i18n"
 import { usePlatform } from "@/test-support/platform"
-import { Colors, Spacing } from "@/theme"
+import { Colors, MinTouchTarget, Spacing } from "@/theme"
 
 import FeedbackScreen, { normalizeFeedbackParam } from "./feedback-screen"
 
@@ -82,9 +82,9 @@ it.each([390, 768, 800, 1024])(
 )
 
 describe.each([
-  ["ios" as const, 44],
-  ["android" as const, 48],
-])("FeedbackScreen on %s", (platform, minimumTarget) => {
+  ["ios" as const, "height"],
+  ["android" as const, "height"],
+])("FeedbackScreen on %s", (platform, behavior) => {
   usePlatform(platform)
 
   it("keeps one scroll body before a semantic sibling action region", async () => {
@@ -98,7 +98,7 @@ describe.each([
     expect(body).not.toContainElement(submit)
     expect(actions).toContainElement(submit)
     expect(StyleSheet.flatten(submit.props.style)).toMatchObject({
-      minHeight: minimumTarget,
+      minHeight: MinTouchTarget,
       backgroundColor: Colors.light.primaryStrong,
     })
     expect(submit.props.accessibilityLabel).toBe("Send")

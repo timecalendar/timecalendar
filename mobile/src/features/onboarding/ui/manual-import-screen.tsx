@@ -1,15 +1,14 @@
 import { router, Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
-import { Pressable, StyleSheet } from "react-native"
+import { StyleSheet } from "react-native"
 
-import { Icon } from "@/components/icon"
+import { Button } from "@/components/button"
 import { PageIntro, RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
 import {
   useImportDraft,
   useProtectedImportRoute,
 } from "@/features/onboarding/draft"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Spacing } from "@/theme"
 
 import { stepStyles } from "./step-styles"
 
@@ -26,7 +25,6 @@ import { stepStyles } from "./step-styles"
 // the app's only import path.
 export default function ManualImportScreen() {
   const { t } = useTranslation()
-  const theme = useTheme()
   const { dispatch } = useImportDraft()
   const legal = useProtectedImportRoute("manual", "/onboarding/import")
 
@@ -43,57 +41,31 @@ export default function ManualImportScreen() {
       >
         <PageIntro caption={t("onboarding.import.body")} style={styles.intro} />
 
-        <Pressable
+        <Button
+          variant="filled"
           testID="onboarding-import-qr"
-          accessibilityRole="button"
+          label={t("onboarding.import.qr")}
           accessibilityLabel={t("onboarding.import.qrLabel")}
           accessibilityHint={t("onboarding.import.qrHint")}
-          hitSlop={Spacing.two}
+          icon={{ ios: "qrcode.viewfinder", android: "qr_code_scanner" }}
           onPress={() => {
             dispatch({ type: "set-manual-handoff", target: "qr" })
             router.push("/onboarding/qr-scan")
           }}
-          style={[styles.primary, { backgroundColor: theme.primaryStrong }]}
-        >
-          <Icon
-            ios="qrcode.viewfinder"
-            android="qr_code_scanner"
-            size={20}
-            color={theme.onPrimary}
-            scaling="text"
-          />
-          <ThemedText type="smallBold" themeColor="onPrimary">
-            {t("onboarding.import.qr")}
-          </ThemedText>
-        </Pressable>
+        />
 
-        <Pressable
+        <Button
+          variant="outlined"
           testID="onboarding-import-url"
-          accessibilityRole="button"
+          label={t("onboarding.import.url")}
           accessibilityLabel={t("onboarding.import.urlLabel")}
           accessibilityHint={t("onboarding.import.urlHint")}
-          hitSlop={Spacing.two}
+          icon={{ ios: "link", android: "link" }}
           onPress={() => {
             dispatch({ type: "set-manual-handoff", target: "ical" })
             router.push("/onboarding/ical-url")
           }}
-          style={[
-            styles.secondary,
-            {
-              backgroundColor: theme.backgroundElement,
-              borderColor: theme.primary,
-            },
-          ]}
-        >
-          <Icon
-            ios="link"
-            android="link"
-            size={20}
-            color={theme.primary}
-            scaling="text"
-          />
-          <ThemedText type="smallBold">{t("onboarding.import.url")}</ThemedText>
-        </Pressable>
+        />
       </RootPage>
     </>
   )
@@ -104,28 +76,5 @@ const styles = StyleSheet.create({
   // rather than as a third paragraph.
   intro: {
     marginBottom: Spacing.two,
-  },
-  // The QR/link pair stays local and stays together: the filled-vs-outlined
-  // contrast is what tells the student QR is the recommended route.
-  primary: {
-    minHeight: 48,
-    flexDirection: "row",
-    gap: Spacing.two,
-    paddingHorizontal: Spacing.four,
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "stretch",
-    borderRadius: Radii.medium,
-  },
-  secondary: {
-    minHeight: 48,
-    flexDirection: "row",
-    gap: Spacing.two,
-    paddingHorizontal: Spacing.four,
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "stretch",
-    borderRadius: Radii.medium,
-    borderWidth: 2,
   },
 })

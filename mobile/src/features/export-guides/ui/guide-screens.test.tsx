@@ -232,7 +232,7 @@ describe("GuidePageScreen", () => {
       StyleSheet.flatten(
         view.getByTestId("export-guide-visible-back").props.style,
       ),
-    ).toEqual(expect.objectContaining({ borderColor: Colors.dark.primary }))
+    ).toEqual(expect.objectContaining({ borderColor: Colors.dark.outline }))
     expect(mockStackScreen).toHaveBeenCalled()
   })
 

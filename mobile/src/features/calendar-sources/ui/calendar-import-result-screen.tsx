@@ -2,8 +2,8 @@ import { router } from "expo-router"
 import { useTranslation } from "react-i18next"
 import { ScrollView, StyleSheet, View } from "react-native"
 
+import { Button } from "@/components/button"
 import { ErrorState } from "@/components/error-surfaces"
-import { PrimaryAction } from "@/components/primary-action"
 import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import { Spacing } from "@/theme"
@@ -66,7 +66,8 @@ export default function CalendarImportResultScreen() {
         </ThemedText>
       </View>
 
-      <PrimaryAction
+      <Button
+        variant="filled"
         testID="calendar-import-result-calendar"
         label={t("calendarImport.action.viewCalendar")}
         onPress={openCalendar}
