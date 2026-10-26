@@ -164,15 +164,18 @@ current state only.
 
 ## 8. Local verification
 
-- [ ] 8.1 `npx tsc --noEmit` passes.
-- [ ] 8.2 `npm run lint` passes with zero warnings.
-- [ ] 8.3 `npm test -- --coverage` passes, including the `button.tsx` 90% tier, the theme tier,
+- [x] 8.1 `npx tsc --noEmit` passes.
+- [x] 8.2 `npm run lint` passes with zero warnings.
+- [x] 8.3 `npm test -- --coverage` passes, including the `button.tsx` 90% tier, the theme tier,
       the registry matrix, the L10 fixture contract and the route-structure tests.
-- [ ] 8.4 `npm run test:timezones` passes (or the CI `test-mobile-timezones` job is green).
-- [ ] 8.5 `git diff --stat origin/main`: no `package.json`, `app.config.ts`, `eas.json`, native or
+- [x] 8.4 `npm run test:timezones` passes (or the CI `test-mobile-timezones` job is green).
+- [x] 8.5 `git diff --stat origin/main`: no `package.json`, `app.config.ts`, `eas.json`, native or
       route file change.
 
 ## 9. Device pass and CI
+
+Left open by the implementer: 9.1 and 9.2 are the conductor's device passes, 9.3 waits for CI on
+PR #493, 9.4 is human-blocked (inbox note exists).
 
 - [ ] 9.1 iOS simulator (conductor device pass): development build of this branch; open
       `timecalendar-dev://developer/gallery/button--filled`, `button--tonal`, `button--outlined`,
