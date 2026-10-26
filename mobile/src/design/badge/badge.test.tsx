@@ -1,9 +1,17 @@
 import { render, screen } from "@testing-library/react-native"
 import { StyleSheet } from "react-native"
 
+import { EventSurface } from "@/design/event-surface/event-surface"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { usePlatform } from "@/test-support/platform"
-import { Colors, Radii, Spacing, type ThemeColor, TypeRamp } from "@/theme"
+import {
+  Colors,
+  Radii,
+  resolveEventAppearance,
+  Spacing,
+  type ThemeColor,
+  TypeRamp,
+} from "@/theme"
 
 import { Badge, type BadgeTone } from "./badge"
 
@@ -224,6 +232,49 @@ describe.each(["ios", "android"] as const)("Badge on %s", (platform) => {
     )
     expect(screen.getByRole("text", { name: "Beta version" })).toBeOnTheScreen()
   })
+})
+
+describe.each(["light", "dark"] as const)(
+  "onEventSurface tone in %s",
+  (scheme) => {
+    it("draws its outline and label in the surface foreground", async () => {
+      mockUseColorScheme.mockReturnValue(scheme)
+      await render(
+        <EventSurface
+          eventColor="#E91E63"
+          accessibilityLabel="Lecture"
+          onPress={jest.fn()}
+        >
+          <Badge
+            label="2/5"
+            tone="onEventSurface"
+            accessibilityLabel={null}
+            testID="b"
+          />
+        </EventSurface>,
+      )
+      const { foreground } = resolveEventAppearance({
+        color: "#E91E63",
+        scheme,
+        increasedContrast: false,
+      })
+      const root = styleOf("b")
+      expect(root.borderWidth).toBe(1)
+      expect(root.borderColor).toBe(foreground)
+      expect(root.backgroundColor).toBeUndefined()
+      expect(styleOf("b-label").color).toBe(foreground)
+    })
+  },
+)
+
+it("throws for the onEventSurface tone outside an event surface", async () => {
+  jest.spyOn(console, "error").mockImplementation(() => undefined)
+  await expect(
+    render(
+      <Badge label="2/5" tone="onEventSurface" accessibilityLabel={null} />,
+    ),
+  ).rejects.toThrow("inside an EventSurface")
+  jest.mocked(console.error).mockRestore()
 })
 
 it("rejects a missing accessibility choice, a color and a font style", () => {

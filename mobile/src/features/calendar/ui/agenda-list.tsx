@@ -2,14 +2,13 @@ import { type ReactElement, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
   Platform,
-  Pressable,
   type RefreshControlProps,
   SectionList,
   StyleSheet,
   View,
 } from "react-native"
 
-import { ThemedText } from "@/design"
+import { EventSurface, EventSurfaceText, ThemedText } from "@/design"
 import {
   type AppLocale,
   type CalendarEvent,
@@ -30,7 +29,7 @@ import { Layout, Radii, Spacing, useTheme } from "@/theme"
 // SectionList (zero new dep — D4) of day-grouped events as a designed brand surface
 // (R-3). The screen owns the read + the resolved locale; this maps events → day
 // sections via the pure groupEventsByDay seam, formats headers/times via the pure
-// date-fns formatter, and renders day headers + themed event tiles. Each tile is a
+// date-fns formatter, and renders day headers + EventSurface tiles. Each tile is a
 // touchable (accessibilityRole="button" + a translated label incl. a view-details
 // hint + onPress) → the screen-provided onPressEvent, which routes synced events to
 // the read-only details screen and personal events to their edit form (D2/D4). A
@@ -187,37 +186,30 @@ function EventTile({
           upcoming && { backgroundColor: theme.primary },
         ]}
       />
-      <Pressable
+      <EventSurface
+        eventColor={event.color}
         testID={
           progress === undefined
             ? `agenda-event-${event.id}`
             : `agenda-event-${event.id}-progress-${progress.completed}-${progress.total}`
         }
-        accessibilityRole="button"
         accessibilityLabel={label}
         onPress={onPress}
-        style={[
-          styles.tile,
-          {
-            backgroundColor: theme.backgroundElement,
-            borderLeftColor: event.color,
-            shadowColor: "#000000",
-          },
-        ]}
+        style={styles.tile}
       >
-        <ThemedText type="smallBold" numberOfLines={2}>
+        <EventSurfaceText type="label" numberOfLines={2}>
           {title}
-        </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
+        </EventSurfaceText>
+        <EventSurfaceText type="callout" numberOfLines={2}>
           {time}
-        </ThemedText>
+        </EventSurfaceText>
         {location.length > 0 && (
-          <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+          <EventSurfaceText type="callout" numberOfLines={1}>
             {location}
-          </ThemedText>
+          </EventSurfaceText>
         )}
         <ChecklistProgressIndicator progress={progress} />
-      </Pressable>
+      </EventSurface>
     </View>
   )
 }
@@ -244,18 +236,5 @@ const styles = StyleSheet.create({
     width: Spacing.half,
     borderRadius: Radii.pill,
   },
-  tile: {
-    flex: 1,
-    minHeight: 44,
-    padding: Spacing.three,
-    borderRadius: Radii.large,
-    borderLeftWidth: Spacing.half,
-    gap: Spacing.half,
-    // Subtle shadow (Flutter planning-tile parity: offset (0,3), rgba(0,0,0,0.06),
-    // blur 15) — shadowColor set inline so it tracks the scheme.
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.06,
-    shadowRadius: 15,
-    elevation: 2,
-  },
+  tile: { flex: 1 },
 })

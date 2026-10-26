@@ -1,8 +1,10 @@
 import { render, screen } from "@testing-library/react-native"
+import type { ReactNode } from "react"
 import { StyleSheet } from "react-native"
 
+import { EventSurface } from "@/design"
 import i18n from "@/i18n"
-import { Colors } from "@/theme"
+import { Colors, resolveEventAppearance } from "@/theme"
 
 import {
   ChecklistProgressIndicator,
@@ -134,6 +136,84 @@ describe("ChecklistProgressIndicator", () => {
     expect(style.maxHeight).toBe(bounds.height)
     expect(style.paddingHorizontal).toBe(dense ? 0 : 4)
     expect(countStyle.fontSize === 8).toBe(dense)
+  })
+
+  describe.each(["light", "dark"] as const)(
+    "inside an event surface in %s",
+    (scheme) => {
+      const foreground = resolveEventAppearance({
+        color: "#E91E63",
+        scheme,
+        increasedContrast: false,
+      }).foreground
+      const onSurface = (node: ReactNode) => (
+        <EventSurface
+          eventColor="#E91E63"
+          accessibilityLabel="Lecture"
+          onPress={jest.fn()}
+        >
+          {node}
+        </EventSurface>
+      )
+
+      beforeEach(() => {
+        mockScheme = scheme
+      })
+
+      it.each([
+        [partial, "square"],
+        [complete, "checkmark.square.fill"],
+      ])(
+        "draws the inline pill in the surface foreground (%o)",
+        async (progress, glyph) => {
+          await render(
+            onSurface(<ChecklistProgressIndicator progress={progress} />),
+          )
+          expect(styleOf("checklist-progress-inline")).toMatchObject({
+            borderWidth: 1,
+            borderColor: foreground,
+          })
+          expect(styleOf("checklist-progress-inline-label").color).toBe(
+            foreground,
+          )
+          expect(
+            screen.getByTestId("checklist-progress-inline-icon", hidden).props
+              .name,
+          ).toBe(glyph)
+        },
+      )
+
+      it.each([partial, complete])(
+        "draws the compact pill in the surface foreground (%o)",
+        async (progress) => {
+          await render(
+            onSurface(
+              <ChecklistProgressIndicator
+                progress={progress}
+                variant="compact"
+              />,
+            ),
+          )
+          expect(styleOf("checklist-progress-compact").borderColor).toBe(
+            foreground,
+          )
+          expect(
+            screen.getByTestId("checklist-progress-glyph", hidden).props
+              .tintColor,
+          ).toBe(foreground)
+          expect(styleOf("checklist-progress-count").color).toBe(foreground)
+        },
+      )
+    },
+  )
+
+  it("keeps the status tones outside a surface", async () => {
+    await render(
+      <ChecklistProgressIndicator progress={partial} variant="compact" />,
+    )
+    expect(styleOf("checklist-progress-compact").borderColor).toBe(
+      Colors.light.informational,
+    )
   })
 
   it("builds the localized phrase only for nonzero progress", async () => {

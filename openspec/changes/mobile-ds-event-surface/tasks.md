@@ -56,11 +56,11 @@ commits, following the design's Migration Plan.
 
 ## 2. Primitive (D2–D5, D10, D11) — commit 2
 
-- [ ] 2.1 `src/design/event-surface/event-surface-context.ts`: `EventSurfaceContext`
+- [x] 2.1 `src/design/event-surface/event-surface-context.ts`: `EventSurfaceContext`
       (`EventAppearance | undefined`) and `useEventSurfaceAppearance()`. It imports only `react`
       and `@/theme` types. Add `event-surface-context.test.ts` (undefined outside, the value
       inside a provider). Verify: `npx jest src/design/event-surface/event-surface-context` passes.
-- [ ] 2.2 `src/design/event-surface/event-surface.tsx`: export `EventSurface`,
+- [x] 2.2 `src/design/event-surface/event-surface.tsx`: export `EventSurface`,
       `EventSurfaceText`, `EventSurfaceProps`, `EventSurfaceTextProps`, `EventSurfacePlacement`,
       `EventSurfaceDensity` and `EventSurfaceLayoutStyle`, per D3 and D4. It reads the scheme from
       `@/hooks/use-color-scheme` and the signal from `@/hooks/use-increased-contrast`, and imports
@@ -68,23 +68,23 @@ commits, following the design's Migration Plan.
       `EventSurfaceText`'s `numberOfLines` are required. Use `StyleSheet.flatten` for the
       `Pressable` style function result (no style arrays reach a `Link`/native child). Verify:
       `npx tsc --noEmit` passes and `npx eslint src/design/event-surface` is clean.
-- [ ] 2.3 `event-surface.test.tsx` per D11 on iOS and Android. Verify:
+- [x] 2.3 `event-surface.test.tsx` per D11 on iOS and Android. Verify:
       `npx jest src/design/event-surface --coverage --collectCoverageFrom='src/design/event-surface/*.{ts,tsx}' --collectCoverageFrom='!**/*.gallery.tsx'`
       shows ≥ 90% branches on both modules.
-- [ ] 2.4 `src/design/badge/badge.tsx`: add tone `onEventSurface` (D6), reading
+- [x] 2.4 `src/design/badge/badge.tsx`: add tone `onEventSurface` (D6), reading
       `useEventSurfaceAppearance()` from `@/design/event-surface/event-surface-context` and throwing
       outside a surface. Extend `badge.test.tsx` (inside: outline and label in the foreground, per
       scheme; outside: throws). Add an `onEventSurface` row to `badge.gallery.tsx` `Tones`, rendered
       inside an `EventSurface`. Verify: `npx jest src/design/badge src/design/import-graph.contract`
       passes (no cycle).
-- [ ] 2.5 Export the new names from `src/design/index.ts` in alphabetical position. Add
+- [x] 2.5 Export the new names from `src/design/index.ts` in alphabetical position. Add
       `"src/design/event-surface/event-surface.tsx"` and
       `"src/design/event-surface/event-surface-context.ts"` at `{ lines: 90, branches: 90 }` to
       `jest.config.js` `coverageThreshold`. Add a row for `src/design/event-surface/event-surface.tsx`
       to `tools/eslint-rules/design-import-policy.test.js` (barrel false, deep true, gallery false).
       Verify: `npx jest src/design/import-graph.contract src/design/gallery/fixture-coverage.contract tools/eslint-rules/design-import-policy`
       passes.
-- [ ] 2.6 Gallery per D10: `event-surface.gallery.tsx` (`id: "event-surface"`, stories `Palette`,
+- [x] 2.6 Gallery per D10: `event-surface.gallery.tsx` (`id: "event-surface"`, stories `Palette`,
       `Placements`, `IncreasedContrast`, `Checklist`, `LongStrings`) and
       `event-surface.gallery.test.tsx` (renders every story on iOS and Android; asserts the local
       palette equals `[...SWATCH_PRESETS, EventFallbackColor]`; asserts each tile is one button
@@ -96,29 +96,29 @@ commits, following the design's Migration Plan.
 
 ## 3. Checklist indicator and call sites (D6, D7) — commit 2
 
-- [ ] 3.1 `features/event-checklists/ui/checklist-progress-indicator.tsx`: inside a surface
+- [x] 3.1 `features/event-checklists/ui/checklist-progress-indicator.tsx`: inside a surface
       (`useEventSurfaceAppearance()` defined), `inline` renders `Badge tone="onEventSurface"` and
       `compact` draws border, glyph and count in `appearance.foreground`; outside, unchanged.
       Extend `checklist-progress-indicator.test.tsx` for both variants inside and outside a surface.
       Verify: `npx jest src/features/event-checklists` passes.
-- [ ] 3.2 `features/home/ui/upcoming-scroller.tsx`: the card is
+- [x] 3.2 `features/home/ui/upcoming-scroller.tsx`: the card is
       `EventSurface placement="flow" density="regular"` with `style={{ width: CARD_WIDTH }}`,
       `testID`, label, hint and `onPress` unchanged; lines per the D7 table via `EventSurfaceText`.
       Delete the local `card` background, radius, padding, min-height and `iosPressed` styles.
-- [ ] 3.3 `features/home/ui/home-screen/today-section.tsx`: each all-day item is
+- [x] 3.3 `features/home/ui/home-screen/today-section.tsx`: each all-day item is
       `EventSurface placement="flow" density="compact"`; title per D7. Delete `allDayEvent`'s
       paint and `iosPressed`.
-- [ ] 3.4 `features/home/ui/today-timeline.tsx`: the positioned tile is
+- [x] 3.4 `features/home/ui/today-timeline.tsx`: the positioned tile is
       `EventSurface placement="absolute" density="compact"` with `style={{ top, left, width, height }}`;
       the reflowed tile is `placement="flow" density="compact"`. Lines per D7 (the reflowed title
       and location gain caps 3 and 2). Delete `tile`/`reflowedEvent` paint, `iosPressed` and the
       `MIN_TARGET_SIZE` constant if unused.
-- [ ] 3.5 Delete `features/home/ui/event-surface.ts`; remove its imports and the now-unused
+- [x] 3.5 Delete `features/home/ui/event-surface.ts`; remove its imports and the now-unused
       `useColorScheme` imports from the Home files. Verify: `grep -rn "eventSurfaceColor" src` finds
       nothing, and `npx jest src/features/home` passes with assertions added for one card, one
       all-day item and one timeline tile: testID, label and hint unchanged, leading border 3 in the
       resolved accent for the scheme, text color the resolved foreground.
-- [ ] 3.6 `features/calendar/ui/agenda-list.tsx`: the tile is
+- [x] 3.6 `features/calendar/ui/agenda-list.tsx`: the tile is
       `EventSurface placement="flow" density="regular"` with `style={{ flex: 1 }}`, keeping the
       `agenda-event-<id>[-progress-<c>-<t>]` testID and the `calendar.agenda.event.openLabel*`
       label. Delete the `backgroundColor`/`borderLeftColor`/`shadowColor` inline object and the
@@ -129,17 +129,17 @@ commits, following the design's Migration Plan.
 
 ## 4. Lint (D9) — commit 2
 
-- [ ] 4.1 `tools/eslint-rules/no-raw-event-color.js`: extend the key set to the eight keys in D9
+- [x] 4.1 `tools/eslint-rules/no-raw-event-color.js`: extend the key set to the eight keys in D9
       and add the `CallExpression` check with message id `eventAppearanceCall`. Update the header
       comment's rationale and remaining-blind-spot sentence and link ADR 076. Update
       `no-raw-event-color.test.js` per D9 (new invalid cases, `borderLeftColor: theme.primary`
       valid, `eventSurfaceColor(...)` valid case replaced by `mix(event.color)`). Verify:
       `npx jest tools/eslint-rules/no-raw-event-color` passes.
-- [ ] 4.2 Keep `raw-event-color-allowlist.js` at one entry and `RAW_EVENT_COLOR_ALLOWLIST_CEILING = 1`;
+- [x] 4.2 Keep `raw-event-color-allowlist.js` at one entry and `RAW_EVENT_COLOR_ALLOWLIST_CEILING = 1`;
       update the `timecalendar/raw-event-color` block comment in `eslint.config.js` to name
       `EventSurface` and ADR 076. Verify: `npx jest tools/eslint-rules` passes and `npm run lint`
       passes with zero warnings.
-- [ ] 4.3 Inject-and-revert proof (record the output for the PR):
+- [x] 4.3 Inject-and-revert proof (record the output for the PR):
       (a) put `borderLeftColor: event.color` back into `agenda-list.tsx`: `npm run lint` fails with
       `local/no-raw-event-color`;
       (b) add `const a = resolveEventAppearance({ color: event.color, scheme: "light", increasedContrast: false })`
@@ -149,7 +149,7 @@ commits, following the design's Migration Plan.
       (d) render `<EventSurfaceText>` without `numberOfLines` and `<EventSurface>` without
       `accessibilityLabel` in a test file: `npx tsc --noEmit` fails.
       Revert all four. Verify: `git status` shows no change in those files afterwards.
-- [ ] 4.4 Selector check: re-run the 0.1 greps into `/tmp/*.after` and `diff` each pair. Verify:
+- [x] 4.4 Selector check: re-run the 0.1 greps into `/tmp/*.after` and `diff` each pair. Verify:
       the three diffs are empty and `npx jest e2e/maestro-selectors` passes.
 
 ## 5. CI proof — commit 2

@@ -7,6 +7,8 @@ import {
   type BadgeProps,
   type BadgeSize,
   type BadgeTone,
+  EventSurface,
+  EventSurfaceText,
   headerScrollProps,
   RootPage,
   ThemedText,
@@ -16,7 +18,7 @@ import { Spacing, useIsAccessibilityTextSize } from "@/theme"
 
 type Story = GalleryStory<BadgeProps>
 
-const tones: readonly BadgeTone[] = [
+const tones: readonly Exclude<BadgeTone, "onEventSurface">[] = [
   "brand",
   "neutral",
   "positive",
@@ -59,6 +61,22 @@ function TonesFixture() {
           />
         )
       })}
+      <EventSurface
+        eventColor="#E91E63"
+        accessibilityLabel={t("gallery.badge.tone.onEventSurface")}
+        onPress={() => undefined}
+        testID="gallery-badge-tone-onEventSurface-surface"
+      >
+        <EventSurfaceText type="label" numberOfLines={1}>
+          {t("gallery.badge.ownerTitle")}
+        </EventSurfaceText>
+        <Badge
+          label={t("gallery.badge.tone.onEventSurface")}
+          tone="onEventSurface"
+          accessibilityLabel={null}
+          testID="gallery-badge-tone-onEventSurface"
+        />
+      </EventSurface>
     </Page>
   )
 }

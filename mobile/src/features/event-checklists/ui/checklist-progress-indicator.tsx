@@ -2,7 +2,13 @@ import type { SFSymbol } from "expo-symbols"
 import type { TFunction } from "i18next"
 import { StyleSheet, View } from "react-native"
 
-import { Badge, Icon, type MaterialGlyph, ThemedText } from "@/design"
+import {
+  Badge,
+  Icon,
+  type MaterialGlyph,
+  ThemedText,
+  useEventSurfaceAppearance,
+} from "@/design"
 import type { ChecklistProgress } from "@/features/event-checklists/data"
 import { Radii, Spacing, useTheme } from "@/theme"
 
@@ -53,6 +59,7 @@ export function ChecklistProgressIndicator({
   bounds?: { width: number; height: number }
 }) {
   const theme = useTheme()
+  const surface = useEventSurfaceAppearance()
   if (progress === undefined || progress.total === 0) return null
 
   const glyph = GLYPH[progress.isComplete ? "complete" : "pending"]
@@ -61,7 +68,13 @@ export function ChecklistProgressIndicator({
   if (variant === "inline") {
     return (
       <Badge
-        tone={progress.isComplete ? "positive" : "informational"}
+        tone={
+          surface !== undefined
+            ? "onEventSurface"
+            : progress.isComplete
+              ? "positive"
+              : "informational"
+        }
         size="medium"
         icon={glyph}
         label={count}
@@ -73,7 +86,9 @@ export function ChecklistProgressIndicator({
 
   const density = densityOf(bounds)
   const dense = density === "dense"
-  const color = progress.isComplete ? theme.positive : theme.informational
+  const color =
+    surface?.foreground ??
+    (progress.isComplete ? theme.positive : theme.informational)
 
   return (
     <View

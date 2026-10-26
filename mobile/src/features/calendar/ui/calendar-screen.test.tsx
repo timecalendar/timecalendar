@@ -45,7 +45,11 @@ import {
   flushUiThread,
   placeCalendarPager,
 } from "@/test-support/owned-calendar/pager-driver"
-import { resolveResponsiveLayout } from "@/theme"
+import {
+  Colors,
+  resolveEventAppearance,
+  resolveResponsiveLayout,
+} from "@/theme"
 
 import { CalendarScreen } from "./calendar-screen"
 import { useCalendarTitleFocus } from "./calendar-screen/use-calendar-title-focus"
@@ -1293,6 +1297,51 @@ describe("CalendarScreen retained Agenda", () => {
       expect(mockPush).toHaveBeenCalledWith(`/event-details/${id}`)
     },
   )
+
+  it("draws an agenda tile as an event surface with no gray fill and no shadow", async () => {
+    mockUseChecklistProgress.mockReturnValue(
+      new Map([["synced-1", { completed: 1, total: 2, isComplete: false }]]),
+    )
+    await render(<CalendarScreen />)
+    await openAgenda()
+
+    const appearance = resolveEventAppearance({
+      color: "#1E88E5",
+      scheme: "light",
+      increasedContrast: false,
+    })
+    const tile = screen.getByTestId("agenda-event-synced-1-progress-1-2")
+    expect(tile.props.accessibilityRole).toBe("button")
+    expect(tile.props.accessibilityLabel).toMatch(/^Algorithms, /)
+    const style = StyleSheet.flatten(tile.props.style)
+    expect(style.backgroundColor).toBe(appearance.surface)
+    expect(style.backgroundColor).not.toBe(Colors.light.backgroundElement)
+    expect(style.flex).toBe(1)
+    for (const key of [
+      "shadowColor",
+      "shadowOpacity",
+      "shadowRadius",
+      "shadowOffset",
+      "elevation",
+      "borderLeftColor",
+    ]) {
+      expect(style[key as keyof typeof style]).toBeUndefined()
+    }
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("agenda-event-synced-1-progress-1-2-stripe").props
+          .style,
+      ),
+    ).toMatchObject({ width: 3, backgroundColor: appearance.accent })
+    expect(
+      StyleSheet.flatten(screen.getByText("Algorithms").props.style).color,
+    ).toBe(appearance.foreground)
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("checklist-progress-inline", HIDDEN).props.style,
+      ).borderColor,
+    ).toBe(appearance.foreground)
+  })
 
   it("keeps Agenda usable after a details-style unmount and return", async () => {
     const first = await render(<CalendarScreen />)

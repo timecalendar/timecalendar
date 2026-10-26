@@ -22,6 +22,16 @@ export {
   type ColorDotRing,
   type ColorDotSizeName,
 } from "./color-dot/color-dot"
+export {
+  EventSurface,
+  type EventSurfaceDensity,
+  type EventSurfaceLayoutStyle,
+  type EventSurfacePlacement,
+  type EventSurfaceProps,
+  EventSurfaceText,
+  type EventSurfaceTextProps,
+} from "./event-surface/event-surface"
+export { useEventSurfaceAppearance } from "./event-surface/event-surface-context"
 export { DateTimeField, type DateTimeFieldProps } from "./field/date-time-field"
 export {
   TextField,

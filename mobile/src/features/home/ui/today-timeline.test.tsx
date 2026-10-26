@@ -3,6 +3,7 @@ import { StyleSheet } from "react-native"
 
 import { type TimedCalendarEventV1 } from "@/features/calendar/data"
 import { type HourRange } from "@/features/home/data"
+import { resolveEventAppearance } from "@/theme"
 
 import { TodayTimeline } from "./today-timeline"
 
@@ -111,6 +112,54 @@ describe("TodayTimeline", () => {
     await reportTileAreaWidth(700)
     expect(tileWidth()).toBe(700)
   })
+
+  it.each([
+    ["positioned", 400, "absolute"],
+    ["reflowed", null, undefined],
+  ] as const)(
+    "draws the %s tile as an event surface with its label and hint",
+    async (_layout, width, position) => {
+      await render(
+        <TodayTimeline
+          events={[event()]}
+          range={range}
+          locale="en"
+          displayZone={ZONE}
+          isToday={false}
+          now={new Date(2026, 5, 15, 9, 30, 0, 0)}
+          checklistProgress={noChecklistProgress}
+          onPressEvent={jest.fn()}
+        />,
+      )
+      if (width !== null) await reportTileAreaWidth(width)
+      const appearance = resolveEventAppearance({
+        color: "#1E88E5",
+        scheme: "light",
+        increasedContrast: false,
+      })
+      const tile = screen.getByTestId("today-tile-ev-1")
+      expect(tile.props.accessibilityRole).toBe("button")
+      expect(tile.props.accessibilityLabel).toMatch(/^Algorithms, .+ Room A1$/)
+      expect(tile.props.accessibilityHint).toBe("Edit this event")
+      const style = StyleSheet.flatten(tile.props.style)
+      expect(style.backgroundColor).toBe(appearance.surface)
+      expect(style.position).toBe(position)
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId("today-tile-ev-1-stripe").props.style,
+        ),
+      ).toMatchObject({ width: 3, backgroundColor: appearance.accent })
+      for (const text of [
+        screen.getByText("Algorithms"),
+        screen.getByText("Room A1"),
+      ]) {
+        expect(StyleSheet.flatten(text.props.style).color).toBe(
+          appearance.foreground,
+        )
+        expect(text.props.numberOfLines).toBeGreaterThan(0)
+      }
+    },
+  )
 
   it("remeasures overlap pixels and reflows when the tile owner is too narrow", async () => {
     const overlapping = event({
