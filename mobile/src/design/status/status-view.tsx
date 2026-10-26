@@ -170,8 +170,10 @@ export function StatusView(props: StatusViewProps) {
             style={styles.artwork}
           />
         )}
+        {/* accessibilityLiveRegion does not stop Fabric flattening this View away without a testID. */}
         <View
           {...textID}
+          collapsable={false}
           accessibilityLiveRegion={liveRegion}
           style={[styles.text, inline ? null : styles.fill]}
         >

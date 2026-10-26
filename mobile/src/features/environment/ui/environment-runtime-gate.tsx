@@ -116,7 +116,6 @@ const styles = StyleSheet.create({
   recovery: {
     flexGrow: 1,
     justifyContent: "center",
-    gap: Spacing.three,
     padding: Spacing.four,
   },
 })

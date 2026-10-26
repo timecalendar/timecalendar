@@ -251,6 +251,21 @@ describe.each(["ios", "android"] as const)("StatusView on %s", (os) => {
     ).toBe(polite)
   })
 
+  it("keeps the live-region text container unflattened without a testID", async () => {
+    await render(
+      <StatusView kind="error" presentation="section" title="Failed" />,
+    )
+    let container = screen.getByText("Failed").parent
+    while (container && container.props.collapsable === undefined) {
+      container = container.parent
+    }
+    expect(within(container!).getByText("Failed")).toBeTruthy()
+    expect(container?.props.collapsable).toBe(false)
+    expect(container?.props.accessibilityLiveRegion).toBe(
+      os === "android" ? "polite" : undefined,
+    )
+  })
+
   it("announces once per appearance and once per key change", async () => {
     const view = await render(
       <StatusView
