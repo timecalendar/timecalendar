@@ -98,4 +98,15 @@ describe.each(["ios", "android"] as const)("Calendar view menu on %s", (os) => {
       ).borderColor,
     ).toBe(Colors.light.text)
   })
+
+  // iOS shrinks an adjustsFontSizeToFit label to nothing inside the header's
+  // intrinsic-width slot at the largest accessibility sizes.
+  it("keeps the view label at a capped, non-shrinking size", async () => {
+    await render(
+      <CalendarViewMenu view="agenda" onChange={jest.fn()} zoom={null} />,
+    )
+    const label = screen.getByText("Agenda")
+    expect(label.props.adjustsFontSizeToFit).toBeUndefined()
+    expect(label.props.maxFontSizeMultiplier).toBe(1.3)
+  })
 })

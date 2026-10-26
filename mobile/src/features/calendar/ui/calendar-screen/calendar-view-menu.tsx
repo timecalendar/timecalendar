@@ -108,8 +108,6 @@ function CalendarPlatformMenu({
             type="smallBold"
             numberOfLines={1}
             maxFontSizeMultiplier={1.3}
-            adjustsFontSizeToFit
-            minimumFontScale={0.8}
           >
             {labels[view]}
           </ThemedText>
