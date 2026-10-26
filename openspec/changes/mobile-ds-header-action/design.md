@@ -95,8 +95,10 @@ export type HeaderAction =
   | (HeaderActionBase & { label: string; icon?: never })
 ```
 
-The hook resolves `useTheme()` for the tint and filters items by `Platform.OS`. An empty side
-returns no key, so a screen with no Android items does not replace the native back arrow area.
+The hook resolves `useTheme()` for the tint and filters items by `Platform.OS`. Only a declared side
+returns a key. `setOptions` merges options, so a declared side with no action for the platform
+returns its key as `undefined` (clearing a button from an earlier render, which keeps the native
+back arrow on Android), and an undeclared side returns no key so a hand-set slot survives.
 
 Why a hook and not a `<HeaderAction>` component that renders its own `Stack.Screen`:
 
@@ -347,7 +349,8 @@ buttons.
 
 - **`header-action.test.tsx`** (`describe.each(["ios", "android"])` with `usePlatform`). It
   covers:
-  - Item filtering by `platform`, and the empty side returning no key.
+  - Item filtering by `platform`, a declared empty side returning its key as `undefined`, and an
+    undeclared side returning no key.
   - iOS item mapping per kind: icon vs text, tint `text` in both schemes, hint, identifier,
     disabled.
   - Android: render the returned `headerRight` / `headerLeft`. Find by testID. Press calls the

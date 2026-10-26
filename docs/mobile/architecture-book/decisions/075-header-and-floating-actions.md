@@ -29,7 +29,10 @@ Platform facts:
   returns the header slots a screen spreads into its one `Stack.Screen options`. A
   `HeaderAction` is an icon (`NativeIcon`) or a visible `label`, never both, with a required
   `accessibilityLabel`, a `testID`, an optional hint, `disabled` and `platform`. It has no color
-  field: the chrome tints every action with `theme.text`. An empty side returns no key.
+  field: the chrome tints every action with `theme.text`. Only a declared side returns a key:
+  `setOptions` merges options, so a declared side with no action for the platform returns its
+  key as `undefined` to clear a button from an earlier render, and an undeclared side returns
+  no key so a slot the screen sets by hand survives.
 - **iOS: native bar items.** Each action is a `type: "button"` header item: SF Symbol or label,
   `accessibilityLabel`, hint, `identifier: testID`. Targets, highlight, Liquid Glass background,
   size caps and the Large Content Viewer are UIKit's.

@@ -585,7 +585,9 @@ platform's own control. See ADR [075](./decisions/075-header-and-floating-action
   `setOptions` merges into the previous options, so a declared side with no action for this
   platform returns its key set to `undefined`, which clears a button set by an earlier render
   (Today on the calendar). An undeclared side returns no key, so a slot the screen sets by hand
-  (the calendar view menu in `headerLeft`) survives the spread whatever its order.
+  (the calendar view menu in `headerLeft`) survives the spread whatever its order. On Android a
+  left action renders through `headerLeft`, which replaces the native back arrow: declare a left
+  action only where the screen has no back navigation or the action is the way out.
 - **iOS:** each action is a native `UIBarButtonItem` header item (`unstable_headerLeftItems` /
   `unstable_headerRightItems`): an SF Symbol (named by `accessibilityLabel`, which also feeds the
   Large Content Viewer) or the visible label, the hint, `identifier: testID`, `disabled`.
