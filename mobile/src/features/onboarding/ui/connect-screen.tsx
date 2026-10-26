@@ -35,8 +35,7 @@ export default function ConnectScreen() {
       <RootPage
         testID="onboarding-connect-content"
         lane="readable"
-        style={stepStyles.fill}
-        contentContainerStyle={[stepStyles.safeArea, styles.safeArea]}
+        contentContainerStyle={[stepStyles.content, styles.content]}
       >
         <PageIntro caption={t("onboarding.connect.body")} />
 
@@ -86,7 +85,7 @@ export default function ConnectScreen() {
 const styles = StyleSheet.create({
   // Wider than the shared step gap: this step's three blocks (intro, optional
   // link, footer) read as separate offers rather than one form.
-  safeArea: {
+  content: {
     gap: Spacing.four,
   },
   stretch: { alignSelf: "stretch" },

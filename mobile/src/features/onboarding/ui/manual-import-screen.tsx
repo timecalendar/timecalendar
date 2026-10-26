@@ -26,8 +26,7 @@ export default function ManualImportScreen() {
       <RootPage
         testID="onboarding-import-content"
         lane="readable"
-        style={stepStyles.fill}
-        contentContainerStyle={stepStyles.safeArea}
+        contentContainerStyle={stepStyles.content}
       >
         <PageIntro caption={t("onboarding.import.body")} style={styles.intro} />
 

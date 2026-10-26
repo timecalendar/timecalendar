@@ -25,6 +25,7 @@ const MIGRATED_SCREENS: readonly {
       "src/features/onboarding/ui/welcome-pages.tsx",
       "src/features/onboarding/ui/connect-screen.tsx",
       "src/features/onboarding/ui/manual-import-screen.tsx",
+      "src/features/onboarding/ui/step-styles.ts",
     ],
   },
 ]
@@ -96,7 +97,7 @@ function findDrift(source: string): { id: string; line: number }[] {
 }
 
 // Raised by every Phase 5 slice that appends files, so the list cannot shrink.
-const MIGRATED_FILE_FLOOR = 12
+const MIGRATED_FILE_FLOOR = 13
 
 const listedFiles = MIGRATED_SCREENS.flatMap(({ files }) => files)
 
