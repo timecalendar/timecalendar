@@ -62,7 +62,7 @@ export function ColorSwatchField({
               }
               accessibilityLabel={option.label}
               disabled={disabled}
-              onPress={disabled ? undefined : () => onChange(option.color)}
+              onPress={() => onChange(option.color)}
               android_ripple={
                 ios || disabled
                   ? undefined

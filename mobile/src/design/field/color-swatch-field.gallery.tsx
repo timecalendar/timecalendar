@@ -66,15 +66,13 @@ function Fixture({
             value={value}
             onChange={setValue}
             disabled={disabled}
-            {...(error || long
-              ? {
-                  error: t(
-                    long
-                      ? "gallery.stress.body"
-                      : "gallery.colorSwatchField.error",
-                  ),
-                }
-              : {})}
+            error={
+              long
+                ? t("gallery.stress.body")
+                : error
+                  ? t("gallery.colorSwatchField.error")
+                  : null
+            }
           />
         </ScrollView>
       )}
