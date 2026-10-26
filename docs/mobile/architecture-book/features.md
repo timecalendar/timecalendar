@@ -195,8 +195,9 @@ The registry lists, in this order (paths under `mobile/src/`):
   compact native chrome and one shared page frame; form screens retain their keyboard/scroll owners,
   School retains its virtualized list and native search, and QR retains its full-bleed camera below
   the header. These presentation bounds do not change step order, validation, or routing.
-- Feedback and onboarding Programme use render-function `RootPage` surfaces around one readable
-  keyboard-safe owner. Their fields are `TextField`s (Feedback's email moves focus to the message
+- Feedback, institution name, Programme and iCal URL use render-function `RootPage` surfaces around
+  one readable keyboard-safe owner and pass it no layout style: the three onboarding-journey steps
+  use `contentPlacement="center"`, and Feedback keeps only its own scroll-body composition. Their fields are `TextField`s (Feedback's email moves focus to the message
   on Next through the field `ref`; both are disabled while sending; the institution-name step uses
   the same field) and stay with their validation in the sole scroll body; their semantic
   filled action is a measured sibling. Programme Skip is a right header text action on both

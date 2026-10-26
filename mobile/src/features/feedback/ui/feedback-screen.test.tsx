@@ -96,6 +96,11 @@ describe.each(["ios", "android"] as const)(
       expect(body).toContainElement(view.getByTestId("feedback-message-input"))
       expect(body).not.toContainElement(submit)
       expect(actions).toContainElement(submit)
+      expect(StyleSheet.flatten(actions.props.style)).toMatchObject({
+        gap: Spacing.two,
+        paddingTop: Spacing.three,
+        paddingBottom: Spacing.four,
+      })
       expect(StyleSheet.flatten(submit.props.style)).toMatchObject({
         minHeight: MinTouchTarget,
         backgroundColor: Colors.light.primaryStrong,
@@ -259,6 +264,9 @@ it("disables duplicate submit and exposes pending status", async () => {
     busy: true,
   })
   expect(getByText("Sending…").props.accessibilityLiveRegion).toBe("polite")
+  expect(StyleSheet.flatten(getByText("Sending…").props.style)).toMatchObject({
+    color: Colors.light.textSecondary,
+  })
   for (const id of ["feedback-email-input", "feedback-message-input"]) {
     expect(getByTestId(id).props.editable).toBe(false)
     expect(getByTestId(id).props.accessibilityState).toEqual({

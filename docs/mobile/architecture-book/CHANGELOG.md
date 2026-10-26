@@ -1,3 +1,14 @@
+## 2026-10-26 — Form screens on the design system
+
+- `KeyboardSafeActionLayout` owns the form rhythm: scroll-content gap and top padding, and the
+  action region's gap and vertical padding, with caller styles last
+  ([theming.md](./theming.md) → Native-chrome wrapper seam, ADR
+  [054](./decisions/054-shared-root-page-semantics.md)).
+- A centred form is `contentPlacement="center"`, whose type rejects `scrollsUnderHeader`, so a
+  viewport-filling form never scrolls under the bar ([navigation.md](./navigation.md)).
+- Institution name, Programme, iCal URL and Feedback compose only `@/design` and sit on no lint
+  allowlist; Feedback's sending status is `tone="secondary"` ([features.md](./features.md)).
+
 ## 2026-10-26 — Design-system import bans
 
 - Features reach the native chrome seam only through the `@/components/chrome` barrel, and the app
