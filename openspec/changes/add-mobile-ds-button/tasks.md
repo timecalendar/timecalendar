@@ -113,24 +113,24 @@ current state only.
 
 ## 6. Lint (Principle 1)
 
-- [ ] 6.1 In `eslint.config.js` add `rawTouchablesImportPath` (D10.1) to the `paths` built by
+- [x] 6.1 In `eslint.config.js` add `rawTouchablesImportPath` (D10.1) to the `paths` built by
       `restrictedImports`, message pointing to `Button` in `@/components/button`. Inject-and-revert:
       add `import { TouchableOpacity } from "react-native"` to a feature file and to
       `src/hooks/use-color-scheme.ts`, confirm `npm run lint` fails on both, and that
       `import { useColorScheme } from "react-native"` in a feature file still fails (L1 intact);
       revert. Record the evidence in the PR.
-- [ ] 6.2 Create `tools/eslint-rules/no-raw-button.js` (D10.2), register it in
+- [x] 6.2 Create `tools/eslint-rules/no-raw-button.js` (D10.2), register it in
       `tools/eslint-rules/index.js`, and `no-raw-button.test.js` with RuleTester (TSX parser):
       invalid: `accessibilityRole="button"` + `ThemedText` child; `role="link"`; aliased
       `Pressable as P`; text child inside `{cond && <ThemedText/>}`; Icon + text children. Valid:
       text wrapped in `View`; function child; `Pressable` from another module; no role; role
       `"switch"`. Verify: `npx jest tools/eslint-rules/no-raw-button.test.js`.
-- [ ] 6.3 Add block `timecalendar/raw-button` (D10.3) and create
+- [x] 6.3 Add block `timecalendar/raw-button` (D10.3) and create
       `tools/eslint-rules/raw-button-allowlist.js` exporting `rawButtonAllowlist`: run lint with an
       empty list after §4–§5, collect every reported file, sort, and annotate each entry with the
       slice that removes it (3.3, 3.4, 3.6, 3.8, 5.x per proposal Out of scope). None of the §5
       files may appear. Verify: `npm run lint` passes.
-- [ ] 6.4 Create `tools/eslint-rules/raw-button-allowlist.test.js` (D10.3): each entry exists;
+- [x] 6.4 Create `tools/eslint-rules/raw-button-allowlist.test.js` (D10.3): each entry exists;
       linting each entry with only `local/no-raw-button` reports ≥ 1 problem;
       `rawButtonAllowlist.length <= RAW_BUTTON_ALLOWLIST_CEILING` (constant in the test, equal to
       the generated length). Inject-and-revert: add a migrated file (e.g.
