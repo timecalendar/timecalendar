@@ -97,6 +97,33 @@ Local builds carry caveats the CLI won't remind you of:
   environment.
 - Local builds consume **no EAS build quota**, so the free plan is sufficient.
 
+## Opening a development build on a fresh install
+
+A `development` build keeps no app code. After an install or `pm clear` it opens the dev launcher
+(server list), not the app. Point it at Metro:
+
+```bash
+npm start                                   # in mobile/, port 8081
+adb reverse tcp:8081 tcp:8081               # Android emulator or device
+adb shell am start -a android.intent.action.VIEW \
+  -d "timecalendar-dev://expo-development-client/?url=http%3A%2F%2F10.0.2.2%3A8081" \
+  fr.samuelprak.timecalendar.dev
+xcrun simctl openurl booted \
+  "timecalendar-dev://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081"
+```
+
+On iOS, the first `openurl` shows an "Open in TimeCalendar (Dev)?" prompt and the launcher drops
+the URL. Run `openurl` a second time once the launcher is open.
+
+On the Android emulator, the screen stays blank and white for about 35 to 40 seconds after
+`Running "main"` appears in logcat. Hermes is interpreting the unoptimized development bundle, and
+the root bootstrap gates render nothing until the module graph has loaded. A warm relaunch takes
+just as long, so this is not a first-run fault. Wait for the first `ReactNativeJS` line after
+`Running "main"`, or for Home in `uiautomator dump`, before deciding that the app is stuck. Take
+screenshots with `adb exec-out screencap -p`, since a cached tool frame can still show the blank
+screen. On the first launch, the dev menu's welcome sheet also opens over the app. Use a `release`
+build (`assembleRelease`, as the E2E lane does) to judge real startup time.
+
 ## Submitting
 
 Submit the exact artifact you built and verified. Never rebuild between verification and
