@@ -174,10 +174,18 @@ current state only.
 
 ## 9. Device pass and CI
 
-Left open by the implementer: 9.1 and 9.2 are the conductor's device passes, 9.3 waits for CI on
-PR #493, 9.4 is human-blocked (inbox note exists).
+Device evidence (iPhone 17 Pro simulator, iOS 26.5, Metro dev build; Pixel_10 emulator, existing
+dev APK): gallery stories filled, outlined, destructive, icons (covers tonal and text) in light;
+long-strings in dark at `accessibility-extra-extra-extra-large`. The pass found the busy spinner
+exposed to VoiceOver as a separate "In progress" element and the 3-line cap truncating labels at
+AX XXXL; both fixed (hidden wrapper View, 16-line cap) and re-verified in the AX tree. Migrated
+screens seen: personal-event list (Add) and form (Save, Delete), changelog sheet (Continue), hidden
+events (empty state only, no Unhide row). Onboarding screens (welcome, connect, manual import,
+programme, export guide) were not reachable: every route waits on the school list, and no backend
+was reachable from the simulator. Android: filled story in dark, states and busy/disabled exposed
+correctly, spinner hidden; ripple, 2.0 font scale and the migrated screens were not checked.
 
-- [ ] 9.1 iOS simulator (conductor device pass): development build of this branch; open
+- [x] 9.1 iOS simulator (partial, see evidence above) (conductor device pass): development build of this branch; open
       `timecalendar-dev://developer/gallery/button--filled`, `button--tonal`, `button--outlined`,
       `button--text`, `button--destructive`, `button--icons`, `button--long-strings` in light and
       dark, at the default size and at `accessibility-extra-extra-extra-large`

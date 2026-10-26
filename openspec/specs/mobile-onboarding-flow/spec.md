@@ -293,7 +293,7 @@ The nested onboarding Stack SHALL reuse the shared compact Stack options for eve
 - **AND** the camera, viewfinder overlay, scan callbacks, failure recovery, and accessibility labels remain owned by the QR feature below the header
 
 ### Requirement: Programme uses the shared primary action and keyboard-safe owner
-The programme step SHALL compose one shared `KeyboardSafeActionLayout` inside the readable root-page safe-area surface. Its intro, field, and validation error SHALL remain in the sole scrollable body, while Continue SHALL use `PrimaryAction` in a sibling region pinned immediately above the focused keyboard. Continue SHALL use `primaryStrong`/`onPrimary`, the 44-point iOS or 48-dp Android minimum, the existing localized label and `onboarding-programme-continue` selector, and disabled accessibility state while the normalized name is empty.
+The programme step SHALL compose one shared `KeyboardSafeActionLayout` inside the readable root-page safe-area surface. Its intro, field, and validation error SHALL remain in the sole scrollable body, while Continue SHALL use the shared button's `filled` variant in a sibling region pinned immediately above the focused keyboard. Continue SHALL use `primaryStrong`/`onPrimary`, the 44-point iOS or 48-dp Android minimum, the existing localized label and `onboarding-programme-continue` selector, and disabled accessibility state while the normalized name is empty.
 
 The iOS native header Skip item and Android header Skip control SHALL retain their current platform placement, localized labels, target semantics, and selector. Name normalization, length validation, draft writes, Return-key submission, Skip's empty-name behavior, Continue navigation, route order, and existing selectors SHALL remain unchanged.
 
@@ -379,3 +379,23 @@ Each onboarding welcome page SHALL let its content size itself: the content SHAL
 
 - **WHEN** any welcome page title renders
 - **THEN** its font scale multiplier is capped by the shared brand-text cap
+
+### Requirement: Onboarding buttons use the shared button family
+The welcome, connect and manual-import steps SHALL render their in-content buttons with the shared
+button: welcome Skip and Next as `text` buttons (Next with a trailing forward arrow), the welcome
+final call to action as a `large` `filled` button; connect's institution link as an `outlined`
+button with the `link` role and a trailing open-in-browser icon, Back as `outlined` and Continue as
+`filled`; manual import's QR route as `filled` with a leading QR icon and the iCal URL route as
+`outlined` with a leading link icon. Labels, accessibility labels and hints, navigation, draft
+writes and every existing `onboarding-*` selector SHALL stay unchanged.
+
+#### Scenario: The recommended import route stands out
+
+- **WHEN** the manual import step renders
+- **THEN** the QR route is the filled button and the iCal URL route is the outlined button
+- **AND** `onboarding-import-qr` and `onboarding-import-url` remain their selectors
+
+#### Scenario: The intranet link announces a link
+
+- **WHEN** the connect step shows a listed institution's intranet link
+- **THEN** the control exposes the `link` role with its existing localized label

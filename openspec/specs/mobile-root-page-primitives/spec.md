@@ -108,7 +108,14 @@ Eligible full-screen exemplar states SHALL bundle optimized local PNG artwork in
 
 ### Requirement: Filled primary actions share semantic colors, sizing, and state
 
-The app SHALL provide a `PrimaryAction` component for filled body/footer actions. It SHALL render `onPrimary` content on `primaryStrong`, meet a minimum 44-point height on iOS and 48-dp height on Android, accept caller-owned translated label, activation handler, style, and `testID`, and expose disabled and busy states. Disabled or busy actions SHALL block activation, visibly differ from enabled state, and expose `accessibilityState.disabled`; busy actions SHALL additionally expose `accessibilityState.busy` and a non-focusable progress indicator while retaining a meaningful accessible label.
+Filled body/footer actions SHALL use the shared button's `filled` variant; the app SHALL NOT keep a
+separate primary-action component. A filled action SHALL render `onPrimary` content on
+`primaryStrong`, meet a minimum 44-point height on iOS and 48-dp height on Android, accept
+caller-owned translated label, activation handler, layout-only style, and `testID`, and expose
+disabled and busy states. Disabled or busy actions SHALL block activation, visibly differ from
+enabled state, and expose `accessibilityState.disabled`; busy actions SHALL additionally expose
+`accessibilityState.busy` and a non-focusable progress indicator while retaining the visible label
+as the accessible label.
 
 #### Scenario: Enabled action uses the verified brand pair
 
@@ -133,6 +140,11 @@ The app SHALL provide a `PrimaryAction` component for filled body/footer actions
 - **WHEN** the semantic primary action belongs in an iOS native header or Android FAB
 - **THEN** the feature MAY use that platform-native placement and its platform-owned target sizing
 - **AND** the shared contract does not force both platforms into the filled body-button layout
+
+#### Scenario: The error state's primary action is a filled button
+
+- **WHEN** a full error state offers a primary recovery action
+- **THEN** that action renders as the shared filled button with the caller's label and selector
 
 ### Requirement: Focused forms keep actions pinned above the keyboard
 

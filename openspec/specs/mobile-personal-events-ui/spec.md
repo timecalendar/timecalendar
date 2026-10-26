@@ -463,7 +463,7 @@ The personal-events list SHALL resolve a `standard` lane from the positive width
 
 The personal-event create/edit/delete form SHALL use the shared `KeyboardSafeActionLayout` while retaining its native date-time pickers, field order, validation, save/delete semantics, confirmation alerts, and error presentation. Its scroll body and keyboard-safe action footer SHALL share one measured `readable` lane at every supported portrait width. The localized create/edit title SHALL live in the compact native Stack header, and the scroll body SHALL NOT repeat it as an oversized in-content route title.
 
-Save SHALL use the shared filled `PrimaryAction` with `primaryStrong`/`onPrimary`, the platform minimum target, disabled/busy accessibility semantics when the save hook is pending, and the unchanged `personal-event-save` selector. Delete SHALL remain a distinct secondary/destructive action after Save with the unchanged `personal-event-delete` selector. Save/delete failure notices SHALL remain in the pinned action region.
+Save SHALL use the shared button's `filled` variant with `primaryStrong`/`onPrimary`, the platform minimum target, disabled/busy accessibility semantics when the save hook is pending, and the unchanged `personal-event-save` selector. Delete SHALL use the shared button's `destructive` variant after Save, with the `destructive` label color, busy and disabled accessibility semantics while the delete is pending, and the unchanged `personal-event-delete` selector. Save/delete failure notices SHALL remain in the pinned action region.
 
 #### Scenario: Form and footer align on tablet
 
@@ -482,6 +482,12 @@ Save SHALL use the shared filled `PrimaryAction` with `primaryStrong`/`onPrimary
 - **WHEN** the form renders or a save is pending
 - **THEN** Save uses the shared filled brand pair, platform target, and enabled/disabled/busy semantics
 - **AND** `personal-event-save` remains the selector on the accessible button
+
+#### Scenario: Delete uses the destructive button
+
+- **WHEN** an existing event's form renders or its delete is pending
+- **THEN** Delete uses the shared destructive button, platform target, and enabled/disabled/busy semantics
+- **AND** `personal-event-delete` remains the selector on the accessible button
 
 #### Scenario: Create and edit behavior is preserved
 

@@ -2,7 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change add-mobile-feedback. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Feedback is a layered root-route feature
 
 The mobile app SHALL expose a root `/feedback` route as a thin `src/app/feedback.tsx` re-export over a tested `src/features/feedback/ui/` screen. Feedback validation, remembered-email parsing, request construction, and the generated contact mutation SHALL live behind the feature's non-UI sublayers and public barrel; UI SHALL NOT import generated API types/hooks, SQLite, MMKV, or React Native Firebase packages directly.
@@ -157,7 +159,7 @@ The React Native feedback flow SHALL treat HTTP 503 from `POST /contact` as a re
 - **AND** recorded failure telemetry receives only the error object and static `feedback/contact-submit` context, never the e-mail or message
 
 ### Requirement: Feedback uses the shared primary action and keyboard-safe owner
-The Feedback form SHALL compose one shared `KeyboardSafeActionLayout` inside the readable root-page safe-area surface. Its fields and status content SHALL remain in the sole scrollable body, while a sibling action region SHALL remain visibly pinned immediately above the focused keyboard. Submit SHALL use `PrimaryAction` with `primaryStrong`/`onPrimary`, the 44-point iOS or 48-dp Android minimum, the existing localized label and `feedback-submit` selector, and disabled/busy accessibility state while the mutation is pending.
+The Feedback form SHALL compose one shared `KeyboardSafeActionLayout` inside the readable root-page safe-area surface. Its fields and status content SHALL remain in the sole scrollable body, while a sibling action region SHALL remain visibly pinned immediately above the focused keyboard. Submit SHALL use the shared button's `filled` variant with `primaryStrong`/`onPrimary`, the 44-point iOS or 48-dp Android minimum, the existing localized label and `feedback-submit` selector, and disabled/busy accessibility state while the mutation is pending.
 
 The migration SHALL preserve e-mail-to-message focus traversal, multiline Return behavior, validation, remembered-email timing, context normalization, single-flight mutation, success alert/back navigation, retryable failure, generated request shape, analytics/observability boundaries, and every existing `feedback-*` selector.
 
@@ -178,4 +180,3 @@ The migration SHALL preserve e-mail-to-message focus traversal, multiline Return
 #### Scenario: Feedback outcomes remain unchanged
 - **WHEN** validation fails, submission succeeds, or submission fails and is retried
 - **THEN** the existing field errors, remembered e-mail, success alert and back action, retryable failure, request context, and diagnostic privacy behavior remain unchanged
-
