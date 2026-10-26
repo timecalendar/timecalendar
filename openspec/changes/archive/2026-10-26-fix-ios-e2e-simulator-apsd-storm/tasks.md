@@ -103,7 +103,7 @@ app code or Maestro flows.
 
 ## 4. Local verification and CI proof
 
-- [ ] 4.1 From the repository root, run `./mobile/e2e/test_quiesce_ios_simulator.sh`,
+- [x] 4.1 From the repository root, run `./mobile/e2e/test_quiesce_ios_simulator.sh`,
   `./mobile/e2e/test_ci_mobile_e2e.sh` and `./mobile/e2e/test_run_e2e.sh`. All three must print
   PASS. In `mobile/`, run `npx tsc --noEmit`, `npm run lint` and `TZ=UTC npm test -- --coverage`.
   All must be green and unchanged, as a guard that nothing app-side moved. Then run
@@ -117,9 +117,9 @@ app code or Maestro flows.
   `mobile/e2e/README.md`, `testing.md`, `CHANGELOG.md` and this change's directory. It adds no
   dependency, and no app, flow, server, native-config or Flutter file. Verify with
   `git diff --stat main...HEAD`.
-- [ ] 4.4 CI proof on the PR head (conductor-run): `test-mobile` in `ci-mobile.yml` is green, so the
+- [x] 4.4 CI proof on the PR head (conductor-run): `test-mobile` in `ci-mobile.yml` is green, so the
   harness contract including the new quiesce test ran. Report pending checks as pending.
-- [ ] 4.5 Native proof (conductor-run): run `gh workflow run ci-mobile-e2e.yml --ref
+- [x] 4.5 Native proof (conductor-run): run `gh workflow run ci-mobile-e2e.yml --ref
   fix/mobile-e2e-ios-ical-import -f ref=fix/mobile-e2e-ios-ical-import`. Record the run URL, both
   platform conclusions, and the iOS boot step's `apsd disabled in simulator <udid>` line in the PR
   description. If iOS fails, read the log before doing anything else. A failure at the boot step
