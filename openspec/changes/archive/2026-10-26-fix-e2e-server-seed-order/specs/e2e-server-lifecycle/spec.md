@@ -37,9 +37,11 @@ An emulator-free gate that runs on ordinary pushes SHALL enforce this order.
 
 ## ADDED Requirements
 
-### Requirement: Seeded feature flags enable the mobile onboarding journey
+### Requirement: Seeded state enables the mobile onboarding journey
 
 The fixture set loaded by `db:init` SHALL enable every database feature flag that gates an endpoint the mobile onboarding journey calls. At minimum, `export-guides-v1` (`EXPORT_GUIDE_FEATURE_FLAG`) SHALL be enabled, so that `GET /v1/export-guides` serves the guide instead of the flag-off 503. The fixture SHALL be environment-neutral, so a development `db:init` enables it as well. A server unit test SHALL assert that the fixture enables the flag under the same constant the service evaluates.
+
+The test environment SHALL set `S3_PUBLIC_BUCKET_CLIENT_URL` to the exact first-party asset origin the dev-variant mobile client compiles (the dev bucket, `https://timecalendar-dev-public.fra1.digitaloceanspaces.com`, equal to the development value), so that every export-guide image URL the e2e backend serves passes the client's origin allow-list. The mobile allow-list SHALL NOT gain a test-only origin. A server unit test SHALL assert that the test and development values are equal.
 
 #### Scenario: The export guide is served on a freshly seeded stack
 
@@ -50,3 +52,9 @@ The fixture set loaded by `db:init` SHALL enable every database feature flag tha
 
 - **WHEN** `EXPORT_GUIDE_FEATURE_FLAG` no longer matches an enabled item in `feature-flag.fixtures.yml`
 - **THEN** the server unit test for the fixture fails
+
+#### Scenario: The export guide parses on the dev-variant client
+
+- **WHEN** the e2e backend (test environment) serves `GET /v1/export-guides` to the dev-variant mobile client
+- **THEN** every image URL in the catalogue uses the dev bucket origin, the client parser accepts the mandatory `generic` provider, and onboarding shows the guide instead of "We couldn't load the export guide"
+- **AND** a test-env asset origin that diverges from the development one fails the server unit test

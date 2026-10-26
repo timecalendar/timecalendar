@@ -3,10 +3,11 @@ export const testEnvVariables = {
   DATABASE_URL: "postgres://postgres@localhost:37291/timecalendar_test",
   REDIS_QUEUE: "timecalendar-queue-test",
   REDIS_URL: "redis://127.0.0.1:37292",
-  // School logo URLs are built as S3_PUBLIC_BUCKET_CLIENT_URL + imageUrl. A
-  // HTTPS loopback keeps the E2E onboarding flow deterministic: a seeded logo
-  // never triggers an outbound DNS lookup, so the test outcome cannot depend
-  // on emulator network behaviour. The endpoint is intentionally unavailable,
-  // so the app falls back to its placeholder (see app SchoolItem.imageErrorBuilder).
-  S3_PUBLIC_BUCKET_CLIENT_URL: "https://127.0.0.1",
+  // The e2e backend runs on this env, and the dev-variant mobile client only
+  // accepts export-guide images on the first-party origin it compiles, so a
+  // different origin here rejects the whole guide. School logos and guide
+  // images share this origin; a failed load degrades to a placeholder in both
+  // apps (Flutter SchoolItem.imageErrorBuilder, RN ExportGuideImage onError).
+  S3_PUBLIC_BUCKET_CLIENT_URL:
+    "https://timecalendar-dev-public.fra1.digitaloceanspaces.com",
 }

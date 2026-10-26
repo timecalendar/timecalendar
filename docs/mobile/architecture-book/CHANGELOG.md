@@ -26,6 +26,12 @@
 - The seed enables `export-guides-v1` in every environment
   (`server/src/modules/feature-flag/fixtures/feature-flag.fixtures.yml`, proven by
   `feature-flag.fixtures.test.ts`), so onboarding reaches the export guide against a fresh stack.
+- The server test environment serves public assets on the dev bucket origin
+  (`server/src/config/environments/test.ts`), the exact first-party origin the dev-variant client
+  accepts in `EXPORT_GUIDE_ASSET_ORIGINS`, so the e2e backend's export guide parses. The mobile
+  allow-list has no test origin. Proven by `server/src/config/environments/test-env.test.ts` (test
+  origin equals development origin). A local `server/export-guide-catalogues/` written under another
+  origin is stale and must be deleted.
 
 ## 2026-10-25 — Gallery fixtures for shared components
 
