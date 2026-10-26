@@ -6,6 +6,8 @@ import * as nativeSettingsNumericEditor from "@/components/chrome/native-setting
 import * as nativeTextEntryDialog from "@/components/chrome/native-text-entry-dialog.gallery"
 import * as button from "@/design/button/button.gallery"
 import * as buttonRow from "@/design/button/button-row.gallery"
+import * as dateTimeField from "@/design/field/date-time-field.gallery"
+import * as textField from "@/design/field/text-field.gallery"
 import * as icon from "@/design/icon/icon.gallery"
 import * as adaptiveContent from "@/design/layout/adaptive-content.gallery"
 import * as keyboardSafeActionLayout from "@/design/layout/keyboard-safe-action-layout.gallery"
@@ -29,6 +31,8 @@ export const galleryModules: readonly GalleryModule[] = [
   errorSurfaces,
   button,
   buttonRow,
+  textField,
+  dateTimeField,
   nativeSettings,
   nativeTextEntryDialog,
   nativeSettingsNumericEditor,

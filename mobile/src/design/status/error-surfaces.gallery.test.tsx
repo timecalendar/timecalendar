@@ -28,7 +28,7 @@ it("keeps the field editable beside its error", async () => {
     "Enter a link that starts with https://",
   )
   expect(
-    view.getByTestId("gallery-error-surfaces-field-error"),
+    view.getByTestId("gallery-error-surfaces-input-error"),
   ).toBeOnTheScreen()
 })
 

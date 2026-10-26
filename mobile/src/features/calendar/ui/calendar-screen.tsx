@@ -26,13 +26,13 @@ import {
   useCalendarWindow,
   usePagePresenter,
   useSyncCalendars,
-  useUses24HourClock,
 } from "@/features/calendar/data"
 import {
   OwnedCalendarShell,
   type OwnedCalendarShellHandle,
 } from "@/features/calendar/renderer"
 import { useShowWeekendsPreference } from "@/features/settings/prefs"
+import { useUses24HourClock } from "@/hooks/use-uses-24-hour-clock"
 import {
   ACCESSIBILITY_PROBE_INITIAL_VERTICAL_OFFSET,
   accessibilityProbeReader,

@@ -33,7 +33,6 @@ export {
   utcDayKey,
   zoneOffsetMinutes,
 } from "./day-key"
-export { useUses24HourClock } from "./device-clock"
 export {
   type EpochDay,
   epochDayKey,

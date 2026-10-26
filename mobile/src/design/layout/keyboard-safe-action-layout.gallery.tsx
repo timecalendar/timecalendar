@@ -1,38 +1,31 @@
 import { type ComponentProps, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { StyleSheet, TextInput } from "react-native"
+import { StyleSheet } from "react-native"
 
 import {
   Button,
   KeyboardSafeActionLayout,
   PageIntro,
   RootPage,
+  TextField,
   ThemedText,
 } from "@/design"
 import type { GalleryMeta, GalleryStory } from "@/design/gallery"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Spacing } from "@/theme"
 
 type Story = GalleryStory<ComponentProps<typeof KeyboardSafeActionLayout>>
 
 const LONG_FIELDS = 4
 
 function Field({ label, testID }: { label: string; testID: string }) {
-  const theme = useTheme()
   const [value, setValue] = useState("")
   return (
-    <>
-      <ThemedText type="label">{label}</ThemedText>
-      <TextInput
-        testID={testID}
-        accessibilityLabel={label}
-        value={value}
-        onChangeText={setValue}
-        style={[
-          styles.input,
-          { color: theme.text, borderColor: theme.outline },
-        ]}
-      />
-    </>
+    <TextField
+      testID={testID}
+      label={label}
+      value={value}
+      onChangeText={setValue}
+    />
   )
 }
 
@@ -112,13 +105,6 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     paddingTop: Spacing.three,
     paddingBottom: Spacing.four,
-  },
-  input: {
-    minHeight: 48,
-    paddingHorizontal: Spacing.three,
-    borderWidth: 1,
-    borderRadius: Radii.medium,
-    fontSize: 16,
   },
 })
 

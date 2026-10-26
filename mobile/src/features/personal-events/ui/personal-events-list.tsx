@@ -9,16 +9,13 @@ import {
   StatusView,
   ThemedText,
 } from "@/design"
-import {
-  formatShortDateTime,
-  resolveLocale,
-  useUses24HourClock,
-} from "@/features/calendar/data"
+import { formatShortDateTime, resolveLocale } from "@/features/calendar/data"
 import {
   type PersonalEvent,
   usePersonalEvents,
 } from "@/features/personal-events/data"
 import { useDisplayZone } from "@/features/settings/prefs"
+import { useUses24HourClock } from "@/hooks/use-uses-24-hour-clock"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 // The Home-tab personal-events list (B2 / TIM-133) — PRESENTATIONAL (70% floor):

@@ -15,7 +15,6 @@ const rawButtonAllowlist = [
   "src/features/home/ui/today-timeline.tsx", // 5.9 timeline presses
   "src/features/home/ui/upcoming-scroller.tsx", // 5.9 scroller presses
   "src/features/onboarding/ui/programme-screen.tsx", // 3.8 header Skip
-  "src/features/personal-events/ui/date-time-field.tsx", // 3.4 date-time field trigger
   "src/features/school-selection/ui/school-group-picker-screen.tsx", // 5.5 school-group Confirm
   "src/features/school-selection/ui/school-row.tsx", // 3.6 ListRow
 ]

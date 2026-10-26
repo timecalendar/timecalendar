@@ -52,13 +52,22 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   lints each allowlisted file with only `local/no-raw-button` and fails on a stale, missing or
   duplicate entry and on growth past `RAW_BUTTON_ALLOWLIST_CEILING`
   ([lint-format.md](./lint-format.md) → Buttons).
-- **`src/design/status/status-view.tsx` and `src/design/status/field-error-hint.ts` have their own
-  90% lines/branches keys** in `coverageThreshold` (ADR [069](./decisions/069-status-view.md)).
+- **`src/design/status/status-view.tsx` has its own 90% lines/branches key** in
+  `coverageThreshold` (ADR [069](./decisions/069-status-view.md)).
   The Jest window reports `fontScale` 2, at or above the accessibility text-size threshold, so
   `StatusView` artwork is not rendered by default; a test that expects artwork mocks
   `useWindowDimensions` or spies `Dimensions.get` with `fontScale: 1`. The RN mock's
   `AccessibilityInfo.announceForAccessibilityWithOptions` is one shared `jest.fn`, so an
   announcement-count assertion calls `mockClear()` after spying.
+- **`src/design/field/text-field.tsx`, `src/design/field/date-time-field.tsx` and
+  `src/design/field/field-error-hint.ts` have their own 90% lines/branches keys** in
+  `coverageThreshold` (ADR [070](./decisions/070-text-field.md)). The field tests run both
+  platforms with `usePlatform` and drive the font scale by mocking `useWindowDimensions`; the date
+  field's fixtures are built in the display zone, so they pass in the time-zone matrix.
+- **The raw-text-input allowlist is a contract test.**
+  `tools/eslint-rules/raw-text-input-allowlist.test.js` lints each allowlisted file with only
+  `local/no-raw-text-input` and fails on a stale, missing or duplicate entry and on growth past
+  `RAW_TEXT_INPUT_ALLOWLIST_CEILING` ([lint-format.md](./lint-format.md) → Fields).
 - **The ad-hoc-status allowlist is a contract test.**
   `tools/eslint-rules/ad-hoc-status-allowlist.test.js` lints each allowlisted file with only
   `local/no-ad-hoc-status` and fails on a stale, missing or duplicate entry and on growth past

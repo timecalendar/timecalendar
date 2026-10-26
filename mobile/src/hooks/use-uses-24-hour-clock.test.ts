@@ -1,7 +1,7 @@
 import { renderHook } from "@testing-library/react-native"
 import * as Localization from "expo-localization"
 
-import { useUses24HourClock } from "./device-clock"
+import { useUses24HourClock } from "./use-uses-24-hour-clock"
 
 afterEach(() => {
   jest.restoreAllMocks()

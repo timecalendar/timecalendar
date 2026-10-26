@@ -64,6 +64,8 @@ The registry lists, in this order (paths under `mobile/src/`):
 | `design/status/error-surfaces.gallery.tsx`                     | `error-surfaces`                 | `notice`, `notice-compact`, `field-error`, `long-strings`                                                                                                                                           |
 | `design/button/button.gallery.tsx`                             | `button`                         | `filled`, `tonal`, `outlined`, `text`, `destructive`, `icons`, `long-strings`                                                                                                                       |
 | `design/button/button-row.gallery.tsx`                         | `button-row`                     | `pair`, `long-strings`                                                                                                                                                                              |
+| `design/field/text-field.gallery.tsx`                          | `text-field`                     | `default`, `helper`, `error`, `disabled`, `multiline`, `keyboard`, `long-strings`                                                                                                                   |
+| `design/field/date-time-field.gallery.tsx`                     | `date-time-field`                | `default`, `error`, `disabled`, `long-strings`                                                                                                                                                      |
 | `components/chrome/native-settings.gallery.tsx`                | `native-settings`                | `rows`, `destructive`, `switches`, `choices`, `header-and-alert`, `floating-action` (Android), `radio-dialog` (Android), `long-strings`                                                             |
 | `components/chrome/native-text-entry-dialog.gallery.tsx`       | `native-text-entry-dialog`       | `default`, `submit-disabled`, `pending`                                                                                                                                                             |
 | `components/chrome/native-settings-numeric-editor.gallery.tsx` | `native-settings-numeric-editor` | `default`, `validation-error`, `long-strings`                                                                                                                                                       |
@@ -76,7 +78,8 @@ The registry lists, in this order (paths under `mobile/src/`):
   characters, a body of at least 200, an action of at least 40 and a single 25-character word).
 - Stateful fixtures hold their own state and have a colocated `*.gallery.test.tsx`: presses update a
   visible counter, dialogs close and reopen from a row behind them, menus update their trigger, and
-  the Android date picker writes a pick to its row.
+  the Android date picker writes a pick to its row, the text-field error story toggles its error
+  and hint, and the Android date-time field commits a pick through both dialogs.
 - On iOS the numeric editor story is the full-height SwiftUI form while open and a row while closed;
   on Android the Compose dialog sits over the row. The Android date picker is a row plus the
   `presentation="dialog"` picker opened on mount; iOS renders the compact inline control.
@@ -90,12 +93,16 @@ The registry lists, in this order (paths under `mobile/src/`):
   days; `src/components/chrome/compose-date-day.ts` owns that conversion inside the seam
   (`date-time-picker.tsx`), and `compose-date-day.test.ts` pins it to `@expo/ui`'s
   `DatePickerView.kt` (ADR [066](./decisions/066-device-local-date-picker-seam-and-timezone-ci.md)).
-- The personal-events `DateTimeField` has no fixture and stays in its feature: it imports
-  `@/features/calendar/data` and a `personalEvents.*` key, and the registry lives in `src/design/`,
-  which may not import a feature (B-7). The design-system `DateTimeField` slice (3.4) makes it
-  product-agnostic, moves it to `src/design/` and gives it a fixture.
-- `button-row--*` captions name the active layout (side by side or stacked), and
-  `status-view--long-strings` names whether its artwork is shown at the current text size; the gallery never
+- `DateTimeField` is a design primitive (`src/design/field/date-time-field.tsx`): it takes the
+  label, the stored instant, the display zone and a `formatValue` function from the caller and
+  imports no feature and no translation key, so its fixture formats with `Intl.DateTimeFormat`
+  around a fixed device-local 2030-01-02 09:30 in the device zone
+  ([theming.md](./theming.md) → Fields). `error-surfaces--field-error` renders a `TextField` with
+  an error; `keyboard-safe-action-layout` fixtures render `TextField`s.
+- `button-row--*` captions name the active layout (side by side or stacked),
+  `status-view--long-strings` names whether its artwork is shown at the current text size, and
+  `text-field--long-strings` and `date-time-field--long-strings` name whether the accessibility
+  text size is active; the gallery never
   forces a font scale, so the reviewer sets the device text size. `icon--glyphs` renders every
   `MATERIAL_GLYPHS` key with its name.
 
@@ -110,14 +117,16 @@ The registry lists, in this order (paths under `mobile/src/`):
   On Android the date/time field opens the native date dialog, then the native time dialog; the
   two commit together as one display-zone wall clock. The time dialog follows the device
   12/24-hour setting. Cancelling either dialog, or a dialog confirming an invalid or epoch date,
-  leaves the value unchanged (`ui/date-time-field.test.tsx`, `ui/wall-clock-day.test.ts`). The
-  field's accessible name is "label, value" (`personalEvents.form.dateTimeAccessibilityLabel`),
-  because TalkBack reads the button's content description instead of its child text. The Delete label uses
-  `destructive`.
+  leaves the value unchanged. The form's title, location and description are `TextField`s and its
+  Starts and Ends are the design `DateTimeField` (`src/design/field/date-time-field.test.tsx`,
+  `ui/wall-clock-day.test.ts`); the range error sits under Ends. The field's accessible name is
+  "label, value", because TalkBack reads the button's content description instead of its child
+  text. The Delete label uses `destructive`.
   The field text, its accessible name and the list ranges follow the device 12/24-hour setting
   through `formatShortDateTime(…, uses24HourClock)`, read once per screen with the calendar data
-  hook `useUses24HourClock`; the list passes it to its rows. The iOS picker takes no `locale` and
-  follows the device language and clock (`ui/date-time-field.test.tsx`); an app language that
+  hook `useUses24HourClock` (`src/hooks/`, re-exported by `@/features/calendar/data`); the form
+  passes the formatter to `DateTimeField` and the list passes it to its rows. The iOS picker takes
+  no `locale` and follows the device language and clock (`src/design/field/date-time-field.test.tsx`); an app language that
   differs from the device language is a known parity gap
   (`docs/react-native-migration/inbox/2026-10-25-mobile-ios-picker-device-language.md`). Color swatches announce translated names
   (`SWATCH_NAME_KEYS`) as radios on Android and selected buttons on iOS
@@ -146,7 +155,9 @@ The registry lists, in this order (paths under `mobile/src/`):
   School retains its virtualized list and native search, and QR retains its full-bleed camera below
   the header. These presentation bounds do not change step order, validation, or routing.
 - Feedback and onboarding Programme use render-function `RootPage` surfaces around one readable
-  keyboard-safe owner. Their fields and validation remain in the sole scroll body; their semantic
+  keyboard-safe owner. Their fields are `TextField`s (Feedback's email moves focus to the message
+  on Next through the field `ref`; both are disabled while sending; the institution-name step uses
+  the same field) and stay with their validation in the sole scroll body; their semantic
   filled action is a measured sibling, with Programme Skip still owned by native platform chrome.
 - `school-selection` lays its list edge to edge (full-bleed lane) like a native plain list: rows
   carry their own horizontal padding and iOS separators inset to the row text. From calendar
@@ -156,7 +167,8 @@ The registry lists, in this order (paths under `mobile/src/`):
 - Calendar event details center the decorative color dot on the first title line through a
   hidden `title`-step strut (`ui/event-details-screen.test.tsx`).
 - `calendar-sources` keeps the QR camera full bleed and bounds permission, viewfinder, guidance,
-  import, and recovery content with readable lanes. iCal form and state content is readable;
+  import, and recovery content with readable lanes. iCal form and state content is readable; the
+  iCal URL is a `TextField` (`ical-url-input`);
   user-calendar collection content is standard; its first-content inset belongs to the populated
   list so it scrolls beneath native chrome. Rename uses the product-neutral controlled native dialog
   seam from ADR [056](./decisions/056-compose-native-dialog-behind-chrome.md): SwiftUI on iOS and
@@ -169,8 +181,8 @@ The registry lists, in this order (paths under `mobile/src/`):
   visibility and hidden-event filters, and supplies Home, Calendar, and event details.
 - Calendar taps open unified event details for both event kinds. Personal events can
   continue to the edit form; synced events remain read-only.
-- The personal-event form's `DateTimeField` hands the chrome `DateTimePicker` the display zone's
-  wall clock as a device-local Date and converts the pick back with `fromZonedTime`; the seam owns
+- The design `DateTimeField` used by the personal-event form hands the chrome `DateTimePicker`
+  the display zone's wall clock as a device-local Date and converts the pick back with `fromZonedTime`; the seam owns
   the Android day conversion, the field owns the display-zone conversion.
 - Home and Calendar each own one rendered-UID-set checklist-progress subscription.
   Summary components receive the resulting map; they never query SQLite per event.

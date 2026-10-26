@@ -1,17 +1,15 @@
 import { router, Stack } from "expo-router"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { StyleSheet, TextInput } from "react-native"
+import { StyleSheet } from "react-native"
 
 import {
   Button,
   ErrorNotice,
-  FieldError,
-  fieldErrorHint,
   KeyboardSafeActionLayout,
   PageIntro,
   RootPage,
-  ThemedText,
+  TextField,
 } from "@/design"
 import {
   useAddCalendar,
@@ -22,7 +20,7 @@ import {
   useProtectedImportRoute,
 } from "@/features/onboarding"
 import { recordUnknownError } from "@/firebase"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Spacing } from "@/theme"
 
 import { ImportProgressView } from "./import-progress-view"
 
@@ -36,7 +34,7 @@ interface FailedIcalAttempt {
 }
 
 // The iCal-URL entry screen (Phase-3 ship 4, rewired by ship 5 / ADR 018) —
-// PRESENTATIONAL (70% floor): a labeled RN-core TextInput for the calendar URL, a
+// PRESENTATIONAL (70% floor): a labeled TextField for the calendar URL, a
 // submit control, and accessible loading / server-error-with-retry states over
 // the add operation (mirroring school-selection's read flow per data.md). It
 // posts the URL to the server (POST /calendars), not a client-side .ics parse —
@@ -57,7 +55,6 @@ interface FailedIcalAttempt {
 // (src/app/onboarding/ical-url.tsx) is a thin re-export (route-structure rule).
 export default function IcalUrlScreen() {
   const { t } = useTranslation()
-  const theme = useTheme()
   const { addCalendarFromUrl, isPending, isError } = useAddCalendar()
   // Institution + programme come from the ephemeral journey draft, NOT from the
   // persisted school selection: a durable selection would attribute an import
@@ -182,15 +179,11 @@ export default function IcalUrlScreen() {
           >
             <PageIntro caption={t("calendarSources.icalUrl.helper")} />
 
-            <ThemedText type="smallBold">
-              {t("calendarSources.icalUrl.fieldLabel")}
-            </ThemedText>
-            <TextInput
+            <TextField
               testID="ical-url-input"
-              accessibilityLabel={t("calendarSources.icalUrl.fieldLabel")}
-              accessibilityHint={fieldErrorHint(errorKey && t(errorKey))}
+              label={t("calendarSources.icalUrl.fieldLabel")}
+              error={errorKey && t(errorKey)}
               placeholder={t("calendarSources.icalUrl.placeholder")}
-              placeholderTextColor={theme.textSecondary}
               value={url}
               onChangeText={(next) => {
                 setUrl(next)
@@ -202,19 +195,9 @@ export default function IcalUrlScreen() {
               autoCorrect={false}
               keyboardType="url"
               inputMode="url"
-              editable={!isPending}
-              style={[
-                styles.input,
-                {
-                  color: theme.text,
-                  borderColor: errorKey
-                    ? theme.error
-                    : theme.backgroundSelected,
-                },
-              ]}
+              textContentType="URL"
+              disabled={isPending}
             />
-
-            {errorKey !== null && <FieldError message={t(errorKey)} />}
           </KeyboardSafeActionLayout>
         )}
       </RootPage>
@@ -235,12 +218,5 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     paddingTop: Spacing.three,
     paddingBottom: Spacing.four,
-  },
-  input: {
-    minHeight: 48,
-    paddingHorizontal: Spacing.three,
-    borderWidth: 1,
-    borderRadius: Radii.medium,
-    fontSize: 16,
   },
 })

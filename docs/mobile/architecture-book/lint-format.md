@@ -8,6 +8,7 @@ The exact rules and their options live in `mobile/eslint.config.js` (named block
 `timecalendar/environment-home`, `timecalendar/design-home`, `timecalendar/fixtures`,
 `timecalendar/design-tests`, `timecalendar/design-fixtures`, `timecalendar/chrome-fixtures`,
 `timecalendar/icon-seam`, `timecalendar/raw-button`, `timecalendar/ad-hoc-status`,
+`timecalendar/raw-text-input`,
 `timecalendar/calendar-sources-is-a-leaf`, `timecalendar/storage-seams`, and
 `timecalendar/tests`). The config is the source of
 truth; this file carries the caveats the config can't (R-1).
@@ -281,11 +282,13 @@ truth; this file carries the caveats the config can't (R-1).
   or `"link"` and that has a direct `ThemedText`/`Text` child (also inside a top-level `&&`,
   conditional or fragment) is an error; text buttons are `Button` from `@/design`
   ([theming.md](./theming.md) → Buttons, ADR [067](./decisions/067-button-family.md)). Ignored:
-  `src/design/button/button.tsx`, `src/components/chrome/**`, `src/features/calendar/renderer/**`,
-  tests, and the files listed in `tools/eslint-rules/raw-button-allowlist.js`, each annotated with
+  `src/design/button/button.tsx`, `src/design/field/date-time-field.tsx` (the Android date-time
+  row is a field trigger drawn as a text field), `src/components/chrome/**`,
+  `src/features/calendar/renderer/**`, tests, and the files listed in
+  `tools/eslint-rules/raw-button-allowlist.js`, each annotated with
   the slice that migrates it. `raw-button-allowlist.test.js` lints every entry with only this rule
   and fails on a stale entry (no report: remove it), a missing file, a duplicate, or a list longer
-  than `RAW_BUTTON_ALLOWLIST_CEILING` (15); migrating a file means deleting its entry and lowering the
+  than `RAW_BUTTON_ALLOWLIST_CEILING` (14); migrating a file means deleting its entry and lowering the
   ceiling. `no-raw-button.test.js` is the RuleTester suite. **Caveats:** a role passed as a
   variable, text wrapped in a layout `View`, a function child and `Animated` pressables are not
   inspected (rows and tiles legitimately use `Pressable`; review covers the rest). The rule has its
@@ -312,10 +315,24 @@ truth; this file carries the caveats the config can't (R-1).
 - **Status — `aria-describedby` banned** (third and fourth selectors in the `restrictedSyntax`
   constant, `JSXAttribute[name.name='aria-describedby']` and
   `Property[key.value='aria-describedby']` for spread props): React Native forwards no described-by relation to
-  UIKit or Android, so a field error is folded into the input's `accessibilityHint` with
-  `fieldErrorHint` ([accessibility.md](./accessibility.md) → Accessible async status). It applies
+  UIKit or Android, so `TextField` and `DateTimeField` fold a field error into the control's
+  `accessibilityHint` ([accessibility.md](./accessibility.md) → Fields). It applies
   to every file, tests included, wherever L8 applies. Inject-and-revert proof: the attribute in a
   feature screen and its test fails `npm run lint` in both.
+- **Fields — `local/no-raw-text-input`** (`tools/eslint-rules/no-raw-text-input.js`, block
+  `timecalendar/raw-text-input`, `files: ["src/**/*.tsx"]`): a value import of `TextInput` from
+  `react-native` (aliases included) is an error; text fields are `TextField` from `@/design`
+  ([theming.md](./theming.md) → Fields, ADR [070](./decisions/070-text-field.md)). A type-only
+  import (`import type { TextInput }`, `import { type TextInput }`) passes. Ignored:
+  `src/design/**`, tests, and the files in `tools/eslint-rules/raw-text-input-allowlist.js`, each
+  annotated with its migrating slice (the inline checklist row editor, 5.8).
+  `src/components/chrome/**` is not ignored. `raw-text-input-allowlist.test.js` fails on a stale
+  entry, a missing file, a duplicate, or a list longer than `RAW_TEXT_INPUT_ALLOWLIST_CEILING`
+  (1). `no-raw-text-input.test.js` is the RuleTester suite. **Caveats:** like `no-raw-button`, it
+  does not catch a namespace import (`import * as RN from "react-native"`, then `RN.TextInput`) or a
+  `require`, and a `TextInput` reached through another module's re-export is invisible to it. Inject-and-revert proof: a
+  migrated file added to the allowlist fails the contract test naming it; a `TextInput` import in
+  `src/features/feedback/ui/feedback-screen.tsx` fails `npm run lint`.
 - **Generated code** (`src/api/generated/`) is exempt from hand-written-code rules but
   still Prettier-formatted; Orval's `afterAllFilesWrite: prettier --write` keeps regen
   output aligned with the committed format.

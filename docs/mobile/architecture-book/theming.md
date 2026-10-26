@@ -195,15 +195,64 @@ primitive owns layout, scrolling, media, roles and the announcement.
   `Button`'s.
 - `style` is `StyleProp<StatusLayoutStyle>` (`ButtonLayoutStyle` keys) and merges last.
 - `ErrorNotice` (inline error surface with an optional `StatusAction` drawn as a `text` `Button`)
-  and `FieldError` (alert text under a field) share the folder. A field with a `FieldError`
-  passes `accessibilityHint={fieldErrorHint(error, hint)}` ([Accessibility](./accessibility.md)
-  → Accessible async status).
+  and `FieldError` (alert text under a field) share the folder. A field's error belongs to the
+  field primitive (→ Fields); `FieldError` alone serves a selection error with no field.
 - Gates: `status-view.test.tsx` (kinds, presentations, both platforms, announcement, the type
-  tests) and `field-error-hint.test.ts` at 90% per-file coverage tiers; `local/no-ad-hoc-status`
+  tests) at a 90% per-file coverage tier; `local/no-ad-hoc-status`
   and the `aria-describedby` ban ([lint-format.md](./lint-format.md) → Status); the gallery
   stories `status-view--loading-screen`, `--loading-section`, `--loading-inline`,
   `--empty-screen`, `--empty-screen-artwork`, `--empty-section`, `--empty-inline`,
   `--error-screen`, `--error-retry-busy`, `--error-section`, `--long-strings`.
+
+## Fields — `TextField` and `DateTimeField` (`src/design/field/`)
+
+Every text field in a feature is `TextField` from `@/design`; every date-and-time field is
+`DateTimeField` (ADR [070](./decisions/070-text-field.md)). The field owns its label, box,
+helper, error, disabled state and font scaling; the caller owns the value and the copy.
+
+| State    | iOS (rounded filled field)                                           | Android (Material 3 outlined field)                                |
+| -------- | -------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Rest     | `backgroundElement` fill, hairline `outline` border, `Radii.medium`  | transparent, 1dp `outline`, `Radii.small`                          |
+| Focused  | unchanged; the caret and selection (`primary`) carry focus           | 2dp `primary`; padding gives back the border width, text stays put |
+| Error    | 1pt `error` border                                                   | `error` border (2dp when focused)                                  |
+| Disabled | label, box and helper at `StateOpacity.disabled`, `editable={false}` | same                                                               |
+
+The error stays at full opacity when the field is disabled.
+
+- The label (`smallBold`) sits above the box on both platforms and is required by the type; a
+  placeholder is only an example. The helper (`small`, `textSecondary`) and then `FieldError` sit
+  below the box. iOS single-line fields show the system clear button while editing; Android none.
+- Input text is `TypeRamp.body` and follows the OS text size with no cap. No field has a fixed
+  `height`: single-line is at least `MinTouchTarget` tall and grows; multiline is at least four
+  body lines × `fontScale` tall, top-aligned, grows with its content, and Return inserts a
+  newline.
+- Visual props (`placeholderTextColor`, `selectionColor`, `cursorColor`, `editable`,
+  `blurOnSubmit`, `allowFontScaling`, `accessibilityHint`, …) are not in `TextFieldProps`.
+  Keyboard and autofill props (`returnKeyType`, `submitBehavior`, `onSubmitEditing`,
+  `keyboardType`, `inputMode`, `textContentType`, `autoComplete`, `autoCapitalize`,
+  `autoCorrect`, `secureTextEntry`, `maxLength`, `placeholder`) pass through, and `ref`
+  (`TextFieldRef`) reaches the native input, so a field that moves focus on Next passes
+  `submitBehavior="submit"` and focuses the next field's ref. `style` is
+  `StyleProp<TextFieldLayoutStyle>` (`ButtonLayoutStyle` keys) and merges last.
+- `testID` sits on the native input (Maestro taps it, types into it and matches its text); the
+  label, helper, error and box are `${testID}-label`, `-helper`, `-error`, `-field`.
+- `DateTimeField` takes `label`, the stored instant `value`, the display `zone`, a `formatValue`
+  function and `onChange`, and imports no feature and no translation key: the caller formats
+  (personal events pass `formatShortDateTime` with the device clock), so the field and the list
+  read the same. It shares `TextField`'s label, error and disabled chrome (`FieldChrome`, a leaf
+  export of `text-field.tsx`; the box border and inset live in `field-box.ts`). iOS renders the chrome `DateTimePicker` inline; Android renders a
+  row drawn like a resting `TextField` that opens the date dialog, then the time dialog, and
+  commits both together; becoming disabled while a dialog is open closes it without committing.
+  Picker values are device-local (ADR
+  [066](./decisions/066-device-local-date-picker-seam-and-timezone-ci.md)); the field converts to
+  and from the display zone, and every picker callback goes through its one `onPicked` adapter.
+- Gates: `text-field.test.tsx`, `date-time-field.test.tsx` and `field-error-hint.test.ts` at 90%
+  per-file coverage tiers, the date field under the three-zone matrix
+  ([testing.md](./testing.md) → Time zones); `local/no-raw-text-input`
+  ([lint-format.md](./lint-format.md) → Fields); the gallery stories `text-field--default`,
+  `--helper`, `--error`, `--disabled`, `--multiline`, `--keyboard`, `--long-strings`,
+  `date-time-field--default`, `--error`, `--disabled`, `--long-strings`, and
+  `error-surfaces--field-error`.
 
 ## Responsive content lanes — measured owners, semantic caps
 

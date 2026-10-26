@@ -489,6 +489,37 @@ describe("PersonalEventFormScreen", () => {
     )
   })
 
+  it("shows the range error under Ends", async () => {
+    const { getByTestId } = await render(<PersonalEventFormScreen />)
+    await act(async () => {
+      fireEvent.changeText(getByTestId("personal-event-title-input"), "Gym")
+    })
+    await act(async () => {
+      fireEvent.press(getByTestId("personal-event-start-picker"))
+    })
+    await act(async () => {
+      fireEvent.press(getByTestId("personal-event-save"))
+    })
+
+    expect(getByTestId("personal-event-end-picker-error")).toHaveTextContent(
+      "The end must be after the start.",
+    )
+    expect(mockSave).not.toHaveBeenCalled()
+  })
+
+  describe("date rows on Android", () => {
+    usePlatform("android")
+
+    it("shows and names the start row with the list's date format", async () => {
+      const { getByTestId } = await render(<PersonalEventFormScreen />)
+      const row = getByTestId("personal-event-start-picker")
+      expect(row.props.accessibilityLabel).toMatch(/^Starts, \S/)
+      expect(row).toHaveTextContent(
+        (row.props.accessibilityLabel as string).slice("Starts, ".length),
+      )
+    })
+  })
+
   it("opens a localized native confirmation without deleting or navigating", async () => {
     useEditEvent()
     const { getByTestId } = await render(<PersonalEventFormScreen />)
