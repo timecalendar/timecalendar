@@ -195,6 +195,8 @@ export default function IcalUrlScreen() {
               autoCorrect={false}
               keyboardType="url"
               inputMode="url"
+              returnKeyType="go"
+              onSubmitEditing={submit}
               editable={!isPending}
               style={[
                 styles.input,

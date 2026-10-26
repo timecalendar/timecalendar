@@ -37,6 +37,10 @@
   onboarding-import-url` loop taps `export-guide-next` without a hard-coded page count.
   `maestro-selectors.test.ts` pins the order and forbids `onboarding-connect-continue`
   ([testing.md](./testing.md), `mobile/e2e/README.md`).
+- The add-by-URL field submits from the keyboard return key (`returnKeyType="go"`), like the
+  programme and institution-name fields, and the flow imports with `pressKey: Enter`: on the
+  Android emulator the keyboard covers `ical-url-submit` (inbox
+  `2026-10-26-export-guide-bootstrap-empty-schema.md`).
 
 ## 2026-10-25 — Gallery fixtures for shared components
 

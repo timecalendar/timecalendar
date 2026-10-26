@@ -36,3 +36,12 @@ warning and retry the initial publish on the first request that needs the snapsh
   test, and not in `server/.dockerignore`, so a catalogue published under another origin survives
   restarts and can be copied into a locally built e2e image. The bootstrap skips publishing when a
   catalogue is already active. CI starts clean.
+- **Android keyboard covers the `KeyboardSafeActionLayout` action.** On the CI Android emulator
+  (run 40258402156, artifact `maestro-debug-android`, step 036) the add-by-URL screen shows the
+  field above the open keyboard and no `ical-url-submit` button: Maestro waited 18 s and the tap
+  failed. The action region sits behind the keyboard instead of above it. The flow now submits with
+  the return key, which the screen supports, so the lane no longer depends on the button. The
+  button path is unverified on a real Android device. The programme and institution-name screens
+  use the same layout and the flow has always submitted them with Enter, so they may hide their
+  action too. Check `resolveKeyboardAvoidingBehavior` ("height") and the Android offset of `0`
+  against edge-to-edge on a device.

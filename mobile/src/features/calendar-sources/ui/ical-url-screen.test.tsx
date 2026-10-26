@@ -220,6 +220,26 @@ describe("IcalUrlScreen", () => {
     expect(mockRecordUnknownError).not.toHaveBeenCalled()
   })
 
+  it("imports from the keyboard return key", async () => {
+    mockAddCalendarFromUrl.mockResolvedValue(undefined)
+    const { getByTestId } = await render(<IcalUrlScreen />)
+    const input = getByTestId("ical-url-input")
+
+    expect(input.props.returnKeyType).toBe("go")
+    await act(async () => {
+      fireEvent.changeText(input, "https://example.com/cal.ics")
+    })
+    await act(async () => {
+      fireEvent(input, "submitEditing")
+    })
+
+    await waitFor(() => expect(mockDismissTo).toHaveBeenCalledTimes(1))
+    expect(mockAddCalendarFromUrl).toHaveBeenCalledWith(
+      "https://example.com/cal.ics",
+      { name: "", schoolName: "" },
+    )
+  })
+
   it("replaces the form with accessible progress and excludes rapid submit", async () => {
     const pending = deferred<void>()
     mockAddCalendarFromUrl.mockReturnValueOnce(pending.promise)

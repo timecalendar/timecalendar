@@ -65,8 +65,9 @@ appId: fr.samuelprak.timecalendar.dev
 - tapOn:
     id: "ical-url-input"
 - inputText: "http://127.0.0.1:3005/__e2e/ical/import.ics"
-- tapOn:
-    id: "ical-url-submit"
+# The Android keyboard covers the submit action (see the 2026-10-26 inbox
+# note), so the flow submits from the return key like the programme step.
+- pressKey: Enter
 - extendedWaitUntil:
     notVisible:
       id: "ical-url-content"
