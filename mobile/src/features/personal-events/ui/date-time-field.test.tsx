@@ -308,8 +308,8 @@ describe("feature-owned DateTimeField", () => {
     })
 
     it.each([
-      [false, /^1 Jan \d{1,2}:\d{2} (AM|PM)$/],
-      [true, /^1 Jan \d{2}:\d{2}$/],
+      [false, /^\d{1,2} [A-Z][a-z]{2} \d{1,2}:\d{2} (AM|PM)$/],
+      [true, /^\d{1,2} [A-Z][a-z]{2} \d{2}:\d{2}$/],
     ] as const)(
       "displays and announces the device clock (uses24hourClock %s)",
       async (uses24hourClock, pattern) => {

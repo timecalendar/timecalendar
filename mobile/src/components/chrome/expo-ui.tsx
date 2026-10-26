@@ -26,8 +26,9 @@ import { type MenuComponentRef, MenuView } from "@expo/ui/community/menu"
 //    the RNC public prop types for API familiarity), so it pulls in NO extra
 //    package — it rides the same already-installed, autolinking `@expo/ui` and
 //    the same ADR-010 universal posture as `Picker` (one library, one seam, one
-//    blast radius). See ADR 012. Kept thin: no higher-level composed date-field,
-//    no forced theming of the OS-chromed control (R-3).
+//    blast radius). See ADR 012. Re-exported raw as `ExpoDateTimePicker` for
+//    `date-time-picker.tsx`, which owns the Android day conversion (ADR 066);
+//    the barrel exports only that wrapper.
 //  - `MenuView` + `MenuComponentRef` — anchored native action menus, including
 //    the calendar view trigger and per-calendar actions.
 //
@@ -38,4 +39,10 @@ import { type MenuComponentRef, MenuView } from "@expo/ui/community/menu"
 // the consumer would otherwise reach the raw Colors map.) No higher-level
 // composed control is baked into the seam.
 
-export { DateTimePicker, Host, type MenuComponentRef, MenuView, Picker }
+export {
+  DateTimePicker as ExpoDateTimePicker,
+  Host,
+  type MenuComponentRef,
+  MenuView,
+  Picker,
+}

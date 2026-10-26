@@ -80,29 +80,33 @@ jest.mock("@expo/ui", () => {
 // The DateTimePicker is @expo/ui's OWN native date/time control (the
 // `@expo/ui/community/datetime-picker` subpath, ADR 012) — SwiftUI/Compose, no
 // off-device JS, so it must be mocked too. The existing jest.mock("@expo/ui")
-// above does NOT cover subpaths, so mock the subpath module explicitly (B2 /
-// TIM-133, design D6). The mock renders an assertable element carrying its
-// testID and a pressable that fires onValueChange(changeEvent, FIXED_DATE), so a
-// proof test can drive the picker → form state wiring deterministically. It
-// matches the real prop shape (value, mode, onValueChange, testID).
-//
-// The fixed test date the mock fires; the proof test asserts the form state
-// becomes this value after driving the picker.
+// above does NOT cover subpaths, so mock the subpath module explicitly. The mock
+// renders the received value's ISO string and a pressable that fires
+// onValueChange(changeEvent, picked), matching the real prop shape (value, mode,
+// onValueChange, testID). It follows the native contract it stands in for: the
+// Android date picker (mode "date" or "datetime") confirms a UTC-midnight day,
+// as Compose does (ADR 066); every other picker confirms 2030-01-02T03:04Z.
 jest.mock("@expo/ui/community/datetime-picker", () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require("react")
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { Pressable, Text } = require("react-native")
+  const { Platform, Pressable, Text } = require("react-native")
 
   const FIXED_DATE = new Date("2030-01-02T03:04:00.000Z")
+  const COMPOSE_DAY = new Date(Date.UTC(2030, 0, 2))
 
   function DateTimePicker(props: {
     testID?: string
     value: Date
+    mode?: "date" | "time" | "datetime"
     disabled?: boolean
     onValueChange?: (event: unknown, date: Date) => void
   }) {
     const { testID, value, disabled, onValueChange, ...rest } = props
+    const picked =
+      Platform.OS === "android" && props.mode !== "time"
+        ? COMPOSE_DAY
+        : FIXED_DATE
     return React.createElement(
       Pressable,
       {
@@ -114,7 +118,7 @@ jest.mock("@expo/ui/community/datetime-picker", () => {
         onPress: () =>
           onValueChange?.(
             { nativeEvent: { timestamp: 0, utcOffset: 0 } },
-            FIXED_DATE,
+            picked,
           ),
       },
       React.createElement(Text, null, value.toISOString()),

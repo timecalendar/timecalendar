@@ -1,10 +1,12 @@
+import { fromZonedTime } from "date-fns-tz"
+
 import type {
   CalendarEventSource,
   CalendarWindowReader,
   TimedCalendarEventV1,
 } from "@/features/calendar/data"
 
-export const ACCESSIBILITY_PROBE_ANCHOR = new Date("2026-06-15T12:00:00.000Z")
+export const ACCESSIBILITY_PROBE_ANCHOR = new Date("2026-06-15T12:00:00")
 export const ACCESSIBILITY_PROBE_INITIAL_VERTICAL_OFFSET = 9 * 60
 
 export type AccessibilityProbeDiagnostic =
@@ -23,6 +25,7 @@ export function recordAccessibilityProbeDiagnostic(
 }
 
 function event(
+  zone: string,
   uid: string,
   startsAt: string,
   endsAt: string,
@@ -36,8 +39,8 @@ function event(
     id: uid,
     title: `Fixture ${uid}`,
     color: "#1E88E5",
-    startsAt: new Date(startsAt),
-    endsAt: new Date(endsAt),
+    startsAt: fromZonedTime(startsAt, zone),
+    endsAt: fromZonedTime(endsAt, zone),
     location: "Room 1",
     description: undefined,
     teachers: [],
@@ -47,59 +50,46 @@ function event(
   }
 }
 
-export function accessibilityProbeFixture(): readonly TimedCalendarEventV1[] {
+export function accessibilityProbeFixture(
+  zone: string,
+): readonly TimedCalendarEventV1[] {
   return [
+    event(zone, "probe-early", "2026-06-15T01:00:00", "2026-06-15T02:00:00"),
+    event(zone, "probe-tied-b", "2026-06-15T10:00:00", "2026-06-15T11:00:00"),
+    event(zone, "probe-tied-a", "2026-06-15T10:00:00", "2026-06-15T11:00:00"),
     event(
-      "probe-early",
-      "2026-06-15T01:00:00.000Z",
-      "2026-06-15T02:00:00.000Z",
-    ),
-    event(
-      "probe-tied-b",
-      "2026-06-15T10:00:00.000Z",
-      "2026-06-15T11:00:00.000Z",
-    ),
-    event(
-      "probe-tied-a",
-      "2026-06-15T10:00:00.000Z",
-      "2026-06-15T11:00:00.000Z",
-    ),
-    event(
+      zone,
       "probe-tied-personal",
-      "2026-06-15T10:00:00.000Z",
-      "2026-06-15T11:00:00.000Z",
+      "2026-06-15T10:00:00",
+      "2026-06-15T11:00:00",
       "personal",
     ),
     event(
+      zone,
       "probe-tied-short",
-      "2026-06-15T10:00:00.000Z",
-      "2026-06-15T10:30:00.000Z",
+      "2026-06-15T10:00:00",
+      "2026-06-15T10:30:00",
     ),
     event(
+      zone,
       "probe-overlap-a",
-      "2026-06-15T11:00:00.000Z",
-      "2026-06-15T12:00:00.000Z",
+      "2026-06-15T11:00:00",
+      "2026-06-15T12:00:00",
     ),
     event(
+      zone,
       "probe-overlap-b",
-      "2026-06-15T11:15:00.000Z",
-      "2026-06-15T12:15:00.000Z",
+      "2026-06-15T11:15:00",
+      "2026-06-15T12:15:00",
     ),
+    event(zone, "probe-tiny-a", "2026-06-15T12:00:00", "2026-06-15T12:02:00"),
+    event(zone, "probe-tiny-b", "2026-06-15T12:03:00", "2026-06-15T12:05:00"),
+    event(zone, "probe-late", "2026-06-15T23:00:00", "2026-06-15T23:45:00"),
     event(
-      "probe-tiny-a",
-      "2026-06-15T12:00:00.000Z",
-      "2026-06-15T12:02:00.000Z",
-    ),
-    event(
-      "probe-tiny-b",
-      "2026-06-15T12:03:00.000Z",
-      "2026-06-15T12:05:00.000Z",
-    ),
-    event("probe-late", "2026-06-15T23:00:00.000Z", "2026-06-15T23:45:00.000Z"),
-    event(
+      zone,
       "probe-next-date",
-      "2026-06-16T01:00:00.000Z",
-      "2026-06-16T02:00:00.000Z",
+      "2026-06-16T01:00:00",
+      "2026-06-16T02:00:00",
     ),
   ]
 }
@@ -107,11 +97,12 @@ export function accessibilityProbeFixture(): readonly TimedCalendarEventV1[] {
 /** A window reader that serves the fixture in every chunk, for the probe route. */
 export const accessibilityProbeReader: CalendarWindowReader = async ({
   chunks,
+  displayZone,
 }) => ({
   chunks: new Map(
     chunks.map((chunk) => [
       chunk.start,
-      { events: accessibilityProbeFixture(), checklist: new Map() },
+      { events: accessibilityProbeFixture(displayZone), checklist: new Map() },
     ]),
   ),
   visibleCalendarIds: new Set(["fixture-calendar"]),

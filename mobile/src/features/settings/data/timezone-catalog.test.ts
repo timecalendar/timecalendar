@@ -134,6 +134,12 @@ describe("generated timezone catalog", () => {
     expect(formatTimezoneOffset(id, new Date(instant))).toBe(expected)
   })
 
+  it("formats the offset in force at the instant across a fall-back", () => {
+    expect(
+      formatTimezoneOffset("Europe/Paris", new Date("2026-10-25T01:30:00Z")),
+    ).toBe("UTC+01:00")
+  })
+
   it("does not format unsupported runtime identifiers", () => {
     expect(formatTimezoneOffset("Not/A_Zone", new Date(0))).toBeUndefined()
     expect(isTimezoneRuntimeSupported("Not/A_Zone")).toBe(false)

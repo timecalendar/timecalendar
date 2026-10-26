@@ -6,6 +6,7 @@ import {
   minuteOfDayInZone,
   startOfDayInZone,
   utcDayKey,
+  zoneOffsetMinutes,
 } from "./day-key"
 
 // UTC-instant fixtures + explicit zones, so the suite proves display-zone day
@@ -100,5 +101,24 @@ describe("utcDayKey", () => {
     // endsAt − 1ms lands on the last covered UTC day.
     const exclusiveEnd = new Date("2026-05-26T00:00:00.000Z")
     expect(utcDayKey(new Date(exclusiveEnd.getTime() - 1))).toBe("2026-05-25")
+  })
+})
+
+describe("zoneOffsetMinutes", () => {
+  it.each([
+    ["UTC", "2026-06-15T12:00:00Z", 0],
+    ["Asia/Kathmandu", "2026-06-15T12:00:00Z", 345],
+    ["America/St_Johns", "2026-03-08T05:29:59Z", -210],
+    ["America/St_Johns", "2026-03-08T05:30:00Z", -150],
+    ["Europe/Paris", "2026-10-25T00:59:59Z", 120],
+    ["Europe/Paris", "2026-10-25T01:00:00Z", 60],
+    ["Pacific/Kiritimati", "2026-06-15T12:00:00Z", 840],
+    ["Pacific/Pago_Pago", "2026-06-15T12:00:00Z", -660],
+  ])("reads %s at %s", (zone, instant, expected) => {
+    expect(zoneOffsetMinutes(new Date(instant), zone)).toBe(expected)
+  })
+
+  it("throws for an unsupported zone", () => {
+    expect(() => zoneOffsetMinutes(new Date(0), "Not/AZone")).toThrow()
   })
 })

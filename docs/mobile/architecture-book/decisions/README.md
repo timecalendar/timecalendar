@@ -58,6 +58,7 @@ decision changes; use Git for its history.
 | [063](./063-platform-type-ramp.md)                                    | Resolve the type ramp per platform in the theme layer                                             |
 | [064](./064-in-house-component-gallery.md)                            | Review components in an in-house on-device gallery, not Storybook                                 |
 | [065](./065-icon-text-scaling.md)                                     | Make icons declare their text scaling, and draw Android glyphs in their own box                   |
+| [066](./066-device-local-date-picker-seam-and-timezone-ci.md)         | Convert the Android date picker day in the chrome seam, and prove the suite in three time zones   |
 
 > `045` is intentionally left free: the open source-recovery PR carries an ADR
 > numbered `044` that collides with the merged one above and renumbers to `045`

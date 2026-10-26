@@ -1,6 +1,4 @@
-import { getTimezoneOffset } from "date-fns-tz"
-
-import { dayKey } from "./day-key"
+import { dayKey, zoneOffsetMinutes } from "./day-key"
 import type { CalendarEvent, TimedCalendarEventV1 } from "./types"
 
 export type TimedEventSupport =
@@ -32,8 +30,8 @@ export function classifyTimedEventSupport(
       shape === "point" ? event.endsAt : new Date(event.endsAt.getTime() - 1)
     startKey = dayKey(event.startsAt, displayZone)
     exclusiveEndKey = dayKey(exclusiveEnd, displayZone)
-    startOffset = getTimezoneOffset(displayZone, event.startsAt)
-    endOffset = getTimezoneOffset(displayZone, exclusiveEnd)
+    startOffset = zoneOffsetMinutes(event.startsAt, displayZone)
+    endOffset = zoneOffsetMinutes(exclusiveEnd, displayZone)
   } catch {
     return { supported: false, reason: "spanning" }
   }

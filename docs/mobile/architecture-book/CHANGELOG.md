@@ -1,3 +1,21 @@
+## 2026-10-26 — Time-zone correctness
+
+- The mobile unit suite passes in any process zone. `test-mobile-timezones` in `ci-mobile.yml`
+  runs it under `Pacific/Kiritimati`, `Pacific/Pago_Pago` and `America/St_Johns`; the
+  `test-mobile` coverage run pins `TZ: UTC`. `ci-timezones.contract.test.ts` pins the matrix and
+  `npm run test:timezones` reproduces it locally ([testing.md](./testing.md) → Time zones, ADR
+  [066](./decisions/066-device-local-date-picker-seam-and-timezone-ci.md)).
+- L11: `getTimezoneOffset` from `date-fns-tz` is a lint error; zone offsets come from
+  `zoneOffsetMinutes(instant, zone)` in `@/features/calendar/data`
+  ([lint-format.md](./lint-format.md), [calendar.md](./calendar.md)).
+- The development accessibility probe places its fixtures on display-zone wall-clock hours
+  ([calendar.md](./calendar.md)).
+- The chrome `DateTimePicker` takes and reports device-local Dates on both platforms; the Android
+  day conversion lives in `src/components/chrome/compose-date-day.ts`, pinned to `@expo/ui`'s
+  `DatePickerView.kt` by `compose-date-day.test.ts`. The suite-wide picker mock confirms a
+  UTC-midnight day in Android date mode ([features.md](./features.md), ADR
+  [066](./decisions/066-device-local-date-picker-seam-and-timezone-ci.md)).
+
 ## 2026-10-25 — Gallery fixtures for shared components
 
 - The gallery holds one fixture per shared primitive: `root-page`, `keyboard-safe-action-layout`,

@@ -189,6 +189,14 @@ const symbolViewImportPath = {
     "Render icons through @/components/icon (accessibility.md → Icon scaling).",
 }
 
+// L11: zone offsets come from the instant (lint-format.md → L11).
+const zoneOffsetTrapImportPath = {
+  name: "date-fns-tz",
+  importNames: ["getTimezoneOffset"],
+  message:
+    "getTimezoneOffset reads device-local Date fields; use zoneOffsetMinutes from @/features/calendar/data (lint-format.md → L11).",
+}
+
 // Route files are entrypoints, not modules. Named (rather than inlined in the
 // block that applies it) because several blocks re-include it: any block that
 // re-sets `no-restricted-imports` for files under src/ has to carry it forward,
@@ -229,6 +237,7 @@ const restrictedImports = (
     banDeveloperTools = true,
     banDesignDeepImports = true,
     banSymbolView = true,
+    banZoneOffsetTrap = true,
   } = {},
 ) => [
   "error",
@@ -250,6 +259,7 @@ const restrictedImports = (
       ...(banDeviceColorScheme ? [deviceColorSchemeImportPath] : []),
       ...(banDeveloperTools ? [developerToolsImportPath] : []),
       ...(banSymbolView ? [symbolViewImportPath] : []),
+      ...(banZoneOffsetTrap ? [zoneOffsetTrapImportPath] : []),
     ],
   },
 ]

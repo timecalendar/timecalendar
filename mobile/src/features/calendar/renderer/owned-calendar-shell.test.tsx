@@ -692,7 +692,9 @@ describe("OwnedCalendarShell", () => {
   it.each([MIN_PIXELS_PER_HOUR, DEFAULT_PIXELS_PER_HOUR, MAX_PIXELS_PER_HOUR])(
     "mounts the committed fixture in projection order at %i pixels per hour",
     async (scale) => {
-      const presentPage = presenter({ events: accessibilityProbeFixture() })
+      const presentPage = presenter({
+        events: accessibilityProbeFixture("UTC"),
+      })
       const expected = presentPage(ANCHOR_INDEX).accessibilityOrder.map(
         (tile) => tile.identity.uid,
       )

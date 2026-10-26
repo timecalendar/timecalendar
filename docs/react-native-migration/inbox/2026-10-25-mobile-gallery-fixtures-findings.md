@@ -1,5 +1,5 @@
-**For:** whoever runs the device passes, and the owners of `EmptyState`, `MenuView`'s glass trigger
-and the Android date dialog (the items below need an iOS simulator or device and an Android build).
+**For:** whoever runs the device passes, and the owners of `EmptyState` and `MenuView`'s glass
+trigger (the items below need an iOS simulator or device and an Android build).
 
 # Gallery fixtures for shared components (OpenSpec `mobile-ds-gallery-fixtures`): device findings
 
@@ -32,6 +32,7 @@ and the Android date dialog (the items below need an iOS simulator or device and
    Android shows the same on a live font-scale change, and a minimal React Native reproduction
    (one `Text` in a `View`, live content-size switch) to decide whether this is a React Native
    Fabric text-cache issue for the runtime owner.
+
 3. **Screen-reader and large-text pass on the new stories**, per the device accessibility recipe in
    `docs/mobile/architecture-book/accessibility.md`, in French at the largest text size, both
    schemes, on Android. The story ids are listed in `docs/mobile/architecture-book/features.md` →
@@ -47,10 +48,6 @@ and the Android date dialog (the items below need an iOS simulator or device and
   once its content exceeds the viewport.
 - **`MenuView` glass trigger at AX5.** `menu-view--long-strings` at AX5 (iOS): the trigger's glass
   capsule becomes a circle and the wrapped label overflows its background shape. Minor.
-- **Android date dialog day in UTC− zones.** The Compose date dialog works in UTC days while the
-  value is local time: a local value near midnight in a UTC− zone can open on, or confirm, the
-  neighbouring day (off by one). The fixture shows the component's behavior unchanged; the date
-  conversion belongs to the date-picker seam.
 - **`FieldError` is not a field description on device.** The `error-surfaces--field-error` story
   links its `TextInput` to the `FieldError` through `aria-describedby` and the error's `nativeID`,
   as the web pattern does. React Native forwards no described-by relation to UIKit or Android

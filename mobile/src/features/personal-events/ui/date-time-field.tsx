@@ -12,8 +12,6 @@ import {
 } from "@/features/calendar/data"
 import { Radii, Spacing, useTheme } from "@/theme"
 
-import { dateDialogValue, mergePickedDay } from "./wall-clock-day"
-
 // A compact, cross-platform date/time field over the @expo/ui DateTimePicker
 // (the @/components/chrome seam — ADR 012), used by the personal-event form.
 //
@@ -30,11 +28,12 @@ import { dateDialogValue, mergePickedDay } from "./wall-clock-day"
 // Android contract), so only the current step's picker is mounted, under its
 // own key so Compose never reuses the closed dialog.
 //
-// The picked wall clock is interpreted in the effective DISPLAY zone (timezone
-// design D6): the native picker only speaks device-local Dates, so the stored
-// instant round-trips through `toZonedTime` (instant → the zone's wall clock
-// for the picker) and `fromZonedTime` (the picked wall clock → instant). Under
-// the "system" preference both are identity — byte-for-byte today's behavior.
+// The chrome seam owns the Compose day conversion: the picker takes and
+// reports device-local Dates, and a date pick keeps the time of day. This field
+// owns the display-zone conversion (timezone design D6): the stored instant
+// round-trips through `toZonedTime` (instant → the zone's wall clock for the
+// picker) and `fromZonedTime` (the picked wall clock → instant). Under the
+// "system" preference both are identity.
 
 type AndroidStep =
   | { kind: "closed" }
@@ -101,11 +100,11 @@ export function DateTimeField({
           key="date"
           mode="date"
           presentation="dialog"
-          value={dateDialogValue(wallClock)}
+          value={wallClock}
           onValueChange={(_event, day) =>
             setStep(
               isPickedDate(day)
-                ? { kind: "time", pending: mergePickedDay(wallClock, day) }
+                ? { kind: "time", pending: day }
                 : { kind: "closed" },
             )
           }

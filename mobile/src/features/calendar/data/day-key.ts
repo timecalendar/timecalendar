@@ -45,6 +45,15 @@ export function minuteOfDayInZone(date: Date, zone: string): number {
   return proxy.getHours() * 60 + proxy.getMinutes()
 }
 
+// The zone's UTC offset in minutes at an instant. `date-fns-tz`'s
+// `getTimezoneOffset` reads the Date's device-local fields as the zone's wall
+// clock, so it answers for a different instant outside UTC (lint L11).
+export function zoneOffsetMinutes(instant: Date, zone: string): number {
+  const offset = formatInTimeZone(instant, zone, "xxx")
+  const magnitude = Number(offset.slice(1, 3)) * 60 + Number(offset.slice(4, 6))
+  return offset.startsWith("-") ? -magnitude : magnitude
+}
+
 // The UTC calendar day of a `Date` as `YYYY-MM-DD` — the all-day key. An all-day
 // event is a FLOATING date (May 25 is May 25 in every timezone), stored as UTC
 // midnight; keying it off a zone's day would shift it a day for a UTC-negative

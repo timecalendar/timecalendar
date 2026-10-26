@@ -335,6 +335,29 @@ describe("CalendarScreen owned shell", () => {
     expect(mockPush).toHaveBeenLastCalledWith("/event-details/probe-late")
   })
 
+  it("places the accessibility fixture on the display zone's wall clock", async () => {
+    setCalendarView("day")
+    mockIsDevVariant.mockReturnValue(true)
+    mockUseLocalSearchParams.mockReturnValue({
+      accessibilityProbe: "timed-events",
+      focusDate: "2026-06-15",
+    })
+    mockUseCalendarClock.mockReturnValue(ACCESSIBILITY_PROBE_ANCHOR)
+
+    await render(<CalendarScreen />)
+    await settleCalendarPager()
+
+    expect(
+      await screen.findByRole("button", { name: /^Fixture probe-early,/ }),
+    ).toBeOnTheScreen()
+    expect(
+      await screen.findByRole("button", { name: /^Fixture probe-late,/ }),
+    ).toBeOnTheScreen()
+    expect(
+      screen.getByTestId("owned-calendar-canvas").props.contentOffset,
+    ).toEqual({ x: 0, y: 540 })
+  })
+
   it("ignores the accessibility fixture flag outside the development variant", async () => {
     setCalendarView("day")
     mockUseLocalSearchParams.mockReturnValue({
@@ -399,16 +422,16 @@ describe("CalendarScreen owned shell", () => {
         identity: { source: "synced", uid: "class-original" },
         id: "class-compatibility",
         title: "Maths",
-        startsAt: new Date("2026-06-16T10:00:00.000Z"),
-        endsAt: new Date("2026-06-16T11:00:00.000Z"),
+        startsAt: new Date(2026, 5, 16, 10),
+        endsAt: new Date(2026, 5, 16, 11),
         location: "B12",
       }),
       calendarEvent({
         identity: { source: "personal", uid: "personal-original" },
         id: "personal-compatibility",
         title: "Study",
-        startsAt: new Date("2026-06-16T12:00:00.000Z"),
-        endsAt: new Date("2026-06-16T13:00:00.000Z"),
+        startsAt: new Date(2026, 5, 16, 12),
+        endsAt: new Date(2026, 5, 16, 13),
         location: undefined,
         userCalendarId: undefined,
       }),
@@ -475,15 +498,15 @@ describe("CalendarScreen owned shell", () => {
         identity: { source: "synced", uid: "crowded-synced" },
         id: "synced-alias",
         title: "Crowded class",
-        startsAt: new Date("2026-06-16T10:00:00.000Z"),
-        endsAt: new Date("2026-06-16T10:02:00.000Z"),
+        startsAt: new Date(2026, 5, 16, 10),
+        endsAt: new Date(2026, 5, 16, 10, 2),
       }),
       calendarEvent({
         identity: { source: "personal", uid: "crowded-personal" },
         id: "personal-alias",
         title: "Crowded study",
-        startsAt: new Date("2026-06-16T10:03:00.000Z"),
-        endsAt: new Date("2026-06-16T10:05:00.000Z"),
+        startsAt: new Date(2026, 5, 16, 10, 3),
+        endsAt: new Date(2026, 5, 16, 10, 5),
         userCalendarId: undefined,
       }),
     ]
@@ -516,8 +539,8 @@ describe("CalendarScreen owned shell", () => {
         identity: { source: "synced", uid: "maths-offline" },
         id: "maths-offline",
         title: "Maths",
-        startsAt: new Date("2026-06-16T10:00:00.000Z"),
-        endsAt: new Date("2026-06-16T11:00:00.000Z"),
+        startsAt: new Date(2026, 5, 16, 10),
+        endsAt: new Date(2026, 5, 16, 11),
         location: "B12",
       }),
     ]
@@ -909,8 +932,8 @@ describe("CalendarScreen owned shell", () => {
       mockWindowEvents = [
         calendarEvent({
           title: "Destination class",
-          startsAt: new Date(`${destination}T10:00:00Z`),
-          endsAt: new Date(`${destination}T11:00:00Z`),
+          startsAt: new Date(`${destination}T10:00:00`),
+          endsAt: new Date(`${destination}T11:00:00`),
         }),
       ]
       const read = mockReadWindow.getMockImplementation()

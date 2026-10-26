@@ -1,6 +1,6 @@
 # Timed-event native accessibility probe
 
-This probe is available only in the development app variant. It runs the existing Calendar route and renderer with fabricated events at 01:00, 10:00, and 23:00, plus tied, overlapping, and minimum-target cases. Its diagnostic lines contain only fixture identity, chronological ordinal, target frame, and routed UID.
+This probe is available only in the development app variant. It runs the existing Calendar route and renderer with fabricated events at 01:00, 10:00, and 23:00, plus tied, overlapping, and minimum-target cases. The hours are wall-clock times in the effective display zone (Settings → Time zone), so the fixture lands on 15 June 2026 whatever the device or manual zone. Its diagnostic lines contain only fixture identity, chronological ordinal, target frame, and routed UID.
 
 Run all commands from `mobile/`. Use the device name accepted by Expo for `build`; use the Android serial or iOS device identifier for the other actions.
 

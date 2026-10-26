@@ -80,6 +80,11 @@ The registry lists, in this order (paths under `mobile/src/`):
   until it is listed. `design-tokens--colors` draws every `Colors` role in both schemes whatever the
   app scheme, and `design-tokens--contrast-pairs` draws `documentedContrastPairs` from
   `src/theme/contrast.ts`, the table the contrast gate asserts.
+- The chrome `DateTimePicker` takes and reports device-local Dates on both platforms: a date pick
+  changes the day and keeps the time of day. The Android Compose date picker speaks UTC-midnight
+  days; `src/components/chrome/compose-date-day.ts` owns that conversion inside the seam
+  (`date-time-picker.tsx`), and `compose-date-day.test.ts` pins it to `@expo/ui`'s
+  `DatePickerView.kt` (ADR [066](./decisions/066-device-local-date-picker-seam-and-timezone-ci.md)).
 - The personal-events `DateTimeField` has no fixture: the registry lives in `src/design/`, which may
   not import a feature (B-7). It gets one when it moves to `src/design/`.
 
@@ -139,6 +144,9 @@ The registry lists, in this order (paths under `mobile/src/`):
   visibility and hidden-event filters, and supplies Home, Calendar, and event details.
 - Calendar taps open unified event details for both event kinds. Personal events can
   continue to the edit form; synced events remain read-only.
+- The personal-event form's `DateTimeField` hands the chrome `DateTimePicker` the display zone's
+  wall clock as a device-local Date and converts the pick back with `fromZonedTime`; the seam owns
+  the Android day conversion, the field owns the display-zone conversion.
 - Home and Calendar each own one rendered-UID-set checklist-progress subscription.
   Summary components receive the resulting map; they never query SQLite per event.
 - User-calendar rows contain server calendar IDs and durable source tokens. Notification

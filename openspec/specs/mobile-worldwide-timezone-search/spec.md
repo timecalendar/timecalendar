@@ -2,7 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change add-worldwide-native-timezone-search. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Worldwide catalog is reproducibly derived from maintained versioned data
 The mobile project SHALL pin compatible exact versions of `@vvo/tzdb` and the CLDR JSON packages used for French and English labels through npm. A deterministic generator SHALL produce a bounded feature-owned runtime catalog from tzdb identifiers/groups/common cities plus only the required `en`/`fr` exemplar-city and territory fields. The repository SHALL document package versions, licenses, generated inputs, the update procedure, and a check command that fails when the committed artifact is stale.
 
@@ -150,3 +152,12 @@ The expanded chooser SHALL continue using the existing effective-zone resolver, 
 - **WHEN** representative canonical, alias, UTC, and fractional-offset selections are checked with the unchanged server validator
 - **THEN** every identifier claimed selectable by that compatibility fixture is accepted
 - **AND** the test does not assume every mobile OS supports every catalog alias
+
+### Requirement: Chooser offsets depend only on the instant, not the device zone
+
+A row's offset label SHALL be the candidate zone's UTC offset at the screen-owned instant, whatever the device time zone.
+
+#### Scenario: A row offset across a DST change is correct in any device zone
+
+- **WHEN** the chooser computes the Europe/Paris offset for the instant 2026-10-25T01:30Z, one hour after the fall-back to +01:00
+- **THEN** the label is `UTC+01:00` whether the device zone is UTC, UTC+14, UTC−11, or UTC−03:30

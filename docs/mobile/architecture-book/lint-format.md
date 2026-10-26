@@ -233,6 +233,13 @@ truth; this file carries the caveats the config can't (R-1).
   `jest.mock("expo-symbols", …)` factories are not imports. See
   [accessibility.md](./accessibility.md) → Icon scaling and ADR
   [065](./decisions/065-icon-text-scaling.md).
+- **L11 — no device-zone-dependent offsets** (`zoneOffsetTrapImportPath`, appended to `paths` by
+  the `banZoneOffsetTrap` flag of `restrictedImports`): `getTimezoneOffset` is banned as a named
+  import from `date-fns-tz` everywhere. It reads a Date's device-local fields as the zone's wall
+  clock, so outside UTC it returns the offset at a different instant. Zone offsets come from
+  `zoneOffsetMinutes(instant, zone)` in `@/features/calendar/data` (`day-key.ts`), which formats the
+  instant itself. `formatInTimeZone`, `toZonedTime` and `fromZonedTime` stay allowed. No file is
+  exempt. Same static-import-only caveat as raw-fetch. See [testing.md](./testing.md) → Time zones.
 - **Generated code** (`src/api/generated/`) is exempt from hand-written-code rules but
   still Prettier-formatted; Orval's `afterAllFilesWrite: prettier --write` keeps regen
   output aligned with the committed format.

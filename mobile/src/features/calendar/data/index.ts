@@ -31,6 +31,7 @@ export {
   minuteOfDayInZone,
   startOfDayInZone,
   utcDayKey,
+  zoneOffsetMinutes,
 } from "./day-key"
 export { useUses24HourClock } from "./device-clock"
 export {

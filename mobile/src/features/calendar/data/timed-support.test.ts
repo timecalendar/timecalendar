@@ -75,6 +75,15 @@ describe("classifyTimedEventSupport", () => {
     ).toEqual({ supported: false, reason: "offset-transition" })
   })
 
+  it("classifies by the display zone's offset at each instant, not the device's", () => {
+    expect(
+      classifyTimedEventSupport(
+        timed("2026-10-25T00:30:00Z", "2026-10-25T01:30:00Z"),
+        "Europe/Paris",
+      ),
+    ).toEqual({ supported: false, reason: "offset-transition" })
+  })
+
   it("returns a stable unsupported reason for an invalid zone", () => {
     expect(
       classifyTimedEventSupport(
