@@ -17,6 +17,7 @@ type Story = GalleryStory<FloatingActionProps>
 
 const addIcon = { ios: "plus", android: "add" } as const
 const ROWS = Array.from({ length: 14 }, (_, index) => index + 1)
+const SCROLL_LINES = Array.from({ length: 48 }, (_, index) => index + 1)
 
 function usePressCount() {
   const [count, setCount] = useState(0)
@@ -116,11 +117,11 @@ function OverScrollFixture() {
         <ThemedText testID="gallery-floating-action-count">
           {t("gallery.pressCount", { count })}
         </ThemedText>
-        {ROWS.map((index) => (
-          <ThemedText key={index} style={styles.row}>
-            {t("gallery.floatingAction.row", { index })}
-          </ThemedText>
-        ))}
+        <ThemedText>
+          {SCROLL_LINES.map((index) =>
+            t("gallery.floatingAction.row", { index }),
+          ).join("\n")}
+        </ThemedText>
         <ThemedText testID="gallery-floating-action-last-row">
           {t("gallery.floatingAction.lastRow")}
         </ThemedText>
@@ -172,5 +173,4 @@ const styles = StyleSheet.create({
     paddingBottom: Layout.fabClearance,
     gap: Spacing.three,
   },
-  row: { paddingVertical: Spacing.two },
 })

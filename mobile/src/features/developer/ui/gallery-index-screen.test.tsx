@@ -78,15 +78,13 @@ describe.each(["ios", "android"] as const)(
         "native-text-entry-dialog",
         "native-list-numeric-editor",
         "menu-view",
+        "header-action",
+        "floating-action",
         "date-time-picker",
         "glass-surface",
         "design-tokens",
       ])
-      const androidOnly = [
-        "icon--glyphs",
-        "native-list--floating-action",
-        "native-list--radio-dialog",
-      ]
+      const androidOnly = ["icon--glyphs", "native-list--radio-dialog"]
       const iosOnly = [
         "date-time-picker--date-time",
         "date-time-picker--disabled",
@@ -177,7 +175,6 @@ describe.each(["ios", "android"] as const)(
           "native-list--switches",
           "native-list--choices",
           "native-list--header-and-alert",
-          "native-list--floating-action",
           "native-list--radio-dialog",
           "native-list--long-strings",
           "native-text-entry-dialog--default",
@@ -189,6 +186,16 @@ describe.each(["ios", "android"] as const)(
           "menu-view--default",
           "menu-view--states",
           "menu-view--long-strings",
+          "header-action--icons",
+          "header-action--text",
+          "header-action--both-sides",
+          "header-action--disabled",
+          "header-action--platform-only",
+          "header-action--long-strings",
+          "floating-action--default",
+          "floating-action--over-list",
+          "floating-action--over-scroll",
+          "floating-action--long-label",
           "date-time-picker--date",
           "date-time-picker--time",
           "date-time-picker--date-time",

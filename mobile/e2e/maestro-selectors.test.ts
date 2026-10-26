@@ -331,7 +331,7 @@ describe("Maestro journey contracts", () => {
     expect(yaml.split(OPEN_AGENDA_FLOW)).toHaveLength(4)
     expect(
       containsOrdered(yaml, [
-        'id: "calendar-(add|fab)"',
+        '- tapOn: "Add an event"',
         '- inputText: "Maestro personal event"',
         '- tapOn: "Maestro personal event(,.*)?"',
         '- tapOn: "Edit this event"',

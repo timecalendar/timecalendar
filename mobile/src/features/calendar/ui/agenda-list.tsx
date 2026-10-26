@@ -1,6 +1,7 @@
 import { type ReactElement, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
+  Platform,
   Pressable,
   type RefreshControlProps,
   SectionList,
@@ -23,7 +24,7 @@ import {
   checklistProgressLabel,
   type ChecklistProgressMap,
 } from "@/features/event-checklists"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Layout, Radii, Spacing, useTheme } from "@/theme"
 
 // The agenda / planning view (presentational, 70% floor): a React Native core
 // SectionList (zero new dep — D4) of day-grouped events as a designed brand surface
@@ -87,7 +88,10 @@ export function AgendaList({
       testID="agenda-section-list"
       sections={sections}
       keyExtractor={(item) => item.id}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[
+        styles.content,
+        Platform.OS === "android" && styles.fabClearance,
+      ]}
       stickySectionHeadersEnabled
       refreshControl={refreshControl}
       renderSectionHeader={({ section }) => (
@@ -224,6 +228,7 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.four,
     gap: Spacing.two,
   },
+  fabClearance: { paddingBottom: Layout.fabClearance },
   dayHeader: {
     flexDirection: "row",
     alignItems: "baseline",

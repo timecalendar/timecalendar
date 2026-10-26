@@ -8,8 +8,7 @@ appId: fr.samuelprak.timecalendar.dev
     visible:
       id: "agenda-section-list"
     timeout: 60000
-- tapOn:
-    id: "calendar-(add|fab)"
+- tapOn: "Add an event"
 - extendedWaitUntil:
     visible:
       id: "personal-event-title-input"

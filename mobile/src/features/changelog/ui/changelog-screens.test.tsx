@@ -1,6 +1,5 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
-import { router, Stack } from "expo-router"
-import type { ReactElement } from "react"
+import { type NativeStackNavigationOptions, router, Stack } from "expo-router"
 import { StyleSheet } from "react-native"
 
 import {
@@ -8,6 +7,8 @@ import {
   setChangelogSeenVersion,
 } from "@/features/changelog/store"
 import i18n from "@/i18n"
+import { headerBarItem, renderHeaderSide } from "@/test-support/header-actions"
+import { usePlatform } from "@/test-support/platform"
 
 import { ChangelogHistoryScreen } from "./changelog-history-screen"
 import { ChangelogSheetScreen } from "./changelog-sheet-screen"
@@ -26,14 +27,7 @@ const mockSetSeen = setChangelogSeenVersion as jest.Mock
 const mockDismiss = router.dismiss as jest.Mock
 const mockStackScreen = Stack.Screen as unknown as jest.Mock
 const screenOptions = () =>
-  mockStackScreen.mock.lastCall?.[0].options as {
-    title: string
-    headerRight?: () => ReactElement<{
-      testID: string
-      accessibilityLabel: string
-      onPress: () => void
-    }>
-  }
+  mockStackScreen.mock.lastCall?.[0].options as NativeStackNavigationOptions
 
 beforeEach(async () => {
   jest.clearAllMocks()
@@ -104,22 +98,6 @@ describe("Changelog screens", () => {
     expect(mockSetSeen).toHaveBeenCalledTimes(1)
   })
 
-  it("acknowledges through the localized header close control", async () => {
-    const view = await render(<ChangelogSheetScreen />)
-    const headerRight = screenOptions().headerRight as () => ReactElement<{
-      testID: string
-      accessibilityLabel: string
-      onPress: () => void
-    }>
-    const close = headerRight()
-    expect(close.props.testID).toBe("changelog-close")
-    expect(close.props.accessibilityLabel).toBe("Close")
-    await act(async () => close.props.onPress())
-    expect(mockSetSeen).toHaveBeenCalledWith(4)
-    expect(mockDismiss).toHaveBeenCalledTimes(1)
-    await view.unmount()
-  })
-
   it("persists on native unmount and handles an empty unseen selection", async () => {
     mockGetSeen.mockReturnValue(4)
     const view = await render(<ChangelogSheetScreen />)
@@ -127,5 +105,39 @@ describe("Changelog screens", () => {
     await view.unmount()
     expect(mockSetSeen).toHaveBeenCalledWith(4)
     expect(mockDismiss).not.toHaveBeenCalled()
+  })
+})
+
+describe("Changelog sheet close on ios", () => {
+  usePlatform("ios")
+
+  it("acknowledges through the native Close bar item", async () => {
+    const view = await render(<ChangelogSheetScreen />)
+    const close = headerBarItem(screenOptions(), "right", "changelog-close")
+    expect(close).toMatchObject({
+      label: "Close",
+      accessibilityLabel: "Close",
+      accessibilityHint: "Closes what’s new and marks this version as seen",
+    })
+    await act(async () => close?.onPress())
+    expect(mockSetSeen).toHaveBeenCalledWith(4)
+    expect(mockDismiss).toHaveBeenCalledTimes(1)
+    await view.unmount()
+  })
+})
+
+describe("Changelog sheet close on android", () => {
+  usePlatform("android")
+
+  it("acknowledges through the Material Close text button", async () => {
+    await render(<ChangelogSheetScreen />)
+    const header = await renderHeaderSide(screenOptions(), "right")
+    const close = header.getByRole("button", {
+      name: "Close, Closes what’s new and marks this version as seen",
+    })
+    expect(close.props.testID).toBe("changelog-close")
+    await fireEvent.press(close)
+    expect(mockSetSeen).toHaveBeenCalledWith(4)
+    expect(mockDismiss).toHaveBeenCalledTimes(1)
   })
 })

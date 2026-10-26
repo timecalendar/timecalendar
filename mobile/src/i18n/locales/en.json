@@ -745,7 +745,6 @@
   "calendar.pageControlSymbol": "‹ ›",
   "calendar.nextWeekLabel": "Next week",
   "calendar.nowLabel": "Current time, {{time}}",
-  "calendar.add": "+",
   "calendar.addLabel": "Add an event",
   "calendar.empty": "No events this period.",
   "calendar.allDay": "All day",

@@ -1,15 +1,15 @@
 import { router, Stack } from "expo-router"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Platform, Pressable, StyleSheet } from "react-native"
+import { StyleSheet } from "react-native"
 
+import { useHeaderActions } from "@/components/chrome"
 import {
   Button,
   KeyboardSafeActionLayout,
   PageIntro,
   RootPage,
   TextField,
-  ThemedText,
 } from "@/design"
 import { emitExportGuideEvent } from "@/features/export-guides/ui"
 import {
@@ -34,10 +34,6 @@ import { stepStyles } from "./step-styles"
 // never the path of least resistance. Continue is disabled while the field is
 // empty, which makes Skip the ONLY route to an empty name — the app never
 // invents one.
-//
-// The platform split mirrors school-picker-screen.tsx's header-LEFT treatment:
-// iOS gets a real `unstable_headerRightItems` text item, Android a `headerRight`
-// Pressable sized to the 48dp minimum target.
 export default function ProgrammeScreen() {
   const { t } = useTranslation()
   const { state, draft, setCalendarName } = useImportDraft()
@@ -88,6 +84,17 @@ export default function ProgrammeScreen() {
 
   const skip = () => advance("")
 
+  const headerActions = useHeaderActions({
+    right: [
+      {
+        label: t("onboarding.programme.skip"),
+        accessibilityLabel: t("onboarding.programme.skipLabel"),
+        testID: "onboarding-programme-skip",
+        onPress: skip,
+      },
+    ],
+  })
+
   if (!legal) return null
 
   return (
@@ -95,33 +102,7 @@ export default function ProgrammeScreen() {
       <Stack.Screen
         options={{
           title: t("onboarding.programme.title"),
-          ...(Platform.OS === "ios" && {
-            unstable_headerRightItems: () => [
-              {
-                type: "button" as const,
-                label: t("onboarding.programme.skip"),
-                accessibilityLabel: t("onboarding.programme.skipLabel"),
-                identifier: "onboarding-programme-skip",
-                onPress: skip,
-              },
-            ],
-          }),
-          ...(Platform.OS === "android" && {
-            headerRight: () => (
-              <Pressable
-                testID="onboarding-programme-skip"
-                accessibilityRole="button"
-                accessibilityLabel={t("onboarding.programme.skipLabel")}
-                hitSlop={Spacing.two}
-                onPress={skip}
-                style={styles.headerSkip}
-              >
-                <ThemedText type="smallBold">
-                  {t("onboarding.programme.skip")}
-                </ThemedText>
-              </Pressable>
-            ),
-          }),
+          ...headerActions,
         }}
       />
       <RootPage
@@ -172,14 +153,4 @@ export default function ProgrammeScreen() {
 
 const styles = StyleSheet.create({
   actionRegion: { paddingTop: Spacing.three, paddingBottom: Spacing.four },
-  // Local: the Android header action, the only control this step adds to the
-  // shared step frame. 48dp minimum in both axes (the iOS branch is a native
-  // header item and is sized by the platform).
-  headerSkip: {
-    minWidth: 48,
-    minHeight: 48,
-    alignItems: "flex-end",
-    justifyContent: "center",
-    paddingHorizontal: Spacing.two,
-  },
 })

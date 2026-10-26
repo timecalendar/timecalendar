@@ -5,13 +5,17 @@ import type {
   NativeStackNavigationOptions,
 } from "expo-router"
 
-type HeaderOptions = Pick<
+type HeaderSlots = Pick<
   NativeStackNavigationOptions,
   | "headerLeft"
   | "headerRight"
   | "unstable_headerLeftItems"
   | "unstable_headerRightItems"
 >
+
+export type HeaderOptions = {
+  [K in keyof HeaderSlots]?: HeaderSlots[K] | undefined
+}
 
 export type HeaderSide = "left" | "right"
 

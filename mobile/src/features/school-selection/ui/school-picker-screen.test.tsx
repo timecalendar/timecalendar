@@ -1,5 +1,10 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
-import { router, Stack, useLocalSearchParams } from "expo-router"
+import {
+  type NativeStackNavigationOptions,
+  router,
+  Stack,
+  useLocalSearchParams,
+} from "expo-router"
 import {
   AccessibilityInfo,
   type StyleProp,
@@ -9,6 +14,7 @@ import {
 
 import { useSchools } from "@/features/school-selection/data"
 import { useColorScheme } from "@/hooks/use-color-scheme"
+import { headerBarItem } from "@/test-support/header-actions"
 import { usePlatform } from "@/test-support/platform"
 import { Colors, Spacing } from "@/theme"
 
@@ -91,7 +97,7 @@ const screenOptions = () =>
     title: string
     headerTitle: string
     headerLeft?: () => React.ReactElement
-    unstable_headerLeftItems?: () => { onPress: () => void }[]
+    unstable_headerLeftItems?: NativeStackNavigationOptions["unstable_headerLeftItems"]
     headerSearchBarOptions: {
       placeholder: string
       textColor: string
@@ -227,9 +233,16 @@ describe("SchoolPickerScreen", () => {
     mockUseSchools.mockReturnValue(ready([]))
     await render(<SchoolPickerScreen />)
 
-    const headerItems = screenOptions().unstable_headerLeftItems
-    expect(headerItems).toBeDefined()
-    headerItems!()[0]!.onPress()
+    const back = headerBarItem(
+      screenOptions(),
+      "left",
+      "onboarding-school-back",
+    )
+    expect(back).toMatchObject({
+      accessibilityLabel: "Back",
+      icon: { type: "sfSymbol", name: "chevron.backward" },
+    })
+    back?.onPress()
     expect(mockDismiss).toHaveBeenCalledTimes(1)
   })
 

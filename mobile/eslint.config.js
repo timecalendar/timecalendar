@@ -17,6 +17,9 @@ const {
   adHocStatusAllowlist,
 } = require("./tools/eslint-rules/ad-hoc-status-allowlist")
 const {
+  headerActionAllowlist,
+} = require("./tools/eslint-rules/header-action-allowlist")
+const {
   rawButtonAllowlist,
 } = require("./tools/eslint-rules/raw-button-allowlist")
 const {
@@ -888,6 +891,20 @@ module.exports = defineConfig([
     plugins: { local: localRules },
     rules: {
       "local/no-ad-hoc-separator": "error",
+    },
+  },
+  {
+    // Navigation-bar actions are declared through useHeaderActions (ADR 075).
+    name: "timecalendar/header-action",
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: [
+      "src/components/chrome/**",
+      "**/*.test.{ts,tsx}",
+      ...headerActionAllowlist,
+    ],
+    plugins: { local: localRules },
+    rules: {
+      "local/no-ad-hoc-header-action": "error",
     },
   },
   {

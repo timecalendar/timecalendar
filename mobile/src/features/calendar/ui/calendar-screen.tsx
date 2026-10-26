@@ -3,13 +3,13 @@ import { useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import {
   AccessibilityInfo,
-  Platform,
   RefreshControl,
   StyleSheet,
   View,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { FloatingAction } from "@/components/chrome"
 import { isDevVariant } from "@/config/variant"
 import { ThemedView } from "@/design"
 import {
@@ -41,7 +41,6 @@ import {
 import { Spacing, useTheme } from "@/theme"
 
 import { CalendarAgendaPane } from "./calendar-agenda-pane"
-import { CalendarAddFab } from "./calendar-screen/calendar-screen-actions"
 import { CalendarScreenHeader } from "./calendar-screen/calendar-screen-header"
 import { useCalendarScreenController } from "./calendar-screen/use-calendar-screen-controller"
 import { useCalendarTitleFocus } from "./calendar-screen/use-calendar-title-focus"
@@ -222,7 +221,12 @@ export function CalendarScreen() {
               }
             />
           )}
-          {Platform.OS === "android" && <CalendarAddFab onPress={onAdd} />}
+          <FloatingAction
+            icon={{ ios: "plus", android: "add" }}
+            label={t("calendar.addLabel")}
+            testID="calendar-fab"
+            onPress={onAdd}
+          />
         </View>
       </SafeAreaView>
     </ThemedView>

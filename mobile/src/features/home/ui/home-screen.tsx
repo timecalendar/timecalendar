@@ -8,10 +8,11 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { FloatingAction } from "@/components/chrome"
 import { ThemedView, useAdaptiveLayout } from "@/design"
-import { Spacing, useTheme } from "@/theme"
+import { Layout, Spacing, useTheme } from "@/theme"
 
-import { HomeAddFab, HomeScreenHeader } from "./home-screen/home-screen-header"
+import { HomeScreenHeader } from "./home-screen/home-screen-header"
 import { HomeScreenStatus } from "./home-screen/home-screen-status"
 import { TodaySection } from "./home-screen/today-section"
 import { UpcomingSection } from "./home-screen/upcoming-section"
@@ -98,7 +99,12 @@ export function HomeScreen() {
               />
             </View>
           </ScrollView>
-          {Platform.OS === "android" && <HomeAddFab onPress={home.addEvent} />}
+          <FloatingAction
+            icon={{ ios: "plus", android: "add" }}
+            label={t("home.addPersonalEvent")}
+            testID="home-add-personal-event"
+            onPress={home.addEvent}
+          />
         </View>
       </SafeAreaView>
     </ThemedView>
@@ -116,6 +122,6 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.four,
     gap: Spacing.three,
   },
-  androidContent: { paddingBottom: 96 },
+  androidContent: { paddingBottom: Layout.fabClearance },
   iosContent: { paddingBottom: 112 },
 })
