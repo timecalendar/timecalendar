@@ -24,6 +24,7 @@ ruleTester.run("no-retired-list-names", rule, {
       code: `import { EnvironmentSettingsRow } from "@/features/environment/ui"`,
     },
     { code: `export function SettingsScreen() {}` },
+    { code: `function openNativeSettings() {}` },
     { code: `useAssertOutsideNativeList("NativeTextEntryDialog")` },
     { code: `const story = "native-list--switches"` },
     { code: `t("gallery.nativeList.title")` },

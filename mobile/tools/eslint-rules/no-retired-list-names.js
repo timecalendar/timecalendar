@@ -2,15 +2,15 @@
 // names) and ADR 072.
 //
 // The native grouped list seam is `NativeList*` from `@/components/chrome`, and
-// features render it directly. The rule keeps the retired names out of `src/`:
-// identifiers containing `NativeSettings`, the private `SwiftSettings*` /
-// `ComposeSettings*` helpers, the deleted `SettingsRow` / `SettingsSection`
-// adapters, any string or template literal naming `native-settings` or
-// `nativeSettings` (import and mock paths, testIDs, story ids, i18n keys), and
-// a file recreated under a retired name.
+// features render it directly with no feature-owned row or section wrapper. The
+// rule bans the settings-era names so the seam keeps one vocabulary: identifiers
+// starting with `NativeSettings`, `SwiftSettings` or `ComposeSettings`, the exact
+// names `SettingsRow` / `SettingsSection` (and their `Props`), any string or
+// template literal naming `native-settings` or `nativeSettings` (import and mock
+// paths, testIDs, story ids, i18n keys), and files under those names.
 const path = require("node:path")
 
-const RETIRED_IDENTIFIER = /NativeSettings|^(Swift|Compose)Settings/
+const RETIRED_IDENTIFIER = /^(Native|Swift|Compose)Settings/
 const RETIRED_ADAPTERS = new Set([
   "SettingsRow",
   "SettingsRowProps",

@@ -367,10 +367,11 @@ truth; this file carries the caveats the config can't (R-1).
   allowlist, tests included): the native list seam is `NativeList*` from `@/components/chrome`
   and features render it directly ([theming.md](./theming.md) → Native-chrome wrapper seam, ADR
   [072](./decisions/072-native-list-seam.md)). The rule reports four things:
-  1. an identifier (declaration, reference, import, TS type name or JSX tag) containing
-     `NativeSettings` or starting with `SwiftSettings` / `ComposeSettings`;
+  1. an identifier (declaration, reference, import, TS type name or JSX tag) starting with
+     `NativeSettings`, `SwiftSettings` or `ComposeSettings` (`openNativeSettings` passes);
   2. the exact identifiers `SettingsRow`, `SettingsRowProps`, `SettingsSection` and
-     `SettingsSectionProps` (`EnvironmentSettingsRow` passes);
+     `SettingsSectionProps` (`EnvironmentSettingsRow` passes). The trade-off: those four
+     generic names are unavailable to any future feature, which must pick a more specific one;
   3. a string or template literal containing `native-settings` or `nativeSettings`: import and
      export sources, `jest.mock` / `require` paths, testIDs, story ids, i18n keys passed to `t()`
      and file paths read by contract tests;
@@ -379,7 +380,8 @@ truth; this file carries the caveats the config can't (R-1).
 
   `no-retired-list-names.test.js` is the RuleTester suite. **Caveats:** it cannot see JSON locale
   files (an unused `gallery.nativeSettings` key; one used through `t()` is caught), Maestro YAML,
-  Markdown, or computed strings (`"native-" + "settings"`); review covers those. Inject-and-revert
+  Markdown, JSX text children, regex literals, or computed strings (`"native-" + "settings"`);
+  review covers those. Inject-and-revert
   proof: `export const NativeSettingsRow = NativeListRow` in `src/components/chrome/index.ts`,
   `testID="gallery-native-settings-rows"` on a row in `native-list.gallery.tsx`, and an empty
   `src/features/settings/ui/settings-section.tsx` each fail `npm run lint`, naming the file and

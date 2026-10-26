@@ -104,7 +104,7 @@
   "developer.gallery.hint": "Chaque état de composant, un écran chacun",
   "gallery.title": "Galerie de composants",
   "gallery.openStory.hint": "Ouvre cet état du composant",
-  "gallery.nativeList.title": "Réglages natifs",
+  "gallery.nativeList.title": "Liste native",
   "gallery.nativeList.story.rows": "Lignes",
   "gallery.nativeList.story.destructive": "Action destructive",
   "gallery.nativeList.story.switches": "Interrupteurs",

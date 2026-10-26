@@ -907,9 +907,9 @@ describe("SwiftUI container identifiers on ios", () => {
       .mockImplementation(() => {})
     await expect(
       render(
-        <NativeSettingsHost>
+        <NativeList>
           <SwiftSection {...{ testID: "x" }}>{null}</SwiftSection>
-        </NativeSettingsHost>,
+        </NativeList>,
       ),
     ).rejects.toThrow(
       "SwiftUI Section received an accessibility identifier; it cascades onto every child (lint-format.md → L12)",

@@ -104,7 +104,7 @@
   "developer.gallery.hint": "Every component state, one screen each",
   "gallery.title": "Component gallery",
   "gallery.openStory.hint": "Opens this component state",
-  "gallery.nativeList.title": "Native settings",
+  "gallery.nativeList.title": "Native list",
   "gallery.nativeList.story.rows": "Rows",
   "gallery.nativeList.story.destructive": "Destructive action",
   "gallery.nativeList.story.switches": "Switches",

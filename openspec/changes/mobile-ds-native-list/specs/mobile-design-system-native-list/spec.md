@@ -76,8 +76,8 @@ hints, values, accessibility roles and labels, and testIDs (`about-privacy`, `ab
 Lint SHALL fail any TypeScript source file under `mobile/src/`, tests included, that does any of
 the following:
 
-- declares or references an identifier containing `NativeSettings`, or starting with
-  `SwiftSettings` or `ComposeSettings`;
+- declares or references an identifier starting with `NativeSettings`, `SwiftSettings` or
+  `ComposeSettings`;
 - declares or references an identifier named exactly `SettingsRow`, `SettingsRowProps`,
   `SettingsSection` or `SettingsSectionProps`;
 - contains a string or template literal with `native-settings` or `nativeSettings` (import paths,
