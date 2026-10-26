@@ -19,11 +19,9 @@
 #   ci/e2e-server.sh logs [--native]   print the server's logs
 #
 # Modes:
-#   compose (default)  Docker owns Postgres, Redis, and the server: up Postgres
-#                      and Redis, run the one-shot db:init, then up the server.
-#                      Builds the server image from source unless
-#                      E2E_SERVER_IMAGE is set (CI points it at the prebuilt
-#                      `build-server` artifact).
+#   compose (default)  Docker owns Postgres, Redis, and the server. Builds the
+#                      server image from source unless E2E_SERVER_IMAGE is set
+#                      (CI points it at the prebuilt `build-server` artifact).
 #   --native           For Docker-less hosts (GitHub macOS runners): the caller
 #                      provisions Postgres/Redis; this script seeds, mints the
 #                      key, boots the server from source as a backgrounded
@@ -109,9 +107,8 @@ up_compose() {
   log "bringing up Postgres and Redis (compose up --wait)…"
   compose up --wait postgres redis
 
-  # Seed before the server starts: it reads the DB during bootstrap (e.g. the
-  # export-guide catalogue snapshot), so a boot against an empty schema keeps
-  # that empty state for the life of the process. The one-shot runs inside the
+  # The export-guide catalogue snapshot taken at bootstrap keeps an empty
+  # schema's state for the life of the process. The one-shot runs inside the
   # compose network and inherits DATABASE_URL (…@postgres:5432/…) from the
   # service env.
   log "seeding the timecalendar_test database (db:init)…"
