@@ -34,5 +34,24 @@ describe.each(["ios", "android"] as const)(
         "Pressed 1 time",
       )
     })
+
+    it("names the text-size layout and one heading per detailed header", async () => {
+      const view = await renderStory(fixture.HeaderDetail)
+      expect(
+        view.getByTestId("gallery-list-section-text-size"),
+      ).toHaveTextContent(/text size/)
+      expect(view.getAllByRole("header")).toHaveLength(2)
+      expect(
+        view.getByRole("header", {
+          name: "Account, Changed on Tuesday at 10:00",
+        }).props.testID,
+      ).toBe("gallery-list-section-header-detail")
+      await fireEvent.press(
+        view.getByTestId("gallery-list-section-header-detail-row"),
+      )
+      expect(view.getByTestId("gallery-list-section-count")).toHaveTextContent(
+        "Pressed 1 time",
+      )
+    })
   },
 )

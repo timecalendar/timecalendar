@@ -43,6 +43,21 @@ const MIGRATED_SCREENS: readonly {
       "src/features/personal-events/ui/use-personal-event-delete-confirmation.ts",
     ],
   },
+  {
+    slice: "5.4",
+    files: [
+      "src/app/activity.tsx",
+      "src/app/changelog.tsx",
+      "src/app/changelog-sheet.tsx",
+      "src/features/activity/ui/activity-screen.tsx",
+      "src/features/activity/ui/activity-items.ts",
+      "src/features/activity/ui/describe-change.ts",
+      "src/features/changelog/ui/changelog-content.tsx",
+      "src/features/changelog/ui/changelog-sheet-screen.tsx",
+      "src/features/changelog/ui/changelog-history-screen.tsx",
+      "src/features/changelog/ui/changelog-gate.tsx",
+    ],
+  },
 ]
 
 const DRIFT_PATTERNS: readonly { id: string; pattern: RegExp }[] = [
@@ -112,7 +127,7 @@ function findDrift(source: string): { id: string; line: number }[] {
 }
 
 // Raised by every Phase 5 slice that appends files, so the list cannot shrink.
-const MIGRATED_FILE_FLOOR = 23
+const MIGRATED_FILE_FLOOR = 33
 
 const listedFiles = MIGRATED_SCREENS.flatMap(({ files }) => files)
 

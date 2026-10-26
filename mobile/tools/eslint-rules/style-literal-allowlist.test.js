@@ -7,9 +7,9 @@ const {
 // Raising this needs a reason in review: the allowlist only shrinks.
 const STYLE_LITERAL_ALLOWLIST_CEILING = {
   colorLiteral: 1,
-  typographyLiteral: 7,
+  typographyLiteral: 6,
   legacyShadow: 0,
-  spacingLiteral: 6,
+  spacingLiteral: 5,
   radiusLiteral: 3,
 }
 

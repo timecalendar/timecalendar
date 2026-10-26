@@ -2,10 +2,10 @@ import { render } from "@testing-library/react-native"
 import { StyleSheet, type TextStyle } from "react-native"
 
 import { usePlatform } from "@/test-support/platform"
-import { Colors, ListGeometry } from "@/theme"
+import { Colors, ListGeometry, Spacing, TypeRamp } from "@/theme"
 
 import { ListRow } from "./list-row"
-import { ListSection } from "./list-section"
+import { ListSection, ListSectionHeader } from "./list-section"
 
 jest.mock("expo-router", () => ({ router: { push: jest.fn() } }))
 jest.mock("@/hooks/use-color-scheme", () => ({
@@ -121,3 +121,96 @@ describe.each(["ios", "android"] as const)("ListSection on %s", (platform) => {
     expect(view.getByText("Footer").props.testID).toBeUndefined()
   })
 })
+
+describe.each(["ios", "android"] as const)(
+  "ListSectionHeader on %s",
+  (platform) => {
+    usePlatform(platform)
+    const ios = platform === "ios"
+    const titleStep = TypeRamp[ios ? "footnote" : "label"].style
+    const titleColor = ios
+      ? Colors.light.textSecondary
+      : Colors.light.actionText
+
+    it("draws the same title ListSection draws", async () => {
+      const section = await render(
+        <ListSection testID="section" title="Title">
+          <ListRow label="Row" onPress={jest.fn()} testID="row" />
+        </ListSection>,
+      )
+      const header = await render(
+        <ListSectionHeader title="Title" testID="section-title" />,
+      )
+      const fromSection = section.getByRole("header", { name: "Title" })
+      const standalone = header.getByRole("header", { name: "Title" })
+      expect(standalone.props.testID).toBe("section-title")
+      expect(flat(standalone)).toEqual(flat(fromSection))
+      expect(flat(standalone).fontSize).toBe(titleStep.fontSize)
+      expect(flat(standalone).color).toBe(titleColor)
+      expect(standalone.props.numberOfLines).toBe(
+        fromSection.props.numberOfLines,
+      )
+    })
+
+    it("joins a detail into one heading named by title and detail", async () => {
+      const view = await render(
+        <ListSectionHeader
+          title="Computer Science"
+          detail="Tuesday 10:00"
+          testID="header"
+        />,
+      )
+      const headers = view.getAllByRole("header")
+      expect(headers).toHaveLength(1)
+      expect(headers[0]!.props.testID).toBe("header")
+      expect(headers[0]!.props.accessibilityLabel).toBe(
+        "Computer Science, Tuesday 10:00",
+      )
+      expect(flat(headers[0]!).paddingHorizontal).toBe(
+        ListGeometry.rowPaddingHorizontal,
+      )
+      expect(flat(headers[0]!).paddingBottom).toBe(
+        ios ? Spacing.one + Spacing.half : Spacing.two,
+      )
+      const title = view.getByText("Computer Science")
+      expect(title.props.accessibilityRole).toBeUndefined()
+      expect(flat(title).fontSize).toBe(titleStep.fontSize)
+      expect(flat(title).color).toBe(titleColor)
+      const detail = view.getByText("Tuesday 10:00")
+      expect(detail.props.accessibilityRole).toBeUndefined()
+      expect(detail.props.numberOfLines).toBe(4)
+      expect(flat(detail).fontSize).toBe(TypeRamp.footnote.style.fontSize)
+      expect(flat(detail).color).toBe(Colors.light.textSecondary)
+    })
+
+    it("names the detailed heading by the caller's label", async () => {
+      const view = await render(
+        <ListSectionHeader
+          title="Computer Science"
+          detail="Tuesday 10:00"
+          accessibilityLabel="Computer Science, changed Tuesday 10:00"
+        />,
+      )
+      expect(
+        view.getByRole("header", {
+          name: "Computer Science, changed Tuesday 10:00",
+        }).props.testID,
+      ).toBeUndefined()
+    })
+
+    it.each([
+      ["title only", undefined],
+      ["with a detail", "Detail"],
+    ])("merges the caller's style last %s", async (_, detail) => {
+      const view = await render(
+        <ListSectionHeader
+          title="Title"
+          detail={detail}
+          style={{ marginTop: Spacing.four }}
+        />,
+      )
+      const style = flat(view.getByRole("header"))
+      expect(style.marginTop).toBe(Spacing.four)
+    })
+  },
+)

@@ -213,6 +213,9 @@ primitive owns layout, scrolling, media, roles and the announcement.
   stacked primary first with `Spacing.two`, full width except `inline`. `busy` and `disabled` are
   `Button`'s.
 - `style` is `StyleProp<StatusLayoutStyle>` (`ButtonLayoutStyle` keys) and merges last.
+- A virtualized list's first load is a `screen` loading state in the lane, never inside the list,
+  and its pagination footer an `inline` one (the small platform footer spinner beside its label):
+  Activity's `activity-loading` and `activity-older-loading`.
 - `ErrorNotice` (inline error surface with an optional `StatusAction` drawn as a `text` `Button`)
   and `FieldError` (alert text under a field) share the folder. A field's error belongs to the
   field primitive (→ Fields); `FieldError` alone serves a selection error with no field.
@@ -340,6 +343,14 @@ colors, so an RN list and a `NativeList` on the same page read as one surface.
   the inset `Separator` on iOS and nothing on Android. `ListSection` adds no side margin (the page
   lane owns it); its title is iOS `footnote`/`textSecondary` or Android `label`/`action`, its
   footer `footnote`/`textSecondary`, and sections stack `Spacing.four` apart.
+- **`ListSectionHeader`** is `ListSection`'s title as its own export, for a virtualized list's
+  `renderSectionHeader` (a `SectionList` cannot wrap its rows in `ListSection`). Title only, it is
+  the same `header` text `ListSection` draws. With `detail`, it adds a second line in
+  `footnote`/`textSecondary` and the pair is **one** `header` element named by the caller's
+  `accessibilityLabel`, or "title, detail" without one; neither text carries its own role.
+  `style` is `ButtonLayoutStyle` and merges last; the list leaves `marginTop: Spacing.four` on
+  every header but the first so groups are spaced like sections. Activity's group headers
+  (calendar name, change time) are the first caller.
 - **`Separator`** (`inset`: `"none"`, `"leading"` or `{ leadingWidth }`) is a `separator`-colored
   hairline on iOS and 1dp on Android, hidden from assistive technology. The text-start formula
   `rowPaddingHorizontal + leadingWidth + leadingGap` lives only in `separatorInset`
@@ -354,8 +365,8 @@ colors, so an RN list and a `NativeList` on the same page read as one surface.
 - Gates: `list-row.test.tsx`, `list-section.test.tsx` and `separator.test.tsx` at 90% per-file
   tiers; `local/no-ad-hoc-separator` ([lint-format.md](./lint-format.md) → Lists); the gallery
   stories `list-row--plain`, `--grouped`, `--states`, `--leading`, `--static`, `--overline`,
-  `--long-strings`, `list-section--titled`, `--single`, `--seam-comparison`, `--long-strings`
-  and `separator--insets`.
+  `--long-strings`, `list-section--titled`, `--single`, `--seam-comparison`, `--long-strings`,
+  `--header-detail` and `separator--insets`.
 - **What lint cannot carry:** no rule detects a hand-built row (a `Pressable` with a label and a
   chevron has no reliable static signature). Review checks that a new list uses `ListRow` or the
   native seam.

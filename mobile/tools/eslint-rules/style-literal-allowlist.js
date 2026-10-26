@@ -35,10 +35,6 @@ const styleLiteralAllowlist = [
     categories: ["spacingLiteral"],
   }, // 5.10
   {
-    path: "src/features/changelog/ui/changelog-content.tsx",
-    categories: ["spacingLiteral", "typographyLiteral"],
-  }, // 5.4
-  {
     path: "src/features/event-checklists/ui/checklist-progress-indicator.tsx",
     categories: ["typographyLiteral"],
   }, // 5.8

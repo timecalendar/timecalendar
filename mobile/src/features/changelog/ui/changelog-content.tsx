@@ -1,9 +1,9 @@
 import { useTranslation } from "react-i18next"
-import { Platform, ScrollView, StyleSheet, View } from "react-native"
+import { ScrollView, StyleSheet, View } from "react-native"
 
-import { Icon, RootPage, ThemedText } from "@/design"
+import { headerScrollProps, ListRow, ListSection, RootPage } from "@/design"
 import type { ChangelogRelease } from "@/features/changelog/data"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Spacing } from "@/theme"
 
 interface ChangelogContentProps {
   readonly releases: readonly ChangelogRelease[]
@@ -12,67 +12,34 @@ interface ChangelogContentProps {
 
 export function ChangelogContent({ releases, footer }: ChangelogContentProps) {
   const { t } = useTranslation()
-  const theme = useTheme()
 
   return (
     <RootPage scrollsUnderHeader testID="changelog-safe-area" lane="readable">
       {(layout) => (
         <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
+          {...headerScrollProps(true)}
           testID="changelog-scroll-owner"
           contentContainerStyle={styles.scrollContent}
-          style={{ backgroundColor: theme.background }}
         >
-          <View
-            testID="changelog-responsive-content"
-            style={[layout.laneStyle, styles.content]}
-          >
+          <View testID="changelog-responsive-content" style={layout.laneStyle}>
             {releases.map((release) => (
-              <View
+              <ListSection
                 key={release.version}
-                style={styles.release}
+                title={t("changelog.versionHeading", {
+                  version: release.label,
+                })}
                 testID={`changelog-release-${release.version}`}
               >
-                <ThemedText type="subtitle">
-                  {t("changelog.versionHeading", { version: release.label })}
-                </ThemedText>
-                <View style={styles.items}>
-                  {release.items.map((item) => (
-                    <View
-                      key={item.titleKey}
-                      style={[
-                        styles.item,
-                        { backgroundColor: theme.backgroundElement },
-                      ]}
-                    >
-                      <View
-                        accessible={false}
-                        importantForAccessibility="no-hide-descendants"
-                        style={[
-                          styles.icon,
-                          { backgroundColor: theme.primarySoft },
-                        ]}
-                      >
-                        <Icon
-                          ios={item.icon.ios}
-                          android={item.icon.android}
-                          size={24}
-                          color={theme.primary}
-                          scaling="text"
-                        />
-                      </View>
-                      <View style={styles.copy}>
-                        <ThemedText style={styles.itemTitle}>
-                          {t(item.titleKey)}
-                        </ThemedText>
-                        <ThemedText themeColor="textSecondary">
-                          {t(item.subtitleKey)}
-                        </ThemedText>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              </View>
+                {release.items.map((item, index) => (
+                  <ListRow
+                    key={item.titleKey}
+                    leading={{ icon: item.icon }}
+                    label={t(item.titleKey)}
+                    subtitle={t(item.subtitleKey)}
+                    testID={`changelog-release-${release.version}-item-${index}`}
+                  />
+                ))}
+              </ListSection>
             ))}
             {footer}
           </View>
@@ -87,26 +54,4 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.four,
     paddingBottom: Spacing.six,
   },
-  content: { gap: Spacing.four },
-  release: { gap: Spacing.three },
-  items: { gap: Spacing.two },
-  item: {
-    minHeight: Platform.OS === "ios" ? 72 : 76,
-    borderRadius: Radii.large,
-    padding: Spacing.three,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.three,
-  },
-  icon: {
-    minWidth: 44,
-    minHeight: 44,
-    padding: 10,
-    borderRadius: Radii.medium,
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  copy: { flex: 1, minWidth: 0, gap: Spacing.one },
-  itemTitle: { fontWeight: "700" },
 })
