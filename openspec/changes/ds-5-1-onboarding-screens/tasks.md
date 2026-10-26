@@ -130,7 +130,7 @@ Tests, specs and docs name no real person or account. Never build Android on the
       `npx jest src/design/screen-migration.contract` (fails naming both); revert. Verify: the
       failing output is in the PR body and the tree is clean after revert (`git diff --stat`
       shows no stray change).
-- [ ] 4.6 Disclosure scan, from the repo root after committing: `node ci/disclosure-scan.mjs`
+- [x] 4.6 Disclosure scan, from the repo root after committing: `node ci/disclosure-scan.mjs`
       (derives identity patterns from commit authors and diffs against the merge base). Also read
       the diff of tests, specs and this change folder for any real person or account name. Verify:
       the scan exits 0 and the read finds none.
