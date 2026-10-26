@@ -5,6 +5,7 @@
   modifier from the local module `modules/compose-semantics` ([theming.md](./theming.md) →
   Native-chrome wrapper seam, [runtime.md](./runtime.md), ADR
   [073](./decisions/073-list-row-family.md)).
+- On iOS a `NativeListRow` badge is part of the row's accessibility label (name, then badge).
 - `ListRow`, `ListSection`, `ListRowSeparator` and `Separator` live in `src/design/list/`, with
   `ListGeometry` in `@/theme` as the one source of list geometry for them and `native-list.tsx`,
   and `useListPalette` in `@/components/chrome` for the seeded Android surface
