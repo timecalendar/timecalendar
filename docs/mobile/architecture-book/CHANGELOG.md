@@ -18,7 +18,9 @@
 - Each `ColorSwatchField` swatch speaks the field error through its hint (`fieldErrorHint`)
   ([accessibility.md](./accessibility.md)).
 - Hidden events, the personal-events list and the personal-event form compose only `@/design`
-  and `@/components/chrome`, and sit on no lint allowlist.
+  and `@/components/chrome`, and sit on no lint allowlist. Slice 5.3 appends their ten route and
+  UI files to the migrated-screen contract and raises `MIGRATED_FILE_FLOOR` to 23
+  ([lint-format.md](./lint-format.md) → Migrated screens).
 
 ## 2026-10-26 — Onboarding welcome, connect and manual import on the design system
 

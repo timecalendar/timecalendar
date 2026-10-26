@@ -28,6 +28,21 @@ const MIGRATED_SCREENS: readonly {
       "src/features/onboarding/ui/step-styles.ts",
     ],
   },
+  {
+    slice: "5.3",
+    files: [
+      "src/app/hidden-events.tsx",
+      "src/app/personal-events.tsx",
+      "src/app/personal-event-form.tsx",
+      "src/features/hidden-events/ui/hidden-events-screen.tsx",
+      "src/features/personal-events/ui/personal-events-list.tsx",
+      "src/features/personal-events/ui/personal-event-form-screen.tsx",
+      "src/features/personal-events/ui/personal-event-editor.tsx",
+      "src/features/personal-events/ui/personal-event-fields.tsx",
+      "src/features/personal-events/ui/personal-event-actions.tsx",
+      "src/features/personal-events/ui/use-personal-event-delete-confirmation.ts",
+    ],
+  },
 ]
 
 const DRIFT_PATTERNS: readonly { id: string; pattern: RegExp }[] = [
@@ -97,7 +112,7 @@ function findDrift(source: string): { id: string; line: number }[] {
 }
 
 // Raised by every Phase 5 slice that appends files, so the list cannot shrink.
-const MIGRATED_FILE_FLOOR = 13
+const MIGRATED_FILE_FLOOR = 23
 
 const listedFiles = MIGRATED_SCREENS.flatMap(({ files }) => files)
 
