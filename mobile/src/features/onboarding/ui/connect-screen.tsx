@@ -13,33 +13,16 @@ import { Spacing } from "@/theme"
 
 import { stepStyles } from "./step-styles"
 
-// The Connect step (TIM-391 / design D6) — behavioural parity with Flutter's
-// app/lib/modules/assistant/screens/connect_screen.dart (read-only reference):
-// explain that the student should open their institution's site on a computer or
-// in the device browser to reach their timetable, offer the institution's own
-// link when there is one, and always offer Back and Continue.
-//
-// The link is gated on safeIntranetUrl, not on `intranetUrl != null` as Flutter
-// gates it. The schools API is a server-owned string reaching a browser opener:
-// http(s) only, so a `javascript:`/`file:` value renders NO button rather than
-// being handed to WebBrowser. An unlisted institution always takes that branch —
-// there is no trusted URL for a school the student typed by hand.
-//
-// ── Assistant insertion point ────────────────────────────────────────────────
-// Continue → /onboarding/import is the boundary a later assistant project
-// inserts at (school → programme → connect → [ASSISTANT] → import). It is a
-// plain push with no state handed forward beyond the draft, so inserting a step
-// here requires no change to this screen or the ones before it.
-// ─────────────────────────────────────────────────────────────────────────────
+// The intranet link is gated on safeIntranetUrl: the URL is a server-owned
+// string reaching a browser opener, so only http(s) renders a button.
+// Continue is a plain push to the export guide with no state beyond the draft,
+// so a later assistant step can be inserted there without touching this screen.
 export default function ConnectScreen() {
   const { t } = useTranslation()
   const { state, draft, dispatch } = useImportDraft()
   const legal = useJourneyGateRoute(state, "connect")
 
-  // An unlisted institution has no school row and therefore no trusted URL, so
-  // both the link's label and its target come from the listed school or not at
-  // all. `safeIntranetUrl` is total on null/undefined, which is what lets the
-  // two live on one narrowing instead of two parallel ternaries.
+  // An unlisted institution has no school row, hence no trusted URL.
   const school =
     draft?.institution.kind === "listed" ? draft.institution.school : null
   const intranetUrl = safeIntranetUrl(school?.intranetUrl)

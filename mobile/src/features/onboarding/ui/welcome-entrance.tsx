@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated"
 
-const FADE_IN_MS = 300
+import { Motion } from "@/theme"
 
 type WelcomeEntranceProps = PropsWithChildren<{
   reduceMotion: boolean | null
@@ -23,7 +23,7 @@ export function WelcomeEntrance({
   useEffect(() => {
     if (reduceMotion === null) return
 
-    opacity.set(reduceMotion ? 1 : withTiming(1, { duration: FADE_IN_MS }))
+    opacity.set(reduceMotion ? 1 : withTiming(1, { duration: Motion.base }))
 
     return () => cancelAnimation(opacity)
   }, [opacity, reduceMotion])

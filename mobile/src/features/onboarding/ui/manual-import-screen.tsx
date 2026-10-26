@@ -11,17 +11,8 @@ import { Spacing } from "@/theme"
 
 import { stepStyles } from "./step-styles"
 
-// The manual-import step (TIM-391 / design D7) — behavioural parity with
-// Flutter's app/lib/modules/import_ical/screens/import_ical/import_ical_screen.dart
-// (read-only reference): QR scanning and pasting an iCal link are offered from
-// ONE screen, so the QR route finally has an in-app entry point (until now the
-// only way to reach it was a deep link).
-//
-// It is deliberately an ORCHESTRATOR and nothing else: no camera permission
-// lifecycle, no URL validation, no pending/error state, no create call, no
-// failure reporting. All of that already exists — tested — on the two routes it
-// pushes to, and duplicating any of it here would be a second, unproven copy of
-// the app's only import path.
+// Only orchestrates: the QR and iCal-URL routes it pushes own camera permission,
+// URL validation, pending/error state and failure reporting.
 export default function ManualImportScreen() {
   const { t } = useTranslation()
   const { dispatch } = useImportDraft()
