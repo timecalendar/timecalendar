@@ -48,6 +48,9 @@ UTC day, keeping the negative assertion meaningful if a job crosses midnight.
   `http://10.0.2.2:3005` for Android or `http://localhost:3005` for iOS, with
   `APP_VARIANT=development` and
   `BACKEND_ENVIRONMENT_CAPABILITY=development`.
+- CI disables `apsd` in the iOS simulator with `quiesce-ios-simulator.sh`
+  ([testing.md](../../docs/mobile/architecture-book/testing.md) → E2E); local
+  simulators do not need it.
 
 From `mobile/`:
 
@@ -83,6 +86,8 @@ Baseline CI stays the primary feedback loop:
   mutation-backed retry-classifier branches without allocating a device.
 - `test_ci_mobile_e2e.sh` proves the daily/manual workflow contract and both
   platform jobs.
+- `test_quiesce_ios_simulator.sh` proves, against a fake `xcrun`, that the
+  quiesce script disables `apsd` in order and fails while it is still loaded.
 
 ## Removed-flow coverage map
 

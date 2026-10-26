@@ -1,3 +1,13 @@
+## 2026-10-26 — CI iOS simulator runs without apsd
+
+- The native E2E iOS job runs `mobile/e2e/quiesce-ios-simulator.sh` after `xcrun simctl boot` and
+  before `xcrun simctl install`, disabling and booting out `user/foreground/com.apple.apsd`;
+  `test_ci_mobile_e2e.sh` pins the call and its order with mutations
+  ([testing.md](./testing.md) → E2E).
+- The script fails the step while `com.apple.apsd` is still listed and when `launchctl disable` or
+  `launchctl list` fails; `test_quiesce_ios_simulator.sh` proves it against a fake `xcrun` on every
+  pull request ([testing.md](./testing.md) → E2E).
+
 ## 2026-10-26 — Badge and ColorDot
 
 - `Badge` and `ColorDot` live in `src/design/badge/` and `src/design/color-dot/`: a closed tone
