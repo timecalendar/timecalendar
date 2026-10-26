@@ -503,7 +503,7 @@ Save SHALL use the shared button's `filled` variant with `primaryStrong`/`onPrim
 
 ### Requirement: Standalone personal-events states use the shared root-page composition
 
-The standalone Personal events destination SHALL use `RootPage` with one measured `standard` lane while retaining its compact localized native title, body Add action, reactive data hook, row order, `FlatList`, and create/edit navigation. Its loaded-empty branch SHALL use the shared screen `EmptyState` without mandatory artwork and SHALL retain the existing localized meaning. The route SHALL NOT add a duplicate in-content title, second scroll owner, or new action placement.
+The standalone Personal events destination SHALL use `RootPage` with one measured `standard` lane while retaining its compact localized native title, body Add action, reactive data hook, row order, `FlatList`, and create/edit navigation. Its loaded-empty branch SHALL use the shared `StatusView` (`kind="empty"`, `presentation="section"`) without artwork and SHALL retain the existing localized meaning. The route SHALL NOT add a duplicate in-content title, second scroll owner, or new action placement.
 
 #### Scenario: Empty list uses the shared page state
 

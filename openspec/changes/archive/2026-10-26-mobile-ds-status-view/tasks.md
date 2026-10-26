@@ -236,13 +236,14 @@ Gallery story ids for the conductor (`timecalendar-dev://developer/gallery/<id>`
 Check `status-view--long-strings` at `accessibility-extra-extra-extra-large` (iOS) and font scale
 2.0 (Android): starts below the header, scrolls to the last action, no artwork.
 
-- [ ] 10.1 iOS simulator pass (conductor): the stories above in light and dark at the default size
+- [x] 10.1 iOS simulator pass (conductor): the stories above in light and dark at the default size
       and AX5 (reopen after a size change); migrated screens: school picker (loading, no results,
       error), group picker, export guide loading/error, import progress and failure, QR failure,
       user calendars empty, event details loading/not found, timezone no results. Record findings
       in the PR; fix defects in this branch.
 - [ ] 10.2 Android pass (conductor, Windows host via `ssh pc`, never on the Mac): same stories and
-      screens, light/dark, font scale 1.0 and 2.0. Record findings in the PR.
+      screens, light/dark, font scale 1.0 and 2.0. Record findings in the PR. Not run: `ssh pc`
+      was unreachable and no Android device was attached; carried in the screen-reader inbox note.
 - [ ] 10.3 CI green on the PR (`test-mobile` with coverage, `test-mobile-timezones`, lint).
 - [ ] 10.4 Real VoiceOver and TalkBack pass on status announcements, loading busy, and field-error
       hints (HUMAN: see inbox/2026-10-26-mobile-ds-status-view-screen-reader-pass.md)

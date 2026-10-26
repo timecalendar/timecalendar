@@ -24,6 +24,11 @@ A real VoiceOver (iOS) and TalkBack (Android) pass, in French, on a development 
    after submitting an invalid email: focusing the field reads its label, its value, then the
    error (iOS hint; Android hint). Clearing the error removes it from the field's reading.
 
+5. **Android visual pass and live-region insertion.** On Android at font scale 1.0 and 2.0, light
+   and dark, open every `status-view--*` story and the migrated screens. With TalkBack on, start
+   the school picker with no network: the loading-to-error switch inserts a new live-region node,
+   and that node must be announced. Do the same on the environment recovery screen.
+
 ## Why
 
 Jest proves declared semantics (roles, `busy`, the hint string, announcer calls). It cannot prove
@@ -38,4 +43,4 @@ failure is fixed in `src/design/status/status-view.tsx`, `src/hooks/use-error-an
 
 ## Blocks
 
-Nothing. Task 10.4 of `mobile-ds-status-view` closes when items 1–4 pass on both platforms.
+Nothing. Task 10.4 of `mobile-ds-status-view` closes when items 1–5 pass on both platforms.

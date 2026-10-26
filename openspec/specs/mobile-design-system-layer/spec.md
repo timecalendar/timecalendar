@@ -18,7 +18,7 @@ below `@/design/` other than the gallery entry where that entry is allowed.
 
 #### Scenario: A screen imports a primitive
 
-- **WHEN** a feature screen needs `Button`, `Icon`, `ThemedText`, `RootPage` or `EmptyState`
+- **WHEN** a feature screen needs `Button`, `Icon`, `ThemedText`, `RootPage` or `StatusView`
 - **THEN** it imports it from `@/design` and lint reports no error
 
 #### Scenario: A feature deep-imports a primitive file

@@ -147,7 +147,7 @@ contain its uid or title), so the details screen is never a one-way trap.
 
 The app SHALL provide a presentational hidden-events management screen and a deep-linkable thin root route reached from Settings. The screen SHALL list name-hidden titles and uid-hidden events, resolving each uid to its current synced event title and time; a uid that no longer resolves SHALL remain omitted for Flutter parity. Every rendered entry SHALL retain its accessible un-hide control and write-failure notice.
 
-After the reactive hidden set resolves to no rendered entries, the screen SHALL use the shared full-screen `EmptyState` with the locally bundled, theme-paired unDraw “No data” artwork and a stable `hidden-events-empty` selector. Its English title SHALL read exactly “No hidden events” and caption “Events you hide will appear here.” Its French title SHALL read exactly “Aucun événement masqué” and caption “Les événements que vous masquez apparaîtront ici.” The title and caption SHALL carry the complete accessible meaning without relying on the decorative image.
+After the reactive hidden set resolves to no rendered entries, the screen SHALL use the shared `StatusView` (`kind="empty"`, `presentation="section"` as its list empty slot) with the locally bundled, theme-paired unDraw “No data” artwork and a stable `hidden-events-empty` selector. Its English title SHALL read exactly “No hidden events” and caption “Events you hide will appear here.” Its French title SHALL read exactly “Aucun événement masqué” and caption “Les événements que vous masquez apparaîtront ici.” The title and caption SHALL carry the complete accessible meaning without relying on the decorative image.
 
 #### Scenario: The management screen lists hidden entries with un-hide controls
 
