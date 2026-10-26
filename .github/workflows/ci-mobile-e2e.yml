@@ -363,6 +363,7 @@ jobs:
           [ -n "$DEVICE_UDID" ] || { echo 'No available iPhone simulator selected' >&2; exit 1; }
           echo "Selected simulator: name=$DEVICE_NAME udid=$DEVICE_UDID runtime=$DEVICE_RUNTIME"
           xcrun simctl boot "$DEVICE_UDID" || true
+          "$GITHUB_WORKSPACE/mobile/e2e/quiesce-ios-simulator.sh" "$DEVICE_UDID"
           APP="$(ls -d build/Build/Products/Release-iphonesimulator/*.app | head -n1)"
           xcrun simctl install "$DEVICE_UDID" "$APP"
 
@@ -378,6 +379,7 @@ jobs:
         run: |
           ./mobile/e2e/test_run_e2e.sh
           ./mobile/e2e/test_ci_mobile_e2e.sh
+          ./mobile/e2e/test_quiesce_ios_simulator.sh
 
       # --native: server from source against the natively-provisioned Postgres/Redis.
       # The harness gives each top-level YAML a fresh Maestro/XCTest lifecycle and

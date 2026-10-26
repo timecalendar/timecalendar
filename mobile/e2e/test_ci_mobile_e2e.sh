@@ -174,6 +174,24 @@ assert_present '--no-daemon'
 assert_present '--max-workers=2'
 assert_present '-Xmx3072m -XX:MaxMetaspaceSize=1024m'
 assert_present './mobile/e2e/run_e2e.sh --native --startup-attempts 4'
+
+ios_boot_block="$(step_block e2e-mobile-ios 'Boot a simulator and install the app')"
+[ -n "$ios_boot_block" ] || fail "missing workflow step 'Boot a simulator and install the app' in job 'e2e-mobile-ios'"
+quiesce_call='"$GITHUB_WORKSPACE/mobile/e2e/quiesce-ios-simulator.sh" "$DEVICE_UDID"'
+assert_block_count 1 "$ios_boot_block" "$quiesce_call" 'iOS boot step'
+[ "$(grep -cxF -- "          $quiesce_call" <<< "$ios_boot_block" || true)" -eq 1 ] || \
+  fail 'quiesce call must stand alone so its failure fails the step'
+line_of() {
+  grep -nF -- "$1" <<< "$ios_boot_block" | head -n1 | cut -d: -f1
+}
+boot_line="$(line_of 'xcrun simctl boot "$DEVICE_UDID"')"
+quiesce_line="$(line_of "$quiesce_call")"
+install_line="$(line_of 'xcrun simctl install "$DEVICE_UDID"')"
+[ -n "$boot_line" ] && [ -n "$install_line" ] && \
+  [ "$boot_line" -lt "$quiesce_line" ] && [ "$quiesce_line" -lt "$install_line" ] || \
+  fail 'iOS simulator must be quiesced after boot and before install'
+assert_block_present "$(step_block e2e-mobile-ios 'Test mobile E2E harness')" \
+  './mobile/e2e/test_quiesce_ios_simulator.sh' 'iOS harness step'
 assert_absent 'for attempt in 1 2 3 4'
 
 assert_failure_artifact() {
@@ -196,6 +214,7 @@ assert_baseline() {
 assert_baseline '- ".github/workflows/ci-mobile-e2e.yml"'
 assert_baseline './mobile/e2e/test_run_e2e.sh'
 assert_baseline './mobile/e2e/test_ci_mobile_e2e.sh'
+assert_baseline './mobile/e2e/test_quiesce_ios_simulator.sh'
 
 expect_mutation_failure() {
   local label="$1" expression="$2" mutant
@@ -221,6 +240,9 @@ if [ "$RUN_MUTATIONS" = 1 ]; then
   expect_mutation_failure continue-on-error 's/(  e2e-mobile-android:\n    name: Run mobile E2E \(Android\)\n)/${1}    continue-on-error: true\n/'
   expect_mutation_failure should-run-output 's/(      target_sha: \$\{\{ steps\.select\.outputs\.target_sha \}\}\n)/${1}      should_run: \${{ steps.select.outputs.should_run }}\n/'
   expect_mutation_failure failure-artifact 's/(name: Upload Maestro debug output\n        )if: failure\(\)/${1}if: always()/'
+  expect_mutation_failure ios-quiesce-removed 's/\n[^\n]*quiesce-ios-simulator\.sh[^\n]*//'
+  expect_mutation_failure ios-quiesce-neutralized 's/(quiesce-ios-simulator\.sh" "\$DEVICE_UDID")/${1} || true/'
+  expect_mutation_failure ios-quiesce-after-install 's/(\n[^\n]*quiesce-ios-simulator\.sh[^\n]*)(\n[^\n]*APP=[^\n]*\n[^\n]*xcrun simctl install[^\n]*)/${2}${1}/'
 fi
 
 echo '[test_ci_mobile_e2e] PASS'

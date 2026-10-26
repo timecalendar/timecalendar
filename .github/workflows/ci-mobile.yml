@@ -35,15 +35,16 @@ jobs:
           cache: npm
           cache-dependency-path: mobile/package-lock.json
 
-      # Both proofs are pure bash + node against files in the repo — no device, no
-      # emulator, no Maestro (test_run_e2e.sh drives a fake one on PATH). They live
-      # here, not only in the scheduled/manual native jobs, so that a change to
-      # ci-mobile-e2e.yml or to the E2E harness is checked by a gate that actually
-      # runs on the pull request.
+      # These proofs are pure bash + node against files in the repo — no device, no
+      # emulator, no Maestro (test_run_e2e.sh drives a fake one on PATH, and
+      # test_quiesce_ios_simulator.sh drives a fake xcrun). They live here, not only
+      # in the scheduled/manual native jobs, so that a change to ci-mobile-e2e.yml or
+      # to the E2E harness is checked by a gate that actually runs on the pull request.
       - name: Check the native E2E harness and workflow contract
         run: |
           ./mobile/e2e/test_run_e2e.sh
           ./mobile/e2e/test_ci_mobile_e2e.sh
+          ./mobile/e2e/test_quiesce_ios_simulator.sh
 
       - name: Install dependencies
         working-directory: ./mobile
