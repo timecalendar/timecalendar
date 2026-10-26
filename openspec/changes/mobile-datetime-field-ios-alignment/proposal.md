@@ -22,7 +22,8 @@ item 7).
     keeps its full-width proposal, so the pills still wrap at accessibility text sizes, and the
     pills hug the leading edge.
   - `accessibilityLabel` becomes the `DatePicker` `title` plus `labelsHidden()`: the label stays
-    hidden visually and SwiftUI keeps it as the control's accessible name.
+    hidden visually and names the picker's SwiftUI container; the inner UIKit picker keeps its
+    system name "Date and Time Picker".
   - Every other iOS prop keeps the community component's behaviour (display style, range, disabled,
     tint, locale/color-scheme/time-zone environment, `testID` on the `DatePicker`, and the
     `onValueChange`-over-`onChange` event contract).
@@ -33,7 +34,7 @@ item 7).
 - The suite-wide Jest mocks gain the SwiftUI `DatePicker` and the `datePickerStyle`,
   `environment` and `labelsHidden` modifiers, so the composed path is exercised in tests.
 - The alignment inbox note is resolved and deleted; item 7 of the screen-reader-pass note
-  describes the picker named by the field label.
+  describes the container-only naming and asks the VoiceOver tester what is spoken.
 
 ## Capabilities
 
@@ -44,7 +45,7 @@ None.
 ### Modified Capabilities
 
 - `mobile-design-system-text-field`: on iOS the date-time field's picker is leading-aligned with
-  its label and error, and the field label is the picker's accessible name.
+  its label and error, and the field label is the picker's hidden SwiftUI title.
 
 ## Impact
 

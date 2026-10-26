@@ -30,7 +30,9 @@ A real VoiceOver (iOS) and TalkBack (Android) pass, in French, on a development 
    "09:30, 2 Jan 2030") with its date and time buttons, and `@expo/ui` exposes nothing that renames
    it. With VoiceOver on, record which of these stops VoiceOver lands on and what it speaks; if the
    label is not spoken with the picker, the remaining fix is an `@expo/ui` change, not a field
-   change.
+   change. Also record whether VoiceOver reads the label twice (the visible label text stop, then
+   the container named by the label) and whether that pair is redundant enough to hide the label
+   text stop from VoiceOver.
 8. **Large text.** At the largest size, `text-field--long-strings` and
    `date-time-field--long-strings`: label, input text, helper and error wrap without clipping; the
    multiline field shows at least four lines.

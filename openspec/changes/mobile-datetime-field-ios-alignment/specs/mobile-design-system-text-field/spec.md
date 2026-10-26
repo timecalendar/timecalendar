@@ -21,7 +21,7 @@ SHALL be unchanged.
   `accessibility-extra-extra-extra-large`
 - **THEN** the picker controls start at the leading edge and no control is clipped
 
-#### Scenario: The picker is named by the label
+#### Scenario: The picker takes the label as its hidden title
 
 - **WHEN** the date-time field with the label "Starts" renders on iOS
 - **THEN** the native picker receives "Starts" as its hidden SwiftUI title

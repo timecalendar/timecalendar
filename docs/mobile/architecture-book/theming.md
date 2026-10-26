@@ -242,7 +242,8 @@ The error stays at full opacity when the field is disabled.
   read the same. It shares `TextField`'s label, error and disabled chrome (`FieldChrome`, a leaf
   export of `text-field.tsx`; the box border and inset live in `field-box.ts`). iOS renders the chrome `DateTimePicker` inline with `alignment="leading"` and
   the field label as its `accessibilityLabel`, so the pills start under the label, wrap at
-  accessibility text sizes and the picker is named by the label (gate:
+  accessibility text sizes and the picker's SwiftUI container is named by the label (the inner
+  UIKit picker keeps its system name, [accessibility.md](./accessibility.md)) (gate:
   `date-time-field.test.tsx`); Android renders a
   row drawn like a resting `TextField` that opens the date dialog, then the time dialog, and
   commits both together; becoming disabled while a dialog is open closes it without committing.

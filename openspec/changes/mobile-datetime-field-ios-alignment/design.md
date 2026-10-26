@@ -79,6 +79,11 @@ swaps to the `accessibilityLabel(label)` modifier (no title). The swap is one pl
 `date-time-picker-ios.tsx`; the Jest assertion follows whichever mapping ships, and the Book and
 inbox note state the shipped mapping.
 
+Measured on the iOS 26.5 simulator: `title` + `labelsHidden()` names the SwiftUI container by the
+label; the inner UIKit element stays "Date and Time Picker". The `accessibilityLabel(label)`
+modifier only names the container a second time ("Starts, Starts"), so `title` + `labelsHidden()`
+ships.
+
 ### D4 — `testID` stays on the `DatePicker`
 
 As in the community path: the `DatePicker` is an element, so L12 allows it, and Maestro/Jest keep
