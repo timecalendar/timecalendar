@@ -386,11 +386,16 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
     Android: one 20dp-rounded `errorContainer` ListItem (`titleMedium` title, `bodyMedium` message in
     `onErrorContainer`) with an optional trailing TextButton. Both announce `title. message` through
     the platform announcer on mount. Settled or in-progress states render nothing.
-  - **Identifiers:** on iOS, `NativeSettingsSection` and `NativeSettingsAlert` take a `testID` but
-    apply no accessibility identifier, because SwiftUI applies a Section's identifier to every row
-    in it and replaces the rows' own. Rows, switches, alert messages, and alert actions keep their
-    identifiers, so Maestro selects rows and never sections on iOS. Android sections and alerts
-    carry their `testID`. Pinned by `native-settings.test.tsx`.
+  - **Identifiers:** on iOS no chrome SwiftUI container (Form, Section, Group, stacks,
+    BottomSheet) carries an accessibility identifier, because SwiftUI applies a container's
+    identifier to each child and replaces theirs. Identifiers sit on leaves: rows, switches,
+    buttons, fields, and text. `NativeSettingsSection` and `NativeSettingsAlert` take a `testID` but
+    apply none on iOS, so Maestro selects rows and never sections; Android sections and alerts
+    carry their `testID` (Compose `testTag` does not cascade). The text-entry dialog puts
+    `ids.dialog` on its title text on iOS and on the dialog surface on Android, so one selector
+    finds it on both, while cancel, submit and the field keep their own ids. Enforced by lint L12
+    ([lint-format.md](./lint-format.md)) and the throwing SwiftUI container mocks; pinned by
+    `native-settings.test.tsx` and `native-text-entry-dialog.test.tsx`.
   - **`NativeSettingsHeader`** (`chrome/native-settings-header.tsx`) is the centered brand header
     for a page's top: the 88pt app icon (continuous rounded square on iOS, circle on Android), the
     app name as a `ThemedText` heading, a tagline, optional secondary detail, and an optional

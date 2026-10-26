@@ -604,10 +604,10 @@ of concerns holds. The `ship` skill is the solo equivalent of the `/ship` comman
 
 ## 10. CI pipelines (`.github/workflows/`)
 
-| Workflow                | Trigger                                                                               | What it gates                                                                                                                                                                                                                                                                                                                                                                    |
-| ----------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`ci-mobile.yml`**     | push touching `mobile/**` or `openapi/**`                                             | The fast `test-mobile` job: **generated-client drift check** (`npm run generate` must produce no diff in `src/api/generated`), generate Expo type decls (`npx expo customize tsconfig.json`), **`tsc --noEmit`**, **`npm run lint`** (`--max-warnings 0`), **`npm test -- --coverage`** (coverage gate in config). This is the gate the conductor watches for `mobile/` changes. |
-| **`ci-mobile-e2e.yml`** | daily when relevant changes landed on `main`; manual dispatch with a required ref/SHA | Informational native Maestro health on Android and iOS. Preparation compares the preceding scheduled attempt, resolves one SHA, and skips native allocation when nothing relevant changed. Slow (~20–30 min/platform); builds its own server image.                                                                                                                              |
+| Workflow                | Trigger                                                  | What it gates                                                                                                                                                                                                                                                                                                                                                                    |
+| ----------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`ci-mobile.yml`**     | push touching `mobile/**` or `openapi/**`                | The fast `test-mobile` job: **generated-client drift check** (`npm run generate` must produce no diff in `src/api/generated`), generate Expo type decls (`npx expo customize tsconfig.json`), **`tsc --noEmit`**, **`npm run lint`** (`--max-warnings 0`), **`npm test -- --coverage`** (coverage gate in config). This is the gate the conductor watches for `mobile/` changes. |
+| **`ci-mobile-e2e.yml`** | daily on `main`; manual dispatch with a required ref/SHA | Informational native Maestro health on Android and iOS. Preparation resolves one SHA; every scheduled and manual run builds the server image and runs both platforms against it, with no skip. Slow (~20–30 min/platform); builds its own server image.                                                                                                                          |
 
 The native workflow pins and prints Maestro 2.8.0 in both jobs. Android bounds
 the Release Gradle build to 3072 MiB heap, 1024 MiB Metaspace, two workers, and
@@ -615,12 +615,10 @@ no daemon. iOS prints the Xcode path/version and available plus selected
 simulator name, UDID, and runtime. Local shell/static checks prove harness and
 workflow control flow, including the complete `APP_VARIANT=development`,
 `BACKEND_ENVIRONMENT_CAPABILITY=development`, and platform-local URL contract in
-every prebuild and release-compilation step. The scheduled controller treats
-`mobile/**`, `openapi/**`, `server/**`, the shared E2E lifecycle/key generator,
-`.nvmrc`, and its own workflow as relevant. It compares against the preceding
-scheduled run's `head_sha` regardless of conclusion; no predecessor runs both
-platforms, while an unusable boundary fails visibly. Manual dispatch resolves the
-required ref once and always selects both platforms. All invocations serialize
+every prebuild and release-compilation step. No job or step carries a condition
+other than `if: failure()` on diagnostics, so a scheduled run's conclusion is the
+lane's state (ADR 071). Manual dispatch resolves the required ref once and runs
+both platforms. All invocations serialize
 without cancellation, and failures retain each platform's Maestro and server-log
 artifacts. These results are diagnostic maintenance evidence, not ordinary
 feature-merge proof.

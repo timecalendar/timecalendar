@@ -1,3 +1,26 @@
+## 2026-10-26 — Honest E2E lane, SwiftUI identifiers, picker events
+
+- The native E2E workflow runs Android and iOS on every scheduled day and every manual dispatch;
+  no job or step is skipped, so a run's conclusion is the lane's state. `test_ci_mobile_e2e.sh`
+  rejects job conditions, step conditions other than `if: failure()`, `continue-on-error` and
+  change-detection outputs ([testing.md](./testing.md), ADR
+  [071](./decisions/071-native-e2e-runs-every-scheduled-day.md); ADR 055 superseded in part).
+- L12: no accessibility identifier on a SwiftUI container (`local/no-swiftui-container-identifier`);
+  the suite-wide SwiftUI container mocks throw on one ([lint-format.md](./lint-format.md),
+  [theming.md](./theming.md) → Identifiers).
+- The iOS text-entry dialog puts `ids.dialog` on its title text, so cancel, submit and the field
+  keep their own ids (`native-text-entry-dialog.test.tsx`).
+- The chrome `DateTimePicker` event describes the Date it reports on Android, and the suite-wide
+  Android date mock confirms 5 January with a Compose-shaped event (`date-time-picker.test.tsx`,
+  `date-time-picker.gallery.test.tsx`, [testing.md](./testing.md)).
+- L11 covers the default, namespace and re-export forms, the `fp` barrel, the
+  `getTimezoneOffset` sub-path exports and dynamic `import()` of `date-fns-tz`, pinned through the
+  real config by `eslint-l11.contract.test.ts`
+  ([lint-format.md](./lint-format.md)).
+- `helpers/confirm-ios-deep-link.yaml` taps "Open" until the iOS "Open in …?" prompt is gone
+  (up to five times): a tap that lands while the prompt animates in is dropped
+  (`maestro-selectors.test.ts`).
+
 ## 2026-10-26 — TextField
 
 - `TextField` (`@/design`) is the one text field: a required visible `label`, optional `helper`,

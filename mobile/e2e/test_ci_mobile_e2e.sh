@@ -88,7 +88,7 @@ trigger_block="$(top_level_block on)"
 permissions_block="$(top_level_block permissions)"
 concurrency_block="$(top_level_block concurrency)"
 prepare_block="$(job_block prepare)"
-select_step_block="$(step_block prepare 'Select execution decision')"
+select_step_block="$(step_block prepare 'Resolve native E2E target')"
 build_server_block="$(job_block build-server)"
 android_block="$(job_block e2e-mobile-android)"
 ios_block="$(job_block e2e-mobile-ios)"
@@ -113,45 +113,41 @@ assert_block_present "$concurrency_block" '  group: ci-mobile-e2e' 'workflow con
 assert_block_present "$concurrency_block" '  cancel-in-progress: false' 'workflow concurrency'
 
 [ -n "$prepare_block" ] || fail 'missing prepare job'
-for output in should_run target_sha comparison_base reason; do
-  assert_block_present "$prepare_block" "      $output: \${{ steps.select.outputs.$output }}" 'prepare outputs'
-done
+prepare_outputs="$(awk '
+  /^    outputs:$/ { inside = 1; next }
+  inside && /^    [^ ]/ { exit }
+  inside { print }
+' <<< "$prepare_block")"
+[ "$prepare_outputs" = "      target_sha: \${{ steps.select.outputs.target_sha }}" ] || \
+  fail "prepare must output exactly target_sha, got: $prepare_outputs"
 assert_block_present "$prepare_block" '          fetch-depth: 0' 'prepare checkout'
 assert_block_present "$prepare_block" "          ref: \${{ github.event_name == 'workflow_dispatch' && inputs.ref || 'main' }}" 'prepare checkout'
-assert_block_present "$prepare_block" 'github.rest.actions.listWorkflowRuns' 'scheduled-run lookup'
-assert_block_present "$prepare_block" "                event: 'schedule'" 'scheduled-run lookup'
-assert_block_present "$prepare_block" "                branch: 'main'" 'scheduled-run lookup'
-assert_block_present "$prepare_block" '.filter((run) => run.run_number < currentRunNumber)' 'preceding-run selection'
-assert_block_present "$prepare_block" 'previous?.head_sha' 'preceding-run boundary'
+[ -n "$select_step_block" ] || fail "missing prepare step 'Resolve native E2E target'"
+assert_block_present "$select_step_block" '        id: select' 'target resolution step'
 assert_block_present "$prepare_block" "          MANUAL_REF: \${{ inputs.ref }}" 'manual ref environment'
 assert_block_present "$prepare_block" 'target_sha="$(git rev-parse HEAD^{commit})"' 'immutable target resolution'
-assert_block_present "$prepare_block" 'Manual dispatch requires a non-empty ref input' 'manual validation'
 manual_branch="$(awk '
   /if \[ "\$EVENT_NAME" = '\''workflow_dispatch'\'' \]; then/ { inside = 1 }
   inside { print }
   inside && /^[[:space:]]*fi$/ { exit }
 ' <<< "$select_step_block")"
-[ -n "$manual_branch" ] || fail 'missing manual dispatch decision branch'
-assert_block_count 1 "$manual_branch" "echo 'should_run=true' >> \"\$GITHUB_OUTPUT\"" 'manual dispatch decision'
-assert_block_present "$prepare_block" 'No preceding scheduled attempt; both platforms selected' 'first-run diagnostic'
-assert_block_present "$prepare_block" 'git cat-file -e "$PREVIOUS_SHA^{commit}"' 'comparison validation'
-assert_block_present "$prepare_block" 'git diff --name-only "$PREVIOUS_SHA" "$target_sha"' 'scheduled comparison'
-assert_block_present "$prepare_block" 'No relevant changes; native allocation skipped' 'skip diagnostic'
-assert_absent 'conclusion:'
-assert_absent '24 hour'
-assert_absent '24-hour'
-assert_absent 'success()'
-
-for relevant_path in 'mobile/*' 'openapi/*' 'server/*' 'ci/e2e-server.sh' \
-  'ci/generate-dummy-firebase-key.sh' '.nvmrc' '.github/workflows/ci-mobile-e2e.yml'; do
-  assert_block_present "$prepare_block" "$relevant_path" 'relevant path set'
+[ -n "$manual_branch" ] || fail 'missing manual dispatch validation branch'
+assert_block_present "$manual_branch" 'Manual dispatch requires a non-empty ref input' 'manual validation'
+for forbidden in should_run comparison_base listWorkflowRuns 'git diff --name-only' \
+  'native allocation skipped' 'continue-on-error' 'PREVIOUS_SHA' 'conclusion:' \
+  '24 hour' '24-hour' 'success()'; do
+  assert_absent "$forbidden"
 done
+
+! grep -Eq '^    if:' "$WORKFLOW" || fail "job-level condition found: $(grep -E '^    if:' "$WORKFLOW" | head -n1)"
+while IFS= read -r condition; do
+  [ "$condition" = '        if: failure()' ] || fail "step condition other than 'if: failure()': $condition"
+done < <(grep -E '^ +if:' "$WORKFLOW" || true)
 
 assert_downstream_contract() {
   local job="$1" block="$2" expected_needs="$3"
   [ -n "$block" ] || fail "missing downstream job: $job"
   assert_block_present "$block" "$expected_needs" "$job dependency"
-  assert_block_present "$block" "    if: needs.prepare.outputs.should_run == 'true'" "$job condition"
   assert_block_present "$block" '          ref: ${{ needs.prepare.outputs.target_sha }}' "$job checkout"
 }
 
@@ -160,7 +156,6 @@ assert_downstream_contract e2e-mobile-android "$android_block" '    needs: [prep
 assert_downstream_contract e2e-mobile-ios "$ios_block" '    needs: prepare'
 assert_absent '${{ github.sha }}'
 assert_count 3 '          ref: ${{ needs.prepare.outputs.target_sha }}'
-assert_count 3 "    if: needs.prepare.outputs.should_run == 'true'"
 assert_block_count 3 "$build_server_block" '${{ needs.prepare.outputs.target_sha }}' build-server
 assert_block_count 2 "$android_block" '${{ needs.prepare.outputs.target_sha }}' e2e-mobile-android
 assert_block_count 1 "$ios_block" '${{ needs.prepare.outputs.target_sha }}' e2e-mobile-ios
@@ -217,12 +212,14 @@ if [ "$RUN_MUTATIONS" = 1 ]; then
   mutation_dir="$(mktemp -d)"
   trap 'rm -rf "$mutation_dir"' EXIT
   expect_mutation_failure trigger 's/  schedule:/  schedule_removed:/'
-  expect_mutation_failure manual-should-run 's/(if \[ "\$EVENT_NAME" = '\''workflow_dispatch'\'' \]; then.*?)echo '\''should_run=true'\'' >> "\$GITHUB_OUTPUT"/${1}echo '\''should_run=false'\'' >> "\$GITHUB_OUTPUT"/s'
-  expect_mutation_failure previous-boundary 's/previous\?\.head_sha/previous?.updated_at/'
-  expect_mutation_failure first-run 's/No preceding scheduled attempt; both platforms selected/No boundary available/'
   expect_mutation_failure android-platform 's/  e2e-mobile-android:/  e2e-mobile-android-removed:/'
   expect_mutation_failure ios-platform 's/  e2e-mobile-ios:/  e2e-mobile-ios-removed:/'
   expect_mutation_failure preparation-dependency 's/    needs: \[prepare, build-server\]/    needs: build-server/'
+  expect_mutation_failure job-condition 's/(  e2e-mobile-ios:\n    name: Run mobile E2E \(iOS\)\n)/${1}    if: needs.prepare.outputs.should_run == '\''true'\''\n/'
+  expect_mutation_failure schedule-only-skip 's/(  build-server:\n    name: Build server image\n)/${1}    if: github.event_name == '\''workflow_dispatch'\''\n/'
+  expect_mutation_failure step-condition 's/(  e2e-mobile-ios:.*?      - name: Run mobile E2E flows\n)/${1}        if: github.event_name != '\''schedule'\''\n/s'
+  expect_mutation_failure continue-on-error 's/(  e2e-mobile-android:\n    name: Run mobile E2E \(Android\)\n)/${1}    continue-on-error: true\n/'
+  expect_mutation_failure should-run-output 's/(      target_sha: \$\{\{ steps\.select\.outputs\.target_sha \}\}\n)/${1}      should_run: \${{ steps.select.outputs.should_run }}\n/'
   expect_mutation_failure failure-artifact 's/(name: Upload Maestro debug output\n        )if: failure\(\)/${1}if: always()/'
 fi
 

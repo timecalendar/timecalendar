@@ -82,7 +82,6 @@ export function NativeTextEntryDialogIos({
             presentationDragIndicator("visible"),
             interactiveDismissDisabled(pending),
             tint(theme.primary),
-            accessibilityIdentifier(ids.dialog),
           ]}
         >
           <VStack spacing={0}>
@@ -101,7 +100,14 @@ export function NativeTextEntryDialogIos({
                 ]}
               />
               <Spacer />
-              <Text modifiers={[font({ textStyle: "headline" })]}>{title}</Text>
+              <Text
+                modifiers={[
+                  font({ textStyle: "headline" }),
+                  accessibilityIdentifier(ids.dialog),
+                ]}
+              >
+                {title}
+              </Text>
               <Spacer />
               {pending ? (
                 <ProgressView

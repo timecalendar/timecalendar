@@ -7,6 +7,8 @@
 // on the JS thread, where the call succeeds. Only a device does — which is why
 // the rule exists.
 
+const { findVariable } = require("./scope")
+
 const WORKLET_CALLBACK_CALLEES = new Set([
   "createWorkletRuntime",
   "runOnUI",
@@ -91,16 +93,6 @@ function isWorkletCallbackArgument(node) {
     name !== null &&
     (WORKLET_CALLBACK_CALLEES.has(name) || WORKLET_CALLBACK_METHODS.has(name))
   )
-}
-
-function findVariable(scope, name) {
-  for (let current = scope; current; current = current.upper) {
-    const variable = current.variables.find((entry) => entry.name === name)
-    if (variable) {
-      return variable
-    }
-  }
-  return null
 }
 
 function declaredFunction(definition) {

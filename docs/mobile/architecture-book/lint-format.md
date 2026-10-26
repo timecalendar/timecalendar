@@ -9,8 +9,8 @@ The exact rules and their options live in `mobile/eslint.config.js` (named block
 `timecalendar/design-tests`, `timecalendar/design-fixtures`, `timecalendar/chrome-fixtures`,
 `timecalendar/icon-seam`, `timecalendar/raw-button`, `timecalendar/ad-hoc-status`,
 `timecalendar/raw-text-input`,
-`timecalendar/calendar-sources-is-a-leaf`, `timecalendar/storage-seams`, and
-`timecalendar/tests`). The config is the source of
+`timecalendar/calendar-sources-is-a-leaf`, `timecalendar/storage-seams`,
+`timecalendar/swiftui-identifiers`, and `timecalendar/tests`). The config is the source of
 truth; this file carries the caveats the config can't (R-1).
 
 ## Toolchain
@@ -262,13 +262,24 @@ truth; this file carries the caveats the config can't (R-1).
   `jest.mock("expo-symbols", …)` factories are not imports. See
   [accessibility.md](./accessibility.md) → Icon scaling and ADR
   [065](./decisions/065-icon-text-scaling.md).
-- **L11 — no device-zone-dependent offsets** (`zoneOffsetTrapImportPath`, appended to `paths` by
-  the `banZoneOffsetTrap` flag of `restrictedImports`): `getTimezoneOffset` is banned as a named
-  import from `date-fns-tz` everywhere. It reads a Date's device-local fields as the zone's wall
-  clock, so outside UTC it returns the offset at a different instant. Zone offsets come from
-  `zoneOffsetMinutes(instant, zone)` in `@/features/calendar/data` (`day-key.ts`), which formats the
-  instant itself. `formatInTimeZone`, `toZonedTime` and `fromZonedTime` stay allowed. No file is
-  exempt. Same static-import-only caveat as raw-fetch. See [testing.md](./testing.md) → Time zones.
+- **L11 — no device-zone-dependent offsets** (`zoneOffsetTrapImportPaths` and
+  `zoneOffsetTrapImportPattern`, appended to `paths` and `patterns` by the `banZoneOffsetTrap` flag
+  of `restrictedImports`, plus two `ImportExpression` selectors in `restrictedSyntax`):
+  `getTimezoneOffset` from `date-fns-tz` is banned everywhere, in every form that can reach it.
+  From the `date-fns-tz` and `date-fns-tz/fp` barrels: named and aliased imports, the default
+  import, the namespace import (`import * as tz` reported for `tz.getTimezoneOffset`),
+  `export { getTimezoneOffset } from` and `export * (as tz) from` re-exports. The
+  `date-fns-tz/getTimezoneOffset` and `date-fns-tz/fp/getTimezoneOffset` sub-path exports are banned
+  outright. Any dynamic `import()` of a `date-fns-tz` path, string or template literal, is banned
+  so the static rules can see it. `require` is already an error under
+  `@typescript-eslint/no-require-imports`. Other helper sub-paths (`date-fns-tz/formatInTimeZone`, …)
+  stay allowed. It reads a Date's device-local fields as the
+  zone's wall clock, so outside UTC it returns the offset at a different instant. Zone offsets come
+  from `zoneOffsetMinutes(instant, zone)` in `@/features/calendar/data` (`day-key.ts`), which
+  formats the instant itself. `formatInTimeZone`, `toZonedTime` and `fromZonedTime` stay allowed.
+  No file is exempt. `mobile/eslint-l11.contract.test.ts` pins every form, and the allowed helpers,
+  by linting probes through the real `eslint.config.js`. See [testing.md](./testing.md) → Time
+  zones.
 - **Buttons — raw touchables banned** (`rawTouchablesImportPath`, appended to `paths` by
   `restrictedImports` with no flag): `Button`, `TouchableOpacity`, `TouchableHighlight`,
   `TouchableWithoutFeedback` and `TouchableNativeFeedback` are banned as named imports from
@@ -333,6 +344,24 @@ truth; this file carries the caveats the config can't (R-1).
   `require`, and a `TextInput` reached through another module's re-export is invisible to it. Inject-and-revert proof: a
   migrated file added to the allowlist fails the contract test naming it; a `TextInput` import in
   `src/features/feedback/ui/feedback-screen.tsx` fails `npm run lint`.
+- **L12 — no identifiers on SwiftUI containers** (`local/no-swiftui-container-identifier` in the
+  `timecalendar/swiftui-identifiers` block, `src/**`): SwiftUI applies an accessibility identifier
+  set on a container to every child and replaces the children's own, so a row inside an identified
+  `Section` reads as the section. The rule reports a `testID` or an `accessibilityIdentifier`
+  modifier on an `@expo/ui/swift-ui` container. A container is a view that lays out or groups
+  children and is not an accessibility element; the list (`Form`, `Section`, `Group`, the stacks,
+  `BottomSheet`, `List`, `ScrollView`, …) lives at the top of
+  `mobile/tools/eslint-rules/no-swiftui-container-identifier.js`. Controls and labelled rows
+  (`Button`, `Toggle`, `LabeledContent`, `Text`, `TextField`, `ProgressView`, …) are elements and
+  keep their identifier. `Host` may keep a `testID`, which React Native applies to the UIKit hosting
+  view outside SwiftUI, but not an identifier modifier, which lands on the SwiftUI root. The rule
+  resolves named, aliased and namespace imports of both `@expo/ui/swift-ui` and its `modifiers`
+  subpath, and searches the `modifiers` expression through array literals, spreads,
+  conditional/logical expressions and a same-file `const` initializer. **Caveat (R-1):** it cannot
+  follow an identifier passed through `{...props}` or a modifier array built in another module; the
+  suite-wide Jest mock throws for those ([testing.md](./testing.md)). Re-check the container list
+  against the `@expo/ui/swift-ui` exports on each SDK bump. RuleTester cases live in
+  `no-swiftui-container-identifier.test.js`. See [theming.md](./theming.md) → Identifiers.
 - **Generated code** (`src/api/generated/`) is exempt from hand-written-code rules but
   still Prettier-formatted; Orval's `afterAllFilesWrite: prettier --write` keeps regen
   output aligned with the committed format.

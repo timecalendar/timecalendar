@@ -284,12 +284,13 @@ describe("Maestro journey contracts", () => {
     ).toBe(true)
   })
 
-  it("waits for the iOS deep-link prompt before its optional confirm", () => {
+  it("waits for the iOS deep-link prompt and confirms until it is gone", () => {
     expect(
       containsOrdered(flow("helpers/confirm-ios-deep-link.yaml"), [
         "platform: iOS",
         'visible: "Open in .*"',
         "optional: true",
+        'while:\n            visible: "Open in .*"',
         'text: "Open"',
         "optional: true",
       ]),

@@ -41,24 +41,44 @@ describe("NativeTextEntryDialog on iOS", () => {
     const view = await render(<NativeTextEntryDialog {...props} />)
 
     expect(screen.getByTestId("native-text-entry-dialog-ios-host")).toBeTruthy()
+    const groupModifiers = () =>
+      screen.getByTestId("swiftui-group").props.modifiers as {
+        $type: string
+        value: unknown
+      }[]
     const modifierOf = (type: string) =>
-      (
-        screen.getByTestId(props.ids.dialog).props.modifiers as {
-          $type: string
-          value: unknown
-        }[]
-      ).find((modifier) => modifier.$type === type)?.value
+      groupModifiers().find((modifier) => modifier.$type === type)?.value
     expect(modifierOf("presentationDetents")).toEqual(["medium", "large"])
     expect(modifierOf("presentationDragIndicator")).toBe("visible")
     expect(modifierOf("tint")).toBe(Colors.light.primary)
     expect(modifierOf("interactiveDismissDisabled")).toBe(false)
     expect(screen.getByText("Rename calendar")).toBeTruthy()
+    expect(
+      groupModifiers().some(
+        (modifier) => modifier.$type === "accessibilityIdentifier",
+      ),
+    ).toBe(false)
 
     await view.rerender(<NativeTextEntryDialog {...props} pending />)
     expect(modifierOf("interactiveDismissDisabled")).toBe(true)
     expect(
       screen.getByTestId(props.ids.cancel).props.accessibilityState.disabled,
     ).toBe(true)
+  })
+
+  it("identifies the title and each control as distinct leaves", async () => {
+    await render(<NativeTextEntryDialog {...props} />)
+
+    expect(screen.getByTestId(props.ids.dialog)).toHaveTextContent(
+      "Rename calendar",
+    )
+    for (const id of [props.ids.cancel, props.ids.submit, props.ids.input]) {
+      expect(id).not.toBe(props.ids.dialog)
+      expect(screen.getAllByTestId(id)).toHaveLength(1)
+    }
+    expect(screen.getByTestId(props.ids.input)).not.toBe(
+      screen.getByTestId(props.ids.submit),
+    )
   })
 
   it("cancels when the sheet is swiped down", async () => {
