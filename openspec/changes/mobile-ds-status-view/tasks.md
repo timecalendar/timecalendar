@@ -159,14 +159,14 @@ why. Docs describe the current state only.
 
 ## 7. Lint (Principle 1)
 
-- [ ] 7.1 Create `tools/eslint-rules/no-ad-hoc-status.js` (D9), register it in
+- [x] 7.1 Create `tools/eslint-rules/no-ad-hoc-status.js` (D9), register it in
       `tools/eslint-rules/index.js`, and `no-ad-hoc-status.test.js` (RuleTester, TSX parser).
       Invalid: `import { ActivityIndicator } from "react-native"`; aliased import;
       `ListEmptyComponent={<View/>}`; `ListEmptyComponent={cond ? <StatusView/> : <ThemedText/>}`;
       `ListEmptyComponent={EmptyThing}`. Valid: `ListEmptyComponent={<StatusView/>}`; a conditional
       of two `StatusView`s; `cond ? <StatusView/> : null`; `ActivityIndicator` from another module.
       Verify: `npx jest tools/eslint-rules/no-ad-hoc-status.test.js`.
-- [ ] 7.2 Add block `timecalendar/ad-hoc-status` to `eslint.config.js` (D9 files/ignores) and
+- [x] 7.2 Add block `timecalendar/ad-hoc-status` to `eslint.config.js` (D9 files/ignores) and
       create `tools/eslint-rules/ad-hoc-status-allowlist.js`: run lint with an empty list after
       §5–§6, list every reported file sorted, each with its removing slice (expected: Activity 5.4,
       environment gate 3.5, dev import 5.7; any other hit means a §5–§6 migration is incomplete).
@@ -175,7 +175,7 @@ why. Docs describe the current state only.
       file to the list (test fails naming it stale); add an `ActivityIndicator` import to
       `src/features/settings/ui/timezone-chooser-screen.tsx` (`npm run lint` fails); revert both.
       Verify: `npx jest tools/eslint-rules` and `npm run lint`.
-- [ ] 7.3 Add `JSXAttribute[name.name='aria-describedby']` with the D9 message to the shared
+- [x] 7.3 Add `JSXAttribute[name.name='aria-describedby']` with the D9 message to the shared
       `restrictedSyntax` list in `eslint.config.js`. Inject-and-revert in a feature file and a test
       file: `npm run lint` fails in both; revert. Verify: `npm run lint`.
 
