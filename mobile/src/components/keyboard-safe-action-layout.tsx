@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef, useState } from "react"
+import { type ReactNode, useContext, useEffect, useRef, useState } from "react"
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -10,6 +10,7 @@ import {
   View,
   type ViewStyle,
 } from "react-native"
+import { SafeAreaInsetsContext } from "react-native-safe-area-context"
 
 import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { headerScrollProps } from "@/components/header-scroll-props"
@@ -45,19 +46,22 @@ export function KeyboardSafeActionLayout({
   const ownerRef = useRef<View>(null)
   const keyboardTopRef = useRef<number | null>(null)
   const [keyboardVerticalOffset, setKeyboardVerticalOffset] = useState(0)
-  const [keyboardInset, setKeyboardInset] = useState(0)
+  const [keyboardOverlap, setKeyboardOverlap] = useState<number | null>(null)
+  // Android measureInWindow starts below the status bar (the visible frame's
+  // top), while keyboardDidShow reports the keyboard top in screen coordinates;
+  // under edge-to-edge the safe-area top is that status bar.
+  const statusBar = useContext(SafeAreaInsetsContext)?.top ?? 0
+  const keyboardInset =
+    keyboardOverlap === null ? 0 : Math.max(0, keyboardOverlap + statusBar)
 
   const measureKeyboardInset = () => {
     ownerRef.current?.measureInWindow((_x, y, _width, height) => {
       const keyboardTop = keyboardTopRef.current
-      if (keyboardTop === null) return
-      setKeyboardInset(Math.max(0, y + height - keyboardTop))
+      if (keyboardTop === null || !Number.isFinite(y + height)) return
+      setKeyboardOverlap(y + height - keyboardTop)
     })
   }
 
-  // KeyboardAvoidingView treats Android's keyboardDidHide screenY as a window Y,
-  // but it is the visible height, leaving the action raised after the keyboard
-  // closes; Android derives the inset in window coordinates itself.
   useEffect(() => {
     if (Platform.OS !== "android") return
     const show = Keyboard.addListener("keyboardDidShow", (event) => {
@@ -66,7 +70,7 @@ export function KeyboardSafeActionLayout({
     })
     const hide = Keyboard.addListener("keyboardDidHide", () => {
       keyboardTopRef.current = null
-      setKeyboardInset(0)
+      setKeyboardOverlap(null)
     })
     return () => {
       show.remove()

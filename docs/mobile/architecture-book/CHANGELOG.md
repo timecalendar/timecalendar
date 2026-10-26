@@ -40,14 +40,15 @@
 - `KeyboardSafeActionLayout` keeps its sibling action region (`ical-url-submit`,
   `personal-event-save`, the onboarding Continue) right above the keyboard. iOS wraps body and
   actions in `KeyboardAvoidingView` (`behavior="height"`) offset by the owner's measured window Y,
-  because the view compares its parent-relative frame with the keyboard's window Y. Android does not
-  use `KeyboardAvoidingView`: its `keyboardDidHide` reports the visible height as `screenY`, not a
-  window Y, so no single static offset is right for both open and close. Android listens to
-  `keyboardDidShow`/`keyboardDidHide` and pads the region by
-  `max(0, ownerWindowY + ownerHeight - keyboardTop)`, recomputed on owner layout while the keyboard
-  is up (a resizing window yields ~0, no double avoidance) and reset to `0` on hide.
-  `keyboard-safe-action-layout.test.tsx` proves the open/close contract on both platforms; the
-  Android Maestro lane exercises the open path.
+  because the view compares its parent-relative frame with the keyboard's window Y. Android pads
+  the region itself and does not use `KeyboardAvoidingView`: there `measureInWindow` starts below
+  the status bar (the visible frame's top) while `keyboardDidShow` reports the keyboard top in
+  screen coordinates, so the padding is `max(0, ownerY + ownerHeight - (keyboardTop - safeAreaTop))`
+  (the safe-area top is the status bar under SDK 56's forced edge-to-edge), recomputed on owner
+  layout while the keyboard is up (a resizing window yields ~0) and `0` after `keyboardDidHide`.
+  `keyboard-safe-action-layout.test.tsx` pins that arithmetic with a modelled status bar; the
+  Android Maestro lane taps the actions with the keyboard open. Neither sees the keyboard window,
+  so the real overlap is a device check (inbox).
 - `helpers/confirm-ios-deep-link.yaml` waits up to 20 s for the iOS "Open in …?" prompt before
   its optional tap: on a loaded simulator the prompt appeared after the tap had given up and
   covered the app for the rest of the flow.

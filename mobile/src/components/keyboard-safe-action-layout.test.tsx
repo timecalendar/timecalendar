@@ -1,6 +1,7 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
 import type { ReactNode } from "react"
 import { DeviceEventEmitter, StyleSheet, Text, View } from "react-native"
+import { SafeAreaInsetsContext } from "react-native-safe-area-context"
 
 import { usePlatform } from "@/test-support/platform"
 
@@ -31,6 +32,8 @@ jest.mock("react-native", () => {
     descriptors,
   )
 })
+
+const STATUS_BAR = 48
 
 describe.each(["ios" as const, "android" as const])(
   "KeyboardSafeActionLayout on %s",
@@ -89,9 +92,13 @@ const measureOwner = (y: number, height: number) =>
 
 const renderForm = () =>
   render(
-    <KeyboardSafeActionLayout testID="form" actions={<View />}>
-      <View />
-    </KeyboardSafeActionLayout>,
+    <SafeAreaInsetsContext.Provider
+      value={{ top: STATUS_BAR, bottom: 0, left: 0, right: 0 }}
+    >
+      <KeyboardSafeActionLayout testID="form" actions={<View />}>
+        <View />
+      </KeyboardSafeActionLayout>
+    </SafeAreaInsetsContext.Provider>,
   )
 
 const layoutOwner = (view: Awaited<ReturnType<typeof renderForm>>) =>
@@ -140,26 +147,27 @@ describe("KeyboardSafeActionLayout keyboard on iOS", () => {
 describe("KeyboardSafeActionLayout keyboard on Android", () => {
   usePlatform("android")
 
-  it("insets the actions above the keyboard in window coordinates and drops the inset on hide", async () => {
-    measureOwner(97, 600)
+  // measureInWindow is below the status bar; keyboardDidShow screenY is not.
+  it("insets the actions by the owner's overlap with the keyboard and drops it on hide", async () => {
+    measureOwner(56, 600)
     const view = await renderForm()
     expect(view.getByTestId("form")).not.toHaveProp("nativeID")
     expect(paddingBottom(view)).toBe(0)
 
-    await emitKeyboard("keyboardDidShow", 400)
-    expect(paddingBottom(view)).toBe(97 + 600 - 400)
+    await emitKeyboard("keyboardDidShow", 500)
+    expect(paddingBottom(view)).toBe(56 + 600 - (500 - STATUS_BAR))
 
     await emitKeyboard("keyboardDidHide", 750)
     expect(paddingBottom(view)).toBe(0)
   })
 
   it("recomputes on layout while the keyboard is up, so a resized window is not avoided twice", async () => {
-    measureOwner(97, 600)
+    measureOwner(56, 600)
     const view = await renderForm()
-    await emitKeyboard("keyboardDidShow", 400)
-    expect(paddingBottom(view)).toBe(297)
+    await emitKeyboard("keyboardDidShow", 500)
+    expect(paddingBottom(view)).toBe(204)
 
-    measureOwner(97, 303)
+    measureOwner(56, 500 - STATUS_BAR - 56)
     await layoutOwner(view)
     expect(paddingBottom(view)).toBe(0)
   })

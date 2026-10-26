@@ -36,14 +36,16 @@ warning and retry the initial publish on the first request that needs the snapsh
   test, and not in `server/.dockerignore`, so a catalogue published under another origin survives
   restarts and can be copied into a locally built e2e image. The bootstrap skips publishing when a
   catalogue is already active. CI starts clean.
-- **Android keyboard inset is unverified on a real device.** `KeyboardSafeActionLayout`
-  hid its action behind the keyboard on the CI emulator (API 34, run 40258402156 step 036 and run
-  40261770615 `personal-event-save`). On Android it no longer uses `KeyboardAvoidingView` (whose
-  hide event reads a height as a window Y and left the action raised over a blank strip after the
-  keyboard closed); it pads the action region by the keyboard's overlap with the owner, computed in
-  window coordinates on `keyboardDidShow` and reset on `keyboardDidHide`. #381 (`28ddeaf1`) had
-  reported the opposite symptom (action "below the keyboard edge"), on a device not recorded in the
-  commit. On the OnePlus 6 (Android 11) and an Android 15+ device, open the keyboard on add-by-URL,
-  the personal-event editor and onboarding programme/institution: Submit/Save/Continue must sit
-  right above it. Then close the keyboard: the action must return to the bottom edge with no blank
-  strip beneath it.
+- **Android keyboard inset is unverified on a real device.** On Android
+  `KeyboardSafeActionLayout` pads its action region by the owner's overlap with the keyboard. It
+  converts the `keyboardDidShow` screen Y into the `measureInWindow` frame by subtracting the
+  safe-area top. That rests on the safe-area top equalling the visible frame's top (the status
+  bar under edge-to-edge); a hidden status bar, a cutout or split screen can break it. The CI
+  emulator (API 34) showed the action hidden behind the keyboard before (runs 40258402156 and
+  40261770615). Maestro cannot see the keyboard window, so a lane pass only shows the action is
+  tappable. On the OnePlus 6 (Android 11) and an Android 15+ device, open the keyboard on
+  add-by-URL, the personal-event editor and onboarding programme/institution: Submit/Save/Continue
+  must sit directly above the keyboard, with the gap measured from a screenshot. Close the
+  keyboard: the action returns to the bottom edge. Height changes while the keyboard is open
+  (emoji or clipboard panel) send no new `keyboardDidShow` on API 30+ and are not tracked;
+  `react-native-keyboard-controller` would cover them.
