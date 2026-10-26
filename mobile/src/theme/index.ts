@@ -1,3 +1,11 @@
+export type {
+  EventAppearance,
+  EventAppearanceScheme,
+} from "@/theme/event-appearance"
+export {
+  EventFallbackColor,
+  resolveEventAppearance,
+} from "@/theme/event-appearance"
 export { buildNavTheme } from "@/theme/nav-theme"
 export type {
   ResponsiveLane,

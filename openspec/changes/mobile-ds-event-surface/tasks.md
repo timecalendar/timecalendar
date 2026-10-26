@@ -9,7 +9,7 @@ commits, following the design's Migration Plan.
 
 ## 0. Baseline
 
-- [ ] 0.1 Record what the change must keep:
+- [x] 0.1 Record what the change must keep:
       `grep -rhoE 'id: *"?[A-Za-z0-9_${}.-]+' .maestro | sort -u > /tmp/maestro-ids.before`,
       `grep -rhoE 'tapOn: *"[^"]+"' .maestro | sort -u > /tmp/maestro-names.before`, and
       `grep -rhoE '(upcoming-card|today-tile|agenda-event|today-timeline-list|home-all-day)[A-Za-z0-9_${}.-]*' src --include=*.tsx | sort -u > /tmp/tile-ids.before`.
@@ -21,20 +21,20 @@ commits, following the design's Migration Plan.
 
 ## 1. Theme resolver and contrast hook (D1, D8) — commit 1
 
-- [ ] 1.1 Create `src/theme/event-appearance.ts` with `resolveEventAppearance`, `EventAppearance`,
+- [x] 1.1 Create `src/theme/event-appearance.ts` with `resolveEventAppearance`, `EventAppearance`,
       `EventAppearanceScheme` and `EventFallbackColor = "#64748B"`, moved from
       `features/calendar/data/event-color.ts` with identical outputs. Keep the Rgb helpers private.
       Export the four public names from `src/theme/index.ts`. Replace every
       `CALENDAR_EVENT_FALLBACK_COLOR` reference with `EventFallbackColor` and delete the old
       constant if nothing else uses it. Verify: `npx tsc --noEmit` passes.
-- [ ] 1.2 Point `features/calendar/data/{page-presentation,timeline-presentation}.ts` and
+- [x] 1.2 Point `features/calendar/data/{page-presentation,timeline-presentation}.ts` and
       `page-presenter.test.ts` at `@/theme`. Drop the `event-color` re-exports from
       `features/calendar/data/index.ts`. Delete `event-color.ts`. Move `event-color.test.ts` to
       `src/theme/event-appearance.test.ts` and keep its deterministic vectors and color list
       unchanged; drop only the `eventSurfaceColor` assertion. Verify: `npx jest src/theme
       src/features/calendar/data` passes and
       `grep -rn "event-color\"" src` finds nothing.
-- [ ] 1.3 Add the D8 contrast tests to `event-appearance.test.ts`:
+- [x] 1.3 Add the D8 contrast tests to `event-appearance.test.ts`:
       - palette: `SWATCH_PRESETS` (imported from `@/features/personal-events/ui/color-swatch-presets`)
         plus `EventFallbackColor`, × `light`/`dark` × increased contrast off/on;
       - floors: foreground on surface ≥ 4.5, accent on the canvas (`#FFFFFF` / `#000000`) ≥ 3,
@@ -45,12 +45,12 @@ commits, following the design's Migration Plan.
       Each case title names the color, scheme and policy. Verify: `npx jest src/theme/event-appearance
       --coverage --collectCoverageFrom='src/theme/event-appearance.ts'` shows ≥ 90% branches, and
       lowering the light alpha from 0.35 to 0.9 locally makes a palette case fail (revert).
-- [ ] 1.4 Move `features/calendar/data/use-increased-contrast{,.test}.ts` to
+- [x] 1.4 Move `features/calendar/data/use-increased-contrast{,.test}.ts` to
       `src/hooks/use-increased-contrast{,.test}.ts`, renaming the hook to `useIncreasedContrast`.
       Update `page-presenter.ts` and every test mock of the old path
       (`grep -rn "use-increased-contrast\|useCalendarIncreasedContrast" src`). Verify: the grep
       shows only the new path and name, and `npx jest src/hooks src/features/calendar` passes.
-- [ ] 1.5 Commit 1: `npx tsc --noEmit`, `npm run lint` and `npm test` pass. The week grid's
+- [x] 1.5 Commit 1: `npx tsc --noEmit`, `npm run lint` and `npm test` pass. The week grid's
       rendered colors are unchanged (`page-presenter.test.ts` vectors pass unedited apart from the
       import path).
 

@@ -1,8 +1,9 @@
 import { calendarEvents, personalEvents } from "@/db"
 import { parseJsonArray } from "@/storage"
+import { EventFallbackColor } from "@/theme"
 
 import { utcDayKey } from "./day-key"
-import { CALENDAR_EVENT_FALLBACK_COLOR, type CalendarEvent } from "./types"
+import type { CalendarEvent } from "./types"
 
 type SyncedRow = typeof calendarEvents.$inferSelect
 type PersonalRow = typeof personalEvents.$inferSelect
@@ -51,7 +52,7 @@ function optionalString(value: unknown): string | undefined {
 function color(value: unknown): string {
   return typeof value === "string" && /^#[0-9A-F]{6}$/i.test(value)
     ? value.toUpperCase()
-    : CALENDAR_EVENT_FALLBACK_COLOR
+    : EventFallbackColor
 }
 
 function jsonValue(raw: unknown): unknown {

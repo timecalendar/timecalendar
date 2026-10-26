@@ -42,5 +42,3 @@ export interface DateOnlyCalendarEventV1 extends CalendarEventBaseV1 {
 
 /** Validated, schema-versioned calendar rendering domain. */
 export type CalendarEvent = TimedCalendarEventV1 | DateOnlyCalendarEventV1
-
-export const CALENDAR_EVENT_FALLBACK_COLOR = "#64748B"

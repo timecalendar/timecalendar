@@ -1,10 +1,10 @@
 import type { TFunction } from "i18next"
 
 import { checklistProgressLabel } from "@/features/event-checklists"
+import type { EventAppearanceScheme } from "@/theme"
 
 import { projectCalendarAccessibilityEntries } from "./accessibility-projection"
 import type { PageStatus } from "./calendar-window-store"
-import type { EventAppearanceScheme } from "./event-color"
 import {
   type AppLocale,
   formatDayHeaderParts,

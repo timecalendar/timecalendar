@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react"
 import { AccessibilityInfo, Platform } from "react-native"
 
-/** Calendar-owned mapping of Android's supported high-text-contrast signal. */
-export function useCalendarIncreasedContrast(
-  platform: string = Platform.OS,
-): boolean {
+/** Android's high-text-contrast setting; iOS has no supported signal. */
+export function useIncreasedContrast(platform: string = Platform.OS): boolean {
   const [enabled, setEnabled] = useState(false)
 
   useEffect(() => {
