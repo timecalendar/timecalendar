@@ -148,13 +148,13 @@ Never build Android on the Mac. Land three commits, following the design's Migra
 
 ## 4. Verification
 
-- [ ] 4.1 `npx tsc --noEmit` passes.
-- [ ] 4.2 `npm run lint` passes with zero warnings.
-- [ ] 4.3 `npm test -- --coverage` passes, including the 90% per-file branch tiers, the gallery
+- [x] 4.1 `npx tsc --noEmit` passes.
+- [x] 4.2 `npm run lint` passes with zero warnings.
+- [x] 4.3 `npm test -- --coverage` passes, including the 90% per-file branch tiers, the gallery
       registry matrix with an unchanged known-violation list, `tools/eslint-rules`, the design
       import-policy and import-graph contracts and FR/EN parity. Record suite and test counts for
       the PR.
-- [ ] 4.4 From the repo root, `openspec validate mobile-no-style-literals` passes. Grep the change
+- [x] 4.4 From the repo root, `openspec validate mobile-no-style-literals` passes. Grep the change
       folder, the new rule, tests and allowlist for developer or account names. Verify: none
       found.
 - [ ] 4.5 iOS simulator check (run by the conductor): open
@@ -165,12 +165,12 @@ Never build Android on the Mac. Land three commits, following the design's Migra
 
 ## 5. Architecture Book, ADR and docs (`docs/mobile/architecture-book/`) — commit 3
 
-- [ ] 5.1 Create `decisions/077-visual-style-lint-ratchet.md` from `TEMPLATE.md` (number from
+- [x] 5.1 Create `decisions/077-visual-style-lint-ratchet.md` from `TEMPLATE.md` (number from
       0.1), status Accepted, from design.md → Decision: Context (tokens and ramp exist, screens
       still write literals, Phase 5 needs a measurable exit), Decision, Rejected, Consequences,
       Revisit if. Add the index row to `decisions/README.md`. Verify: from the repo root,
       `rg -n "077" docs/mobile/architecture-book` shows the index row and every link.
-- [ ] 5.2 `lint-format.md`: add the three block names to the list at the top, and a
+- [x] 5.2 `lint-format.md`: add the three block names to the list at the top, and a
       **Style literals — `local/no-style-literals`** entry in the rule inventory: the five
       categories and their keys (D2), what counts as a literal (D3), the options (D4), scope and
       exemptions (D5, chrome typography off, renderer in scope), the per-file per-category
@@ -180,18 +180,18 @@ Never build Android on the Mac. Land three commits, following the design's Migra
       lowers the matching ceilings.** Verify:
       `rg -n "no-style-literals|same PR|style-literal-allowlist" docs/mobile/architecture-book/lint-format.md`
       shows each.
-- [ ] 5.3 `theming.md` → Token layer: one bullet saying color, type, shadow, spacing and radius
+- [x] 5.3 `theming.md` → Token layer: one bullet saying color, type, shadow, spacing and radius
       values come from `src/theme/` and the ramp, enforced by `local/no-style-literals`
       ([lint-format.md](./lint-format.md) → Style literals, ADR 077), and naming the new
       `ListGeometry` icon tokens. Verify: `rg -n "no-style-literals" docs/mobile/architecture-book/theming.md`
       matches.
-- [ ] 5.4 `CHANGELOG.md`: add `## 2026-10-26 — Visual-style lint ratchet` at the top with bullets
+- [x] 5.4 `CHANGELOG.md`: add `## 2026-10-26 — Visual-style lint ratchet` at the top with bullets
       for the rule and its categories (lint-format.md, ADR 077), the per-category allowlist and
       the same-PR deletion rule (lint-format.md), the design-layer fixes and icon tokens
       (theming.md). Leave earlier entries as they are. Verify: the entry is first and every link
       resolves.
-- [ ] 5.5 `docs/mobile/design-system-audit/migration-roadmap.md`: mark 4.1 done only if earlier
+- [x] 5.5 `docs/mobile/design-system-audit/migration-roadmap.md`: mark 4.1 done only if earlier
       slices are marked there (follow the file's convention). Verify: the file's convention is
       respected (no change if it does not track status).
-- [ ] 5.6 Commit 3. Verify: `npm run lint` and `npm test -- --coverage` still pass and
+- [x] 5.6 Commit 3. Verify: `npm run lint` and `npm test -- --coverage` still pass and
       `openspec validate mobile-no-style-literals` passes.

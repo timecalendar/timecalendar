@@ -98,6 +98,13 @@ surfaces and calendar content; native controls are tinted and composed rather th
 
 ## Token layer — typed TS constants under `src/theme/`
 
+- **Style values are tokens, enforced.** Color, type, shadow, spacing and corner-radius values
+  come from `src/theme/` and the type ramp; a literal in a style is a lint error from
+  `local/no-style-literals` ([lint-format.md](./lint-format.md) → Style literals, ADR
+  [077](./decisions/077-visual-style-lint-ratchet.md)), with not-yet-migrated screens on a
+  shrink-only per-category allowlist. Fixed geometry with no scale step is a named token next to
+  its family, such as `ListGeometry.ios.leadingIconTileRadius` (7), `ListGeometry.headerIcon` (88)
+  and `ListGeometry.ios.headerIconRadius` (20).
 - `src/theme/tokens.ts` holds the design tokens as plain `as const` TypeScript: `Colors` (light/dark records, including the brand **`primary`**), `Spacing`, the `Radii` scale (radius is a token, not a magic number), `Fonts`, `MaxContentWidth`, and the interaction/elevation/motion/layout tokens below; `ThemeColor` is derived from `Colors`. **No styling runtime** (NativeWind / Tamagui / unistyles rejected, R-2 — `StyleSheet` + typed token constants is the pattern, and `tsc` is the only type gate). A missing/mistyped token key is a `tsc` error, not a silent fallback.
 - **Brand `primary` token (the pink hue, ADR [008](./decisions/008-brand-color.md)):** `light.primary = #E91E63` (the Flutter `Colors.pink` identity tone — used as an **accent/tint**, e.g. the nav active tint, _not_ a fill carrying white body text), `dark.primary = #FF4081` (reads on the dark background). **The load-bearing usage rule:** white text on a brand fill MUST ride the darker **`#C2185B`** (white-on-`#C2185B` = 5.87:1, AA body) — the bright `#E91E63` is white-on-fill 4.35:1, below the body floor; `#E91E63` is the accent/large/UI tone (meets the 3:1 bar). Brand-colored small text (`ThemedText type="smallBold"` / `type="label"` text actions such as Skip, Back, See all, Un-hide) uses **`actionText`** (`#C2185B` light, 5.87:1), never `primary`; through `tone` it is `tone="action"`, and `TextTone` has no brand member. [`src/theme/brand-small-text.test.ts`](../../../mobile/src/theme/brand-small-text.test.ts) scans every non-test source under `mobile/src/` and fails on any element pairing `type="smallBold"` or `type="label"` with `themeColor="primary"`, in any prop order; the colocated `src/features/**` UI tests assert `Colors.light.actionText` on the existing labels. The **`primaryStrong` (#C2185B) + `onPrimary` (#ffffff) token pair LANDED** (2026-06-16, the onboarding welcome filled CTA — the first white-text-on-brand consumer, R-2: earned not speculative): a filled brand button is `primaryStrong` carrying `onPrimary` (5.87:1, AA body, scheme-independent — the fill owns its white label), clearing the 3:1 UI-component bar against `background` in both schemes. `tokens.ts`'s contrast block documents the pair.
 - **Semantic Activity status tokens:** `positive` (`#146C43` light / `#7EE2A8` dark) identifies added items and `informational` (`#0B57D0` light / `#A8C7FA` dark) identifies changed items; cancelled items reuse `destructive`. Each item also carries a translated kind label, so color is never the only signal. `tokens.ts` documents every new foreground against `background` and `backgroundElement` in both schemes; all clear the 4.5:1 body-text floor.
@@ -293,10 +300,11 @@ colors, so an RN list and a `NativeList` on the same page read as one surface.
   | `rowPaddingHorizontal` / `leadingGap`     | 16 / 16                   | 16 / 16            |
   | `rowMinHeight`                            | 44                        | 56                 |
   | `rowPaddingVertical`                      | `Spacing.twoHalf`         | `Spacing.two`      |
-  | leading icon                              | 29pt `primaryStrong` tile | 24dp flat glyph    |
+  | leading icon                              | 29pt `primaryStrong` tile, `leadingIconTileRadius` 7 | 24dp flat glyph    |
   | grouped corners                           | 26 (iOS 26+), 10 below    | 20 outer / 4 inner |
   | `segmentGap` / `listInset`                | —                         | 2 / 16             |
   | `trailingGap` (value to check or chevron) | `Spacing.two`             | `Spacing.three`    |
+  | `headerIcon` (native list header app icon) | 88, `headerIconRadius` 20 | 88, round         |
 
 - **Colors:** `useListPalette()` (`@/components/chrome`) returns the grouped `surface`, `text` and
   `textSecondary`. iOS reads `backgroundElement`, `text` and `textSecondary`. Android reads

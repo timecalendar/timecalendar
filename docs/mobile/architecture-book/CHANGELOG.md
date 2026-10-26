@@ -1,3 +1,18 @@
+## 2026-10-26 — Visual-style lint ratchet
+
+- `local/no-style-literals` reports color, typography, legacy-shadow, spacing and radius literals
+  in styles across hand-written `src/**`, the calendar renderer and `.ts` style helpers included;
+  theme, swatch presets, fixtures and tests are exempt, chrome for typography only
+  ([lint-format.md](./lint-format.md) → Style literals, ADR
+  [077](./decisions/077-visual-style-lint-ratchet.md)).
+- Not-yet-migrated files sit on `style-literal-allowlist.js` with only the categories they still
+  violate turned off, pinned by a per-category ceiling test; every migration slice deletes its
+  files from the allowlist in the same PR ([lint-format.md](./lint-format.md) → Style literals).
+- `src/design/**` and chrome are clean: the `ErrorMessage` title is the `sectionTitle` ramp step,
+  and the iOS list icon tile and native list header icon use the `ListGeometry` tokens
+  `leadingIconTileRadius`, `headerIcon` and `headerIconRadius` ([theming.md](./theming.md) → Token
+  layer).
+
 ## 2026-10-26 — Event surface
 
 - `EventSurface` and `EventSurfaceText` live in `src/design/event-surface/`: the event's resolved
