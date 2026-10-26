@@ -1,16 +1,14 @@
 import type { TFunction } from "i18next"
-import { StyleSheet, View } from "react-native"
 
-import { DateTimeField, TextField, ThemedText } from "@/design"
+import { ColorSwatchField, DateTimeField, TextField } from "@/design"
 import { type AppLocale, formatShortDateTime } from "@/features/calendar/data"
 import type {
   EventFormErrors,
   EventFormValues,
 } from "@/features/personal-events/form"
 import { useUses24HourClock } from "@/hooks/use-uses-24-hour-clock"
-import { Spacing } from "@/theme"
 
-import { ColorSwatchPicker } from "./color-swatch-picker"
+import { SWATCH_NAME_KEYS, SWATCH_PRESETS } from "./color-swatch-presets"
 
 export type UpdateEventFormValue = <K extends keyof EventFormValues>(
   key: K,
@@ -72,15 +70,16 @@ export function PersonalEventFields({
         onChange={(date) => update("endsAt", date)}
       />
 
-      <View style={styles.field}>
-        <ThemedText type="smallBold">
-          {t("personalEvents.form.colorLabel")}
-        </ThemedText>
-        <ColorSwatchPicker
-          value={values.color}
-          onChange={(hex) => update("color", hex)}
-        />
-      </View>
+      <ColorSwatchField
+        testID="color-swatch"
+        label={t("personalEvents.form.colorLabel")}
+        options={SWATCH_PRESETS.map((hex) => ({
+          color: hex,
+          label: t(SWATCH_NAME_KEYS[hex]),
+        }))}
+        value={values.color}
+        onChange={(color) => update("color", color)}
+      />
 
       <TextField
         testID="personal-event-location-input"
@@ -101,7 +100,3 @@ export function PersonalEventFields({
     </>
   )
 }
-
-const styles = StyleSheet.create({
-  field: { gap: Spacing.two },
-})

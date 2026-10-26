@@ -124,6 +124,10 @@ describe("HiddenEventsScreen", () => {
       "contentInsetAdjustmentBehavior",
       "never",
     )
+    const contentContainer = screen.getByTestId("hidden-events-empty").parent
+    expect(contentContainer?.parent).toBe(
+      screen.getByTestId("hidden-events-responsive-content"),
+    )
   })
 
   it("renders the exact French empty title and caption", async () => {

@@ -1,7 +1,6 @@
 import { router } from "expo-router"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { StyleSheet } from "react-native"
 
 import { KeyboardSafeActionLayout } from "@/design"
 import type { AppLocale } from "@/features/calendar/data"
@@ -13,7 +12,6 @@ import {
   useSaveEvent,
   validateEventForm,
 } from "@/features/personal-events/form"
-import { Spacing } from "@/theme"
 
 import { DEFAULT_SWATCH } from "./color-swatch-presets"
 import { PersonalEventActions } from "./personal-event-actions"
@@ -90,8 +88,6 @@ export function PersonalEventEditor({
   return (
     <KeyboardSafeActionLayout
       testID="personal-event-form-responsive-owner"
-      contentContainerStyle={styles.content}
-      actionContainerStyle={styles.footer}
       actions={
         <PersonalEventActions
           canDelete={uid !== undefined}
@@ -117,14 +113,3 @@ export function PersonalEventEditor({
     </KeyboardSafeActionLayout>
   )
 }
-
-const styles = StyleSheet.create({
-  content: {
-    paddingBottom: Spacing.five,
-    gap: Spacing.three,
-  },
-  footer: {
-    paddingTop: Spacing.three,
-    paddingBottom: Spacing.four,
-  },
-})

@@ -6,29 +6,51 @@ import { StyleSheet } from "react-native"
 import { usePersonalEvents } from "@/features/personal-events/data"
 import { setTimezonePreference, SETTINGS_KEYS } from "@/features/settings/prefs"
 import { remove } from "@/storage"
-import { resolveResponsiveLayout } from "@/theme"
+import { usePlatform } from "@/test-support/platform"
+import { Layout, resolveResponsiveLayout } from "@/theme"
 
 import { PersonalEventsList } from "./personal-events-list"
 
-// Presentational (70% floor): renders rows from a mocked usePersonalEvents, the
-// localized empty state when empty, and the accessible Add control. Localized
-// copy resolves through the real i18n tree. expo-router is stubbed (no router
-// context under Jest); rows navigate through `router.push`.
+// Rows come from a mocked usePersonalEvents and copy from the real i18n tree.
+// The iOS header item is asserted through Stack.Screen options because the
+// navigator chrome is outside the rendered tree.
 jest.mock("@/features/personal-events/data", () => ({
   usePersonalEvents: jest.fn(),
 }))
 
 const mockPush = jest.fn()
+const mockScreenOptions = jest.fn()
 jest.mock("expo-router", () => ({
   router: { push: (href: string) => mockPush(href) },
-  Stack: { Screen: () => null },
+  Stack: {
+    Screen: ({ options }: { options?: unknown }) => {
+      mockScreenOptions(options)
+      return null
+    },
+  },
 }))
+
+type HeaderOptions = {
+  unstable_headerRightItems?: () => {
+    identifier: string
+    accessibilityLabel: string
+    onPress: () => void
+  }[]
+}
+
+const headerOptions = () =>
+  mockScreenOptions.mock.lastCall?.[0] as HeaderOptions
 
 const mockUsePersonalEvents = usePersonalEvents as jest.MockedFunction<
   typeof usePersonalEvents
 >
 
 describe("PersonalEventsList", () => {
+  beforeEach(() => {
+    mockPush.mockClear()
+    mockScreenOptions.mockClear()
+  })
+
   afterEach(async () => {
     try {
       await cleanup()
@@ -37,16 +59,12 @@ describe("PersonalEventsList", () => {
     }
   })
 
-  it("shows the localized empty state and an accessible Add control when empty", async () => {
+  it("shows the empty state title and caption within the readable lane", async () => {
     mockUsePersonalEvents.mockReturnValue([])
     const { getByText, getByTestId } = await render(<PersonalEventsList />)
 
-    expect(getByText("No events yet. Tap Add to create one.")).toBeTruthy()
-    const add = getByTestId("personal-events-add")
-    expect(add.props.accessibilityRole).toBe("button")
-    expect(add.props.accessibilityLabel).toBe("Add event")
-    await fireEvent.press(add)
-    expect(mockPush).toHaveBeenCalledWith("/personal-event-form")
+    expect(getByText("No personal events")).toBeTruthy()
+    expect(getByText("Events you add appear here.")).toBeTruthy()
     expect(getByTestId("personal-events-list")).toHaveProp(
       "contentInsetAdjustmentBehavior",
       "never",
@@ -66,6 +84,52 @@ describe("PersonalEventsList", () => {
       )
       expect(style.paddingHorizontal).toBe(metrics.gutter)
     }
+  })
+
+  describe("on iOS", () => {
+    usePlatform("ios")
+
+    it("adds through a header item and renders no in-content control", async () => {
+      mockUsePersonalEvents.mockReturnValue([])
+      const { getByTestId, queryByTestId } = await render(
+        <PersonalEventsList />,
+      )
+
+      const items = headerOptions().unstable_headerRightItems?.() ?? []
+      expect(items).toHaveLength(1)
+      const [add] = items
+      expect(add?.identifier).toBe("personal-events-add")
+      expect(add?.accessibilityLabel).toBe("Add event")
+      add?.onPress()
+      expect(mockPush).toHaveBeenCalledWith("/personal-event-form")
+      expect(queryByTestId("personal-events-add")).toBeNull()
+      expect(
+        StyleSheet.flatten(
+          getByTestId("personal-events-list").props.contentContainerStyle,
+        ).paddingBottom,
+      ).not.toBe(Layout.fabClearance)
+    })
+  })
+
+  describe("on Android", () => {
+    usePlatform("android")
+
+    it("adds through a FAB on the empty state and clears it at the list end", async () => {
+      mockUsePersonalEvents.mockReturnValue([])
+      const { getByLabelText, getByTestId } = await render(
+        <PersonalEventsList />,
+      )
+
+      expect(headerOptions().unstable_headerRightItems).toBeUndefined()
+      expect(getByLabelText("Add event")).toBeTruthy()
+      await fireEvent.press(getByTestId("personal-events-add"))
+      expect(mockPush).toHaveBeenCalledWith("/personal-event-form")
+      expect(
+        StyleSheet.flatten(
+          getByTestId("personal-events-list").props.contentContainerStyle,
+        ).paddingBottom,
+      ).toBe(Layout.fabClearance)
+    })
   })
 
   it("renders a row per event with title and an accessible edit label", async () => {

@@ -32,6 +32,11 @@ export {
   type EventSurfaceTextProps,
 } from "./event-surface/event-surface"
 export { useEventSurfaceAppearance } from "./event-surface/event-surface-context"
+export {
+  ColorSwatchField,
+  type ColorSwatchFieldProps,
+  type ColorSwatchOption,
+} from "./field/color-swatch-field"
 export { DateTimeField, type DateTimeFieldProps } from "./field/date-time-field"
 export {
   TextField,
