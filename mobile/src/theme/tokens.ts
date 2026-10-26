@@ -103,6 +103,8 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark
  *   - `actionText` selects the AA body-text brand tone for each scheme:
  *       actionText on background #C2185B on #fff → 5.87:1  (light, body ✅)
  *       actionText on background #FF4081 on #000 → 6.30:1  (dark, body ✅)
+ *       actionText on backgroundElement #C2185B on #F0F0F3 → 5.16:1  (light, body ✅)
+ *       actionText on backgroundElement #FF4081 on #212225 → 4.78:1  (dark, body ✅)
  *
  *   ERROR (WCAG luminance recomputed for error surfaces):
  *   - error light on background #B3261E on #fff → 6.54:1 (body AA)
@@ -111,8 +113,8 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark
  *   - error dark on backgroundElement #FFB4AB on #212225 → 9.37:1 (body AAA)
  *
  *   DESTRUCTIVE
- *   - destructive light #B3261E on backgroundElement #F0F0F3 → 5.75:1 (UI ✅)
- *   - destructive dark #FFB4AB on backgroundElement #212225 → 9.37:1 (UI ✅)
+ *   - destructive light #B3261E on backgroundElement #F0F0F3 → 5.75:1 (body ✅)
+ *   - destructive dark #FFB4AB on backgroundElement #212225 → 9.37:1 (body AAA)
  *
  *   OUTLINE — the input / control boundary stroke (WCAG 1.4.11, 3:1 UI bar):
  *   - outline light #7C7F87 on background #fff → 4.01:1 (UI ✅)

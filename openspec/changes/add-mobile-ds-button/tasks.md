@@ -8,7 +8,7 @@ current state only.
 
 ## 1. Contrast pairs
 
-- [ ] 1.1 In `src/theme/contrast.ts` add `["actionText", "backgroundElement", "body"]` and
+- [x] 1.1 In `src/theme/contrast.ts` add `["actionText", "backgroundElement", "body"]` and
       `["destructive", "backgroundElement", "body"]` (D2), and the matching lines with their
       ratios (light 5.16 / dark 4.78; light 5.75 / dark 9.37) in the `tokens.ts` contrast comment
       (BRAND and DESTRUCTIVE blocks). Verify: `npx jest src/theme` passes and the new pairs appear
@@ -16,7 +16,7 @@ current state only.
 
 ## 2. `Button` primitive
 
-- [ ] 2.1 Create `src/components/button.tsx` exporting `Button`, `ButtonProps`, `ButtonVariant`,
+- [x] 2.1 Create `src/components/button.tsx` exporting `Button`, `ButtonProps`, `ButtonVariant`,
       `ButtonSize`, `ButtonIcon`, `ButtonLayoutStyle` per D2–D7: required `variant`, `size`
       (default `medium`), `label`, `onPress`, optional `accessibilityLabel` (default `label`),
       `accessibilityHint`, `accessibilityRole` (`"button" | "link"`, default `button`), `icon`,
@@ -27,7 +27,7 @@ current state only.
       true }` + `overflow: "hidden"`, iOS pressed opacity + `borderCurve: "continuous"`; the style
       callback returns `StyleSheet.flatten([base, size, variant, state, style])`. Add any missing
       glyph to `src/components/icon-glyphs.ts`. Verify: `npx tsc --noEmit`.
-- [ ] 2.2 Create `src/components/button.test.tsx`, `describe.each` over iOS and Android, both
+- [x] 2.2 Create `src/components/button.test.tsx`, `describe.each` over iOS and Android, both
       schemes where colors are asserted:
       - every variant's fill / border / label color equals its D2 tokens (`Colors.light` and
         `Colors.dark`);
@@ -49,7 +49,7 @@ current state only.
         `{ minHeight: 1 }`, `{ opacity: 1 }`, and a missing `variant` (checked by `tsc`).
       Verify: `npx jest src/components/button.test.tsx --coverage --collectCoverageFrom=src/components/button.tsx`
       reports ≥ 90% lines and branches.
-- [ ] 2.3 In `jest.config.js` add `"src/components/button.tsx": { lines: 90, branches: 90 }` to
+- [x] 2.3 In `jest.config.js` add `"src/components/button.tsx": { lines: 90, branches: 90 }` to
       `coverageThreshold` (with the other per-path keys); update `jest.config.test.ts` if it pins
       the threshold keys. Verify: `npx jest jest.config.test.ts`.
 
