@@ -163,6 +163,12 @@ function LeadingSlot({
   )
 }
 
+function trailingGap(): number {
+  return Platform.OS === "ios"
+    ? ListGeometry.ios.trailingGap
+    : ListGeometry.android.trailingGap
+}
+
 function SelectedCheck({ testID }: { testID: string }) {
   const theme = useTheme()
   return (
@@ -185,7 +191,6 @@ function SelectedCheck({ testID }: { testID: string }) {
 
 function DisclosureChevron({ testID }: { testID: string }) {
   const theme = useTheme()
-  if (Platform.OS !== "ios") return null
   return (
     <Icon
       ios="chevron.forward"
@@ -329,6 +334,12 @@ function RowContent({ row, model }: { row: ListRowProps; model: RowModel }) {
   const check = model.selected ? (
     <SelectedCheck testID={`${row.testID}-check`} />
   ) : null
+  const chevron =
+    model.interactive && row.trailing === "chevron" && Platform.OS === "ios"
+  const trailingValueStyle = [
+    styles.trailingValue,
+    check || chevron ? { marginEnd: trailingGap() } : null,
+  ]
   // A static row's text column already carries the value as its
   // accessibilityValue, so the visible trailing copy is hidden.
   const trailingValue =
@@ -336,12 +347,12 @@ function RowContent({ row, model }: { row: ListRowProps; model: RowModel }) {
       <View
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
-        style={styles.trailingValue}
+        style={trailingValueStyle}
       >
         {value}
       </View>
     ) : value ? (
-      <View style={styles.trailingValue}>{value}</View>
+      <View style={trailingValueStyle}>{value}</View>
     ) : null
   return (
     <>
@@ -364,9 +375,7 @@ function RowContent({ row, model }: { row: ListRowProps; model: RowModel }) {
       />
       {model.stacked ? null : trailingValue}
       {model.stacked ? null : check}
-      {model.interactive && row.trailing === "chevron" ? (
-        <DisclosureChevron testID={`${row.testID}-chevron`} />
-      ) : null}
+      {chevron ? <DisclosureChevron testID={`${row.testID}-chevron`} /> : null}
       {!model.interactive && row.trailing ? (
         <View style={styles.accessory}>{row.trailing}</View>
       ) : null}

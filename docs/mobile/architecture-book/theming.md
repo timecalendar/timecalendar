@@ -284,6 +284,7 @@ colors, so an RN list and a `NativeList` on the same page read as one surface.
   | leading icon                                  | 29pt `primaryStrong` tile | 24dp flat glyph |
   | grouped corners                               | 26 (iOS 26+), 10 below    | 20 outer / 4 inner |
   | `segmentGap` / `listInset`                    | —                         | 2 / 16  |
+  | `trailingGap` (value to check or chevron)     | `Spacing.two`             | `Spacing.three` |
 
 - **Colors:** `useListPalette()` (`@/components/chrome`) returns the grouped `surface`, `text` and
   `textSecondary`. iOS reads `backgroundElement`, `text` and `textSecondary`. Android reads

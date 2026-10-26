@@ -10,6 +10,8 @@
   `ListGeometry` in `@/theme` as the one source of list geometry for them and `native-list.tsx`,
   and `useListPalette` in `@/components/chrome` for the seeded Android surface
   ([theming.md](./theming.md) → Lists).
+- A `ListRow` value sits `ListGeometry.<platform>.trailingGap` (iOS 8pt, Android 16dp) before
+  the selection check or the iOS chevron ([theming.md](./theming.md) → Lists).
 - The list accessibility contract: one element per activatable row with a composed name, value,
   hint and derived state, static rows with an accessory stop, header section titles
   ([accessibility.md](./accessibility.md) → Lists). The Expo UI mock derives a role only from real

@@ -268,12 +268,43 @@ describe.each(["ios", "android"] as const)("ListRow on %s", (platform) => {
       includeHiddenElements: true,
     })
     const value = view.getByText("+01:00", { includeHiddenElements: true })
+    const gap = ios
+      ? ListGeometry.ios.trailingGap
+      : ListGeometry.android.trailingGap
+    expect(flat(value.parent!)).toMatchObject({ marginEnd: gap })
     const children = check.parent!.children as unknown[]
     expect(children.indexOf(check)).toBeGreaterThan(
       children.findIndex(
         (child) => typeof child !== "string" && child === value,
       ),
     )
+  })
+
+  it("spaces the value from a chevron on iOS and leaves a bare value flush", async () => {
+    const view = await render(
+      <>
+        <ListRow
+          label="Language"
+          value="English"
+          trailing="chevron"
+          onPress={jest.fn()}
+          testID="language"
+        />
+        <ListRow label="Count" value="3" onPress={jest.fn()} testID="count" />
+      </>,
+    )
+    const language = flat(
+      view.getByText("English", { includeHiddenElements: true }).parent!,
+    )
+    if (ios) {
+      expect(language.marginEnd).toBe(ListGeometry.ios.trailingGap)
+    } else {
+      expect(language.marginEnd).toBeUndefined()
+    }
+    expect(
+      flat(view.getByText("3", { includeHiddenElements: true }).parent!)
+        .marginEnd,
+    ).toBeUndefined()
   })
 
   it("hides the leading element and icon from assistive technology", async () => {
