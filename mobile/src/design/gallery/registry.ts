@@ -12,6 +12,9 @@ import * as icon from "@/design/icon/icon.gallery"
 import * as adaptiveContent from "@/design/layout/adaptive-content.gallery"
 import * as keyboardSafeActionLayout from "@/design/layout/keyboard-safe-action-layout.gallery"
 import * as rootPage from "@/design/layout/root-page.gallery"
+import * as listRow from "@/design/list/list-row.gallery"
+import * as listSection from "@/design/list/list-section.gallery"
+import * as separator from "@/design/list/separator.gallery"
 import * as errorSurfaces from "@/design/status/error-surfaces.gallery"
 import * as statusView from "@/design/status/status-view.gallery"
 import * as themedText from "@/design/text/themed-text.gallery"
@@ -33,6 +36,9 @@ export const galleryModules: readonly GalleryModule[] = [
   buttonRow,
   textField,
   dateTimeField,
+  listRow,
+  listSection,
+  separator,
   nativeList,
   nativeTextEntryDialog,
   nativeListNumericEditor,

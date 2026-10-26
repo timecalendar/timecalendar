@@ -907,6 +907,7 @@ jest.mock("@expo/ui/jetpack-compose", () => {
   function useMaterialColors() {
     return palette
   }
+  const getMaterialColors = jest.fn(() => palette)
   function ListItem(props: {
     children?: unknown
     colors?: unknown
@@ -996,6 +997,7 @@ jest.mock("@expo/ui/jetpack-compose", () => {
     CircularProgressIndicator,
     Column,
     FloatingActionButton,
+    getMaterialColors,
     Host,
     Icon,
     LazyColumn,

@@ -82,7 +82,7 @@ import {
 } from "@/components/chrome/native-list-icons"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { useErrorAnnouncement } from "@/hooks/use-error-announcement"
-import { useIsAccessibilityTextSize, useTheme } from "@/theme"
+import { ListGeometry, useIsAccessibilityTextSize, useTheme } from "@/theme"
 
 export type NativeListRowProps = {
   kind: "navigation" | "action" | "value"
@@ -173,23 +173,31 @@ const SegmentContext = createContext<Segment>({
   titled: true,
 })
 
-const OUTER_RADIUS = 20
-const INNER_RADIUS = 4
-const SEGMENT_GAP = 2
-const LIST_INSET = 16
 const LIST_BOTTOM_PADDING = 24
 const FAB_CLEARANCE = 88
 const UNBREAKABLE_WORD_MIN_SCALE = 0.5
 
 const segmentCorners: Record<SegmentPosition, { top: number; bottom: number }> =
   {
-    first: { top: OUTER_RADIUS, bottom: INNER_RADIUS },
-    middle: { top: INNER_RADIUS, bottom: INNER_RADIUS },
-    last: { top: INNER_RADIUS, bottom: OUTER_RADIUS },
-    single: { top: OUTER_RADIUS, bottom: OUTER_RADIUS },
+    first: {
+      top: ListGeometry.android.outerRadius,
+      bottom: ListGeometry.android.innerRadius,
+    },
+    middle: {
+      top: ListGeometry.android.innerRadius,
+      bottom: ListGeometry.android.innerRadius,
+    },
+    last: {
+      top: ListGeometry.android.innerRadius,
+      bottom: ListGeometry.android.outerRadius,
+    },
+    single: {
+      top: ListGeometry.android.outerRadius,
+      bottom: ListGeometry.android.outerRadius,
+    },
   }
 
-function segmentPosition(index: number, count: number): SegmentPosition {
+export function segmentPosition(index: number, count: number): SegmentPosition {
   if (count === 1) return "single"
   if (index === 0) return "first"
   return index === count - 1 ? "last" : "middle"
@@ -202,10 +210,10 @@ function useSegmentModifiers(): ModifierConfig[] {
   const trailing = position === "last" || position === "single"
   return [
     padding(
-      LIST_INSET,
-      leading && !titled ? LIST_INSET : 0,
-      LIST_INSET,
-      trailing ? 0 : SEGMENT_GAP,
+      ListGeometry.android.listInset,
+      leading && !titled ? ListGeometry.android.listInset : 0,
+      ListGeometry.android.listInset,
+      trailing ? 0 : ListGeometry.android.segmentGap,
     ),
     clip(
       Shapes.RoundedCorner({
@@ -342,7 +350,12 @@ function ComposeListSection({
           color={palette.primary}
           style={{ typography: "titleSmall" }}
           modifiers={[
-            padding(LIST_INSET, 24, LIST_INSET, 8),
+            padding(
+              ListGeometry.android.listInset,
+              24,
+              ListGeometry.android.listInset,
+              8,
+            ),
             ...(sectionTestID ? [testID(sectionTestID)] : []),
           ]}
         >
@@ -361,7 +374,14 @@ function ComposeListSection({
         <MaterialText
           color={palette.onSurfaceVariant}
           style={{ typography: "bodySmall" }}
-          modifiers={[padding(LIST_INSET, 8, LIST_INSET, 0)]}
+          modifiers={[
+            padding(
+              ListGeometry.android.listInset,
+              8,
+              ListGeometry.android.listInset,
+              0,
+            ),
+          ]}
         >
           {footer}
         </MaterialText>
@@ -446,8 +466,13 @@ function ComposeListAlert({
         trailingContentColor: palette.onErrorContainer,
       }}
       modifiers={[
-        padding(LIST_INSET, LIST_INSET, LIST_INSET, 0),
-        clip(Shapes.RoundedCorner(OUTER_RADIUS)),
+        padding(
+          ListGeometry.android.listInset,
+          ListGeometry.android.listInset,
+          ListGeometry.android.listInset,
+          0,
+        ),
+        clip(Shapes.RoundedCorner(ListGeometry.android.outerRadius)),
         testID(alertTestID),
       ]}
     >

@@ -203,6 +203,27 @@ export const Spacing = {
   six: 64,
 } as const
 
+// The native list seam and the design list rows draw from the same numbers.
+export const ListGeometry = {
+  rowPaddingHorizontal: 16,
+  leadingGap: 16,
+  ios: {
+    rowMinHeight: 44,
+    rowPaddingVertical: Spacing.twoHalf,
+    leadingIconTile: 29,
+    groupedRadius: { glass: 26, legacy: 10 },
+  },
+  android: {
+    rowMinHeight: 56,
+    rowPaddingVertical: Spacing.two,
+    leadingIcon: 24,
+    outerRadius: 20,
+    innerRadius: 4,
+    segmentGap: 2,
+    listInset: 16,
+  },
+} as const
+
 export const Radii = {
   small: 4,
   medium: 8,

@@ -4,6 +4,7 @@ export const MATERIAL_GLYPHS = {
   add: 0xe145,
   arrow_forward: 0xe5c8,
   bolt: 0xea0b,
+  check: 0xe5ca,
   check_box: 0xe834,
   check_box_outline_blank: 0xe835,
   error_outline: 0xe001,
