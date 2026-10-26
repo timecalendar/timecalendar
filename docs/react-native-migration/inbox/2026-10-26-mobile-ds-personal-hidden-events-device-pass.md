@@ -6,7 +6,9 @@ rendering and TalkBack need a person on a device or on the Windows host. They ne
 
 ## Status
 
-Not done.
+Not done. The pipeline tried to run this pass on the Windows host on 2026-10-26 and could not:
+`ssh pc` timed out, so the host was unreachable. The pass needs a person on an Android device, or
+a retry once the Windows host is reachable.
 
 ## What I need
 

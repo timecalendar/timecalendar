@@ -234,7 +234,7 @@ must stay: "Edit this event", "Delete event…" alert title, the alert's "Delete
 
 ## 7. Architecture Book (`docs/mobile/architecture-book/`) — commit 2
 
-- [ ] 7.1 `theming.md` → Fields (`:226-279`): add a `ColorSwatchField` bullet covering the props,
+- [x] 7.1 `theming.md` → Fields (`:226-279`): add a `ColorSwatchField` bullet covering the props,
       the `FieldChrome` label and error, `MinTouchTarget` circles with no hit slop, the selected
       ring, press feedback, the platform roles, `${testID}-${color}`, and caller-supplied names. Add
       it to the Gates line (`color-swatch-field.test.tsx` at 90%; stories
@@ -248,18 +248,18 @@ must stay: "Edit this event", "Delete event…" alert title, the alert's "Delete
       Verify: `rtk proxy rg -n "48 pt swatches|5\.3\)" docs/mobile/architecture-book/theming.md`
       finds nothing, and `rtk proxy rg -n "ColorSwatchField" docs/mobile/architecture-book/theming.md`
       matches.
-- [ ] 7.2 `accessibility.md:211-214` and `:116-117`: the swatches are `ColorSwatchField`, and the
+- [x] 7.2 `accessibility.md:211-214` and `:116-117`: the swatches are `ColorSwatchField`, and the
       gate is `src/design/field/color-swatch-field.test.tsx` plus the form-screen name test. Add
       `local/no-raw-radio-group` as the encoded part.
       Verify: `rtk proxy rg -n "color-swatch-picker" docs/mobile/architecture-book` finds nothing.
-- [ ] 7.3 `lint-format.md` rule inventory: add a **Radio groups — `local/no-raw-radio-group`**
+- [x] 7.3 `lint-format.md` rule inventory: add a **Radio groups — `local/no-raw-radio-group`**
       bullet after Fields, with the same shape as the others: block, `files`, what it reports,
       ignored paths, no allowlist, RuleTester suite, caveats (a role through a variable or spread
       is not seen; Compose `RadioButton` in chrome carries no RN role) and the inject-and-revert
       proof from 2.3. Link the ADR.
       Verify: `rtk proxy rg -n "no-raw-radio-group" docs/mobile/architecture-book/lint-format.md`
       matches.
-- [ ] 7.4 `features.md`: in the personal-events paragraphs (`:24`, `:128-147`), the color is
+- [x] 7.4 `features.md`: in the personal-events paragraphs (`:24`, `:128-147`), the color is
       `ColorSwatchField` and the editor passes no layout style (Save and Delete stacked in the shared
       rhythm). Update the swatch sentence at `:145-147` to point to the new tests. In Header and
       floating actions (`:211-221`), add a "Personal events: on iOS a right Add (`plus`,
@@ -268,22 +268,22 @@ must stay: "Edit this event", "Delete event…" alert title, the alert's "Delete
       hidden events and personal events true.
       Verify: `rtk proxy rg -n "color-swatch-picker|in-content Add" docs/mobile/architecture-book/features.md`
       finds nothing.
-- [ ] 7.5 ADR: write `decisions/078-color-swatch-field.md` from `TEMPLATE.md` (use the next free
+- [x] 7.5 ADR: write `decisions/078-color-swatch-field.md` from `TEMPLATE.md` (use the next free
       number if 078 is taken on `origin/main`; fix every link). Include Context (the hand-built
       picker, `color-swatch-picker.tsx` facts in design.md → Context), Decision (D1 and D2),
       Rejected (D1 and D2 alternatives) and Consequences (iOS 44 pt circles, the lint gate, Android
       device evidence in the inbox note). Add it to `decisions/README.md`.
       Verify: the README index lists it, and every relative link in the ADR resolves.
-- [ ] 7.6 `CHANGELOG.md`: add `## 2026-10-26 — Personal events and hidden events on the design system`
+- [x] 7.6 `CHANGELOG.md`: add `## 2026-10-26 — Personal events and hidden events on the design system`
       above the current first entry. Add bullets for: `ColorSwatchField` (theming.md → Fields, ADR);
       `local/no-raw-radio-group` (lint-format.md); the personal-events create idiom (theming.md →
       Header and floating actions, features.md); the editor passing no layout style and Save/Delete
       in the shared rhythm (theming.md, features.md); the three screens composing only `@/design`
       with no allowlist entry. Verify: the entry is first and every link resolves.
-- [ ] 7.7 Outside the Book: `docs/react-native-migration/inbox/2026-10-26-mobile-ds-personal-hidden-events-device-pass.md`
+- [x] 7.7 Outside the Book: `docs/react-native-migration/inbox/2026-10-26-mobile-ds-personal-hidden-events-device-pass.md`
       exists (written at planning). Update it if a story id or label changed. Verify: the four
       story ids come from `src/design/gallery/stories.ts` for the new fixture.
-- [ ] 7.8 Commit 2. Verify: `npm run lint`, `npm test -- --coverage` and the openspec validate
+- [x] 7.8 Commit 2. Verify: `npm run lint`, `npm test -- --coverage` and the openspec validate
       still pass.
 
 ## 8. Device verification

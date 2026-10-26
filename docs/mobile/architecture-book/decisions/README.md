@@ -70,6 +70,7 @@ decision changes; use Git for its history.
 | [075](./075-header-and-floating-actions.md)                           | `useHeaderActions` renders native header actions per platform; one M3 `FloatingAction`              |
 | [076](./076-event-surface.md)                                        | `EventSurface` draws every event tile: theme-owned resolver, tint, clipped accent stripe          |
 | [077](./077-visual-style-lint-ratchet.md)                            | Style literals, raw `Text`/`Modal` and DS import bans are lint gates with shrink-only allowlists; migrated screens are a grow-only contract |
+| [078](./078-color-swatch-field.md)                                   | `ColorSwatchField` is the single-color choice; hand-built radio groups are a lint error           |
 
 > `045` is intentionally left free: the open source-recovery PR carries an ADR
 > numbered `044` that collides with the merged one above and renumbers to `045`

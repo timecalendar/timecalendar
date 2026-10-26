@@ -1,3 +1,19 @@
+## 2026-10-26 — Personal events and hidden events on the design system
+
+- `ColorSwatchField` is the field-family primitive for choosing one color from a palette:
+  `FieldChrome` label and error, `MinTouchTarget` circles with no hit slop, a selected ring,
+  platform press feedback and roles, caller-supplied names ([theming.md](./theming.md) → Fields,
+  ADR [078](./decisions/078-color-swatch-field.md), [accessibility.md](./accessibility.md)).
+- `local/no-raw-radio-group` makes a hand-built `radiogroup` or `radio` role in feature or route
+  code a lint error, with no allowlist ([lint-format.md](./lint-format.md) → Radio groups).
+- The personal-events list adds through the create idiom: an iOS header "+" and an Android
+  `FloatingAction` with `Layout.fabClearance` under the list
+  ([theming.md](./theming.md) → Header and floating actions, [features.md](./features.md)).
+- The personal-event editor passes `KeyboardSafeActionLayout` no layout style; Save and Delete
+  sit stacked in the shared action rhythm ([theming.md](./theming.md), [features.md](./features.md)).
+- Hidden events, the personal-events list and the personal-event form compose only `@/design`
+  and `@/components/chrome`, and sit on no lint allowlist.
+
 ## 2026-10-26 — Onboarding welcome, connect and manual import on the design system
 
 - The welcome page body uses the `secondary` tone, the page indicator reserves `MinTouchTarget`,

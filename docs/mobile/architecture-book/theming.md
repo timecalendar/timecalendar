@@ -223,10 +223,11 @@ primitive owns layout, scrolling, media, roles and the announcement.
   `--empty-screen`, `--empty-screen-artwork`, `--empty-section`, `--empty-inline`,
   `--error-screen`, `--error-retry-busy`, `--error-section`, `--long-strings`.
 
-## Fields — `TextField` and `DateTimeField` (`src/design/field/`)
+## Fields — `TextField`, `DateTimeField` and `ColorSwatchField` (`src/design/field/`)
 
 Every text field in a feature is `TextField` from `@/design`; every date-and-time field is
-`DateTimeField` (ADR [070](./decisions/070-text-field.md)). The field owns its label, box,
+`DateTimeField` (ADR [070](./decisions/070-text-field.md)); every choice of one color from a
+palette is `ColorSwatchField` (ADR [078](./decisions/078-color-swatch-field.md)). The field owns its label, box,
 helper, error, disabled state and font scaling; the caller owns the value and the copy.
 
 | State    | iOS (rounded filled field)                                           | Android (Material 3 outlined field)                                |
@@ -269,12 +270,27 @@ The error stays at full opacity when the field is disabled.
   Picker values are device-local (ADR
   [066](./decisions/066-device-local-date-picker-seam-and-timezone-ci.md)); the field converts to
   and from the display zone, and every picker callback goes through its one `onPicked` adapter.
-- Gates: `text-field.test.tsx`, `date-time-field.test.tsx` and `field-error-hint.test.ts` at 90%
-  per-file coverage tiers, the date field under the three-zone matrix
-  ([testing.md](./testing.md) → Time zones); `local/no-raw-text-input`
-  ([lint-format.md](./lint-format.md) → Fields); the gallery stories `text-field--default`,
+- `ColorSwatchField` takes `label`, `options: { color, label }[]`, `value`, `onChange`, `testID`,
+  and optional `error`, `disabled` and `style`. It shares `FieldChrome`, so its label, error and
+  disabled dimming match the other fields (`${testID}-label`, `${testID}-error`). Swatches are
+  `Radii.pill` circles of `MinTouchTarget` diameter (44 pt iOS, 48 dp Android) in a wrapping row
+  with `Spacing.two` gaps and no `hitSlop`, so neighbouring targets never overlap. The selected
+  swatch draws a 3-unit `text` ring; unselected swatches keep a transparent border of the same
+  width, so selection never shifts layout. Press feedback follows `Button`: an Android foreground
+  `ripple` clipped to the circle, an iOS dim to `StateOpacity.pressed`, neither when disabled.
+  The row is a `radiogroup`; each swatch is an Android `radio` with `checked`, or an iOS `button`
+  with `selected` (UIKit has no radio trait), with `disabled` in its state when the field is.
+  Each swatch's name is its option `label` and its testID is `${testID}-${color}`. The field
+  imports no feature and no translation key: the caller supplies the colors and their translated
+  names, and the color is reported verbatim.
+- Gates: `text-field.test.tsx`, `date-time-field.test.tsx`, `color-swatch-field.test.tsx` and
+  `field-error-hint.test.ts` at 90% per-file coverage tiers, the date field under the three-zone
+  matrix ([testing.md](./testing.md) → Time zones); `local/no-raw-text-input`
+  ([lint-format.md](./lint-format.md) → Fields) and `local/no-raw-radio-group`
+  ([lint-format.md](./lint-format.md) → Radio groups); the gallery stories `text-field--default`,
   `--helper`, `--error`, `--disabled`, `--multiline`, `--keyboard`, `--long-strings`,
-  `date-time-field--default`, `--error`, `--disabled`, `--long-strings`, and
+  `date-time-field--default`, `--error`, `--disabled`, `--long-strings`,
+  `color-swatch-field--default`, `--error`, `--disabled`, `--long-strings`, and
   `error-surfaces--field-error`.
 
 ## Lists — `ListRow`, `ListSection`, `Separator` (`src/design/list/`)
@@ -378,8 +394,9 @@ from `@/design` (ADR [074](./decisions/074-badge-and-color-dot.md)).
   token inside the box, so overlapping dots read as cut out in both schemes. There is no ring color
   value and no label: a dot is always hidden from VoiceOver and TalkBack.
 - **Color names belong to the control.** Where a color is the subject, the control that shows it
-  names it (the personal-events swatch picker through `SWATCH_NAME_KEYS`). `src/design/` cannot
-  import feature data, and server colors have no names.
+  names it: `ColorSwatchField` requires a `label` per option, and the personal-events form passes
+  the `SWATCH_NAME_KEYS` names. `src/design/` cannot import feature data, and server colors have
+  no names.
 - **Chrome import.** `NativeListHeader` imports `Badge` by path (`@/design/badge/badge`), a design
   leaf like `text/` and `list/`; `badge.tsx` imports only `@/theme`, `@/design/text/themed-text`
   and `@/design/icon/icon`, so no cycle forms.
@@ -394,7 +411,7 @@ from `@/design` (ADR [074](./decisions/074-badge-and-color-dot.md)).
   dot (large) and the Home welcome summary dots (medium, `homeHero` ring, at most five then `+N`).
 - **Deferred:** the event-details title dot and `TagBubble` (slice 5.8, allowlisted), the calendar
   view-menu pill (a menu trigger, 5.10), the agenda now marker (brand `primary` beside the tile,
-  not an event color), the swatch picker's 48 pt swatches (an input control, 5.3), the onboarding
+  not an event color), the onboarding
   page indicator (a pager, 5.1), the checklist `compact` grid-tile variant (renderer-fitted
   geometry, 5.11), and
   `SwiftBadge` / Compose `Badge` in the native list seam (native idiom, stays).
@@ -517,7 +534,9 @@ content has `paddingTop: Spacing.four` and `gap: Spacing.three`, its action regi
 `gap: Spacing.two`, `paddingTop: Spacing.three` and `paddingBottom: Spacing.four`, and caller
 styles apply last. A form that fills the viewport passes `contentPlacement="center"`, which centres
 the content and never scrolls it under the header. Institution name, Programme and iCal URL do, and
-pass no layout style at all. Enforced by
+pass no layout style at all. The personal-event editor is top-placed and also passes no layout
+style: its error notice, Save and Delete are direct children of the action region, stacked full
+width with Save first. Enforced by
 [`keyboard-safe-action-layout.test.tsx`](../../../mobile/src/design/layout/keyboard-safe-action-layout.test.tsx)
 (defaults, override, placement, and a `@ts-expect-error` against `scrollsUnderHeader` on a centred
 form). Programme Skip is a header text action on both platforms.
@@ -676,7 +695,7 @@ platform's own control. See ADR [075](./decisions/075-header-and-floating-action
 - **Tint:** the chrome tints every action `text` (`tintColor` on iOS, `contentColor` on Android).
   `HeaderAction` has no color field.
 - **Create action:** a trailing iOS header item and an Android `FloatingAction`, never both,
-  with one label (calendar, user calendars). Home's iOS add stays an in-content glass button,
+  with one label (calendar, user calendars, personal events). Home's iOS add stays an in-content glass button,
   since `(tabs)` has no header (5.9).
 - **`FloatingAction({ icon, label, testID, onPress })`** (`chrome/floating-action.tsx`) is the
   Compose M3 `FloatingActionButton` in a `SeededComposeHost`, absolute at the 16 dp margin
@@ -684,8 +703,8 @@ platform's own control. See ADR [075](./decisions/075-header-and-floating-action
   `primaryContainer` / `onPrimaryContainer` colors, shape and elevation come from the seeded
   scheme; it has no color, size or variant prop. It renders nothing on iOS.
 - **Clearance:** `Layout.fabClearance` (96: 56 dp FAB, 16 dp margin, 24 dp gap) is the only
-  bottom clearance under a FAB: `NativeList reservesFloatingAction`, Home's Android scroll and the
-  Android agenda list.
+  bottom clearance under a FAB: `NativeList reservesFloatingAction`, Home's Android scroll, the
+  Android agenda list and the Android personal-events list.
 - **Gallery:** `header-action--icons`, `--text`, `--both-sides`, `--disabled`, `--platform-only`,
   `--long-strings`; `floating-action--default`, `--over-list`, `--over-scroll`, `--long-label`
   (iOS shows an "Android only" caption).
