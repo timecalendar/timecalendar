@@ -28,6 +28,10 @@ const {
 const {
   rawTextInputAllowlist,
 } = require("./tools/eslint-rules/raw-text-input-allowlist")
+const {
+  styleLiteralAllowlist,
+  styleLiteralCategoryOption,
+} = require("./tools/eslint-rules/style-literal-allowlist")
 
 // Canonical import/export order (autofixable). Groups here are disjoint, so the
 // longest-match-wins tie-break never bites, and no bare "^" catch-all is used —
@@ -49,6 +53,23 @@ const importSortGroups = [
 
 // Codegen-owned (Orval): exempt from hand-written-code rules, formatting still applies.
 const generatedCode = "src/api/generated/**"
+
+const styleLiteralIgnores = [
+  generatedCode,
+  "src/theme/**",
+  "src/features/personal-events/ui/color-swatch-presets.ts",
+  "src/test-support/**",
+  "**/*.test.{ts,tsx}",
+]
+const styleLiteralOptions = {
+  colors: true,
+  typography: true,
+  shadows: true,
+  spacing: true,
+  radius: true,
+}
+const chromeStyleLiteralOptions = { ...styleLiteralOptions, typography: false }
+const chromeDir = "src/components/chrome/"
 
 // The ../* ban below is what makes @/-prefixed boundary patterns sound:
 // with parent-relative imports banned, the alias is the only way to cross
@@ -937,6 +958,50 @@ module.exports = defineConfig([
       "local/no-raw-text-input": "error",
     },
   },
+  {
+    // Visual-style values come from the tokens and the type ramp (ADR 077).
+    name: "timecalendar/style-literals",
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: styleLiteralIgnores,
+    plugins: { local: localRules },
+    rules: {
+      "local/no-style-literals": ["error", styleLiteralOptions],
+    },
+  },
+  {
+    // Chrome mirrors SwiftUI/Compose type, which is not on the RN ramp (ADR 077).
+    name: "timecalendar/style-literals-chrome",
+    files: [`${chromeDir}**`],
+    ignores: styleLiteralIgnores,
+    plugins: { local: localRules },
+    rules: {
+      "local/no-style-literals": ["error", chromeStyleLiteralOptions],
+    },
+  },
+  // One block per not-yet-migrated file turns off only the categories it still
+  // violates; flat config gives the last matching block's options to the rule,
+  // so every other category stays on (ADR 077).
+  ...styleLiteralAllowlist.map(({ path, categories }) => ({
+    name: "timecalendar/style-literals-allowlist",
+    files: [path],
+    plugins: { local: localRules },
+    rules: {
+      "local/no-style-literals": [
+        "error",
+        {
+          ...(path.startsWith(chromeDir)
+            ? chromeStyleLiteralOptions
+            : styleLiteralOptions),
+          ...Object.fromEntries(
+            categories.map((category) => [
+              styleLiteralCategoryOption[category],
+              false,
+            ]),
+          ),
+        },
+      ],
+    },
+  })),
   {
     name: "timecalendar/swiftui-identifiers",
     files: ["src/**/*.{ts,tsx}"],

@@ -295,10 +295,13 @@ describe("ListGeometry", () => {
     expect(ListGeometry).toEqual({
       rowPaddingHorizontal: 16,
       leadingGap: 16,
+      headerIcon: 88,
       ios: {
         rowMinHeight: 44,
         rowPaddingVertical: 12,
         leadingIconTile: 29,
+        leadingIconTileRadius: 7,
+        headerIconRadius: 20,
         trailingGap: 8,
         groupedRadius: { glass: 26, legacy: 10 },
       },

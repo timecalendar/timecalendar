@@ -222,10 +222,13 @@ export const Spacing = {
 export const ListGeometry = {
   rowPaddingHorizontal: 16,
   leadingGap: 16,
+  headerIcon: 88,
   ios: {
     rowMinHeight: 44,
     rowPaddingVertical: Spacing.twoHalf,
     leadingIconTile: 29,
+    leadingIconTileRadius: 7,
+    headerIconRadius: 20,
     trailingGap: Spacing.two,
     groupedRadius: { glass: 26, legacy: 10 },
   },
