@@ -1,3 +1,19 @@
+## 2026-10-26 — Design-system import bans
+
+- Features reach the native chrome seam only through the `@/components/chrome` barrel, and the app
+  shell (`app-tabs`) is imported only by routes and `src/components/`: `restrictedImports` flags
+  `banChromeDeepImports` and `banAppShellImports`, pinned per file class by the design
+  import-policy test, with no allowlist ([lint-format.md](./lint-format.md) → Design layer, ADR
+  [077](./decisions/077-visual-style-lint-ratchet.md)).
+- `local/no-raw-primitive` reports React Native `Text` and `Modal` in `src/features/*/ui/**`, with
+  a per-file, per-primitive allowlist of one entry (the calendar header title, 5.10) pinned by an
+  exact ceiling test; `TextInput`, `ActivityIndicator`, `Button` and the touchables stay with their
+  existing gates ([lint-format.md](./lint-format.md) → Raw primitives, ADR
+  [077](./decisions/077-visual-style-lint-ratchet.md)).
+- L9 bans `SymbolView`, `unstable_getMaterialSymbolSourceAsync` and every `expo-symbols/*` sub-path
+  outside the `Icon` primitive and the native chrome seam ([lint-format.md](./lint-format.md) → L9,
+  ADR [077](./decisions/077-visual-style-lint-ratchet.md)).
+
 ## 2026-10-26 — Visual-style lint ratchet
 
 - `local/no-style-literals` reports color, typography, legacy-shadow, spacing and radius literals

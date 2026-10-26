@@ -9,6 +9,8 @@ The exact rules and their options live in `mobile/eslint.config.js` (named block
 `timecalendar/design-tests`, `timecalendar/design-fixtures`, `timecalendar/chrome-fixtures`,
 `timecalendar/icon-seam`, `timecalendar/raw-button`, `timecalendar/ad-hoc-status`,
 `timecalendar/ad-hoc-separator`, `timecalendar/header-action`, `timecalendar/raw-event-color`, `timecalendar/raw-text-input`,
+`timecalendar/raw-primitive`, `timecalendar/raw-primitive-allowlist`,
+`timecalendar/components-home`, `timecalendar/routes-shell`,
 `timecalendar/style-literals`, `timecalendar/style-literals-chrome`,
 `timecalendar/style-literals-allowlist`,
 `timecalendar/retired-list-names`,
@@ -209,34 +211,43 @@ truth; this file carries the caveats the config can't (R-1).
   route-pattern reason as the color-scheme seam. Same static-import-only caveat as raw-fetch;
   `jest.mock("@/features/environment", …)` factories are not imports and stay free. See
   [navigation.md](./navigation.md) → Developer page.
-- **Design layer: one primitive barrel, a developer-only gallery entry** (ADR
-  [068](./decisions/068-design-layer-barrel-and-gallery-entry.md)). Three patterns, each behind a
+- **Design layer: one primitive barrel, a developer-only gallery entry, a chrome barrel, a
+  route-only app shell** (ADR [068](./decisions/068-design-layer-barrel-and-gallery-entry.md),
+  ADR [077](./decisions/077-visual-style-lint-ratchet.md)). Five patterns, each behind a
   `restrictedImports` flag:
   - `designDeepImportPattern` (`^@/design/(?!gallery(/|$))`, `banDesignDeepImports`, default on):
     a path below `@/design/` other than the gallery entry.
   - `galleryEntryImportPattern` (`^@/design/gallery(/|$)`, `banGalleryEntry`, default on).
   - `designBarrelImportPattern` (`^@/design$`, `banDesignBarrel`, default off).
+  - `chromeDeepImportPattern` (`^@/components/chrome/`, `banChromeDeepImports`, default on): a
+    path below the `@/components/chrome` barrel.
+  - `appShellImportPattern` (`^@/components/(?!chrome(/|$))`, `banAppShellImports`, default on):
+    the app shell (`app-tabs`), which routes compose.
 
-  | Files                                                             | `@/design` | `@/design/<folder>/…` | `@/design/gallery` | Block                                   |
-  | ----------------------------------------------------------------- | ---------- | --------------------- | ------------------ | --------------------------------------- |
-  | features, routes, `components/app-tabs`, `theme`, `hooks`, others | allowed    | banned                | banned             | `architecture`, `routes-not-importable` |
-  | `src/features/developer/**`                                       | allowed    | banned                | allowed            | `developer-tools-home`                  |
-  | `src/design/**` primitives (not fixtures, tests, `gallery/`)      | banned     | allowed               | banned             | `design-home`                           |
-  | `src/design/icon/icon{,.test}.tsx`                                | banned     | allowed               | banned             | `icon-seam` (also lifts L9)             |
-  | `src/design/**` tests                                             | allowed    | allowed               | banned             | `design-tests`                          |
-  | `src/design/**` fixtures, `src/design/gallery/**`                 | allowed    | allowed               | allowed            | `design-fixtures`                       |
-  | `src/components/chrome/**` runtime files and tests                | banned     | allowed               | banned             | `chrome-seams`                          |
-  | `src/components/chrome/**` fixtures                               | allowed    | allowed               | allowed            | `chrome-fixtures`                       |
-  | other `*.gallery.tsx` (`src/theme/tokens.gallery.tsx`)            | allowed    | banned                | allowed            | `fixtures`                              |
+  | Files                                                        | `@/design` | `@/design/<folder>/…` | `@/design/gallery` | `@/components/chrome/…` | app shell | Block                                   |
+  | ------------------------------------------------------------ | ---------- | --------------------- | ------------------ | ----------------------- | --------- | --------------------------------------- |
+  | features, `theme`, `hooks`, others                           | allowed    | banned                | banned             | banned                  | banned    | `architecture`, `routes-not-importable` |
+  | routes (`src/app/**`)                                        | allowed    | banned                | banned             | banned                  | allowed   | `routes-shell`                          |
+  | `src/features/developer/**`                                  | allowed    | banned                | allowed            | banned                  | banned    | `developer-tools-home`                  |
+  | `src/design/**` primitives (not fixtures, tests, `gallery/`) | banned     | allowed               | banned             | allowed                 | banned    | `design-home`                           |
+  | `src/design/icon/icon{,.test}.tsx`                           | banned     | allowed               | banned             | allowed                 | banned    | `icon-seam` (also lifts L9)             |
+  | `src/design/**` tests                                        | allowed    | allowed               | banned             | allowed                 | banned    | `design-tests`                          |
+  | `src/design/**` fixtures, `src/design/gallery/**`            | allowed    | allowed               | allowed            | allowed                 | banned    | `design-fixtures`                       |
+  | `src/components/**` outside chrome (`app-tabs`, its tests)   | allowed    | banned                | banned             | allowed                 | allowed   | `components-home`                       |
+  | `src/components/chrome/**` runtime files and tests           | banned     | allowed               | banned             | allowed                 | banned    | `chrome-seams` (also lifts L9)          |
+  | `src/components/chrome/**` fixtures                          | allowed    | allowed               | allowed            | allowed                 | banned    | `chrome-fixtures` (also lifts L9)       |
+  | other `*.gallery.tsx` (`src/theme/tokens.gallery.tsx`)       | allowed    | banned                | allowed            | banned                  | banned    | `fixtures`                              |
 
-  Every block re-calls `restrictedImports([routeEntrypointImportPattern], …)` with its full flag
-  set. Inside `src/design/`, a folder imports its own files relatively and other folders through
+  Every block re-calls `restrictedImports(…)` with its full flag set. Most pass
+  `[routeEntrypointImportPattern]`; `routes-shell` passes `[]` because routes may import `@/app`,
+  and `storage-seams`, `activity-seam` and `export-guide-seam` pass `[]` as well. No later block matches `src/app/**`. No file is allowlisted against the chrome
+  barrel or app-shell bans. Inside `src/design/`, a folder imports its own files relatively and other folders through
   `@/design/<folder>/<file>`; fixtures import primitives from `@/design` and gallery types from
   `@/design/gallery` with `import type`. **The R-1 proof is two tests, not inject-and-revert:**
   `tools/eslint-rules/design-import-policy.test.js` computes the effective
   `no-restricted-imports` options for one representative file per row (plus an environment file
-  and a route) and asserts which design, route-entrypoint, storage, chrome-seam and `SymbolView`
-  bans apply, so a block that forgets a flag fails naming the file; and
+  and a route) and asserts which design, route-entrypoint, storage, chrome-seam, chrome-barrel,
+  app-shell and `expo-symbols` bans apply, so a block that forgets a flag fails naming the file; and
   `src/design/import-graph.contract.test.ts` walks the value-import graph and fails when the
   barrel reaches a gallery module, when anything but the developer UI, developer routes, fixtures
   and the gallery reaches one, or when a require cycle passes through `src/design/`. **Caveat:**
@@ -254,14 +265,24 @@ truth; this file carries the caveats the config can't (R-1).
   no other block sets `no-restricted-syntax`; a future block that does must spread
   `restrictedSyntax`, because flat config replaces the options and would silently drop L8 for
   its files. See [accessibility.md](./accessibility.md).
-- **L9 — icons only through the `Icon` primitive** (`symbolViewImportPath`, appended to `paths`
-  by the `banSymbolView` flag of `restrictedImports`): `SymbolView` is banned as a named import
-  from `expo-symbols` everywhere except `src/design/icon/icon.tsx` and
-  `src/design/icon/icon.test.tsx`, so every icon declares its text scaling. Type imports
-  (`SFSymbol`, `AndroidSymbol`, `SymbolWeight`) stay allowed because `importNames` names only the
-  component. The exemption is the `timecalendar/icon-seam` block, which re-calls
-  `restrictedImports([routeEntrypointImportPattern], { banSymbolView: false, … })`; it is the last
-  block for those files, so it restates the design-primitive flags. Same static-import-only caveat as raw-fetch;
+- **L9 — icons only through the `Icon` primitive** (`symbolViewImportPath` appended to `paths`
+  and `symbolsDeepImportPattern` (`^expo-symbols/`) appended to `patterns`, both by the
+  `banSymbolView` flag of `restrictedImports`): `SymbolView` and the glyph loader
+  `unstable_getMaterialSymbolSourceAsync` are banned as named imports from `expo-symbols`, and
+  every `expo-symbols/*` sub-path (`androidWeights/*`) is banned outright, everywhere except the
+  `Icon` primitive (`src/design/icon/icon{,.test}.tsx`) and the native chrome seam
+  (`src/components/chrome/**`), so every icon a feature or design primitive renders declares its
+  text scaling. Chrome wraps native symbol APIs at the same level as `SymbolView`, so a chrome
+  wrapper that renders a raw symbol view owns the text-scaling contract itself; no chrome file
+  does today. Type imports (`SFSymbol`, `AndroidSymbol`, `SymbolWeight`) from the `expo-symbols` root stay
+  allowed because `importNames` names only values; the `^expo-symbols/` pattern bans sub-paths
+  outright, type imports included. The exemptions are the `timecalendar/icon-seam`,
+  `timecalendar/chrome-seams` and `timecalendar/chrome-fixtures` blocks, each re-calling
+  `restrictedImports([routeEntrypointImportPattern], { banSymbolView: false, … })`; `icon-seam` is
+  the last block for its files, so it restates the design-primitive flags. Inject-and-revert proof:
+  `SymbolView` in a feature screen and in `src/design/badge/badge.tsx`, the loader and
+  `expo-symbols/androidWeights/regular` in a feature screen all fail `npm run lint`; `SymbolView` in
+  `src/components/chrome/floating-action.tsx` passes. Same static-import-only caveat as raw-fetch;
   `jest.mock("expo-symbols", …)` factories are not imports. See
   [accessibility.md](./accessibility.md) → Icon scaling and ADR
   [065](./decisions/065-icon-text-scaling.md).
@@ -347,6 +368,34 @@ truth; this file carries the caveats the config can't (R-1).
   `require`, and a `TextInput` reached through another module's re-export is invisible to it. Inject-and-revert proof: a
   migrated file added to the allowlist fails the contract test naming it; a `TextInput` import in
   `src/features/feedback/ui/feedback-screen.tsx` fails `npm run lint`.
+- **Raw primitives — `local/no-raw-primitive`** (`tools/eslint-rules/no-raw-primitive.js`, block
+  `timecalendar/raw-primitive`, `files: ["src/features/*/ui/**/*.{ts,tsx}"]`, tests ignored): a
+  value import or re-export of `Text` or `Modal` from `react-native` (aliases included) is an
+  error, one option and one message id per primitive: `rawText` (`text`) points to `ThemedText`
+  from `@/design`, `rawModal` (`modal`) to a Router route with a sheet or modal presentation
+  ([navigation.md](./navigation.md)) or `MenuView` from `@/components/chrome`. A type-only import
+  or re-export passes. The calendar renderer (`src/features/calendar/renderer/**`) is outside
+  `ui/` and out of scope. `TextInput` (`local/no-raw-text-input`), `ActivityIndicator`
+  (`local/no-ad-hoc-status`), `Button` and the touchables (`rawTouchablesImportPath`) keep their
+  own wider gates, so each name is reported by one gate and has one allowlist (ADR
+  [077](./decisions/077-visual-style-lint-ratchet.md)). **Ratchet:**
+  `tools/eslint-rules/raw-primitive-allowlist.js` lists each not-yet-migrated file with the
+  primitives it still imports (`categories`, message ids) and its migrating slice; one
+  `timecalendar/raw-primitive-allowlist` block per entry, mapped after the base block, turns off
+  only those primitives for that file, so a file listed for `Text` still fails on a `Modal`. Today
+  it holds one entry, `src/features/calendar/ui/calendar-screen/calendar-screen-header.tsx`
+  (`rawText`, 5.10). `src/design/**` and `src/components/chrome/**` carry no entry (they are out of
+  scope). `raw-primitive-allowlist.test.js` lints every entry with both options on and fails on a
+  missing file, a duplicate, an unknown or stale primitive, or a per-primitive count that differs
+  from `RAW_PRIMITIVE_ALLOWLIST_CEILING` (`rawText` 1, `rawModal` 0, exact).
+  **Every migration slice deletes its files (or the primitives it removes) from the allowlist in
+  the same PR** and lowers the ceiling. `no-raw-primitive.test.js` is the RuleTester suite.
+  **Caveats:** a namespace import (`import * as RN`, then `RN.Text`), a `require` and a primitive
+  reached through another module's re-export are invisible to it. Inject-and-revert proof: `Text`
+  and `Modal` in `src/features/feedback/ui/feedback-screen.tsx` fail with `rawText` and `rawModal`;
+  `Modal` in the allowlisted calendar header fails with `rawModal`; `TextInput` there fails once,
+  from `local/no-raw-text-input`; an unmigrated entry added to the allowlist fails its test on the
+  ceiling and the stale check.
 - **Lists — `local/no-ad-hoc-separator`** (`tools/eslint-rules/no-ad-hoc-separator.js`, block
   `timecalendar/ad-hoc-separator`, `files: ["src/**/*.{ts,tsx}"]`): a style property
   `borderBottomWidth`, `borderTopWidth` or `height` whose value is `StyleSheet.hairlineWidth` is an

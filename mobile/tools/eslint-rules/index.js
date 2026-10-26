@@ -6,6 +6,7 @@ const noAdHocStatus = require("./no-ad-hoc-status")
 const noJsCallInWorklet = require("./no-js-call-in-worklet")
 const noRawButton = require("./no-raw-button")
 const noRawEventColor = require("./no-raw-event-color")
+const noRawPrimitive = require("./no-raw-primitive")
 const noRawTextInput = require("./no-raw-text-input")
 const noStyleLiterals = require("./no-style-literals")
 const noSwiftuiContainerIdentifier = require("./no-swiftui-container-identifier")
@@ -19,6 +20,7 @@ module.exports = {
     "no-js-call-in-worklet": noJsCallInWorklet,
     "no-raw-button": noRawButton,
     "no-raw-event-color": noRawEventColor,
+    "no-raw-primitive": noRawPrimitive,
     "no-raw-text-input": noRawTextInput,
     "no-style-literals": noStyleLiterals,
     "no-swiftui-container-identifier": noSwiftuiContainerIdentifier,

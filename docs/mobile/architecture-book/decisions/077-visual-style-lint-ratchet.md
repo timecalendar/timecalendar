@@ -1,4 +1,4 @@
-# 077 — Visual-style lint ratchet
+# 077 — Visual-style lint ratchet and design-system import bans
 
 ## Status
 
@@ -13,6 +13,14 @@ nothing stopped a screen from writing `color: "#fff"`, `fontSize: 17`, `padding:
 escapes per screen, and Phase 5 migrates screens one slice at a time; without a gate the count can
 grow behind each migration, and a slice has no measurable exit. Principle 1 requires the rule to
 be a gate before it is prose. This is roadmap slice 4.1 (audit gates L5, L6, L7, roadmap ADR "E").
+
+The audit's import gates L2–L4 were partly encoded: the deep `@/design/*` ban (ADR
+[068](./068-design-layer-barrel-and-gallery-entry.md)), the `SymbolView` ban (ADR
+[065](./065-icon-text-scaling.md)) and the raw-touchable, `TextInput` and `ActivityIndicator`
+gates. A feature could still deep-import a chrome module, import the app shell, render React
+Native `Text` or `Modal`, or load symbol glyphs through `expo-symbols`' other value export and
+sub-paths. Raw `Text` and `Modal` have screens left to migrate, so they need the same per-file
+exit as the style literals. This is roadmap slice 4.2.
 
 ## Decision
 
@@ -32,7 +40,24 @@ be a gate before it is prose. This is roadmap slice 4.1 (audit gates L5, L6, L7,
   file. `style-literal-allowlist.test.js` fails on a missing file, a duplicate, an unknown or stale
   category, or a per-category count that differs from its committed ceiling (exact, so the
   ceiling only moves down with the list).
-- **Every migration slice deletes its files (or the categories it cleans) from the allowlist in
+- **Raw primitives, same ratchet.** `local/no-raw-primitive` reports a value import or re-export
+  of `Text` (`rawText`, → `ThemedText`) or `Modal` (`rawModal`, → a Router sheet or modal route, or
+  `MenuView` from `@/components/chrome`) from `react-native` in `src/features/*/ui/**`, tests out
+  (the calendar renderer is outside `ui/`). `raw-primitive-allowlist.js` and its exact-ceiling test
+  mirror the style-literal pair, one block per entry turning off only the listed primitives.
+  `TextInput`, `ActivityIndicator`, `Button` and the touchables stay with their existing, wider
+  gates (`local/no-raw-text-input`, `local/no-ad-hoc-status`, `rawTouchablesImportPath`): each
+  name is gated once and has one allowlist.
+- **Chrome barrel and app shell.** Two `restrictedImports` flags: `banChromeDeepImports`
+  (`^@/components/chrome/`) and `banAppShellImports` (`^@/components/(?!chrome(/|$))`). The
+  chrome barrel ban is lifted for `src/design/**` and `src/components/**`; the app-shell ban for
+  `src/components/**` and routes (`src/app/**`), which compose the shell. Both have zero offenders
+  and no allowlist; the design import-policy test pins them per file class.
+- **`expo-symbols` completed.** The `banSymbolView` flag bans `SymbolView`,
+  `unstable_getMaterialSymbolSourceAsync` and every `expo-symbols/*` sub-path. It is lifted for
+  the `Icon` primitive and the native chrome seam (`src/components/chrome/**`), which wraps native
+  symbol APIs at the same level and owns their text scaling. Type imports stay allowed.
+- **Every migration slice deletes its files (or the categories it cleans) from both allowlists in
   the same PR** and lowers the matching ceilings.
 
 Rejected:
@@ -44,6 +69,13 @@ Rejected:
 - Five separate rules: one concept with five inventories and five allowlists.
 - A permanent calendar-renderer exemption: it hides real drift; its entries stay visible as debt.
 - An allow option read from `context.filename` inside the rule: puts config in the rule.
+- One L3 rule for all seven React Native names with the older gates retired: narrows the
+  `TextInput` and touchable bans to `ui/`, and splits `no-ad-hoc-status`' shared allowlist.
+- Adding `Text`/`Modal` to `no-restricted-imports`: a per-file, per-name exemption would need a
+  per-file block restating every seam flag of the file's directory, the silent-drop hazard.
+- An allowlist entry for the tabs route's app-shell import: composition, not debt; it would never
+  leave.
+- Banning `SymbolView` in chrome: the seam wraps native APIs at that level.
 
 ## Consequences
 
@@ -54,10 +86,16 @@ Rejected:
 - The `ErrorMessage` title moved onto the `sectionTitle` ramp step.
 - The renderer's entries remain until a renderer slice (5.11) runs.
 - A literal behind a variable, an imported constant or a spread stays a review item.
+- The raw-primitive allowlist holds one entry, the calendar header title (5.10); a namespace
+  import or `require` of `Text`/`Modal` stays a review item.
+- A feature reaches chrome only through `@/components/chrome` and never imports `app-tabs`; a
+  chrome wrapper that draws a raw `SymbolView` must declare its text scaling itself.
 
 ## Revisit if
 
-- The allowlist reaches zero: drop the per-file block machinery and keep the base blocks.
+- An allowlist reaches zero: drop its per-file block machinery and keep the base blocks.
+- A chrome wrapper renders a symbol that does not follow the OS text size.
+- `src/components/` gains a second shell module that features legitimately need.
 - A category's false positives on data objects need style-context detection.
 - A token family is added (extend the key table), or chrome type moves onto the RN ramp (turn
   `typography` on for chrome).

@@ -14,6 +14,13 @@ const GALLERY_ENTRY = "^@/design/gallery(/|$)"
 const ROUTE_ENTRYPOINT = "^@/app(/|$)"
 const STORAGE_BACKEND = "^react-native-mmkv($|/)"
 const CHROME_SEAM = "^expo-glass-effect($|/)"
+const CHROME_DEEP = "^@/components/chrome/"
+const APP_SHELL = "^@/components/(?!chrome(/|$))"
+const SYMBOLS_DEEP = "^expo-symbols/"
+const SYMBOL_IMPORT_NAMES = [
+  "SymbolView",
+  "unstable_getMaterialSymbolSourceAsync",
+]
 
 const fileClasses = [
   {
@@ -40,18 +47,21 @@ const fileClasses = [
     deep: false,
     gallery: false,
     route: false,
+    appShell: true,
   },
   {
     file: "src/design/button/button.tsx",
     barrel: false,
     deep: true,
     gallery: false,
+    chromeDeep: true,
   },
   {
     file: "src/design/event-surface/event-surface.tsx",
     barrel: false,
     deep: true,
     gallery: false,
+    chromeDeep: true,
   },
   {
     file: "src/design/icon/icon.tsx",
@@ -59,24 +69,28 @@ const fileClasses = [
     deep: true,
     gallery: false,
     symbolView: false,
+    chromeDeep: true,
   },
   {
     file: "src/design/gallery/registry.ts",
     barrel: true,
     deep: true,
     gallery: true,
+    chromeDeep: true,
   },
   {
     file: "src/design/button/button.gallery.tsx",
     barrel: true,
     deep: true,
     gallery: true,
+    chromeDeep: true,
   },
   {
     file: "src/design/button/button.test.tsx",
     barrel: true,
     deep: true,
     gallery: false,
+    chromeDeep: true,
   },
   {
     file: "src/components/chrome/native-list.tsx",
@@ -84,6 +98,8 @@ const fileClasses = [
     deep: true,
     gallery: false,
     chromeSeam: false,
+    chromeDeep: true,
+    symbolView: false,
   },
   {
     file: "src/components/chrome/menu-view.gallery.tsx",
@@ -91,6 +107,53 @@ const fileClasses = [
     deep: true,
     gallery: true,
     chromeSeam: false,
+    chromeDeep: true,
+    symbolView: false,
+  },
+  {
+    file: "src/features/calendar-sources/ui/dev-import-screen.tsx",
+    barrel: true,
+    deep: false,
+    gallery: false,
+  },
+  {
+    file: "src/features/developer/ui/gallery-story-screen.tsx",
+    barrel: true,
+    deep: false,
+    gallery: true,
+  },
+  {
+    file: "src/app/(tabs)/_layout.tsx",
+    barrel: true,
+    deep: false,
+    gallery: false,
+    route: false,
+    appShell: true,
+  },
+  {
+    file: "src/components/app-tabs.tsx",
+    barrel: true,
+    deep: false,
+    gallery: false,
+    chromeDeep: true,
+    appShell: true,
+  },
+  {
+    file: "src/components/app-tabs.test.tsx",
+    barrel: true,
+    deep: false,
+    gallery: false,
+    chromeDeep: true,
+    appShell: true,
+  },
+  {
+    file: "src/components/chrome/native-list.test.tsx",
+    barrel: false,
+    deep: true,
+    gallery: false,
+    chromeSeam: false,
+    chromeDeep: true,
+    symbolView: false,
   },
   {
     file: "src/theme/tokens.gallery.tsx",
@@ -132,10 +195,14 @@ describe("design import policy", () => {
       route = true,
       symbolView = true,
       chromeSeam = true,
+      chromeDeep = false,
+      appShell = false,
     }) => {
       const options = configs.get(file)
       const patterns = options.patterns.map((pattern) => pattern.regex)
-      const paths = options.paths.map((path) => path.name)
+      const symbolNames = options.paths
+        .filter((path) => path.name === "expo-symbols")
+        .flatMap((path) => path.importNames)
       const banned = (regex) => patterns.includes(regex)
 
       expect({
@@ -146,7 +213,10 @@ describe("design import policy", () => {
         route: banned(ROUTE_ENTRYPOINT),
         storage: banned(STORAGE_BACKEND),
         chromeSeam: banned(CHROME_SEAM),
-        symbolView: paths.includes("expo-symbols"),
+        chromeDeep: !banned(CHROME_DEEP),
+        appShell: !banned(APP_SHELL),
+        symbolView: symbolNames,
+        symbolsDeep: banned(SYMBOLS_DEEP),
       }).toEqual({
         file,
         barrel,
@@ -155,7 +225,10 @@ describe("design import policy", () => {
         route,
         storage: true,
         chromeSeam,
-        symbolView,
+        chromeDeep,
+        appShell,
+        symbolView: symbolView ? SYMBOL_IMPORT_NAMES : [],
+        symbolsDeep: symbolView,
       })
     },
   )

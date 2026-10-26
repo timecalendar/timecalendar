@@ -201,7 +201,7 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   than the app shell and `chrome/`. `tools/eslint-rules/design-import-policy.test.js` computes the
   effective `no-restricted-imports` options per file class in a child Node process (ESLint cannot
   load its config under Jest's module resolution) and pins the design, route-entrypoint, storage,
-  chrome-seam and `SymbolView` bans.
+  chrome-seam, chrome-barrel, app-shell and `expo-symbols` bans.
 - **Every design primitive ships with a fixture and a test (L10).**
   `src/design/gallery/fixture-coverage.contract.test.ts` fails, naming the module, when a `.tsx`
   under `src/design/` (other than tests, fixtures and the `galleryInfrastructure` list) has no
