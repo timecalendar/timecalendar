@@ -49,3 +49,10 @@ warning and retry the initial publish on the first request that needs the snapsh
   keyboard: the action returns to the bottom edge. Height changes while the keyboard is open
   (emoji or clipboard panel) send no new `keyboardDidShow` on API 30+ and are not tracked;
   `react-native-keyboard-controller` would cover them.
+- **iOS text-entry dialog identifiers likely cascade.** `native-text-entry-dialog-ios.tsx` puts
+  `accessibilityIdentifier(ids.dialog)` on the sheet's `Group`. SwiftUI applies a container's
+  identifier to its children, the same mechanism that replaced settings row identifiers, so the
+  cancel/confirm/field identifiers may read as the dialog id. No Maestro flow opens this dialog
+  yet. Check with `describe` on a simulator before a flow depends on those ids.
+- **Connect is not covered by Maestro.** Flow 01 imports through the export guide; the Connect
+  path (`onboarding-connect-continue`) has no E2E flow.
