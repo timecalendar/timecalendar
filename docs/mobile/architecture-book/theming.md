@@ -258,6 +258,66 @@ The error stays at full opacity when the field is disabled.
   `date-time-field--default`, `--error`, `--disabled`, `--long-strings`, and
   `error-surfaces--field-error`.
 
+## Lists — `ListRow`, `ListSection`, `Separator` (`src/design/list/`)
+
+A list the native seam cannot host (virtualized, hundreds of rows, a caller element in the row)
+renders `ListRow` from `@/design` (ADR [073](./decisions/073-list-row-family.md)). It takes the
+seam's row vocabulary (`label`, `subtitle`, `value`, `hint`, `destructive`) and its numbers and
+colors, so an RN list and a `NativeList` on the same page read as one surface.
+
+- **Anatomy:** optional `leading` (a seam-style icon `{ icon: { ios, android } }`, or
+  `{ element, width }` for a caller element such as a logo, swatch or thumbnail), then a text
+  column (`overline` in a status tone, `label`, `subtitle`, `details` lines), then `value`, the
+  selection check, and a trailing slot. An action row (`onPress` or `href`, which calls
+  `router.push`) takes `hint`, `selected`, `disabled` and `trailing="chevron"`; a static row takes
+  none of those and accepts one accessory element (a small text `Button`) as `trailing`. The props
+  union makes a nested control in a pressable row, a color, height or font override, and a row
+  without `testID` type errors. `style` is `StyleProp<ListRowLayoutStyle>` (`ButtonLayoutStyle`
+  keys) and merges last.
+- **Geometry** comes from `ListGeometry` in `@/theme`, which `native-list.tsx` also reads:
+
+  | Token                                         | iOS                       | Android |
+  | --------------------------------------------- | ------------------------- | ------- |
+  | `rowPaddingHorizontal` / `leadingGap`         | 16 / 16                   | 16 / 16 |
+  | `rowMinHeight`                                | 44                        | 56      |
+  | `rowPaddingVertical`                          | `Spacing.twoHalf`         | `Spacing.two` |
+  | leading icon                                  | 29pt `primaryStrong` tile | 24dp flat glyph |
+  | grouped corners                               | 26 (iOS 26+), 10 below    | 20 outer / 4 inner |
+  | `segmentGap` / `listInset`                    | —                         | 2 / 16  |
+
+- **Colors:** `useListPalette()` (`@/components/chrome`) returns the grouped `surface`, `text` and
+  `textSecondary`. iOS reads `backgroundElement`, `text` and `textSecondary`. Android reads
+  `surfaceContainer`, `onSurface` and `onSurfaceVariant` from Expo UI's `getMaterialColors` with
+  `seedColor = primary`, the same derivation every Compose host uses, cached per scheme and seed.
+  Plain rows draw no surface. Overlines use `positive`, `informational` and `destructive`.
+- **Grouped vs plain:** a row inside `ListSection`, or with an explicit `position`
+  (`listRowPosition(index, count)` in virtualized lists), is grouped: `surface` fill, corners by
+  position, an iOS bottom `Separator` inset to the text start on every row but the last, an
+  Android 2dp gap and no dividers. A row with neither is plain, and the list passes
+  `ItemSeparatorComponent={ListRowSeparator}` (`leadingWidth` for a leading element), which renders
+  the inset `Separator` on iOS and nothing on Android. `ListSection` adds no side margin (the page
+  lane owns it); its title is iOS `footnote`/`textSecondary` or Android `label`/`action`, its
+  footer `footnote`/`textSecondary`, and sections stack `Spacing.four` apart.
+- **`Separator`** (`inset`: `"none"`, `"leading"` or `{ leadingWidth }`) is a `separator`-colored
+  hairline on iOS and 1dp on Android, hidden from assistive technology. The text-start formula
+  `rowPaddingHorizontal + leadingWidth + leadingGap` lives only in `separatorInset`
+  (`separator-inset.ts`). `listRowPosition` (`list-row-position.ts`) and the seam's private
+  `segmentPosition` (`chrome/native-list-position.ts`) agree, which `list-row.test.tsx` asserts.
+- **States:** iOS fills the shaped row with `backgroundSelected` on press; Android draws a
+  foreground `ripple` clipped by the row shape. `disabled` dims to `StateOpacity.disabled` and
+  shows no feedback. `selected` draws an SF `checkmark` or Material `check` in `primary`.
+- **Scaling:** line caps are label 8, each supporting line 8, value 4, overline 2. At accessibility
+  text sizes the value and check stack under the label, and a single-word label shrinks to one
+  line (`minimumFontScale` 0.5) instead of breaking mid-word.
+- Gates: `list-row.test.tsx`, `list-section.test.tsx` and `separator.test.tsx` at 90% per-file
+  tiers; `local/no-ad-hoc-separator` ([lint-format.md](./lint-format.md) → Lists); the gallery
+  stories `list-row--plain`, `--grouped`, `--states`, `--leading`, `--static`, `--overline`,
+  `--long-strings`, `list-section--titled`, `--single`, `--seam-comparison`, `--long-strings`
+  and `separator--insets`.
+- **What lint cannot carry:** no rule detects a hand-built row (a `Pressable` with a label and a
+  chevron has no reliable static signature). Review checks that a new list uses `ListRow` or the
+  native seam.
+
 ## Responsive content lanes — measured owners, semantic caps
 
 - `src/theme/responsive.ts` owns the typed portrait responsive policy and re-exports it through
@@ -375,7 +435,12 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
     `ListItem` (role switch) carrying `testID`; its trailing Material `Switch` carries
     `switchTestID` and is still its own unlabeled TalkBack stop, a known violation
     ([accessibility.md](./accessibility.md) → Proof in CI). Choice and radio-dialog `RadioButton`s
-    take no `onClick` and add no semantics of their own.
+    take no `onClick` and add no semantics of their own. Every navigation, value and action row's
+    Compose node carries one content description (name, then value, then hint) and, on navigation
+    and action rows, `Role.Button`, through the `timecalendarSemantics` modifier from the local
+    module `modules/compose-semantics`. `ComposeListRow` places it last, so it clears the
+    `ListItem` text inside it and keeps the `testID` tag and the click action outside it. Segment
+    corners, gap and margins come from `ListGeometry.android`.
   - **Row subtitle and destructive rows:** a row `subtitle` is a second line under the label (iOS
     `subheadline`/`textSecondary` in a leading VStack; Android the supporting slot, which moves any
     `value` to trailing `labelLarge`/`onSurfaceVariant` text). The default accessibility label reads
@@ -430,13 +495,18 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
     the retired seam and adapter names out of `src/` ([lint-format.md](./lint-format.md) → Native list names).
   - **Numeric editor:** `chrome/native-list-numeric-editor.tsx` carries the same brand accent
     (iOS Form `tint`, Compose `seedColor`).
+- **`chrome/compose-semantics.ts`** — `composeSemantics({ contentDescription, role? })`, the
+  only place that names the `timecalendarSemantics` modifier type registered by
+  `modules/compose-semantics` (Android). Not on the barrel; `native-list.tsx` is its consumer.
+- **`chrome/list-palette.ts`** — `useListPalette()`, the grouped-list surface and text colors
+  (Android from Expo UI's `getMaterialColors`, seeded with `primary`), for `ListRow`.
 - **`src/design/icon/icon.tsx`** (from `@/design`) — `Icon`, the only renderer of a symbol glyph (lint L9 bans
   `SymbolView` elsewhere, ADR [065](./decisions/065-icon-text-scaling.md)). iOS renders
   `SymbolView`; Android draws the Material Symbols glyph from the closed `MATERIAL_GLYPHS` table (`icon-glyphs.ts`)
   in a box sized by the required `scaling` (see [Accessibility → Icon
   scaling](./accessibility.md#icon-scaling--encoded-in-icon)). Callers pass the color token; the
   icon carries no tone of its own.
-- **`chrome/index.ts`** — the barrel. Exports `NativeTabs`, `GlassSurface`, `Host`, `Picker`, `DateTimePicker`, `MenuView`, `MenuComponentRef`, and the native list seam: `NativeList`, `NativeListSection`, `NativeListRow` (+ `NativeListRowProps`), `NativeListSwitchRow`, `NativeListChoiceRow`, `NativeListRadioDialog`, `NativeListAlert`, `NativeListFloatingAction`, `NativeListHeader`, `NativeListNumericEditor` (+ its props and ids types), and the `NativeListIcon` type. It carries no aliases.
+- **`chrome/index.ts`** — the barrel. Exports `NativeTabs`, `GlassSurface`, `Host`, `Picker`, `DateTimePicker`, `MenuView`, `MenuComponentRef`, and the native list seam: `NativeList`, `NativeListSection`, `NativeListRow` (+ `NativeListRowProps`), `NativeListSwitchRow`, `NativeListChoiceRow`, `NativeListRadioDialog`, `NativeListAlert`, `NativeListFloatingAction`, `NativeListHeader`, `NativeListNumericEditor` (+ its props and ids types), and the `NativeListIcon` type, and `useListPalette` (+ `ListPalette`). It carries no aliases.
 
 ## Lint boundary — the R-1 enforcement
 
@@ -462,6 +532,11 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
   the brand reaches the iOS Form tint and every Compose `seedColor`, and that icons, footers, segment
   positions, Material text roles, and the radio-dialog structure are wired. Rendered geometry stays
   device evidence, checked through the `native-list` stories of `/developer/gallery`.
+- Its "android row semantics" block asserts that every Android row carries the
+  `timecalendarSemantics` modifier last, with the composed description (name, value, hint) and the
+  button role on navigation and action rows only. Maestro flow 03 asserts the description on a
+  real Android row. Whether TalkBack speaks it in that order is device evidence (the inbox note
+  `2026-10-26-mobile-ds-list-row-device-pass.md`).
 - The placement invariant ("native list dialog placement" in `native-list.test.tsx`, and
   the placement cases in `native-list-numeric-editor.test.tsx` and
   `native-text-entry-dialog.test.tsx`) asserts that each standalone dialog rejects rendering inside

@@ -1,3 +1,24 @@
+## 2026-10-26 — List row family and Android row semantics
+
+- On Android every `NativeListRow` is one TalkBack node with a content description (name, value,
+  hint) and, on navigation and action rows, the button role, through the `timecalendarSemantics`
+  modifier from the local module `modules/compose-semantics` ([theming.md](./theming.md) →
+  Native-chrome wrapper seam, [runtime.md](./runtime.md), ADR
+  [073](./decisions/073-list-row-family.md)).
+- `ListRow`, `ListSection`, `ListRowSeparator` and `Separator` live in `src/design/list/`, with
+  `ListGeometry` in `@/theme` as the one source of list geometry for them and `native-list.tsx`,
+  and `useListPalette` in `@/components/chrome` for the seeded Android surface
+  ([theming.md](./theming.md) → Lists).
+- The list accessibility contract: one element per activatable row with a composed name, value,
+  hint and derived state, static rows with an accessory stop, header section titles
+  ([accessibility.md](./accessibility.md) → Lists). The Expo UI mock derives a role only from real
+  semantics ([testing.md](./testing.md)).
+- `local/no-ad-hoc-separator` bans hand-drawn hairline separators outside `src/design/` (ceiling
+  1), and the raw-button allowlist ceiling is 13 ([lint-format.md](./lint-format.md) → Lists,
+  Buttons).
+- The timezone chooser, school picker, hidden events, Activity, personal events and export-guide
+  provider selection render `ListRow` ([features.md](./features.md)).
+
 ## 2026-10-26 — NativeList seam
 
 - The native grouped list seam is `NativeList*` in `src/components/chrome/native-list*`:

@@ -8,7 +8,8 @@ The exact rules and their options live in `mobile/eslint.config.js` (named block
 `timecalendar/environment-home`, `timecalendar/design-home`, `timecalendar/fixtures`,
 `timecalendar/design-tests`, `timecalendar/design-fixtures`, `timecalendar/chrome-fixtures`,
 `timecalendar/icon-seam`, `timecalendar/raw-button`, `timecalendar/ad-hoc-status`,
-`timecalendar/raw-text-input`, `timecalendar/retired-list-names`,
+`timecalendar/ad-hoc-separator`, `timecalendar/raw-text-input`,
+`timecalendar/retired-list-names`,
 `timecalendar/calendar-sources-is-a-leaf`, `timecalendar/storage-seams`,
 `timecalendar/swiftui-identifiers`, and `timecalendar/tests`). The config is the source of
 truth; this file carries the caveats the config can't (R-1).
@@ -299,7 +300,7 @@ truth; this file carries the caveats the config can't (R-1).
   `tools/eslint-rules/raw-button-allowlist.js`, each annotated with
   the slice that migrates it. `raw-button-allowlist.test.js` lints every entry with only this rule
   and fails on a stale entry (no report: remove it), a missing file, a duplicate, or a list longer
-  than `RAW_BUTTON_ALLOWLIST_CEILING` (14); migrating a file means deleting its entry and lowering the
+  than `RAW_BUTTON_ALLOWLIST_CEILING` (13); migrating a file means deleting its entry and lowering the
   ceiling. `no-raw-button.test.js` is the RuleTester suite. **Caveats:** a role passed as a
   variable, text wrapped in a layout `View`, a function child and `Animated` pressables are not
   inspected (rows and tiles legitimately use `Pressable`; review covers the rest). The rule has its
@@ -344,6 +345,25 @@ truth; this file carries the caveats the config can't (R-1).
   `require`, and a `TextInput` reached through another module's re-export is invisible to it. Inject-and-revert proof: a
   migrated file added to the allowlist fails the contract test naming it; a `TextInput` import in
   `src/features/feedback/ui/feedback-screen.tsx` fails `npm run lint`.
+- **Lists — `local/no-ad-hoc-separator`** (`tools/eslint-rules/no-ad-hoc-separator.js`, block
+  `timecalendar/ad-hoc-separator`, `files: ["src/**/*.{ts,tsx}"]`): a style property
+  `borderBottomWidth`, `borderTopWidth` or `height` whose value is `StyleSheet.hairlineWidth` is an
+  error; list separators are `Separator` or `ListRowSeparator` from `@/design`
+  ([theming.md](./theming.md) → Lists, ADR [073](./decisions/073-list-row-family.md)). Ignored:
+  `src/design/**`, `src/theme/**` (the token swatch table), `src/features/calendar/renderer/**`
+  (grid lines, not list separators), tests, and the files in
+  `tools/eslint-rules/ad-hoc-separator-allowlist.js`, each annotated with its migrating slice (the
+  Home timeline divider, 5.9). `ad-hoc-separator-allowlist.test.js` fails on a stale entry, a
+  missing file, a duplicate, or a list longer than its ceiling (1). `no-ad-hoc-separator.test.js`
+  is the RuleTester suite. `borderWidth` (the rings of the school logo, header icon and checklist
+  box) is deliberately not matched. **Caveats:** a value reached through a variable
+  (`const line = StyleSheet.hairlineWidth`) is not followed, and no rule detects a hand-built
+  row: a `Pressable` with a label and chevron has no reliable static signature, so review checks
+  that a list uses `ListRow` or the native seam. Inject-and-revert proof: a
+  `borderBottomWidth: StyleSheet.hairlineWidth` style in
+  `src/features/settings/ui/timezone-chooser-screen.tsx` fails `npm run lint` naming the rule; a
+  migrated file added to the allowlist fails the contract test; re-adding `school-row.tsx` to the
+  raw-button allowlist fails its test (stale and over the ceiling).
 - **L12 — no identifiers on SwiftUI containers** (`local/no-swiftui-container-identifier` in the
   `timecalendar/swiftui-identifiers` block, `src/**`): SwiftUI applies an accessibility identifier
   set on a container to every child and replaces the children's own, so a row inside an identified
