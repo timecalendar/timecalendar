@@ -1,6 +1,6 @@
 import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
 import { router, useLocalSearchParams } from "expo-router"
-import { Alert, StyleSheet } from "react-native"
+import { Alert, StyleSheet, TextInput } from "react-native"
 
 import {
   getRememberedEmail,
@@ -152,9 +152,14 @@ it("keeps next-key focus traversal wired to the multiline message field", async 
   const email = view.getByTestId("feedback-email-input")
   const message = view.getByTestId("feedback-message-input")
 
-  expect(email.props.onSubmitEditing).toEqual(expect.any(Function))
+  const focus = jest.spyOn(TextInput.prototype, "focus")
+
+  expect(email.props.submitBehavior).toBe("submit")
   expect(message.props.multiline).toBe(true)
+  expect(message.props.submitBehavior).toBe("newline")
   await fireEvent(email, "submitEditing")
+  expect(focus).toHaveBeenCalledTimes(1)
+  focus.mockRestore()
 })
 
 it("prefills remembered e-mail and submits normalized values with route context", async () => {
@@ -254,6 +259,12 @@ it("disables duplicate submit and exposes pending status", async () => {
     busy: true,
   })
   expect(getByText("Sending…").props.accessibilityLiveRegion).toBe("polite")
+  for (const id of ["feedback-email-input", "feedback-message-input"]) {
+    expect(getByTestId(id).props.editable).toBe(false)
+    expect(getByTestId(id).props.accessibilityState).toEqual({
+      disabled: true,
+    })
+  }
   await fireEvent.press(getByTestId("feedback-submit"))
   expect(sendFeedback).not.toHaveBeenCalled()
 })

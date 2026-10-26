@@ -1,16 +1,19 @@
 import type { TFunction } from "i18next"
-import { StyleSheet, TextInput, View } from "react-native"
+import { StyleSheet, View } from "react-native"
 
-import { FieldError, fieldErrorHint, ThemedText } from "@/design"
-import type { AppLocale } from "@/features/calendar/data"
+import { DateTimeField, TextField, ThemedText } from "@/design"
+import {
+  type AppLocale,
+  formatShortDateTime,
+  useUses24HourClock,
+} from "@/features/calendar/data"
 import type {
   EventFormErrors,
   EventFormValues,
 } from "@/features/personal-events/form"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Spacing } from "@/theme"
 
 import { ColorSwatchPicker } from "./color-swatch-picker"
-import { DateTimeField } from "./date-time-field"
 
 export type UpdateEventFormValue = <K extends keyof EventFormValues>(
   key: K,
@@ -36,61 +39,41 @@ export function PersonalEventFields({
   onSubmitTitle,
   t,
 }: PersonalEventFieldsProps) {
-  const theme = useTheme()
-  const inputStyle = [
-    styles.input,
-    { backgroundColor: theme.backgroundElement, color: theme.text },
-  ]
+  const uses24HourClock = useUses24HourClock()
+  const formatValue = (date: Date) =>
+    formatShortDateTime(date, locale, displayZone, uses24HourClock)
 
   return (
     <>
-      <View style={styles.field}>
-        <ThemedText type="smallBold">
-          {t("personalEvents.form.titleLabel")}
-        </ThemedText>
-        <TextInput
-          testID="personal-event-title-input"
-          accessibilityLabel={t("personalEvents.form.titleLabel")}
-          accessibilityHint={fieldErrorHint(errors.title && t(errors.title))}
-          placeholder={t("personalEvents.form.titlePlaceholder")}
-          placeholderTextColor={theme.textSecondary}
-          value={values.title}
-          onChangeText={(text) => update("title", text)}
-          returnKeyType="done"
-          onSubmitEditing={onSubmitTitle}
-          style={inputStyle}
-        />
-        {errors.title !== undefined && <FieldError message={t(errors.title)} />}
-      </View>
+      <TextField
+        testID="personal-event-title-input"
+        label={t("personalEvents.form.titleLabel")}
+        error={errors.title && t(errors.title)}
+        placeholder={t("personalEvents.form.titlePlaceholder")}
+        value={values.title}
+        onChangeText={(text) => update("title", text)}
+        returnKeyType="done"
+        onSubmitEditing={onSubmitTitle}
+      />
 
-      <View style={styles.field}>
-        <ThemedText type="smallBold">
-          {t("personalEvents.form.startLabel")}
-        </ThemedText>
-        <DateTimeField
-          testID="personal-event-start-picker"
-          accessibilityLabel={t("personalEvents.form.startLabel")}
-          value={values.startsAt}
-          locale={locale}
-          zone={displayZone}
-          onChange={(date) => update("startsAt", date)}
-        />
-      </View>
+      <DateTimeField
+        testID="personal-event-start-picker"
+        label={t("personalEvents.form.startLabel")}
+        value={values.startsAt}
+        zone={displayZone}
+        formatValue={formatValue}
+        onChange={(date) => update("startsAt", date)}
+      />
 
-      <View style={styles.field}>
-        <ThemedText type="smallBold">
-          {t("personalEvents.form.endLabel")}
-        </ThemedText>
-        <DateTimeField
-          testID="personal-event-end-picker"
-          accessibilityLabel={t("personalEvents.form.endLabel")}
-          value={values.endsAt}
-          locale={locale}
-          zone={displayZone}
-          onChange={(date) => update("endsAt", date)}
-        />
-        {errors.range !== undefined && <FieldError message={t(errors.range)} />}
-      </View>
+      <DateTimeField
+        testID="personal-event-end-picker"
+        label={t("personalEvents.form.endLabel")}
+        value={values.endsAt}
+        zone={displayZone}
+        formatValue={formatValue}
+        error={errors.range && t(errors.range)}
+        onChange={(date) => update("endsAt", date)}
+      />
 
       <View style={styles.field}>
         <ThemedText type="smallBold">
@@ -102,51 +85,26 @@ export function PersonalEventFields({
         />
       </View>
 
-      <View style={styles.field}>
-        <ThemedText type="smallBold">
-          {t("personalEvents.form.locationLabel")}
-        </ThemedText>
-        <TextInput
-          testID="personal-event-location-input"
-          accessibilityLabel={t("personalEvents.form.locationLabel")}
-          placeholder={t("personalEvents.form.locationPlaceholder")}
-          placeholderTextColor={theme.textSecondary}
-          value={values.location}
-          onChangeText={(text) => update("location", text)}
-          style={inputStyle}
-        />
-      </View>
+      <TextField
+        testID="personal-event-location-input"
+        label={t("personalEvents.form.locationLabel")}
+        placeholder={t("personalEvents.form.locationPlaceholder")}
+        value={values.location}
+        onChangeText={(text) => update("location", text)}
+      />
 
-      <View style={styles.field}>
-        <ThemedText type="smallBold">
-          {t("personalEvents.form.descriptionLabel")}
-        </ThemedText>
-        <TextInput
-          testID="personal-event-description-input"
-          accessibilityLabel={t("personalEvents.form.descriptionLabel")}
-          placeholder={t("personalEvents.form.descriptionPlaceholder")}
-          placeholderTextColor={theme.textSecondary}
-          value={values.description}
-          onChangeText={(text) => update("description", text)}
-          multiline
-          style={[inputStyle, styles.multiline]}
-        />
-      </View>
+      <TextField
+        testID="personal-event-description-input"
+        label={t("personalEvents.form.descriptionLabel")}
+        placeholder={t("personalEvents.form.descriptionPlaceholder")}
+        value={values.description}
+        onChangeText={(text) => update("description", text)}
+        multiline
+      />
     </>
   )
 }
 
 const styles = StyleSheet.create({
   field: { gap: Spacing.two },
-  input: {
-    minHeight: 48,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Radii.medium,
-    fontSize: 16,
-  },
-  multiline: {
-    minHeight: 96,
-    paddingTop: Spacing.three,
-    textAlignVertical: "top",
-  },
 })

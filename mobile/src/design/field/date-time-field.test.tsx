@@ -1,12 +1,13 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
-import { fromZonedTime, toZonedTime } from "date-fns-tz"
+import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz"
 import * as Localization from "expo-localization"
 import { useState } from "react"
+import { StyleSheet } from "react-native"
 
-import { formatShortDateTime } from "@/features/calendar/data"
 import { usePlatform } from "@/test-support/platform"
+import { Colors, StateOpacity } from "@/theme"
 
-import { DateTimeField } from "./date-time-field"
+import { DateTimeField, type DateTimeFieldProps } from "./date-time-field"
 
 // Overrides the suite-wide picker mock (jest/setup-expo-ui.ts) for this file to
 // mirror the @expo/ui Android Compose contract (DatePickerView.kt): the date
@@ -37,9 +38,18 @@ jest.mock("@expo/ui/community/datetime-picker", () => {
     onDismiss?: () => void
     is24Hour?: boolean
     locale?: string
+    disabled?: boolean
   }) {
-    const { testID, mode, value, onValueChange, onDismiss, is24Hour, locale } =
-      props
+    const {
+      testID,
+      mode,
+      value,
+      onValueChange,
+      onDismiss,
+      is24Hour,
+      locale,
+      disabled,
+    } = props
     return React.createElement(
       View,
       null,
@@ -81,6 +91,11 @@ jest.mock("@expo/ui/community/datetime-picker", () => {
         String(is24Hour),
       ),
       React.createElement(Text, { testID: `${mode}-locale` }, String(locale)),
+      React.createElement(
+        Text,
+        { testID: `${mode}-disabled` },
+        String(disabled),
+      ),
     )
   }
 
@@ -100,6 +115,9 @@ function deviceClock(uses24hourClock: boolean | null) {
   ] as unknown as ReturnType<typeof Localization.useCalendars>)
 }
 
+const formatIn = (zone: string) => (date: Date) =>
+  formatInTimeZone(date, zone, "yyyy-MM-dd HH:mm")
+
 beforeEach(() => {
   deviceClock(true)
 })
@@ -108,43 +126,64 @@ afterAll(() => {
   mockUseCalendars.mockRestore()
 })
 
-describe("feature-owned DateTimeField", () => {
-  it("renders the inline picker on iOS and reports its change (identity under the device zone)", async () => {
-    const onChange = jest.fn()
-    const { getByTestId } = await render(
-      <DateTimeField
-        testID="field"
-        value={INITIAL}
-        locale="en"
-        zone={DEVICE_ZONE}
-        onChange={onChange}
-      />,
-    )
+function Field(props: Partial<DateTimeFieldProps>) {
+  const zone = props.zone ?? DEVICE_ZONE
+  return (
+    <DateTimeField
+      testID="field"
+      label="Starts"
+      value={INITIAL}
+      zone={zone}
+      formatValue={formatIn(zone)}
+      onChange={jest.fn()}
+      {...props}
+    />
+  )
+}
 
-    await act(async () => {
-      fireEvent.press(getByTestId("field"))
-    })
+const press = async (
+  view: { getByTestId: (id: string) => unknown },
+  id: string,
+) => {
+  await act(async () => {
+    fireEvent.press(view.getByTestId(id) as never)
+  })
+}
+
+it("imports no product feature", () => {
+  const { readFileSync } = jest.requireActual(
+    "node:fs",
+  ) as typeof import("node:fs")
+  const { resolve } = jest.requireActual(
+    "node:path",
+  ) as typeof import("node:path")
+  const source = readFileSync(resolve(__dirname, "date-time-field.tsx"), "utf8")
+  expect(source).not.toMatch(/from "@\/features/)
+  expect(source).not.toMatch(/useTranslation|i18next/)
+})
+
+describe("DateTimeField on iOS", () => {
+  usePlatform("ios")
+
+  it("shows the label and reports the inline picker's change (identity under the device zone)", async () => {
+    const onChange = jest.fn()
+    const view = await render(<Field onChange={onChange} />)
+    expect(view.getByTestId("field-label")).toHaveTextContent("Starts")
+
+    await press(view, "field")
 
     expect(onChange).toHaveBeenCalledWith(FIXED)
   })
 
-  it("re-interprets the picked wall clock in a non-device display zone (iOS)", async () => {
+  it("re-interprets the picked wall clock in a non-device display zone", async () => {
     const onChange = jest.fn()
-    const { getByTestId, getByText } = await render(
-      <DateTimeField
-        testID="field"
-        value={INITIAL}
-        locale="en"
-        zone={NOUMEA}
-        onChange={onChange}
-      />,
-    )
+    const view = await render(<Field zone={NOUMEA} onChange={onChange} />)
 
-    expect(getByText(toZonedTime(INITIAL, NOUMEA).toISOString())).toBeTruthy()
+    expect(
+      view.getByText(toZonedTime(INITIAL, NOUMEA).toISOString()),
+    ).toBeTruthy()
 
-    await act(async () => {
-      fireEvent.press(getByTestId("field"))
-    })
+    await press(view, "field")
 
     expect(onChange).toHaveBeenCalledWith(fromZonedTime(FIXED, NOUMEA))
   })
@@ -153,39 +192,63 @@ describe("feature-owned DateTimeField", () => {
   // language paired with the device region or hour cycle is silently dropped.
   it("leaves the iOS picker on the device language and clock", async () => {
     deviceClock(false)
-    const { getByTestId } = await render(
+    const view = await render(<Field />)
+    expect(view.getByTestId("datetime-locale")).toHaveTextContent("undefined")
+  })
+
+  it("shows the error as text after the picker, which takes no hint", async () => {
+    const view = await render(<Field error="Ends before it starts" />)
+    expect(view.getByTestId("field-error")).toHaveTextContent(
+      "Ends before it starts",
+    )
+    expect(view.getByTestId("field-error").props.accessibilityRole).toBe(
+      "alert",
+    )
+    expect(view.getByTestId("field").props.accessibilityHint).toBeUndefined()
+  })
+
+  it("passes disabled to the picker and dims the field", async () => {
+    const view = await render(<Field disabled />)
+    expect(view.getByTestId("datetime-disabled")).toHaveTextContent("true")
+    expect(
+      StyleSheet.flatten(view.getByTestId("field-label").parent?.props.style)
+        .opacity,
+    ).toBe(StateOpacity.disabled)
+  })
+
+  it("merges the caller's layout style last", async () => {
+    const view = await render(<Field style={{ marginTop: 99 }} />)
+    expect(
+      StyleSheet.flatten(view.getByTestId("field-label").parent?.props.style)
+        .marginTop,
+    ).toBe(99)
+  })
+
+  it("renders without a testID", async () => {
+    const view = await render(
       <DateTimeField
-        testID="field"
+        label="Starts"
         value={INITIAL}
-        locale="fr"
         zone={DEVICE_ZONE}
+        formatValue={formatIn(DEVICE_ZONE)}
         onChange={jest.fn()}
       />,
     )
-    expect(getByTestId("datetime-locale")).toHaveTextContent("undefined")
+    expect(view.getByText("Starts")).toBeOnTheScreen()
   })
+})
 
-  describe.each([DEVICE_ZONE, NOUMEA])("on Android in %s", (zone) => {
+describe.each([DEVICE_ZONE, NOUMEA])(
+  "DateTimeField on Android in %s",
+  (zone) => {
     usePlatform("android")
 
-    async function renderField() {
+    async function renderField(props: Partial<DateTimeFieldProps> = {}) {
       const onChange = jest.fn()
-      const screen = await render(
-        <DateTimeField
-          testID="field"
-          accessibilityLabel="Start"
-          value={INITIAL}
-          locale="en"
-          zone={zone}
-          onChange={onChange}
-        />,
+      const view = await render(
+        <Field zone={zone} onChange={onChange} {...props} />,
       )
-      const press = async (testID: string) => {
-        await act(async () => {
-          fireEvent.press(screen.getByTestId(testID))
-        })
-      }
-      return { ...screen, onChange, press }
+      return { ...view, onChange, press: (id: string) => press(view, id) }
     }
 
     function expectClosed(queryByTestId: (id: string) => unknown) {
@@ -197,9 +260,7 @@ describe("feature-owned DateTimeField", () => {
       const { getByText, getByTestId, queryByTestId, onChange, press } =
         await renderField()
 
-      expect(
-        getByText(formatShortDateTime(INITIAL, "en", zone, true)),
-      ).toBeTruthy()
+      expect(getByText(formatIn(zone)(INITIAL))).toBeTruthy()
       expectClosed(queryByTestId)
 
       await press("field")
@@ -276,82 +337,25 @@ describe("feature-owned DateTimeField", () => {
       },
     )
 
-    it("announces the label and the displayed value, and follows a commit", async () => {
+    it("names the row with the label and the displayed value, and follows a commit", async () => {
       function ControlledField() {
         const [value, setValue] = useState(INITIAL)
-        return (
-          <DateTimeField
-            testID="field"
-            accessibilityLabel="Starts"
-            value={value}
-            locale="en"
-            zone={zone}
-            onChange={setValue}
-          />
-        )
+        return <Field zone={zone} value={value} onChange={setValue} />
       }
       const view = await render(<ControlledField />)
+      expect(view.getByTestId("field-label")).toHaveTextContent("Starts")
+      expect(view.getByTestId("field").props.accessibilityRole).toBe("button")
       expect(view.getByTestId("field").props.accessibilityLabel).toBe(
-        `Starts, ${formatShortDateTime(INITIAL, "en", zone, true)}`,
+        `Starts, ${formatIn(zone)(INITIAL)}`,
       )
 
       for (const id of ["field", "date-confirm", "time-confirm"]) {
-        await act(async () => {
-          fireEvent.press(view.getByTestId(id))
-        })
+        await press(view, id)
       }
 
       const committed = fromZonedTime(new Date(2030, 0, 2, 9, 41), zone)
       expect(view.getByTestId("field").props.accessibilityLabel).toBe(
-        `Starts, ${formatShortDateTime(committed, "en", zone, true)}`,
-      )
-    })
-
-    it.each([
-      [false, /^\d{1,2} [A-Z][a-z]{2} \d{1,2}:\d{2} (AM|PM)$/],
-      [true, /^\d{1,2} [A-Z][a-z]{2} \d{2}:\d{2}$/],
-    ] as const)(
-      "displays and announces the device clock (uses24hourClock %s)",
-      async (uses24hourClock, pattern) => {
-        deviceClock(uses24hourClock)
-        const view = await render(
-          <DateTimeField
-            testID="field"
-            accessibilityLabel="Starts"
-            value={INITIAL}
-            locale="en"
-            zone={zone}
-            onChange={jest.fn()}
-          />,
-        )
-        const display = formatShortDateTime(
-          INITIAL,
-          "en",
-          zone,
-          uses24hourClock,
-        )
-        expect(display).toMatch(pattern)
-        expect(view.getByText(display)).toBeTruthy()
-        expect(view.getByTestId("field").props.accessibilityLabel).toBe(
-          `Starts, ${display}`,
-        )
-      },
-    )
-
-    it("sets no label without an accessibilityLabel prop, leaving the value text as the name", async () => {
-      const view = await render(
-        <DateTimeField
-          testID="field"
-          value={INITIAL}
-          locale="en"
-          zone={zone}
-          onChange={jest.fn()}
-        />,
-      )
-      const field = view.getByTestId("field")
-      expect(field.props.accessibilityLabel).toBeUndefined()
-      expect(field).toHaveTextContent(
-        formatShortDateTime(INITIAL, "en", zone, true),
+        `Starts, ${formatIn(zone)(committed)}`,
       )
     })
 
@@ -372,5 +376,38 @@ describe("feature-owned DateTimeField", () => {
         expect(getByTestId("date-confirm")).toBeTruthy()
       },
     )
-  })
-})
+
+    it("shows the error and carries it in the row's hint", async () => {
+      const { getByTestId } = await renderField({ error: "Ends too early" })
+      expect(getByTestId("field-error")).toHaveTextContent("Ends too early")
+      expect(getByTestId("field").props.accessibilityHint).toBe(
+        "Ends too early",
+      )
+      expect(
+        StyleSheet.flatten(getByTestId("field").props.style).borderColor,
+      ).toBe(Colors.light.error)
+    })
+
+    it("draws the row like a resting text field", async () => {
+      const { getByTestId } = await renderField()
+      expect(
+        StyleSheet.flatten(getByTestId("field").props.style),
+      ).toMatchObject({
+        borderWidth: 1,
+        borderColor: Colors.light.outline,
+      })
+      expect(getByTestId("field").props.accessibilityHint).toBeUndefined()
+    })
+
+    it("ignores presses while disabled and exposes the state", async () => {
+      const { getByTestId, queryByTestId, press } = await renderField({
+        disabled: true,
+      })
+      expect(getByTestId("field").props.accessibilityState).toEqual({
+        disabled: true,
+      })
+      await press("field")
+      expectClosed(queryByTestId)
+    })
+  },
+)

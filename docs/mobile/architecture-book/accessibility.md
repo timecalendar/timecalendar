@@ -52,6 +52,24 @@ These rules guard real product touchables (interactive controls declare `accessi
   gallery registry matrix; see ADR [067](./decisions/067-button-family.md) and
   [Theming](./theming.md) → Buttons.
 
+## Fields — encoded in `TextField`
+
+- A field is two stops: the visible label as text, then the input. The input's name is the label
+  (or a fuller `accessibilityLabel` the caller passes), its value is the typed text, and on
+  Android it is also labelled by the label's `nativeID`.
+- The input's hint is the error, then the helper, then the field's own hint, joined as sentences.
+  The helper text is hidden from assistive technology, so it is read once, in the hint.
+- `FieldError` announces an error when it appears and again only when its message changes (iOS
+  queued announcement, Android polite live region), so typing while the same error stays is
+  silent.
+- `disabled` sets `editable={false}` and `{ disabled: true }` and dims the whole field.
+- The Android `DateTimeField` row is a `button` named "label, value" whose hint carries the
+  error. The iOS SwiftUI picker takes no hint, so its error is announced on appearance and is the
+  text stop directly after the picker.
+- Feature code passes `error` to the field; `fieldErrorHint` is not on the `@/design` barrel.
+  The screen-reader pass is owner-led
+  (`docs/react-native-migration/inbox/2026-10-26-mobile-ds-text-field-screen-reader-pass.md`).
+
 ## Accessible async status
 
 - Every loading, empty and error state is `StatusView` (ADR [069](./decisions/069-status-view.md)).
@@ -70,10 +88,10 @@ These rules guard real product touchables (interactive controls declare `accessi
 - Artwork is decorative and not rendered at accessibility text sizes; `screen` scrolls once the
   text outgrows the viewport, so title and actions stay reachable at AX5 and font scale 2.0.
 - **Field errors live in the field's hint.** React Native forwards `aria-describedby` and
-  `nativeID` relations to neither UIKit nor Android, so a `TextInput` with a `FieldError` passes
-  `accessibilityHint={fieldErrorHint(error, hint)}` (`error. hint`, `error`, or `hint`). VoiceOver
-  and TalkBack read it after the label and value on focus; `FieldError` keeps its alert text,
-  Android live region and iOS announcement for the moment it appears. `aria-describedby` is a lint
+  `nativeID` relations to neither UIKit nor Android, so `TextField` and `DateTimeField` fold the
+  error into the control's `accessibilityHint` (→ Fields). VoiceOver and TalkBack read it after
+  the label and value on focus; `FieldError` keeps its alert text, Android live region and iOS
+  announcement for the moment it appears. `aria-describedby` is a lint
   error ([lint-format.md](./lint-format.md) → Status). Folding the error into
   `accessibilityLabel` would rename the field; `accessibilityValue` would mask the typed text.
 - A busy or disabled `Button` keeps one translated label, reports its state on that button, blocks
@@ -86,12 +104,13 @@ These rules guard real product touchables (interactive controls declare `accessi
   only `PageIntro` content follows that navigation heading before fields, actions, status, or rows;
   content headings remain only when they identify domain content such as an event or release.
 - The Android personal-event date/time field announces its label and its value ("Starts, <date
-  time>"), and the name follows each commit (`features/personal-events/ui/date-time-field.test.tsx`).
+  time>"), and the name follows each commit (`src/design/field/date-time-field.test.tsx`).
 - Personal-event date/time text follows the device 12/24-hour setting in the app language: the
   Android field, its accessible name and the personal-events list render 12-hour time on a 12-hour
-  device (`date-time-field.test.tsx`, `personal-events-list.test.tsx`,
-  `features/calendar/data/format.test.ts`). The device setting is read once through
-  `useUses24HourClock` (`features/calendar/data/device-clock.test.ts`). The iOS SwiftUI picker takes
+  device (`personal-event-form-screen.test.tsx`, `personal-events-list.test.tsx`,
+  `features/calendar/data/format.test.ts`); the Android time dialog follows the same setting
+  (`src/design/field/date-time-field.test.tsx`). The device setting is read through
+  `useUses24HourClock` (`src/hooks/use-uses-24-hour-clock.test.ts`). The iOS SwiftUI picker takes
   no `locale`: it follows the device language and clock, because `@expo/ui` applies only identifiers
   Foundation lists, so an app language paired with the device region or an `@hours=` cycle is
   dropped silently. The picker reading the device language rather than the in-app language is a
@@ -163,7 +182,11 @@ Android emulators run on the Windows host, not the Mac.
 - `src/design/status/status-view.test.tsx` proves the status roles, the hidden media, the
   `progressbar` busy state, the Android-only live region and the once-per-key announcement on both
   platforms; `src/hooks/use-error-announcement.test.ts` proves the keyed and unkeyed hook paths;
-  `src/design/status/field-error-hint.test.ts` proves the hint composition.
+  `src/design/field/text-field.test.tsx` proves the field's name, hint order, hidden helper,
+  once-per-message error announcement and disabled state on both platforms;
+  `src/design/field/date-time-field.test.tsx` proves the Android "label, value" name, its error
+  hint and the iOS error text; `src/design/field/field-error-hint.test.ts` proves the hint
+  composition.
 
 ## What lint can't encode → prose, each with reason + owner
 

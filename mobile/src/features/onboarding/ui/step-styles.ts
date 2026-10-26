@@ -1,6 +1,6 @@
 import { StyleSheet } from "react-native"
 
-import { Radii, Spacing } from "@/theme"
+import { Spacing } from "@/theme"
 
 // The shared frame of the import-journey steps (TIM-391): institution name →
 // programme → Connect → manual import are one visual family — a centred
@@ -26,15 +26,5 @@ export const stepStyles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: "center",
     gap: Spacing.three,
-  },
-  // The free-text name field shared by the two name steps. Their VALIDATION
-  // rules are deliberately different (institution required, programme optional
-  // via Skip) — only the box is shared.
-  input: {
-    minHeight: 48,
-    paddingHorizontal: Spacing.three,
-    borderWidth: 1,
-    borderRadius: Radii.medium,
-    fontSize: 16,
   },
 })

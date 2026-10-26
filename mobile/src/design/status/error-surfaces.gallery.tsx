@@ -1,21 +1,19 @@
 import { type ComponentProps, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { ScrollView, StyleSheet, TextInput, View } from "react-native"
+import { ScrollView, StyleSheet, View } from "react-native"
 
 import {
   ErrorNotice,
   FieldError as FieldErrorMessage,
-  fieldErrorHint,
   headerScrollProps,
   RootPage,
+  TextField,
   ThemedText,
 } from "@/design"
 import type { GalleryMeta, GalleryStory } from "@/design/gallery"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Spacing } from "@/theme"
 
 type Story = GalleryStory<ComponentProps<typeof ErrorNotice>>
-
-const FIELD_ERROR_ID = "gallery-error-surfaces-field-error"
 
 function usePressCount() {
   const [count, setCount] = useState(0)
@@ -63,28 +61,16 @@ function NoticeFixture({ compact = false }: { compact?: boolean }) {
 
 function FieldErrorFixture() {
   const { t } = useTranslation()
-  const theme = useTheme()
   const [value, setValue] = useState("")
-  const message = t("gallery.errorSurfaces.fieldMessage")
   return (
     <RootPage>
-      <View style={styles.stack}>
-        <ThemedText type="label">
-          {t("gallery.errorSurfaces.fieldLabel")}
-        </ThemedText>
-        <TextInput
-          testID="gallery-error-surfaces-input"
-          accessibilityLabel={t("gallery.errorSurfaces.fieldLabel")}
-          accessibilityHint={fieldErrorHint(message)}
-          value={value}
-          onChangeText={setValue}
-          style={[
-            styles.input,
-            { color: theme.text, borderColor: theme.error },
-          ]}
-        />
-        <FieldErrorMessage testID={FIELD_ERROR_ID} message={message} />
-      </View>
+      <TextField
+        testID="gallery-error-surfaces-input"
+        label={t("gallery.errorSurfaces.fieldLabel")}
+        error={t("gallery.errorSurfaces.fieldMessage")}
+        value={value}
+        onChangeText={setValue}
+      />
     </RootPage>
   )
 }
@@ -115,13 +101,6 @@ function LongStringsFixture() {
 const styles = StyleSheet.create({
   stack: { gap: Spacing.three },
   scroll: { paddingTop: Spacing.four, gap: Spacing.four },
-  input: {
-    minHeight: 48,
-    paddingHorizontal: Spacing.three,
-    borderWidth: 1,
-    borderRadius: Radii.medium,
-    fontSize: 16,
-  },
 })
 
 const meta: GalleryMeta<ComponentProps<typeof ErrorNotice>> = {

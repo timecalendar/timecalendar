@@ -1,16 +1,16 @@
 import { router, Stack, useLocalSearchParams } from "expo-router"
 import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Alert, StyleSheet, TextInput, View } from "react-native"
+import { Alert, StyleSheet, View } from "react-native"
 
 import {
   Button,
   ErrorNotice,
-  FieldError,
-  fieldErrorHint,
   KeyboardSafeActionLayout,
   PageIntro,
   RootPage,
+  TextField,
+  type TextFieldRef,
   ThemedText,
 } from "@/design"
 import {
@@ -22,7 +22,7 @@ import {
   type FeedbackFormErrors,
   validateFeedbackForm,
 } from "@/features/feedback/form"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Spacing } from "@/theme"
 
 const MAX_CONTEXT_LENGTH = 2_048
 
@@ -36,7 +36,6 @@ export function normalizeFeedbackParam(
 
 export default function FeedbackScreen() {
   const { t } = useTranslation()
-  const theme = useTheme()
   const params = useLocalSearchParams<{
     calendarUrl?: string | string[]
     schoolId?: string | string[]
@@ -59,7 +58,7 @@ export default function FeedbackScreen() {
     failed: submitFailed,
     reset,
   } = useSendFeedback()
-  const messageRef = useRef<TextInput>(null)
+  const messageRef = useRef<TextFieldRef>(null)
   const submitInFlightRef = useRef(false)
   const [email, setEmail] = useState(getRememberedEmail)
   const [message, setMessage] = useState("")
@@ -137,83 +136,42 @@ export default function FeedbackScreen() {
             <View testID="feedback-responsive-content" style={styles.content}>
               <PageIntro caption={t("feedback.intro")} />
 
-              <View style={styles.field}>
-                <ThemedText nativeID="feedback-email-label" type="smallBold">
-                  {t("feedback.email.label")}
-                </ThemedText>
-                <TextInput
-                  testID="feedback-email-input"
-                  accessibilityLabel={t("feedback.email.label")}
-                  accessibilityLabelledBy="feedback-email-label"
-                  accessibilityHint={fieldErrorHint(
-                    errors.email && t(errors.email),
-                  )}
-                  value={email}
-                  onChangeText={(value) => {
-                    setEmail(value)
-                    if (errors.email)
-                      setErrors(({ email: _email, ...current }) => current)
-                  }}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoComplete="email"
-                  keyboardType="email-address"
-                  inputMode="email"
-                  returnKeyType="next"
-                  blurOnSubmit={false}
-                  onSubmitEditing={() => messageRef.current?.focus()}
-                  editable={!isPending}
-                  style={[
-                    styles.input,
-                    {
-                      color: theme.text,
-                      borderColor: errors.email
-                        ? theme.error
-                        : theme.backgroundSelected,
-                    },
-                  ]}
-                />
-                {errors.email ? <FieldError message={t(errors.email)} /> : null}
-              </View>
+              <TextField
+                testID="feedback-email-input"
+                label={t("feedback.email.label")}
+                error={errors.email && t(errors.email)}
+                value={email}
+                onChangeText={(value) => {
+                  setEmail(value)
+                  if (errors.email)
+                    setErrors(({ email: _email, ...current }) => current)
+                }}
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                textContentType="emailAddress"
+                keyboardType="email-address"
+                inputMode="email"
+                returnKeyType="next"
+                submitBehavior="submit"
+                onSubmitEditing={() => messageRef.current?.focus()}
+                disabled={isPending}
+              />
 
-              <View style={styles.field}>
-                <ThemedText nativeID="feedback-message-label" type="smallBold">
-                  {t("feedback.message.label")}
-                </ThemedText>
-                <TextInput
-                  ref={messageRef}
-                  testID="feedback-message-input"
-                  accessibilityLabel={t("feedback.message.label")}
-                  accessibilityLabelledBy="feedback-message-label"
-                  accessibilityHint={fieldErrorHint(
-                    errors.message && t(errors.message),
-                  )}
-                  value={message}
-                  onChangeText={(value) => {
-                    setMessage(value)
-                    if (errors.message)
-                      setErrors(({ message: _message, ...current }) => current)
-                  }}
-                  multiline
-                  textAlignVertical="top"
-                  returnKeyType="default"
-                  blurOnSubmit={false}
-                  editable={!isPending}
-                  style={[
-                    styles.input,
-                    styles.messageInput,
-                    {
-                      color: theme.text,
-                      borderColor: errors.message
-                        ? theme.error
-                        : theme.backgroundSelected,
-                    },
-                  ]}
-                />
-                {errors.message ? (
-                  <FieldError message={t(errors.message)} />
-                ) : null}
-              </View>
+              <TextField
+                ref={messageRef}
+                testID="feedback-message-input"
+                label={t("feedback.message.label")}
+                error={errors.message && t(errors.message)}
+                value={message}
+                onChangeText={(value) => {
+                  setMessage(value)
+                  if (errors.message)
+                    setErrors(({ message: _message, ...current }) => current)
+                }}
+                multiline
+                disabled={isPending}
+              />
             </View>
           </KeyboardSafeActionLayout>
         )}
@@ -227,15 +185,5 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.four,
   },
   content: { gap: Spacing.four },
-  field: { gap: Spacing.two },
-  input: {
-    minHeight: 48,
-    borderWidth: 1,
-    borderRadius: Radii.medium,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 16,
-  },
-  messageInput: { minHeight: 144 },
   actions: { gap: Spacing.two, paddingBottom: Spacing.four },
 })

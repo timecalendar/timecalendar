@@ -1,0 +1,250 @@
+import { type ReactNode, type Ref, useId, useState } from "react"
+import {
+  Platform,
+  type StyleProp,
+  StyleSheet,
+  TextInput,
+  type TextInputProps,
+  useWindowDimensions,
+  View,
+} from "react-native"
+
+import type { ButtonLayoutStyle } from "@/design/button/button"
+import { joinSentences } from "@/design/field/field-error-hint"
+import { FieldError } from "@/design/status/error-surfaces"
+import { ThemedText } from "@/design/text/themed-text"
+import {
+  MinTouchTarget,
+  Radii,
+  Spacing,
+  StateOpacity,
+  type ThemeColor,
+  TypeRamp,
+  useTheme,
+} from "@/theme"
+
+export type TextFieldLayoutStyle = ButtonLayoutStyle
+
+export type TextFieldRef = TextInput
+
+export type TextFieldProps = Omit<
+  TextInputProps,
+  | "style"
+  | "editable"
+  | "multiline"
+  | "numberOfLines"
+  | "placeholderTextColor"
+  | "selectionColor"
+  | "cursorColor"
+  | "underlineColorAndroid"
+  | "textAlignVertical"
+  | "clearButtonMode"
+  | "allowFontScaling"
+  | "maxFontSizeMultiplier"
+  | "blurOnSubmit"
+  | "accessibilityLabelledBy"
+  | "aria-label"
+  | "aria-labelledby"
+  | "accessibilityState"
+  | "aria-disabled"
+  | "accessibilityHint"
+  | "aria-describedby"
+> & {
+  label: string
+  helper?: string
+  error?: string | null | undefined
+  hint?: string
+  disabled?: boolean
+  multiline?: boolean
+  testID?: string
+  style?: StyleProp<TextFieldLayoutStyle>
+  ref?: Ref<TextFieldRef>
+}
+
+const MULTILINE_MIN_LINES = 4
+
+// The box keeps text in place when its border thickens: padding gives back
+// whatever the border takes.
+export const FieldInset = {
+  horizontal: Spacing.three,
+  vertical: Spacing.twoHalf,
+} as const
+
+const derived = (testID: string | undefined, suffix: string) =>
+  testID === undefined ? undefined : `${testID}-${suffix}`
+
+type BoxState = { focused: boolean; error: boolean }
+
+function fieldBorder({ focused, error }: BoxState): {
+  width: number
+  color: ThemeColor
+} {
+  if (Platform.OS === "ios") {
+    return error
+      ? { width: 1, color: "error" }
+      : { width: StyleSheet.hairlineWidth, color: "outline" }
+  }
+  return {
+    width: focused ? 2 : 1,
+    color: error ? "error" : focused ? "primary" : "outline",
+  }
+}
+
+export function useFieldBoxStyle(state: BoxState) {
+  const theme = useTheme()
+  const border = fieldBorder(state)
+  const ios = Platform.OS === "ios"
+  return [
+    styles.box,
+    ios ? styles.iosBox : styles.androidBox,
+    {
+      borderWidth: border.width,
+      borderColor: theme[border.color],
+      backgroundColor: ios ? theme.backgroundElement : "transparent",
+    },
+  ]
+}
+
+type FieldChromeProps = {
+  label: string
+  labelNativeID?: string
+  helper?: string | undefined
+  error?: string | null | undefined
+  disabled?: boolean
+  testID?: string | undefined
+  style?: StyleProp<TextFieldLayoutStyle>
+  children: ReactNode
+}
+
+export function FieldChrome({
+  label,
+  labelNativeID,
+  helper,
+  error,
+  disabled = false,
+  testID,
+  style,
+  children,
+}: FieldChromeProps) {
+  return (
+    <View
+      style={StyleSheet.flatten([
+        styles.root,
+        disabled ? { opacity: StateOpacity.disabled } : null,
+        style,
+      ])}
+    >
+      <ThemedText
+        type="smallBold"
+        nativeID={labelNativeID}
+        testID={derived(testID, "label")}
+      >
+        {label}
+      </ThemedText>
+      {children}
+      {helper ? (
+        <ThemedText
+          type="small"
+          tone="secondary"
+          testID={derived(testID, "helper")}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          {helper}
+        </ThemedText>
+      ) : null}
+      {error ? (
+        <FieldError
+          message={error}
+          {...(testID === undefined ? {} : { testID: `${testID}-error` })}
+        />
+      ) : null}
+    </View>
+  )
+}
+
+export function TextField({
+  label,
+  helper,
+  error,
+  hint,
+  disabled = false,
+  multiline = false,
+  testID,
+  style,
+  ref,
+  accessibilityLabel = label,
+  onFocus,
+  onBlur,
+  submitBehavior,
+  ...inputProps
+}: TextFieldProps) {
+  const theme = useTheme()
+  const labelNativeID = useId()
+  const { fontScale } = useWindowDimensions()
+  const [focused, setFocused] = useState(false)
+  const ios = Platform.OS === "ios"
+  const border = fieldBorder({ focused, error: Boolean(error) })
+  const boxStyle = useFieldBoxStyle({ focused, error: Boolean(error) })
+  const body = TypeRamp.body.style
+  const lineHeight = body.lineHeight ?? 0
+
+  return (
+    <FieldChrome
+      label={label}
+      labelNativeID={labelNativeID}
+      helper={helper}
+      error={error}
+      disabled={disabled}
+      testID={testID}
+      style={style}
+    >
+      <View testID={derived(testID, "field")} style={boxStyle}>
+        <TextInput
+          {...inputProps}
+          ref={ref}
+          testID={testID}
+          accessibilityLabel={accessibilityLabel}
+          accessibilityLabelledBy={ios ? undefined : labelNativeID}
+          accessibilityHint={joinSentences(error, helper, hint)}
+          accessibilityState={{ disabled }}
+          editable={!disabled}
+          multiline={multiline}
+          submitBehavior={submitBehavior ?? (multiline ? "newline" : undefined)}
+          textAlignVertical={multiline ? "top" : "center"}
+          clearButtonMode={ios && !multiline ? "while-editing" : "never"}
+          placeholderTextColor={theme.textSecondary}
+          selectionColor={theme.primary}
+          cursorColor={theme.primary}
+          underlineColorAndroid="transparent"
+          onFocus={(event) => {
+            setFocused(true)
+            onFocus?.(event)
+          }}
+          onBlur={(event) => {
+            setFocused(false)
+            onBlur?.(event)
+          }}
+          style={{
+            color: theme.text,
+            fontSize: body.fontSize,
+            paddingHorizontal: FieldInset.horizontal - border.width,
+            paddingVertical: FieldInset.vertical - border.width,
+            minHeight: multiline
+              ? MULTILINE_MIN_LINES * lineHeight * fontScale +
+                2 * FieldInset.vertical
+              : MinTouchTarget,
+            ...(multiline ? { lineHeight } : null),
+          }}
+        />
+      </View>
+    </FieldChrome>
+  )
+}
+
+const styles = StyleSheet.create({
+  root: { gap: Spacing.two },
+  box: { overflow: "hidden" },
+  iosBox: { borderRadius: Radii.medium, borderCurve: "continuous" },
+  androidBox: { borderRadius: Radii.small },
+})

@@ -122,7 +122,7 @@ describe("InstitutionNameScreen", () => {
       const { getByTestId, getByText } = await submitWith(value)
 
       expect(getByText("Enter your institution's name.")).toBeTruthy()
-      const error = getByTestId("onboarding-institution-error")
+      const error = getByTestId("onboarding-institution-input-error")
       expect(error.props.accessibilityRole).toBe("alert")
       expect(mockSetUnlistedInstitution).not.toHaveBeenCalled()
       expect(mockClearSelection).not.toHaveBeenCalled()
@@ -143,7 +143,7 @@ describe("InstitutionNameScreen", () => {
 
   it("clears the validation message as soon as the field is edited", async () => {
     const { getByTestId, queryByTestId } = await submitWith("")
-    const error = getByTestId("onboarding-institution-error")
+    const error = getByTestId("onboarding-institution-input-error")
     expect(getByTestId("onboarding-institution-input")).toHaveProp(
       "accessibilityHint",
       error.props.children,
@@ -152,7 +152,7 @@ describe("InstitutionNameScreen", () => {
     await act(async () => {
       fireEvent.changeText(getByTestId("onboarding-institution-input"), "É")
     })
-    expect(queryByTestId("onboarding-institution-error")).toBeNull()
+    expect(queryByTestId("onboarding-institution-input-error")).toBeNull()
     expect(
       getByTestId("onboarding-institution-input").props.accessibilityHint,
     ).toBeUndefined()

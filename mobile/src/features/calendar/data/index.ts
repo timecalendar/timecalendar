@@ -33,7 +33,6 @@ export {
   utcDayKey,
   zoneOffsetMinutes,
 } from "./day-key"
-export { useUses24HourClock } from "./device-clock"
 export {
   type EpochDay,
   epochDayKey,
@@ -247,3 +246,4 @@ export {
   chunkStartOfDay,
   requiredChunks,
 } from "./window-chunks"
+export { useUses24HourClock } from "@/hooks/use-uses-24-hour-clock"

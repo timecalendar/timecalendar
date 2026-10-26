@@ -1,3 +1,29 @@
+## 2026-10-26 — TextField
+
+- `TextField` (`@/design`) is the one text field: a required visible `label`, optional `helper`,
+  `error`, `hint`, `disabled` and `multiline`, a `ref` to the native input, keyboard and autofill
+  props passed through, visual props out of the type, and a layout-only `style` merged last
+  ([theming.md](./theming.md) → Fields, ADR [070](./decisions/070-text-field.md)).
+- iOS draws a rounded filled field with a hairline `outline` border and the system clear button
+  while editing; Android draws a Material 3 outlined field whose 2dp `primary` focus border does
+  not move the text. Input text is the platform body step with no fixed height; multiline is at
+  least four lines at the current text size.
+- The field owns its error: `FieldError` below the box, and the input hint is error, helper, own
+  hint. The helper is hidden from assistive technology. `fieldErrorHint` lives in
+  `src/design/field/` and is not on the `@/design` barrel
+  ([accessibility.md](./accessibility.md) → Fields).
+- `DateTimeField` is a design primitive in `src/design/field/`: the caller passes the label, the
+  instant, the display zone, a `formatValue` function and `onChange`; it imports no feature and no
+  translation key, and its Android name is "label, value". `useUses24HourClock` lives in
+  `src/hooks/`.
+- Onboarding institution name and programme, Feedback, the iCal URL and the personal-event form
+  use `TextField` and `DateTimeField`; every Maestro selector stays on the native input.
+- `local/no-raw-text-input` reports a value import of `TextInput` from `react-native` outside
+  `src/design/` and tests; `raw-text-input-allowlist.js` holds the checklist row editor (slice
+  5.8), ceiling 1 ([lint-format.md](./lint-format.md) → Fields). The raw-button ceiling is 14.
+- Gallery fixtures `text-field` and `date-time-field`; `text-field.tsx`, `date-time-field.tsx` and
+  `field-error-hint.ts` carry 90% per-file coverage tiers ([testing.md](./testing.md)).
+
 ## 2026-10-26 — StatusView
 
 - `StatusView` (`@/design`) is the one loading, empty and error state: `kind` `loading`, `empty`

@@ -218,7 +218,7 @@ describe("ProgrammeScreen", () => {
     jest.clearAllMocks()
     const { getByTestId, getByText } = await typeAndSubmit("x".repeat(101))
     expect(getByText("Use 100 characters or fewer.")).toBeTruthy()
-    const error = getByTestId("onboarding-programme-error")
+    const error = getByTestId("onboarding-programme-input-error")
     expect(error.props.accessibilityRole).toBe("alert")
     expect(getByTestId("onboarding-programme-input")).toHaveProp(
       "accessibilityHint",

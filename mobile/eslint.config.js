@@ -16,6 +16,9 @@ const {
 const {
   rawButtonAllowlist,
 } = require("./tools/eslint-rules/raw-button-allowlist")
+const {
+  rawTextInputAllowlist,
+} = require("./tools/eslint-rules/raw-text-input-allowlist")
 
 // Canonical import/export order (autofixable). Groups here are disjoint, so the
 // longest-match-wins tie-break never bites, and no bare "^" catch-all is used —
@@ -813,6 +816,8 @@ module.exports = defineConfig([
     files: ["src/**/*.tsx"],
     ignores: [
       "src/design/button/button.tsx",
+      // The Android date-time row is a field trigger drawn as a text field.
+      "src/design/field/date-time-field.tsx",
       "src/components/chrome/**",
       "src/features/calendar/renderer/**",
       "**/*.test.tsx",
@@ -839,6 +844,18 @@ module.exports = defineConfig([
     plugins: { local: localRules },
     rules: {
       "local/no-ad-hoc-status": "error",
+    },
+  },
+  {
+    // Text fields are the shared TextField (ADR 070). The allowlist holds the
+    // files not yet migrated; raw-text-input-allowlist.test.js keeps it
+    // shrinking.
+    name: "timecalendar/raw-text-input",
+    files: ["src/**/*.tsx"],
+    ignores: ["src/design/**", "**/*.test.tsx", ...rawTextInputAllowlist],
+    plugins: { local: localRules },
+    rules: {
+      "local/no-raw-text-input": "error",
     },
   },
   {

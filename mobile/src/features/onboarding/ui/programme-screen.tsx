@@ -1,15 +1,14 @@
 import { router, Stack } from "expo-router"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Platform, Pressable, StyleSheet, TextInput } from "react-native"
+import { Platform, Pressable, StyleSheet } from "react-native"
 
 import {
   Button,
-  FieldError,
-  fieldErrorHint,
   KeyboardSafeActionLayout,
   PageIntro,
   RootPage,
+  TextField,
   ThemedText,
 } from "@/design"
 import { emitExportGuideEvent } from "@/features/export-guides/ui"
@@ -20,7 +19,7 @@ import {
   useImportDraft,
   useJourneyGateRoute,
 } from "@/features/onboarding/draft"
-import { Spacing, useTheme } from "@/theme"
+import { Spacing } from "@/theme"
 
 import { stepStyles } from "./step-styles"
 
@@ -41,7 +40,6 @@ import { stepStyles } from "./step-styles"
 // Pressable sized to the 48dp minimum target.
 export default function ProgrammeScreen() {
   const { t } = useTranslation()
-  const theme = useTheme()
   const { state, draft, setCalendarName } = useImportDraft()
   const legal = useJourneyGateRoute(state, "programme")
   const [name, setName] = useState("")
@@ -150,17 +148,11 @@ export default function ProgrammeScreen() {
           >
             <PageIntro caption={t("onboarding.programme.helper")} />
 
-            <ThemedText nativeID="onboarding-programme-label" type="smallBold">
-              {t("onboarding.programme.fieldLabel")}
-            </ThemedText>
-            <TextInput
+            <TextField
               testID="onboarding-programme-input"
-              accessibilityLabel={t("onboarding.programme.fieldLabel")}
-              accessibilityLabelledBy="onboarding-programme-label"
-              accessibilityHint={fieldErrorHint(errorKey && t(errorKey))}
-              // Example only — a `placeholder` prop can never reach the draft.
+              label={t("onboarding.programme.fieldLabel")}
+              error={errorKey && t(errorKey)}
               placeholder={t("onboarding.programme.placeholder")}
-              placeholderTextColor={theme.textSecondary}
               value={name}
               onChangeText={(next) => {
                 setName(next)
@@ -170,22 +162,7 @@ export default function ProgrammeScreen() {
               autoCorrect={false}
               returnKeyType="next"
               onSubmitEditing={submit}
-              style={[
-                stepStyles.input,
-                {
-                  color: theme.text,
-                  borderColor:
-                    errorKey !== null ? theme.error : theme.backgroundSelected,
-                },
-              ]}
             />
-
-            {errorKey !== null && (
-              <FieldError
-                testID="onboarding-programme-error"
-                message={t(errorKey)}
-              />
-            )}
           </KeyboardSafeActionLayout>
         )}
       </RootPage>

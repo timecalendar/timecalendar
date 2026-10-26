@@ -1,4 +1,4 @@
-import { fieldErrorHint } from "./field-error-hint"
+import { fieldErrorHint, joinSentences } from "./field-error-hint"
 
 it.each([
   ["Enter a URL", undefined, "Enter a URL"],
@@ -11,4 +11,13 @@ it.each([
   [null, undefined, undefined],
 ])("folds error %p and hint %p into %p", (error, hint, expected) => {
   expect(fieldErrorHint(error, hint)).toBe(expected)
+})
+
+it.each([
+  [["Enter a name.", "Shown in the list."], "Enter a name. Shown in the list."],
+  [["Bad", "Help", "Own"], "Bad. Help. Own"],
+  [["Bad!", undefined, "Own"], "Bad! Own"],
+  [[undefined, null, ""], undefined],
+])("joins %p into %p without doubling punctuation", (parts, expected) => {
+  expect(joinSentences(...parts)).toBe(expected)
 })

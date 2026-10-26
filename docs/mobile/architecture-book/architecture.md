@@ -22,7 +22,7 @@ these pages describe the system as it is now.
 - Shared infrastructure is reached through owned seams such as `@/db`, `@/storage`,
   `@/firebase`, and `@/components/chrome`.
 - Design primitives live in family folders under `src/design/` (`text/`, `icon/`, `button/`,
-  `status/`, `layout/`) and are imported only through the `@/design` barrel, which exports
+  `field/`, `status/`, `layout/`) and are imported only through the `@/design` barrel, which exports
   primitives and their types, never tokens (`@/theme`) or gallery code. The component gallery is
   the developer-only entry `@/design/gallery`; `*.gallery.tsx` fixtures live next to the component
   they exercise ([ADR 068](./decisions/068-design-layer-barrel-and-gallery-entry.md)).
@@ -35,23 +35,23 @@ these pages describe the system as it is now.
 
 ## Reference
 
-| Topic | Document |
-| --- | --- |
-| Runtime and native baseline | [runtime.md](./runtime.md) |
-| Navigation | [navigation.md](./navigation.md) |
-| API and query data | [data.md](./data.md) |
-| Local persistence | [storage.md](./storage.md) |
-| Lint and formatting | [lint-format.md](./lint-format.md) |
+| Topic                         | Document                                                                     |
+| ----------------------------- | ---------------------------------------------------------------------------- |
+| Runtime and native baseline   | [runtime.md](./runtime.md)                                                   |
+| Navigation                    | [navigation.md](./navigation.md)                                             |
+| API and query data            | [data.md](./data.md)                                                         |
+| Local persistence             | [storage.md](./storage.md)                                                   |
+| Lint and formatting           | [lint-format.md](./lint-format.md)                                           |
 | Testing and completion checks | [testing.md](./testing.md), [definition-of-done.md](./definition-of-done.md) |
-| Internationalization | [i18n.md](./i18n.md) |
-| Accessibility | [accessibility.md](./accessibility.md) |
-| Theme and native chrome | [theming.md](./theming.md) |
-| Firebase and push | [firebase.md](./firebase.md) |
-| EAS distribution | [eas.md](./eas.md) |
-| Release operations | [../releases/README.md](../releases/README.md) |
-| Calendar rendering and sync | [calendar.md](./calendar.md) |
-| Feature map | [features.md](./features.md) |
-| Architectural decisions | [decisions/README.md](./decisions/README.md) |
+| Internationalization          | [i18n.md](./i18n.md)                                                         |
+| Accessibility                 | [accessibility.md](./accessibility.md)                                       |
+| Theme and native chrome       | [theming.md](./theming.md)                                                   |
+| Firebase and push             | [firebase.md](./firebase.md)                                                 |
+| EAS distribution              | [eas.md](./eas.md)                                                           |
+| Release operations            | [../releases/README.md](../releases/README.md)                               |
+| Calendar rendering and sync   | [calendar.md](./calendar.md)                                                 |
+| Feature map                   | [features.md](./features.md)                                                 |
+| Architectural decisions       | [decisions/README.md](./decisions/README.md)                                 |
 
 For a new feature, use [golden-path.md](./golden-path.md). Update a topical page
 when its current contract changes. Record Architecture Book rule changes in

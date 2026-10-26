@@ -1,16 +1,14 @@
 import { router, Stack } from "expo-router"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { StyleSheet, TextInput } from "react-native"
+import { StyleSheet } from "react-native"
 
 import {
   Button,
-  FieldError,
-  fieldErrorHint,
   KeyboardSafeActionLayout,
   PageIntro,
   RootPage,
-  ThemedText,
+  TextField,
 } from "@/design"
 import {
   isImportNameWithinLimit,
@@ -18,7 +16,7 @@ import {
   useImportDraft,
 } from "@/features/onboarding/draft"
 import { clearSelection } from "@/features/school-selection"
-import { Spacing, useTheme } from "@/theme"
+import { Spacing } from "@/theme"
 
 import { stepStyles } from "./step-styles"
 
@@ -37,7 +35,6 @@ import { stepStyles } from "./step-styles"
 // find (design D10).
 export default function InstitutionNameScreen() {
   const { t } = useTranslation()
-  const theme = useTheme()
   const { setUnlistedInstitution } = useImportDraft()
   const [name, setName] = useState("")
   const [errorKey, setErrorKey] = useState<string | null>(null)
@@ -84,19 +81,11 @@ export default function InstitutionNameScreen() {
           >
             <PageIntro caption={t("onboarding.institution.helper")} />
 
-            <ThemedText
-              nativeID="onboarding-institution-label"
-              type="smallBold"
-            >
-              {t("onboarding.institution.fieldLabel")}
-            </ThemedText>
-            <TextInput
+            <TextField
               testID="onboarding-institution-input"
-              accessibilityLabel={t("onboarding.institution.fieldLabel")}
-              accessibilityLabelledBy="onboarding-institution-label"
-              accessibilityHint={fieldErrorHint(errorKey && t(errorKey))}
+              label={t("onboarding.institution.fieldLabel")}
+              error={errorKey && t(errorKey)}
               placeholder={t("onboarding.institution.placeholder")}
-              placeholderTextColor={theme.textSecondary}
               value={name}
               onChangeText={(next) => {
                 setName(next)
@@ -106,22 +95,7 @@ export default function InstitutionNameScreen() {
               autoCorrect={false}
               returnKeyType="next"
               onSubmitEditing={submit}
-              style={[
-                stepStyles.input,
-                {
-                  color: theme.text,
-                  borderColor:
-                    errorKey !== null ? theme.error : theme.backgroundSelected,
-                },
-              ]}
             />
-
-            {errorKey !== null && (
-              <FieldError
-                testID="onboarding-institution-error"
-                message={t(errorKey)}
-              />
-            )}
           </KeyboardSafeActionLayout>
         )}
       </RootPage>

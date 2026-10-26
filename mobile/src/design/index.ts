@@ -7,6 +7,13 @@ export {
   type ButtonVariant,
 } from "./button/button"
 export { ButtonRow, type ButtonRowProps } from "./button/button-row"
+export { DateTimeField, type DateTimeFieldProps } from "./field/date-time-field"
+export {
+  TextField,
+  type TextFieldLayoutStyle,
+  type TextFieldProps,
+  type TextFieldRef,
+} from "./field/text-field"
 export {
   Icon,
   type IconProps,
@@ -23,7 +30,6 @@ export { headerScrollProps } from "./layout/header-scroll-props"
 export { KeyboardSafeActionLayout } from "./layout/keyboard-safe-action-layout"
 export { PageIntro, RootPage } from "./layout/root-page"
 export { ErrorNotice, FieldError } from "./status/error-surfaces"
-export { fieldErrorHint } from "./status/field-error-hint"
 export {
   developerActivityArtwork,
   noDataArtwork,
