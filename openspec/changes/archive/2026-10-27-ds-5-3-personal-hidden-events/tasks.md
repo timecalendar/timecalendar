@@ -288,7 +288,7 @@ must stay: "Edit this event", "Delete event…" alert title, the alert's "Delete
 
 ## 8. Device verification
 
-- [ ] 8.1 iOS simulator pass (conductor-owned; iOS build on the Mac with Xcode 26.6), in light and
+- [x] 8.1 iOS simulator pass (conductor-owned; iOS build on the Mac with Xcode 26.6), in light and
       dark, at the default text size and at AX5:
       - **Gallery:** `timecalendar-dev://developer/gallery/color-swatch-field--default`,
         `--error`, `--disabled`, `--long-strings`.
