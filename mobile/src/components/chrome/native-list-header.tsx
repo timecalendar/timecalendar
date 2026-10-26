@@ -72,7 +72,7 @@ function HeaderContent({
           size="small"
           label={caption}
           accessibilityLabel={caption}
-          {...(captionTestID === undefined ? {} : { testID: captionTestID })}
+          testID={captionTestID}
           style={styles.caption}
         />
       ) : null}

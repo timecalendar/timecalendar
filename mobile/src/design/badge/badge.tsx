@@ -45,7 +45,7 @@ export type BadgeProps = {
   size?: BadgeSize
   icon?: BadgeIcon
   accessibilityLabel: string | null
-  testID?: string
+  testID?: string | undefined
   style?: StyleProp<BadgeLayoutStyle>
 }
 
