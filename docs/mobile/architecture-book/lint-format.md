@@ -371,8 +371,9 @@ truth; this file carries the caveats the config can't (R-1).
 - **Radio groups — `local/no-raw-radio-group`** (`tools/eslint-rules/no-raw-radio-group.js`,
   block `timecalendar/raw-radio-group`, `files: ["src/features/**/*.tsx", "src/app/**/*.tsx"]`):
   a JSX `accessibilityRole` or `role` whose value is the literal `"radiogroup"` or `"radio"`
-  (directly, in an expression container, or as either branch of a conditional such as
-  `isAndroid ? "radio" : "button"`) is an error. A single choice among options is
+  (directly, in an expression container, as either branch of a conditional such as
+  `isAndroid ? "radio" : "button"` or of a logical expression such as `isAndroid && "radio"`, or
+  under `as`, `satisfies` or `!`) is an error. A single choice among options is
   `ColorSwatchField` from `@/design` or a `NativeList` choice row from `@/components/chrome`
   ([theming.md](./theming.md) → Fields, ADR [078](./decisions/078-color-swatch-field.md)).
   Ignored: tests; `src/design/**` and `src/components/chrome/**` are outside `files`. No file

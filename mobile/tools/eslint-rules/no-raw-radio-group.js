@@ -6,7 +6,8 @@
 // roles, touch targets and press feedback. A hand-built choice control has no
 // reliable static shape, but its role does: the rule reports a JSX
 // `accessibilityRole` or `role` whose value is the literal "radiogroup" or
-// "radio", directly or as either branch of a conditional.
+// "radio", directly, as either branch of a conditional or logical expression,
+// or under a type assertion.
 
 const RADIO_ROLES = new Set(["radiogroup", "radio"])
 const ROLE_ATTRIBUTES = new Set(["accessibilityRole", "role"])
@@ -22,6 +23,16 @@ function namesRadio(node) {
   }
   if (node.type === "ConditionalExpression") {
     return namesRadio(node.consequent) || namesRadio(node.alternate)
+  }
+  if (node.type === "LogicalExpression") {
+    return namesRadio(node.left) || namesRadio(node.right)
+  }
+  if (
+    node.type === "TSAsExpression" ||
+    node.type === "TSSatisfiesExpression" ||
+    node.type === "TSNonNullExpression"
+  ) {
+    return namesRadio(node.expression)
   }
   if (node.type === "JSXExpressionContainer") return namesRadio(node.expression)
   return false

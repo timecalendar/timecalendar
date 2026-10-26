@@ -23,6 +23,12 @@ ruleTester.run("no-raw-radio-group", rule, {
     },
     { code: `const node = <View role="list" />` },
     { code: `const node = <View testID="radiogroup" />` },
+    {
+      code: `const node = <Pressable accessibilityRole={pressable && "button"} />`,
+    },
+    {
+      code: `const node = <Pressable accessibilityRole={"button" as const} />`,
+    },
   ],
   invalid: [
     {
@@ -40,6 +46,22 @@ ruleTester.run("no-raw-radio-group", rule, {
     { code: `const node = <View role="radiogroup" />`, errors: raw },
     {
       code: `const node = <Pressable accessibilityRole={isAndroid ? "radio" : "button"} />`,
+      errors: raw,
+    },
+    {
+      code: `const node = <Pressable accessibilityRole={isAndroid && "radio"} />`,
+      errors: raw,
+    },
+    {
+      code: `const node = <Pressable accessibilityRole={role ?? "radio"} />`,
+      errors: raw,
+    },
+    {
+      code: `const node = <Pressable accessibilityRole={"radio" as const} />`,
+      errors: raw,
+    },
+    {
+      code: `const node = <View role={"radiogroup" satisfies Role} />`,
       errors: raw,
     },
   ],
