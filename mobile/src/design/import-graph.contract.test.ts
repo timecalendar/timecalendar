@@ -65,6 +65,9 @@ function resolveSpecifier(from: string, specifier: string): string[] | null {
   return null
 }
 
+const allTypeOnly = (elements: readonly { isTypeOnly: boolean }[]) =>
+  elements.length > 0 && elements.every((element) => element.isTypeOnly)
+
 function isTypeOnlyImport(node: TypeScript.ImportDeclaration) {
   const clause = node.importClause
   if (!clause) return false
@@ -74,8 +77,7 @@ function isTypeOnlyImport(node: TypeScript.ImportDeclaration) {
   return (
     bindings !== undefined &&
     ts.isNamedImports(bindings) &&
-    bindings.elements.length > 0 &&
-    bindings.elements.every((element) => element.isTypeOnly)
+    allTypeOnly(bindings.elements)
   )
 }
 
@@ -85,8 +87,7 @@ function isTypeOnlyExport(node: TypeScript.ExportDeclaration) {
   return (
     clause !== undefined &&
     ts.isNamedExports(clause) &&
-    clause.elements.length > 0 &&
-    clause.elements.every((element) => element.isTypeOnly)
+    allTypeOnly(clause.elements)
   )
 }
 
