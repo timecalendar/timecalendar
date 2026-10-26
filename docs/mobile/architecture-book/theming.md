@@ -508,10 +508,19 @@ decorative. Filled body/footer actions are `Button variant="filled"`. Header act
 from `useHeaderActions` and `FloatingAction` ([Header and floating actions](#header-and-floating-actions--useheaderactions-floatingaction-srccomponentschrome)).
 
 Home's true-empty Up next and Today title/caption pairs use `inline` `StatusView`, keeping leading
-alignment, subtitle hierarchy, secondary captions and the shared announcement. Feedback, onboarding Programme, and the personal-event editor compose one readable
+alignment, subtitle hierarchy, secondary captions and the shared announcement.
+
+Institution name, Programme, iCal URL, Feedback and the personal-event editor compose one readable
 `KeyboardSafeActionLayout`: the fields remain in its sole scroll body and the filled `Button`
-region is a measured sibling above the keyboard. Programme Skip is a header text action on both
-platforms.
+region is a measured sibling above the keyboard. The layout owns the form rhythm: its scroll
+content has `paddingTop: Spacing.four` and `gap: Spacing.three`, its action region
+`gap: Spacing.two`, `paddingTop: Spacing.three` and `paddingBottom: Spacing.four`, and caller
+styles apply last. A form that fills the viewport passes `contentPlacement="center"`, which centres
+the content and never scrolls it under the header. Institution name, Programme and iCal URL do, and
+pass no layout style at all. Enforced by
+[`keyboard-safe-action-layout.test.tsx`](../../../mobile/src/design/layout/keyboard-safe-action-layout.test.tsx)
+(defaults, override, placement, and a `@ts-expect-error` against `scrollsUnderHeader` on a centred
+form). Programme Skip is a header text action on both platforms.
 
 The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tabs` is "API subject to change"; `@expo/ui` ships unstable entry points; `expo-glass-effect` is iOS-26-only). The wrapper seam localizes that churn to one directory. Each module is the **single import site** for its alpha API:
 

@@ -5,6 +5,11 @@ never the Mac.
 
 # Form screens on the design system: Android device pass
 
+## Status
+
+Not done. The Windows build host (`ssh pc`) was unreachable on 2026-10-26, so the delivery
+pipeline could not build or run Android. Everything below is still open.
+
 ## What I need
 
 A pass in French and English on an Android development build of

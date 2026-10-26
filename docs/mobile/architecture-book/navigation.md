@@ -40,7 +40,9 @@ fills the viewport (`flexGrow: 1` — a `StatusView presentation="screen"`, a ce
 error) never scrolls under the bar: the automatic inset on top of a viewport-tall content makes it
 scroll by the header height. Such a page drops `scrollsUnderHeader` and its scroller spreads
 `headerScrollProps(false)` (inset `never`, no bounce); a list toggles both on whether it has rows
-(`headerScrollProps(hasRows)`); `KeyboardSafeActionLayout` takes `scrollsUnderHeader={false}`. `(tabs)`, `onboarding`, `profile`, `more`,
+(`headerScrollProps(hasRows)`); a centred form is `KeyboardSafeActionLayout
+contentPlacement="center"`, whose type rejects `scrollsUnderHeader` and whose scroller always
+spreads `headerScrollProps(false)` (`keyboard-safe-action-layout.test.tsx`). `(tabs)`, `onboarding`, `profile`, `more`,
 `dev-import` and `calendar-import-result` are explicit headerless exceptions. The route-structure test enumerates top-level
 siblings so a new route cannot inherit either posture accidentally. Features own localized
 `Stack.Screen` titles and declare header actions through `useHeaderActions`. See ADR [054](./decisions/054-shared-root-page-semantics.md).

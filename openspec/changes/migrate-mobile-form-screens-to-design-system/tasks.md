@@ -139,36 +139,36 @@ raw-text-input 1, ad-hoc-separator 1, header-action 1, raw-event-color 1. Task 0
 
 ## 5. Architecture Book (`docs/mobile/architecture-book/`) — commit 2
 
-- [ ] 5.1 `theming.md` → Native-chrome wrapper seam (the paragraph at `:509-514`):
+- [x] 5.1 `theming.md` → Native-chrome wrapper seam (the paragraph at `:509-514`):
       `KeyboardSafeActionLayout` owns the form rhythm (content `paddingTop four` / `gap three`,
       action region `gap two` / `paddingTop three` / `paddingBottom four`, caller styles last) and
       `contentPlacement="center"` for forms that fill the viewport. Name institution name,
       Programme, iCal URL, Feedback and the personal-event editor as its consumers. Link
       `keyboard-safe-action-layout.test.tsx`.
       Verify: `rg -n "contentPlacement" docs/mobile/architecture-book/theming.md` matches.
-- [ ] 5.2 `navigation.md:39-43`: the centred form is `KeyboardSafeActionLayout contentPlacement="center"`,
+- [x] 5.2 `navigation.md:39-43`: the centred form is `KeyboardSafeActionLayout contentPlacement="center"`,
       whose type rejects `scrollsUnderHeader` (the gate). Replace "takes `scrollsUnderHeader={false}`".
       Verify: `rg -n "scrollsUnderHeader=\{false\}" docs/mobile/architecture-book/navigation.md`
       finds nothing.
-- [ ] 5.3 `features.md`: in the bullet at `:198-203`, name institution name and iCal URL beside
+- [x] 5.3 `features.md`: in the bullet at `:198-203`, name institution name and iCal URL beside
       Feedback and Programme as keyboard-safe forms whose screens pass no layout style (centred
       placement for the three onboarding-journey steps). Keep the rows at `:27` and `:29` true.
       Verify: the bullet names all four screens.
-- [ ] 5.4 `decisions/054-shared-root-page-semantics.md` → Decision: extend the
+- [x] 5.4 `decisions/054-shared-root-page-semantics.md` → Decision: extend the
       `KeyboardSafeActionLayout` sentence (`:30-31`) to say that it also supplies the action-region
       rhythm and the centred placement. Write it as current state, without "amended".
       Verify: `rg -n "action-region rhythm|contentPlacement" docs/mobile/architecture-book/decisions/054-shared-root-page-semantics.md`
       matches.
-- [ ] 5.5 `CHANGELOG.md`: add `## 2026-10-26 — Form screens on the design system` above the
+- [x] 5.5 `CHANGELOG.md`: add `## 2026-10-26 — Form screens on the design system` above the
       current first entry, with bullets for: the layout-owned rhythm (theming.md, ADR 054), the
       type-enforced centred placement (navigation.md), and the four screens composing only
       `@/design` with no allowlist entry (features.md). Verify: the entry is first and every link
       resolves.
-- [ ] 5.6 Outside the Book: `docs/react-native-migration/inbox/2026-10-26-mobile-ds-form-screens-device-pass.md`
+- [x] 5.6 Outside the Book: `docs/react-native-migration/inbox/2026-10-26-mobile-ds-form-screens-device-pass.md`
       exists (written at planning). Update it if a story id or route changed. Verify: the three
       story ids are produced by `src/design/gallery/stories.ts`
       (`keyboard-safe-action-layout--default`, `--fills-viewport`, `--long-strings`).
-- [ ] 5.7 Commit 2. Verify: `npm run lint`, `npm test -- --coverage` and the openspec validate
+- [x] 5.7 Commit 2. Verify: `npm run lint`, `npm test -- --coverage` and the openspec validate
       still pass.
 
 ## 6. Device verification

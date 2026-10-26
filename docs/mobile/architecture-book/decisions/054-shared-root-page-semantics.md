@@ -27,8 +27,9 @@ sibling action region inside keyboard avoidance; the screen retains safe-area ow
 The root safe-area frame has no decorative top padding. Static page content owns its top
 spacing; scrollable pages put top spacing and responsive gutters inside their scroll content,
 so content can scroll up to the native header and the viewport spans the available width.
-`KeyboardSafeActionLayout` supplies the standard top spacing inside its scroll body, while its
-action region remains a sibling outside the scroll. List headers belong to the list content.
+`KeyboardSafeActionLayout` supplies the standard top spacing and content gap inside its scroll
+body, the action-region rhythm, and `contentPlacement="center"` for a form that fills the
+viewport, while its action region remains a sibling outside the scroll. List headers belong to the list content.
 
 ## Consequences
 
