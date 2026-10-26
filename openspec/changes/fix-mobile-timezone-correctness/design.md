@@ -138,10 +138,12 @@ throws for an unsupported zone, like `formatInTimeZone`. The calendar data barre
 
 - `classifyTimedEventSupport` compares `zoneOffsetMinutes` at the start and at the exclusive end.
   Its `try/catch` still maps an invalid zone to `"spanning"`.
-- `formatTimezoneOffset` (`features/settings/data/timezone-catalog.ts`) imports it through
-  `@/features/calendar/data`. The edge settings → calendar/data already exists
-  (`settings/prefs/types.ts`), and calendar/data imports nothing from settings, so the graph stays
-  acyclic.
+- `formatTimezoneOffset` (`features/settings/data/timezone-catalog.ts`) imports it from
+  `@/features/calendar/data/day-key`, the way `settings/prefs/types.ts` imports
+  `@/features/calendar/data/time-grid`. The barrel would close a runtime module cycle
+  (calendar/data → `@/features/personal-events` UI → `@/features/settings` → settings/data →
+  calendar/data), which leaves a mocked `@/db` binding unresolved in `calendar-screen.test.tsx`.
+  `day-key.ts` imports only `date-fns-tz`.
 
 Lint L11 adds `{ name: "date-fns-tz", importNames: ["getTimezoneOffset"] }` to the
 `restrictedImports` `paths`, behind a `banZoneOffsetTrap = true` flag in the L9 shape. No file

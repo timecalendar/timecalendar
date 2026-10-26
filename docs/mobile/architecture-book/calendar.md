@@ -191,7 +191,10 @@ uses the same explicit zone for its selected-date heading and Agenda range. Laun
 start on Monday through an explicit first-weekday input, and whole-week shifts compose
 civil day-key helpers rather than fixed-duration milliseconds. Page indexes are pure integer
 `EpochDay` arithmetic with no timezone formatting; a page's dates become instants only through
-the display zone.
+the display zone. A zone's UTC offset comes from `zoneOffsetMinutes` at the instant (lint L11);
+the timed-event classifier uses it to defer an event that crosses an offset transition. The
+development accessibility probe (`src/test-support/owned-calendar/accessibility-probe.ts`) places
+its fixtures on display-zone wall-clock hours of 15 June 2026, so it reads the same in any zone.
 Deriving a displayed time or day from device-local `Date` fields
 or `toLocaleString` is a defect. All-day events are
 the exception: they stay on the floating UTC-day-key path and never shift with the

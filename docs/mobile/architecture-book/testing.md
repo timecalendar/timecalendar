@@ -112,7 +112,26 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   dialog close and reopen, menu selection, a date pick), using the suite-wide native mocks. The
   `@expo/ui/community/menu` mock wraps the trigger as each platform does: a button on iOS (the
   SwiftUI `Menu` label); on Android a `Pressable` with `accessible={false}` whose press opens the
-  menu, while the children carry their own role (`MenuView.android.tsx`). The `@expo/ui/community/datetime-picker` mock forwards its props and maps `disabled`.
+  menu, while the children carry their own role (`MenuView.android.tsx`). The `@expo/ui/community/datetime-picker` mock forwards its props and maps `disabled`; its Android date mode (`mode` `date` or `datetime`) confirms a UTC-midnight day, as Compose does.
+
+## Time zones
+
+- **The unit suite passes in any process zone.** Fixtures are built in the zone under display
+  (`new Date(y, m, d, h)` when the preference is "system", `fromZonedTime` for a named zone), and
+  expectations come from the same zone-aware helpers the code uses. A test never hard-codes a
+  calendar day derived from a `Z` instant.
+- **CI runs the full suite under three zones.** `test-mobile-timezones` in `ci-mobile.yml` runs
+  `npm test` once per leg under `Pacific/Kiritimati` (+14), `Pacific/Pago_Pago` (−11) and
+  `America/St_Johns` (−03:30/−02:30, DST), with `fail-fast: false`, beside the `TZ: UTC` coverage
+  run in `test-mobile` (ADR [066](./decisions/066-device-local-date-picker-seam-and-timezone-ci.md)).
+- **`npm run test:timezones`** reproduces the matrix locally (`scripts/test-timezones.sh`), one
+  zone after the other, stopping at the first failing zone. Extra arguments go to Jest.
+- **`mobile/ci-timezones.contract.test.ts`** pins the job, the three zones, the `TZ` envs, the
+  local script, and checks that the process zone reached the Jest worker.
+- **Device-local field math on an event instant is caught by this matrix, not by lint**
+  (ADR [035](./decisions/035-display-timezone-preference.md)). The `toZonedTime` proxy pattern
+  relies on device-local getters, so a syntactic ban would be noise. The one named trap,
+  `date-fns-tz` `getTimezoneOffset`, is lint L11 ([lint-format.md](./lint-format.md)).
 
 ## E2E — Maestro, real round-trip
 
@@ -140,7 +159,8 @@ table. Native sheet/search placement remains project-owner device evidence under
 
 - `test-mobile` fetches full Git history, runs the deterministic E2E harness regression, installs
   the mobile lockfile, blocks new React Doctor warnings/errors relative to `origin/main`, then runs
-  gen-drift, tsc, lint, and Jest. The full React Doctor inventory remains the advisory command and
+  gen-drift, tsc, lint, and Jest under `TZ: UTC` with coverage. `test-mobile-timezones` runs Jest
+  without coverage under the three matrix zones (Time zones). The full React Doctor inventory remains the advisory command and
   normalized report defined by ADR [053](./decisions/053-react-doctor-changed-code-gate.md).
   `e2e-mobile-android` (ubuntu, KVM emulator, reuses the `build-server` image artifact via
   `E2E_SERVER_IMAGE`) and `e2e-mobile-ios` (macOS runner, Postgres/Redis provisioned natively
@@ -153,7 +173,7 @@ table. Native sheet/search placement remains project-owner device evidence under
 Workflows are split by concern; native E2E is **not** run on every push (cold native build + device boot is ~20–30 min/platform — toolchain cost, not app size).
 
 - **`ci-build-deploy.yml`** — server/web images, server tests, deploy (every push; deploy self-gates to main/production).
-- **`ci-mobile.yml`** — `test-mobile` (gen-drift, tsc, lint, Jest); path-filtered to `mobile/**` + `openapi/**` + **`.github/workflows/ci-mobile-e2e.yml`**. It also runs `test_run_e2e.sh` and mutation-backed `test_ci_mobile_e2e.sh` — pure bash + node, no device. These are ordinary pull-request gates even though the native workflow itself has no pull-request trigger.
+- **`ci-mobile.yml`** — `test-mobile` (gen-drift, tsc, lint, Jest under `TZ: UTC` with coverage) and `test-mobile-timezones` (Jest in three zones, see Time zones); path-filtered to `mobile/**` + `openapi/**` + **`.github/workflows/ci-mobile-e2e.yml`**. It also runs `test_run_e2e.sh` and mutation-backed `test_ci_mobile_e2e.sh` — pure bash + node, no device. These are ordinary pull-request gates even though the native workflow itself has no pull-request trigger.
 - **`ci-mobile-e2e.yml`** — one daily schedule plus required-ref manual dispatch. Preparation resolves one immutable target; manual runs always select both platforms, while scheduled runs compare current `main` with the preceding scheduled attempt's `head_sha` and select Android plus iOS only for changes under `mobile/**`, `openapi/**`, `server/**`, the shared E2E lifecycle/key generator, `.nvmrc`, or the workflow. No predecessor initializes health by running; an unusable boundary fails visibly. Daily and manual invocations serialize without cancellation, and platform failures retain Maestro debug output plus server logs (ADR [055](./decisions/055-native-e2e-daily-health-signal.md)).
 - **`ci-flutter.yml`** — legacy `test-app` + Flutter `test-e2e`, demoted to main/production pushes touching `app/**` (R-5 bounded maintenance).
 - **Branch-protection caveat:** path-filtered jobs that are skipped don't report a status — if any of these become _required_ checks, a skip can block a PR. None are required today.
