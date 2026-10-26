@@ -24,6 +24,7 @@ case "$*" in
     printf 'PID\tStatus\tLabel\n'
     printf -- '-\t0\tcom.apple.notifyd\n'
     printf -- '123\t0\tcom.apple.storekitd\n'
+    printf -- '-\t0\tcom.apple.apsd.lookalike\n'
     [ "${FAKE_APSD_LISTED:-0}" != 1 ] || printf -- '-\t0\tcom.apple.apsd\n'
     exit "${FAKE_LIST_STATUS:-0}"
     ;;
@@ -54,7 +55,7 @@ test_happy_path() {
 simctl spawn U launchctl disable user/foreground/com.apple.apsd
 simctl spawn U launchctl bootout user/foreground/com.apple.apsd
 simctl spawn U launchctl list"
-  [ "$(cat "$CALL_LOG")" = "$expected" ] || fail "unexpected call order:\n$(cat "$CALL_LOG")"
+  [ "$(cat "$CALL_LOG")" = "$expected" ] || fail "unexpected call order:"$'\n'"$(cat "$CALL_LOG")"
   grep -Fq 'apsd disabled in simulator U' "$case_dir/stdout" || fail 'happy path printed no evidence line'
 }
 
@@ -75,13 +76,14 @@ test_disable_failure_fatal() {
   QUIESCE_ARGS=(U)
   run_case FAKE_DISABLE_STATUS=5
   [ "$status" -ne 0 ] || fail 'a failed disable must fail the script'
-  ! grep -Eq 'bootout|list' "$CALL_LOG" || fail "a failed disable must stop the script:\n$(cat "$CALL_LOG")"
+  ! grep -Eq 'bootout|list' "$CALL_LOG" || fail "a failed disable must stop the script:"$'\n'"$(cat "$CALL_LOG")"
 }
 
 test_list_failure_fatal() {
   QUIESCE_ARGS=(U)
   run_case FAKE_LIST_STATUS=4
   [ "$status" -ne 0 ] || fail 'a failed launchctl list must fail the script'
+  ! grep -Fq 'apsd disabled' "$case_dir/stdout" || fail 'a failed launchctl list must not report apsd disabled'
 }
 
 test_missing_udid() {

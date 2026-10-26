@@ -179,6 +179,8 @@ ios_boot_block="$(step_block e2e-mobile-ios 'Boot a simulator and install the ap
 [ -n "$ios_boot_block" ] || fail "missing workflow step 'Boot a simulator and install the app' in job 'e2e-mobile-ios'"
 quiesce_call='"$GITHUB_WORKSPACE/mobile/e2e/quiesce-ios-simulator.sh" "$DEVICE_UDID"'
 assert_block_count 1 "$ios_boot_block" "$quiesce_call" 'iOS boot step'
+[ "$(grep -cxF -- "          $quiesce_call" <<< "$ios_boot_block" || true)" -eq 1 ] || \
+  fail 'quiesce call must stand alone so its failure fails the step'
 line_of() {
   grep -nF -- "$1" <<< "$ios_boot_block" | head -n1 | cut -d: -f1
 }
@@ -239,6 +241,7 @@ if [ "$RUN_MUTATIONS" = 1 ]; then
   expect_mutation_failure should-run-output 's/(      target_sha: \$\{\{ steps\.select\.outputs\.target_sha \}\}\n)/${1}      should_run: \${{ steps.select.outputs.should_run }}\n/'
   expect_mutation_failure failure-artifact 's/(name: Upload Maestro debug output\n        )if: failure\(\)/${1}if: always()/'
   expect_mutation_failure ios-quiesce-removed 's/\n[^\n]*quiesce-ios-simulator\.sh[^\n]*//'
+  expect_mutation_failure ios-quiesce-neutralized 's/(quiesce-ios-simulator\.sh" "\$DEVICE_UDID")/${1} || true/'
   expect_mutation_failure ios-quiesce-after-install 's/(\n[^\n]*quiesce-ios-simulator\.sh[^\n]*)(\n[^\n]*APP=[^\n]*\n[^\n]*xcrun simctl install[^\n]*)/${2}${1}/'
 fi
 

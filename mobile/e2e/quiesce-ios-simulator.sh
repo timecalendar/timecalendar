@@ -20,7 +20,7 @@ xcrun simctl spawn "$UDID" launchctl disable "$SERVICE"
 xcrun simctl spawn "$UDID" launchctl bootout "$SERVICE" || true
 
 services="$(xcrun simctl spawn "$UDID" launchctl list)"
-if grep -Fq com.apple.apsd <<< "$services"; then
+if awk -F'\t' '$3 == "com.apple.apsd" { found = 1 } END { exit !found }' <<< "$services"; then
   echo "apsd is still loaded in simulator $UDID" >&2
   exit 1
 fi
