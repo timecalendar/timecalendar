@@ -3,9 +3,9 @@ import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Alert, StyleSheet, TextInput, View } from "react-native"
 
+import { Button } from "@/components/button"
 import { ErrorNotice, FieldError } from "@/components/error-surfaces"
 import { KeyboardSafeActionLayout } from "@/components/keyboard-safe-action-layout"
-import { PrimaryAction } from "@/components/primary-action"
 import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import {
@@ -110,7 +110,8 @@ export default function FeedbackScreen() {
                     message={t("feedback.failure")}
                   />
                 ) : null}
-                <PrimaryAction
+                <Button
+                  variant="filled"
                   testID="feedback-submit"
                   label={t("feedback.submit")}
                   busy={isPending}

@@ -29,12 +29,28 @@ These rules guard real product touchables (interactive controls declare `accessi
 - `Icon` is always decorative (`accessible={false}`, hidden from VoiceOver and TalkBack); the control that contains it owns the label.
 - Encoded by the type (`scaling` is required) and lint L9; proven by `src/components/icon.test.tsx` (box and glyph sizes per scaling on Android, `SymbolView` size on iOS, decorative props, the Material codepoint pin). See ADR [065](./decisions/065-icon-text-scaling.md).
 
+## Buttons — encoded in `Button`
+
+- A `Button` is one accessible element: role `button` by default, `link` when it leaves the app.
+  Its name defaults to the visible label; a caller may give a fuller `accessibilityLabel` and an
+  `accessibilityHint`. `accessibilityState` is derived from `disabled` and `busy` and cannot be
+  passed.
+- Busy keeps the visible label and the accessible name, exposes `{ disabled: true, busy: true }`,
+  and hides its progress indicator from VoiceOver and TalkBack. Disabled exposes
+  `{ disabled: true, busy: false }`. Icons inside a button are decorative.
+- Every size is at least `MinTouchTarget` (44 pt iOS / 48 dp Android) tall and wide, including a
+  short `text` button.
+- The label follows the OS text size without a cap and wraps to sixteen lines (N > 0, never
+  `ellipsizeMode="clip"`).
+- Proven by `src/components/button.test.tsx` and the gallery registry matrix; see ADR
+  [067](./decisions/067-button-family.md) and [Theming](./theming.md) → Buttons.
+
 ## Accessible async status
 
 - Loading/error text carries `accessibilityLiveRegion="polite"` (Android announces the change) and a status role (`text` / `alert`), so assistive tech conveys the state rather than reading a silent node.
 - Shared empty states expose localized title then caption as the complete meaning and hide optional
-  artwork from the accessibility tree. They add no motion. `PrimaryAction` keeps one translated
-  button label, reports disabled/busy state on that button, blocks repeat activation, and hides its
+  artwork from the accessibility tree. They add no motion. A busy or disabled `Button` keeps one
+  translated label, reports its state on that button, blocks repeat activation, and hides its
   progress indicator from focus. See ADR [054](./decisions/054-shared-root-page-semantics.md).
 - Home's section empty states keep title-before-caption source order and left alignment. Feedback,
   Programme, and personal-event focused forms keep fields and errors in one scroll body followed by

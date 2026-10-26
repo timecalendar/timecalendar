@@ -2,8 +2,8 @@ import { type ComponentProps, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, TextInput } from "react-native"
 
+import { Button } from "@/components/button"
 import { KeyboardSafeActionLayout } from "@/components/keyboard-safe-action-layout"
-import { PrimaryAction } from "@/components/primary-action"
 import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import type { GalleryMeta, GalleryStory } from "@/design"
@@ -35,7 +35,8 @@ function Field({ label, testID }: { label: string; testID: string }) {
 
 function Submit({ label }: { label: string }) {
   return (
-    <PrimaryAction
+    <Button
+      variant="filled"
       testID="gallery-keyboard-layout-submit"
       label={label}
       onPress={() => {}}

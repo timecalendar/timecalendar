@@ -10,6 +10,9 @@ const reactNativeA11y = require("eslint-plugin-react-native-a11y")
 const simpleImportSort = require("eslint-plugin-simple-import-sort")
 
 const localRules = require("./tools/eslint-rules")
+const {
+  rawButtonAllowlist,
+} = require("./tools/eslint-rules/raw-button-allowlist")
 
 // Canonical import/export order (autofixable). Groups here are disjoint, so the
 // longest-match-wins tie-break never bites, and no bare "^" catch-all is used —
@@ -189,6 +192,21 @@ const symbolViewImportPath = {
     "Render icons through @/components/icon (accessibility.md → Icon scaling).",
 }
 
+// Buttons are the shared Button (ADR 067, lint-format.md → Buttons). No file
+// uses these, so the ban carries no flag and no seam exemption.
+const rawTouchablesImportPath = {
+  name: "react-native",
+  importNames: [
+    "Button",
+    "TouchableOpacity",
+    "TouchableHighlight",
+    "TouchableWithoutFeedback",
+    "TouchableNativeFeedback",
+  ],
+  message:
+    "Use Button from @/components/button (ADR 067, lint-format.md → Buttons).",
+}
+
 // L11: zone offsets come from the instant (lint-format.md → L11).
 const zoneOffsetTrapImportPath = {
   name: "date-fns-tz",
@@ -260,6 +278,7 @@ const restrictedImports = (
       ...(banDeveloperTools ? [developerToolsImportPath] : []),
       ...(banSymbolView ? [symbolViewImportPath] : []),
       ...(banZoneOffsetTrap ? [zoneOffsetTrapImportPath] : []),
+      rawTouchablesImportPath,
     ],
   },
 ]
@@ -676,6 +695,23 @@ module.exports = defineConfig([
         "error",
         { safeImports: workletSafeImports },
       ],
+    },
+  },
+  {
+    // Text buttons are the shared Button (ADR 067). The allowlist holds the
+    // files not yet migrated; raw-button-allowlist.test.js keeps it shrinking.
+    name: "timecalendar/raw-button",
+    files: ["src/**/*.tsx"],
+    ignores: [
+      "src/components/button.tsx",
+      "src/components/chrome/**",
+      "src/features/calendar/renderer/**",
+      "**/*.test.tsx",
+      ...rawButtonAllowlist,
+    ],
+    plugins: { local: localRules },
+    rules: {
+      "local/no-raw-button": "error",
     },
   },
   {

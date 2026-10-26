@@ -6,7 +6,7 @@ import { StyleSheet } from "react-native"
 import { useImportDraft } from "@/features/onboarding/draft"
 import { clearSelection } from "@/features/school-selection"
 import { usePlatform } from "@/test-support/platform"
-import { Colors } from "@/theme"
+import { Colors, MinTouchTarget } from "@/theme"
 
 import InstitutionNameScreen from "./institution-name-screen"
 
@@ -218,7 +218,7 @@ describe("InstitutionNameScreen", () => {
         ).toHaveLength(0)
         expect(actions).toContainElement(cta)
         expect(StyleSheet.flatten(cta.props.style)).toMatchObject({
-          minHeight: 48,
+          minHeight: MinTouchTarget,
           backgroundColor: Colors.light.primaryStrong,
         })
       })

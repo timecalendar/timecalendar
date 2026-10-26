@@ -9,7 +9,7 @@ import {
 } from "@/features/feedback/data"
 import i18n from "@/i18n"
 import { usePlatform } from "@/test-support/platform"
-import { Colors, Spacing } from "@/theme"
+import { Colors, MinTouchTarget, Spacing } from "@/theme"
 
 import FeedbackScreen, { normalizeFeedbackParam } from "./feedback-screen"
 
@@ -81,33 +81,33 @@ it.each([390, 768, 800, 1024])(
   },
 )
 
-describe.each([
-  ["ios" as const, 44],
-  ["android" as const, 48],
-])("FeedbackScreen on %s", (platform, minimumTarget) => {
-  usePlatform(platform)
+describe.each(["ios", "android"] as const)(
+  "FeedbackScreen on %s",
+  (platform) => {
+    usePlatform(platform)
 
-  it("keeps one scroll body before a semantic sibling action region", async () => {
-    const view = await render(<FeedbackScreen />)
-    const body = view.getByTestId("feedback-scroll-owner")
-    const actions = view.getByTestId("feedback-action-region")
-    const submit = view.getByTestId("feedback-submit")
-    expect(body.props.keyboardShouldPersistTaps).toBe("handled")
-    expect(body).toContainElement(view.getByTestId("feedback-email-input"))
-    expect(body).toContainElement(view.getByTestId("feedback-message-input"))
-    expect(body).not.toContainElement(submit)
-    expect(actions).toContainElement(submit)
-    expect(StyleSheet.flatten(submit.props.style)).toMatchObject({
-      minHeight: minimumTarget,
-      backgroundColor: Colors.light.primaryStrong,
+    it("keeps one scroll body before a semantic sibling action region", async () => {
+      const view = await render(<FeedbackScreen />)
+      const body = view.getByTestId("feedback-scroll-owner")
+      const actions = view.getByTestId("feedback-action-region")
+      const submit = view.getByTestId("feedback-submit")
+      expect(body.props.keyboardShouldPersistTaps).toBe("handled")
+      expect(body).toContainElement(view.getByTestId("feedback-email-input"))
+      expect(body).toContainElement(view.getByTestId("feedback-message-input"))
+      expect(body).not.toContainElement(submit)
+      expect(actions).toContainElement(submit)
+      expect(StyleSheet.flatten(submit.props.style)).toMatchObject({
+        minHeight: MinTouchTarget,
+        backgroundColor: Colors.light.primaryStrong,
+      })
+      expect(submit.props.accessibilityLabel).toBe("Send")
+      expect(submit.props.accessibilityState).toEqual({
+        disabled: false,
+        busy: false,
+      })
     })
-    expect(submit.props.accessibilityLabel).toBe("Send")
-    expect(submit.props.accessibilityState).toEqual({
-      disabled: false,
-      busy: false,
-    })
-  })
-})
+  },
+)
 
 it("normalizes scalar, array, empty, and bounded route params", () => {
   expect(normalizeFeedbackParam(" value ")).toBe("value")

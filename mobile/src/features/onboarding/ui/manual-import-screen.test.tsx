@@ -7,6 +7,7 @@ import {
   renderHook,
 } from "@testing-library/react-native"
 import { router } from "expo-router"
+import { StyleSheet } from "react-native"
 
 import {
   type ImportJourneyAction,
@@ -14,6 +15,7 @@ import {
   type ImportJourneyState,
   useProtectedImportRoute,
 } from "@/features/onboarding/draft"
+import { Colors } from "@/theme"
 
 import ManualImportScreen from "./manual-import-screen"
 
@@ -85,18 +87,27 @@ describe("ManualImportScreen", () => {
   })
 
   it.each([
-    ["onboarding-import-qr", "/onboarding/qr-scan"],
-    ["onboarding-import-url", "/onboarding/ical-url"],
-  ])("navigates from %s to %s", async (testID, route) => {
-    const { getByTestId } = await render(<ManualImportScreen />)
-    const control = getByTestId(testID)
+    ["onboarding-import-qr", "/onboarding/qr-scan", "primaryStrong", 0],
+    ["onboarding-import-url", "/onboarding/ical-url", undefined, 1],
+  ] as const)(
+    "navigates from %s to %s",
+    async (testID, route, fill, border) => {
+      const { getByTestId } = await render(<ManualImportScreen />)
+      const control = getByTestId(testID)
 
-    expect(control.props.accessibilityRole).toBe("button")
-    expect(control.props.accessibilityLabel).toBeTruthy()
+      expect(control.props.accessibilityRole).toBe("button")
+      expect(control.props.accessibilityLabel).toBeTruthy()
+      expect(control.props.accessibilityHint).toBeTruthy()
+      const style = StyleSheet.flatten(control.props.style)
+      expect(style.backgroundColor).toBe(
+        fill === undefined ? undefined : Colors.light[fill],
+      )
+      expect(style.borderWidth ?? 0).toBe(border)
 
-    await act(async () => fireEvent.press(control))
-    expect(mockPush).toHaveBeenCalledWith(route)
-  })
+      await act(async () => fireEvent.press(control))
+      expect(mockPush).toHaveBeenCalledWith(route)
+    },
+  )
 
   it("opens iCal from the chooser after QR recovery without restarting the completed journey", async () => {
     if (mockJourneyState.phase !== "completed")

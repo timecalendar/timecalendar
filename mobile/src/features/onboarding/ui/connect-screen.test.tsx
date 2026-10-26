@@ -129,6 +129,10 @@ describe("ConnectScreen", () => {
       const link = getByTestId("onboarding-connect-intranet")
       expect(getByText("Université Gustave Eiffel")).toBeTruthy()
       expect(link.props.accessibilityRole).toBe("link")
+      expect(StyleSheet.flatten(link.props.style)).toMatchObject({
+        alignSelf: "stretch",
+        borderColor: Colors.light.outline,
+      })
       // The label says the action AND the destination, so a screen-reader user
       // knows the tap leaves the app.
       expect(link.props.accessibilityLabel).toBe(

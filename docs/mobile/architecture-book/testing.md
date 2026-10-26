@@ -39,6 +39,17 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   boundary; CalendarKit's focused rerender test asserts a progress-only change retains
   the projected vendor array and objects.
 - **Coverage** is collected via `npm test -- --coverage`. The `coverageThreshold` is **enforced** — 90% logic / 70% global; see [ADR 003](./decisions/003-coverage-threshold.md). Gated by the `test-mobile` job (R-1).
+- **`src/components/button.tsx` has its own 90% lines/branches key** in `coverageThreshold`: the
+  shared `Button` carries every button's states and platform branches (ADR
+  [067](./decisions/067-button-family.md)). `button.test.tsx` reads the `Pressable`'s own props
+  (style callback, `android_ripple`) through a module mock of
+  `react-native/Libraries/Components/Pressable/Pressable`, since the host view only receives the
+  resolved style. `MinTouchTarget` resolves at module load, so a test under `usePlatform` compares
+  against the imported token; `src/theme/theme.test.tsx` pins its per-platform value.
+- **The raw-button allowlist is a contract test.** `tools/eslint-rules/raw-button-allowlist.test.js`
+  lints each allowlisted file with only `local/no-raw-button` and fails on a stale, missing or
+  duplicate entry and on growth past `RAW_BUTTON_ALLOWLIST_CEILING`
+  ([lint-format.md](./lint-format.md) → Buttons).
 - **Calendar T05 proof** combines total preference/reset tests, pure display-zone civil
   transition tables, one/five/seven-column renderer and stale-event tests, screen/menu/i18n
   integration, and `calendar-owned-shell.contract.test.ts`. Native partial-drag feel, restart,

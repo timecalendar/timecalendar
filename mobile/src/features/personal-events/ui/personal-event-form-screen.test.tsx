@@ -15,7 +15,12 @@ import {
   useSaveEvent,
 } from "@/features/personal-events/form"
 import { usePlatform } from "@/test-support/platform"
-import { Colors, resolveResponsiveLayout, Spacing } from "@/theme"
+import {
+  Colors,
+  MinTouchTarget,
+  resolveResponsiveLayout,
+  Spacing,
+} from "@/theme"
 
 import PersonalEventFormScreen from "./personal-event-form-screen"
 
@@ -119,47 +124,47 @@ afterEach(() => {
 })
 
 describe("PersonalEventFormScreen", () => {
-  describe.each([
-    ["ios" as const, 44],
-    ["android" as const, 48],
-  ])("shared editor contract on %s", (platform, minimumTarget) => {
-    usePlatform(platform)
+  describe.each(["ios", "android"] as const)(
+    "shared editor contract on %s",
+    (platform) => {
+      usePlatform(platform)
 
-    it("keeps semantic Save and ordered errors/actions beside the sole scroll body", async () => {
-      useEditEvent()
-      mockUseSaveEvent.mockReturnValue({ save: mockSave, failed: true })
-      const view = await render(<PersonalEventFormScreen />)
-      await waitFor(() => expect(view.getByDisplayValue("Old")).toBeTruthy())
+      it("keeps semantic Save and ordered errors/actions beside the sole scroll body", async () => {
+        useEditEvent()
+        mockUseSaveEvent.mockReturnValue({ save: mockSave, failed: true })
+        const view = await render(<PersonalEventFormScreen />)
+        await waitFor(() => expect(view.getByDisplayValue("Old")).toBeTruthy())
 
-      const owner = view.getByTestId("personal-event-form-responsive-owner")
-      const body = view.getByTestId(
-        "personal-event-form-responsive-owner-content",
-      )
-      const actions = view.getByTestId(
-        "personal-event-form-responsive-owner-actions",
-      )
-      const save = view.getByTestId("personal-event-save")
-      const remove = view.getByTestId("personal-event-delete")
-      const error = view.getByText("Could not save the event.")
-      expect(body).toContainElement(
-        view.getByTestId("personal-event-title-input"),
-      )
-      expect(body).not.toContainElement(save)
-      expect(actions).toContainElement(error)
-      expect(actions).toContainElement(save)
-      expect(actions).toContainElement(remove)
-      expect(within(actions).getAllByRole("button")).toEqual([save, remove])
-      expect(StyleSheet.flatten(save.props.style)).toMatchObject({
-        minHeight: minimumTarget,
-        backgroundColor: Colors.light.primaryStrong,
+        const owner = view.getByTestId("personal-event-form-responsive-owner")
+        const body = view.getByTestId(
+          "personal-event-form-responsive-owner-content",
+        )
+        const actions = view.getByTestId(
+          "personal-event-form-responsive-owner-actions",
+        )
+        const save = view.getByTestId("personal-event-save")
+        const remove = view.getByTestId("personal-event-delete")
+        const error = view.getByText("Could not save the event.")
+        expect(body).toContainElement(
+          view.getByTestId("personal-event-title-input"),
+        )
+        expect(body).not.toContainElement(save)
+        expect(actions).toContainElement(error)
+        expect(actions).toContainElement(save)
+        expect(actions).toContainElement(remove)
+        expect(within(actions).getAllByRole("button")).toEqual([save, remove])
+        expect(StyleSheet.flatten(save.props.style)).toMatchObject({
+          minHeight: MinTouchTarget,
+          backgroundColor: Colors.light.primaryStrong,
+        })
+        expect(save.props.accessibilityState).toEqual({
+          disabled: false,
+          busy: false,
+        })
+        expect(owner).toBeOnTheScreen()
       })
-      expect(save.props.accessibilityState).toEqual({
-        disabled: false,
-        busy: false,
-      })
-      expect(owner).toBeOnTheScreen()
-    })
-  })
+    },
+  )
 
   it("starts create mode with blank fields and a one-hour default range", async () => {
     const { getByTestId, queryByTestId } = await render(
@@ -583,7 +588,7 @@ describe("PersonalEventFormScreen", () => {
     })
   })
 
-  it("admits one removal while pending and exposes disabled accessibility state", async () => {
+  it("admits one removal while pending and exposes busy accessibility state", async () => {
     let resolveRemoval: ((removed: boolean) => void) | undefined
     mockRemove.mockImplementationOnce(
       () =>
@@ -602,7 +607,10 @@ describe("PersonalEventFormScreen", () => {
       await Promise.resolve()
     })
     expect(deleteButton).toBeDisabled()
-    expect(deleteButton).toHaveProp("accessibilityState", { disabled: true })
+    expect(deleteButton).toHaveProp("accessibilityState", {
+      disabled: true,
+      busy: true,
+    })
 
     await act(async () => {
       confirm?.onPress?.()

@@ -3,9 +3,9 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Platform, Pressable, StyleSheet, TextInput } from "react-native"
 
+import { Button } from "@/components/button"
 import { FieldError } from "@/components/error-surfaces"
 import { KeyboardSafeActionLayout } from "@/components/keyboard-safe-action-layout"
-import { PrimaryAction } from "@/components/primary-action"
 import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import { emitExportGuideEvent } from "@/features/export-guides/ui"
@@ -134,7 +134,8 @@ export default function ProgrammeScreen() {
             contentContainerStyle={stepStyles.formContent}
             actionContainerStyle={styles.actionRegion}
             actions={
-              <PrimaryAction
+              <Button
+                variant="filled"
                 testID="onboarding-programme-continue"
                 label={t("onboarding.programme.continue")}
                 accessibilityLabel={t("onboarding.programme.continueLabel")}

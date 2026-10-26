@@ -134,6 +134,7 @@ describe("WelcomeScreen", () => {
       expect(within(getByTestId(testID)).getByText(label)).toHaveStyle({
         color: Colors.light.actionText,
       })
+      expect(getByTestId(testID)).toHaveProp("accessibilityRole", "button")
     }
 
     expect(getByText("Welcome to TimeCalendar!")).toBeTruthy()
@@ -165,7 +166,12 @@ describe("WelcomeScreen", () => {
     ).toBe("Page 3 of 3")
     expect(queryByTestId("onboarding-skip")).toBeNull()
     expect(queryByTestId("onboarding-next")).toBeNull()
-    expect(getByTestId("onboarding-welcome-cta")).toBeTruthy()
+    const cta = getByTestId("onboarding-welcome-cta")
+    expect(cta).toHaveProp("accessibilityRole", "button")
+    expect(StyleSheet.flatten(cta.props.style)).toMatchObject({
+      backgroundColor: Colors.light.primaryStrong,
+      alignSelf: "stretch",
+    })
     expect(
       StyleSheet.flatten(getByTestId("onboarding-page-indicator-2").props.style)
         .backgroundColor,

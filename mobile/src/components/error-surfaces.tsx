@@ -8,8 +8,8 @@ import {
   type ViewStyle,
 } from "react-native"
 
+import { Button } from "@/components/button"
 import { Icon } from "@/components/icon"
-import { PrimaryAction } from "@/components/primary-action"
 import { ThemedText } from "@/components/themed-text"
 import { useErrorAnnouncement } from "@/components/use-error-announcement"
 import { Radii, Spacing, useTheme } from "@/theme"
@@ -184,7 +184,9 @@ export function ErrorState({
       <ErrorMessage title={title} message={message} />
       {primaryAction || secondaryAction ? (
         <View style={styles.actions}>
-          {primaryAction ? <PrimaryAction {...primaryAction} /> : null}
+          {primaryAction ? (
+            <Button variant="filled" {...primaryAction} />
+          ) : null}
           {secondaryAction ? <ErrorTextAction {...secondaryAction} /> : null}
         </View>
       ) : null}

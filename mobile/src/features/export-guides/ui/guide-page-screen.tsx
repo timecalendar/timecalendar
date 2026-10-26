@@ -4,13 +4,12 @@ import { useTranslation } from "react-i18next"
 import {
   AccessibilityInfo,
   findNodeHandle,
-  Pressable,
   ScrollView,
   StyleSheet,
   View,
 } from "react-native"
 
-import { PrimaryAction } from "@/components/primary-action"
+import { Button } from "@/components/button"
 import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import {
@@ -24,7 +23,7 @@ import {
   type ImportJourneyState,
   useImportDraft,
 } from "@/features/onboarding/draft"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Spacing } from "@/theme"
 
 import { ExportGuideImage } from "./export-guide-image"
 import { GuideBlockingError, GuideLoading } from "./guide-status"
@@ -200,7 +199,6 @@ function GuidePageContent({
   dispatch: (action: ImportJourneyAction) => void
 }) {
   const { t } = useTranslation()
-  const theme = useTheme()
   const page = state.snapshot.pages[pageIndex]!
   const total = state.snapshot.pages.length
   const progress = t("exportGuide.progress", {
@@ -271,7 +269,8 @@ function GuidePageContent({
               }}
             />
           )}
-          <PrimaryAction
+          <Button
+            variant="filled"
             testID="export-guide-next"
             label={
               pageIndex === total - 1
@@ -280,17 +279,12 @@ function GuidePageContent({
             }
             onPress={next}
           />
-          <Pressable
+          <Button
+            variant="outlined"
             testID="export-guide-visible-back"
-            accessibilityRole="button"
-            accessibilityLabel={t("common.back")}
+            label={t("common.back")}
             onPress={() => router.back()}
-            style={[styles.back, { borderColor: theme.primary }]}
-          >
-            <ThemedText type="smallBold" themeColor="actionText">
-              {t("common.back")}
-            </ThemedText>
-          </Pressable>
+          />
         </ScrollView>
       )}
     </RootPage>
@@ -300,11 +294,4 @@ function GuidePageContent({
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   content: { gap: Spacing.four, paddingVertical: Spacing.four },
-  back: {
-    minHeight: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderRadius: Radii.medium,
-  },
 })

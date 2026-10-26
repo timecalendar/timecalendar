@@ -3,9 +3,9 @@ import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, TextInput } from "react-native"
 
+import { Button } from "@/components/button"
 import { ErrorNotice, FieldError } from "@/components/error-surfaces"
 import { KeyboardSafeActionLayout } from "@/components/keyboard-safe-action-layout"
-import { PrimaryAction } from "@/components/primary-action"
 import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import {
@@ -164,7 +164,8 @@ export default function IcalUrlScreen() {
                     message={t("calendarSources.icalUrl.serverError")}
                   />
                 )}
-                <PrimaryAction
+                <Button
+                  variant="filled"
                   testID="ical-url-submit"
                   accessibilityLabel={t("calendarSources.icalUrl.submitLabel")}
                   label={t("calendarSources.icalUrl.submit")}
