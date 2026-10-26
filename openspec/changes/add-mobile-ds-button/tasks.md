@@ -140,25 +140,25 @@ current state only.
 
 ## 7. ADR and Architecture Book
 
-- [ ] 7.1 Write `docs/mobile/architecture-book/decisions/067-button-family.md` from
+- [x] 7.1 Write `docs/mobile/architecture-book/decisions/067-button-family.md` from
       `TEMPLATE.md` per D12 (re-check open PRs for a reserved number first, README note); add its
       row to `decisions/README.md`.
-- [ ] 7.2 `theming.md`: new section "Buttons — `Button` (`src/components/button.tsx`)" after the
+- [x] 7.2 `theming.md`: new section "Buttons — `Button` (`src/components/button.tsx`)" after the
       token layer: variant table (fill, boundary, label tone, platform reference), sizes,
       states, platform press feedback, layout-only `style` merged last, label wrap cap, icon slot,
       links to ADR 067, `button.test.tsx`, the lint rules and the gallery stories. Rewrite the
       `PrimaryAction` sentences in the root-page section (filled body/footer actions are
       `Button variant="filled"`).
-- [ ] 7.3 `accessibility.md`: a "Buttons — encoded in `Button`" entry (role/label/hint, busy keeps
+- [x] 7.3 `accessibility.md`: a "Buttons — encoded in `Button`" entry (role/label/hint, busy keeps
       the label, `accessibilityState` derived from props, target ≥ `MinTouchTarget`, label scales
       uncapped and wraps to three lines); rewrite the `PrimaryAction` sentence in "Accessible async
       status".
-- [ ] 7.4 `lint-format.md` rule inventory: the touchables ban and `local/no-raw-button` with its
+- [x] 7.4 `lint-format.md` rule inventory: the touchables ban and `local/no-raw-button` with its
       allowlist, ceiling test and the inject-and-revert caveat; `testing.md`: the per-file
       `button.tsx` threshold and the allowlist contract test; `features.md` → Design system gallery:
       `button` fixture replaces `primary-action`; `architecture.md` only if its structure bullets
       name `PrimaryAction` (they do not today).
-- [ ] 7.5 `CHANGELOG.md`: `## 2026-10-26 — Button family` at the top (primitive and variants,
+- [x] 7.5 `CHANGELOG.md`: `## 2026-10-26 — Button family` at the top (primitive and variants,
       `PrimaryAction` removed, contrast pairs, lint ban + ratchet, gallery fixture, ADR 067).
       Verify: `npx prettier --check` on the changed docs; relative links resolve.
 

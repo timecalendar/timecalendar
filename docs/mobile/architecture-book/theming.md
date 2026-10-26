@@ -111,6 +111,43 @@ surfaces and calendar content; native controls are tinted and composed rather th
 - `src/theme/index.ts` re-exports the public surface (`Colors` / `Spacing` / `Radii` / `Fonts` / `MaxContentWidth` / `MinTouchTarget` / `IconSize` / `WordmarkMaxFontScale` / `ChevronMaxFontScale` / `StateOpacity` / `Elevation` / `Motion` / `Layout` / `AccessibilityFontScale` / `isAccessibilityTextSize` / `useIsAccessibilityTextSize` / `ThemeColor` / `TypeRamp` / `TypeVariant` / `TypeStep` / `useTheme` / `buildNavTheme` / the responsive exports) — **call sites import `@/theme`**, import-source-only. `Fonts.mono` resolves via `Platform.select` (`ios` → `ui-monospace`, `default` → `monospace`).
 - `Themed*` consumers import from `@/theme`. `ThemedText` owns no type scale: it renders the `TypeRamp` step named by `type` (default `body`) and passes the step's `dynamicTypeRamp`; caller `style` and props win. The aliases `default` → `body`, `small` → `callout`, `smallBold` → `label` and `subtitle` → `sectionTitle` resolve inside the component. Color comes from `tone` (`primary` → `text`, `secondary` → `textSecondary`, `action` → `actionText`, `destructive` → `destructive`, `onPrimary` → `onPrimary`; `primary` is the label color, not brand pink, and the union has no brand or tertiary member) or from `themeColor` (any `ThemeColor`); the two props are mutually exclusive at the type level, and with neither the text is `text`. The heading role per step follows [Accessibility](./accessibility.md#the-heading-role-contract--encoded-in-themedtext).
 
+## Buttons — `Button` (`src/components/button.tsx`)
+
+Every in-content button is `Button` (ADR [067](./decisions/067-button-family.md)). The caller
+chooses an intent and a size; the primitive owns colors, geometry, states and press feedback.
+
+| `variant`     | Fill                | Boundary    | Label         | iOS / Material reference              |
+| ------------- | ------------------- | ----------- | ------------- | ------------------------------------- |
+| `filled`      | `primaryStrong`     | none        | `onPrimary`   | `.borderedProminent` / Filled         |
+| `tonal`       | `backgroundElement` | none        | `text`        | gray `.bordered` / Filled tonal       |
+| `outlined`    | none                | 1 `outline` | `actionText`  | none on iOS / Outlined                |
+| `text`        | none                | none        | `actionText`  | `.borderless` / Text                  |
+| `destructive` | `backgroundElement` | none        | `destructive` | `.bordered` destructive / Tonal error |
+
+- `variant` is required. `outlined` exists on iOS too: the onboarding pairs (QR vs link, Continue
+  vs Back) need a second rank that is not a second fill, and a gray `.bordered` would be `tonal`.
+- Sizes: `small` and `medium` are `MinTouchTarget` tall, `large` is `MinTouchTarget + Spacing.two`
+  (52 iOS / 56 Android); every size is at least `MinTouchTarget` wide. `small` keeps the target and
+  only tightens horizontal padding (inline and row actions). `large` uses the `headline` step and
+  `IconSize.large`; the others use `label` and `IconSize.medium`. Radius `Radii.large` at every
+  size, continuous on iOS.
+- States: `disabled` and `busy` block activation and dim to `StateOpacity.disabled`; `busy` shows a
+  hidden progress indicator in the leading slot (`${testID}-progress`) and hides the icon.
+- Press feedback: Android ripple in `ripple`, foreground and clipped to the shape, no opacity
+  change; iOS dims to `StateOpacity.pressed`. A blocked button shows neither.
+- `style` is `StyleProp<ButtonLayoutStyle>` (margins, flex, alignment, width, position) and merges
+  last, so a caller's `alignSelf` or `width` wins; color, height, padding, radius, border and
+  opacity are not in the type. The style callback returns one flattened object, safe under an
+  Expo Router `Slot`.
+- Label: `numberOfLines={3}`, centered, no font-scale cap, the default tail ellipsis beyond three
+  lines. Icon: `icon={{ ios, android }}` rendered by `Icon` with `scaling="text"` in the label
+  color, `iconPosition` `leading` (default) or `trailing`.
+- Gates: `button.test.tsx` (variant tokens per scheme, sizes, states, platform feedback, style
+  order, the type tests) at a 90% per-file coverage tier; the touchables ban and
+  `local/no-raw-button` ([lint-format.md](./lint-format.md) → Buttons); the gallery stories
+  `button--filled`, `--tonal`, `--outlined`, `--text`, `--destructive`, `--icons`,
+  `--long-strings`.
+
 ## Responsive content lanes — measured owners, semantic caps
 
 - `src/theme/responsive.ts` owns the typed portrait responsive policy and re-exports it through
@@ -171,13 +208,13 @@ feature that already owns them.
 `EmptyState` accepts optional local light/dark artwork pairs selected through the single
 color-scheme seam. Eligible full-screen illustrations are recolored to each scheme's exact
 `primary` accent; the localized text carries meaning and the image remains decorative. Filled
-body/footer `PrimaryAction` controls always use `primaryStrong` with `onPrimary`. Platform-native
-header actions and FABs retain their native placement and sizing.
+body/footer actions are `Button variant="filled"`. Platform-native header actions and FABs retain
+their native placement and sizing.
 
 Home's true-empty Up next and Today title/caption pairs use section `EmptyState`, retaining
 left alignment while sharing subtitle hierarchy, secondary captions, semantic spacing, and polite
 announcement. Feedback, onboarding Programme, and the personal-event editor compose one readable
-`KeyboardSafeActionLayout`: the fields remain in its sole scroll body and the `PrimaryAction`
+`KeyboardSafeActionLayout`: the fields remain in its sole scroll body and the filled `Button`
 region is a measured sibling above the keyboard. Programme Skip remains native per platform.
 
 The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tabs` is "API subject to change"; `@expo/ui` ships unstable entry points; `expo-glass-effect` is iOS-26-only). The wrapper seam localizes that churn to one directory. Each module is the **single import site** for its alpha API:
@@ -283,6 +320,7 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
 - **The gate:** `src/theme/contrast.ts` holds the `contrastRatio` helper (WCAG 2.x relative luminance; it throws on a translucent hex so an alpha token cannot pass by accident) and the typed `documentedContrastPairs` table keyed on scheme and `ThemeColor`. `src/theme/theme.test.tsx` calibrates the helper against 21:1, 5.87:1 and 4.35:1 and asserts every pair against its floor: 4.5:1 for body text, 3:1 for large text and UI components. A renamed token is a `tsc` error; a value change that breaks a floor fails `test-mobile`. The gallery story `design-tokens--contrast-pairs` draws the same table with each computed ratio, so the page cannot list a pair the gate does not check. The module is not re-exported from `@/theme`.
 - **Manual link (R-1 caveat):** the test cannot read the `tokens.ts` comment. A pair added to the comment needs a row in `documentedContrastPairs`, and review checks both land together.
 - **Brand pairs:** white-on-`#E91E63` is **4.35:1** (large/UI only, below the 4.5:1 body floor), so **white text on brand rides `#C2185B`** (5.87:1, AA body); the identity pink `#E91E63` is the **accent/tint** (4.35:1 on white meets the 3:1 large/UI-component bar); the dark-scheme brand is `#FF4081` (6.30:1 on `#000`, AA body).
+- **Button pairs:** every `Button` variant draws a documented pair: `onPrimary` on `primaryStrong`, `text` on `backgroundElement`, `actionText` on `background` and on `backgroundElement` (a `text` button inside an element-filled row), `destructive` on `backgroundElement`, all at the body floor, and the `outline` boundary at the UI floor.
 - **Status pairs:** `positive` and `informational` on `background` and `backgroundElement` for light and dark, each an AA body-text pair. Status colors remain semantic and never substitute for event/calendar colors.
 - **Call-site placement is not checked:** a static tool can't know which token lands on which background at a given site. That stays the DoD's manual review.
 

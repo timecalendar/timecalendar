@@ -1,3 +1,23 @@
+## 2026-10-26 — Button family
+
+- `Button` (`src/components/button.tsx`) is the one in-content button: a required closed
+  `variant` (`filled`, `tonal`, `outlined`, `text`, `destructive`), `size` (`small`, `medium`,
+  `large`) at or above `MinTouchTarget`, `disabled`/`busy` states, an optional text-scaled icon,
+  platform press feedback, and a layout-only `style` merged last ([theming.md](./theming.md) →
+  Buttons, [accessibility.md](./accessibility.md) → Buttons, ADR
+  [067](./decisions/067-button-family.md)). `button.tsx` has its own 90% coverage key
+  ([testing.md](./testing.md)).
+- `PrimaryAction` is removed; its call sites are `Button variant="filled"`. Onboarding welcome,
+  connect and manual import, changelog Continue, personal-event Save/Delete/Add, hidden events
+  Unhide and export guide Back use the `Button` variants with their test IDs unchanged.
+- `actionText` on `backgroundElement` and `destructive` on `backgroundElement` are documented
+  contrast pairs at the body floor ([theming.md](./theming.md) → Contrast).
+- Lint: `react-native`'s `Button` and `Touchable*` are banned imports; `local/no-raw-button`
+  reports a text button built from a raw `Pressable`, with a ceiling-pinned allowlist of the files
+  each later slice migrates ([lint-format.md](./lint-format.md) → Buttons).
+- The `button` gallery fixture replaces `primary-action` ([features.md](./features.md) → Design
+  system gallery).
+
 ## 2026-10-26 — Time-zone correctness
 
 - The mobile unit suite passes in any process zone. `test-mobile-timezones` in `ci-mobile.yml`

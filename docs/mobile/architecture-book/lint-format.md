@@ -240,6 +240,30 @@ truth; this file carries the caveats the config can't (R-1).
   `zoneOffsetMinutes(instant, zone)` in `@/features/calendar/data` (`day-key.ts`), which formats the
   instant itself. `formatInTimeZone`, `toZonedTime` and `fromZonedTime` stay allowed. No file is
   exempt. Same static-import-only caveat as raw-fetch. See [testing.md](./testing.md) → Time zones.
+- **Buttons — raw touchables banned** (`rawTouchablesImportPath`, appended to `paths` by
+  `restrictedImports` with no flag): `Button`, `TouchableOpacity`, `TouchableHighlight`,
+  `TouchableWithoutFeedback` and `TouchableNativeFeedback` are banned as named imports from
+  `react-native` in every file, with no exemption (no file uses them). ESLint reports each `paths`
+  entry's `importNames` independently, so this entry and L1's `react-native` entry both fire
+  (verified by inject-and-revert in a feature file and in `src/hooks/use-color-scheme.ts`, where
+  L1 is lifted and this ban still applies). Same static-import-only caveat as raw-fetch.
+- **Buttons — `local/no-raw-button`** (`tools/eslint-rules/no-raw-button.js`, block
+  `timecalendar/raw-button`, `files: ["src/**/*.tsx"]`): a `Pressable` imported from
+  `react-native` (aliases followed) whose `accessibilityRole` or `role` is the literal `"button"`
+  or `"link"` and that has a direct `ThemedText`/`Text` child (also inside a top-level `&&`,
+  conditional or fragment) is an error; text buttons are `Button` from `@/components/button`
+  ([theming.md](./theming.md) → Buttons, ADR [067](./decisions/067-button-family.md)). Ignored:
+  `src/components/button.tsx`, `src/components/chrome/**`, `src/features/calendar/renderer/**`,
+  tests, and the files listed in `tools/eslint-rules/raw-button-allowlist.js`, each annotated with
+  the slice that migrates it. `raw-button-allowlist.test.js` lints every entry with only this rule
+  and fails on a stale entry (no report: remove it), a missing file, a duplicate, or a list longer
+  than `RAW_BUTTON_ALLOWLIST_CEILING`; migrating a file means deleting its entry and lowering the
+  ceiling. `no-raw-button.test.js` is the RuleTester suite. **Caveats:** a role passed as a
+  variable, text wrapped in a layout `View`, a function child and `Animated` pressables are not
+  inspected (rows and tiles legitimately use `Pressable`; review covers the rest). The rule has its
+  own block, so it does not share the `no-restricted-syntax` slot (L8). Inject-and-revert proof:
+  a migrated file added to the allowlist fails the contract test naming it; a raw text button in
+  an unlisted feature file fails `npm run lint`.
 - **Generated code** (`src/api/generated/`) is exempt from hand-written-code rules but
   still Prettier-formatted; Orval's `afterAllFilesWrite: prettier --write` keeps regen
   output aligned with the committed format.
