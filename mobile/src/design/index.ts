@@ -6,6 +6,7 @@ export {
   type ButtonSize,
   type ButtonVariant,
 } from "./button/button"
+export { ButtonRow, type ButtonRowProps } from "./button/button-row"
 export {
   Icon,
   type IconProps,

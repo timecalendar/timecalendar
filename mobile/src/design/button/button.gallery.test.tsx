@@ -57,7 +57,7 @@ it("counts presses on the icon and long-string buttons", async () => {
 
   const long = await renderStory(fixture.LongStrings)
   await fireEvent.press(long.getByTestId("gallery-button-long-word"))
-  await fireEvent.press(long.getByTestId("gallery-button-long-row-long"))
+  await fireEvent.press(long.getByTestId("gallery-button-long-filled"))
   expect(long.getByTestId("gallery-button-count")).toHaveTextContent(
     "Pressed 2 times",
   )

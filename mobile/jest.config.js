@@ -130,5 +130,6 @@ module.exports = {
     "src/theme/**": { lines: 90, branches: 90 },
     "src/design/gallery/*.ts": { lines: 90, branches: 90 },
     "src/design/button/button.tsx": { lines: 90, branches: 90 },
+    "src/design/button/button-row.tsx": { lines: 90, branches: 90 },
   },
 }

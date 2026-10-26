@@ -5,6 +5,7 @@ import * as nativeSettings from "@/components/chrome/native-settings.gallery"
 import * as nativeSettingsNumericEditor from "@/components/chrome/native-settings-numeric-editor.gallery"
 import * as nativeTextEntryDialog from "@/components/chrome/native-text-entry-dialog.gallery"
 import * as button from "@/design/button/button.gallery"
+import * as buttonRow from "@/design/button/button-row.gallery"
 import * as icon from "@/design/icon/icon.gallery"
 import * as adaptiveContent from "@/design/layout/adaptive-content.gallery"
 import * as keyboardSafeActionLayout from "@/design/layout/keyboard-safe-action-layout.gallery"
@@ -27,6 +28,7 @@ export const galleryModules: readonly GalleryModule[] = [
   emptyState,
   errorSurfaces,
   button,
+  buttonRow,
   nativeSettings,
   nativeTextEntryDialog,
   nativeSettingsNumericEditor,

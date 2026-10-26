@@ -1,4 +1,10 @@
-import { act, fireEvent, render, within } from "@testing-library/react-native"
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react-native"
 import { router } from "expo-router"
 import * as WebBrowser from "expo-web-browser"
 import { StyleSheet } from "react-native"
@@ -21,6 +27,17 @@ jest.mock("expo-web-browser", () => ({ openBrowserAsync: jest.fn() }))
 jest.mock("@/features/onboarding/draft", () => ({
   ...jest.requireActual("@/features/onboarding/draft"),
   useImportDraft: jest.fn(),
+}))
+
+let mockFontScale = 1
+jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({
+  __esModule: true,
+  default: () => ({
+    width: 390,
+    height: 844,
+    scale: 3,
+    fontScale: mockFontScale,
+  }),
 }))
 
 const mockPush = router.push as jest.Mock
@@ -65,12 +82,38 @@ const draftValue = (draft: ReturnType<typeof listed> | null) => ({
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockFontScale = 1
   mockUseImportDraft.mockReturnValue(
     draftValue(listed("https://example.com/connect")),
   )
 })
 
+const footer = ["onboarding-connect-back", "onboarding-connect-continue"]
+
+const footerOrder = () =>
+  screen
+    .getAllByRole("button")
+    .map((button) => button.props.testID as string)
+    .filter((id) => footer.includes(id))
+
 describe("ConnectScreen", () => {
+  it("lays Back before Continue at the default text size", async () => {
+    await render(<ConnectScreen />)
+    expect(footerOrder()).toEqual([
+      "onboarding-connect-back",
+      "onboarding-connect-continue",
+    ])
+  })
+
+  it("stacks Continue above Back at an accessibility text size", async () => {
+    mockFontScale = 3.571
+    await render(<ConnectScreen />)
+    expect(footerOrder()).toEqual([
+      "onboarding-connect-continue",
+      "onboarding-connect-back",
+    ])
+  })
+
   it("recovers a restored Connect route that skipped required Programme", async () => {
     const draft = listed("https://example.com/connect")
     mockUseImportDraft.mockReturnValue({
