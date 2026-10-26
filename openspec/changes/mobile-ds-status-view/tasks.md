@@ -216,13 +216,13 @@ why. Docs describe the current state only.
 
 ## 9. Local verification
 
-- [ ] 9.1 `npx tsc --noEmit` passes.
-- [ ] 9.2 `npm run lint` passes with zero warnings.
-- [ ] 9.3 `npm test -- --coverage` passes, including the `status-view.tsx` and
+- [x] 9.1 `npx tsc --noEmit` passes.
+- [x] 9.2 `npm run lint` passes with zero warnings.
+- [x] 9.3 `npm test -- --coverage` passes, including the `status-view.tsx` and
       `field-error-hint.ts` 90% tiers, `src/hooks/**` 90%, the registry matrix, the L10 fixture
       contract, the import-graph contract and both allowlist tests.
-- [ ] 9.4 `npm run test:timezones` passes (or the CI `test-mobile-timezones` job is green).
-- [ ] 9.5 `git diff --stat origin/main`: no `package.json`, `app.config.ts`, `eas.json`, native,
+- [x] 9.4 `npm run test:timezones` passes (or the CI `test-mobile-timezones` job is green).
+- [x] 9.5 `git diff --stat origin/main`: no `package.json`, `app.config.ts`, `eas.json`, native,
       route or `src/components/chrome/` change.
 
 ## 10. Device pass and CI
