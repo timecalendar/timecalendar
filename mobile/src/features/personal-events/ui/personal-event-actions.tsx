@@ -1,8 +1,6 @@
 import type { TFunction } from "i18next"
-import { StyleSheet, View } from "react-native"
 
 import { Button, ErrorNotice } from "@/design"
-import { Spacing } from "@/theme"
 
 type PersonalEventActionsProps = {
   canDelete: boolean
@@ -26,7 +24,7 @@ export function PersonalEventActions({
   t,
 }: PersonalEventActionsProps) {
   return (
-    <View testID="personal-event-actions" style={styles.footer}>
+    <>
       {(saveFailed || deleteFailed) && (
         <ErrorNotice
           message={
@@ -54,14 +52,6 @@ export function PersonalEventActions({
           busy={isDeleting}
         />
       )}
-    </View>
+    </>
   )
 }
-
-const styles = StyleSheet.create({
-  footer: {
-    paddingTop: Spacing.three,
-    paddingBottom: Spacing.four,
-    gap: Spacing.three,
-  },
-})

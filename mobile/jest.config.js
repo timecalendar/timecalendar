@@ -135,6 +135,7 @@ module.exports = {
     "src/design/field/field-error-hint.ts": { lines: 90, branches: 90 },
     "src/design/field/text-field.tsx": { lines: 90, branches: 90 },
     "src/design/field/date-time-field.tsx": { lines: 90, branches: 90 },
+    "src/design/field/color-swatch-field.tsx": { lines: 90, branches: 90 },
     "src/design/field/field-box.ts": { lines: 90, branches: 90 },
     "src/design/list/list-row.tsx": { lines: 90, branches: 90 },
     "src/design/list/list-section.tsx": { lines: 90, branches: 90 },

@@ -14,6 +14,7 @@ import {
   useEventToEdit,
   useSaveEvent,
 } from "@/features/personal-events/form"
+import i18n from "@/i18n"
 import { usePlatform } from "@/test-support/platform"
 import {
   Colors,
@@ -22,7 +23,31 @@ import {
   Spacing,
 } from "@/theme"
 
+import { DEFAULT_SWATCH, SWATCH_PRESETS } from "./color-swatch-presets"
 import PersonalEventFormScreen from "./personal-event-form-screen"
+
+const COLOR_NAMES = {
+  en: [
+    "Pink",
+    "Purple",
+    "Indigo",
+    "Light blue",
+    "Teal",
+    "Green",
+    "Orange",
+    "Brown",
+  ],
+  fr: [
+    "Rose",
+    "Violet",
+    "Indigo",
+    "Bleu clair",
+    "Sarcelle",
+    "Vert",
+    "Orange",
+    "Marron",
+  ],
+} as const
 
 // Presentational form (70% floor): renders localized labels through the real
 // theme + i18n trees, drives the real validate/build logic, and asserts the
@@ -163,6 +188,67 @@ describe("PersonalEventFormScreen", () => {
         })
         expect(owner).toBeOnTheScreen()
       })
+
+      it("uses the shared form rhythm with no editor layout style", async () => {
+        useEditEvent()
+        const view = await render(<PersonalEventFormScreen />)
+        await waitFor(() => expect(view.getByDisplayValue("Old")).toBeTruthy())
+
+        const content = StyleSheet.flatten(
+          view.getByTestId("personal-event-form-responsive-owner-content").props
+            .contentContainerStyle,
+        )
+        expect(content).toMatchObject({
+          paddingTop: Spacing.four,
+          gap: Spacing.three,
+        })
+        expect(content).not.toHaveProperty("paddingBottom")
+        const actions = view.getByTestId(
+          "personal-event-form-responsive-owner-actions",
+        )
+        expect(StyleSheet.flatten(actions.props.style)).toMatchObject({
+          gap: Spacing.two,
+          paddingTop: Spacing.three,
+          paddingBottom: Spacing.four,
+        })
+        expect(actions.children).toEqual([
+          view.getByTestId("personal-event-save"),
+          view.getByTestId("personal-event-delete"),
+        ])
+      })
+
+      it("selects the default swatch on create", async () => {
+        const view = await render(<PersonalEventFormScreen />)
+        for (const hex of SWATCH_PRESETS) {
+          const state = view.getByTestId(`color-swatch-${hex}`).props
+            .accessibilityState as { selected?: boolean; checked?: boolean }
+          expect(platform === "ios" ? state.selected : state.checked).toBe(
+            hex === DEFAULT_SWATCH,
+          )
+        }
+      })
+
+      it.each(["en", "fr"] as const)(
+        "names every swatch by its %s color name",
+        async (language) => {
+          await act(async () => {
+            await i18n.changeLanguage(language)
+          })
+          try {
+            const view = await render(<PersonalEventFormScreen />)
+            SWATCH_PRESETS.forEach((hex, index) => {
+              expect(
+                view.getByTestId(`color-swatch-${hex}`).props
+                  .accessibilityLabel,
+              ).toBe(COLOR_NAMES[language][index])
+            })
+          } finally {
+            await act(async () => {
+              await i18n.changeLanguage("en")
+            })
+          }
+        },
+      )
     },
   )
 

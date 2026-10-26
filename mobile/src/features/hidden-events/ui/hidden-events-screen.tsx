@@ -1,6 +1,6 @@
 import { Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
-import { ScrollView, StyleSheet, View } from "react-native"
+import { ScrollView, StyleSheet } from "react-native"
 
 import {
   Button,
@@ -22,15 +22,9 @@ import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
 import { useDisplayZone } from "@/features/settings/prefs"
 import { Spacing } from "@/theme"
 
-// The hidden-events management screen (D7) — PRESENTATIONAL (70% floor). Hide-by-
-// name has no per-event details surface, so un-hide MUST be reachable here. It
-// reads the hidden set + the synced events (the sibling calendar data sub-barrel,
-// to resolve each uid → its current title/time, Flutter `_buildDisplayItems`) and
-// renders a name-hidden section + a uid-hidden section (only uids that STILL
-// resolve to a synced event — Flutter parity, so a stale uid is not orphaned in
-// the list), each with an accessible un-hide control, plus an empty state. The
-// write goes through useHideActions() (the observability-wrapped seam). Themed
-// from @/theme (R-3). The route (src/app/hidden-events.tsx) is a thin re-export.
+// Hide-by-name has no per-event surface, so un-hide must be reachable here.
+// Hidden uids that no longer resolve to a synced event are not listed (Flutter
+// parity); the stored set still keeps them for the importer round-trip.
 
 interface UidEntry {
   uid: string
@@ -90,16 +84,14 @@ export function HiddenEventsScreen() {
             )}
 
             {isEmpty ? (
-              <View style={styles.stateLane}>
-                <StatusView
-                  kind="empty"
-                  testID="hidden-events-empty"
-                  presentation="section"
-                  title={t("hiddenEvents.empty.title")}
-                  caption={t("hiddenEvents.empty.caption")}
-                  artwork={noDataArtwork}
-                />
-              </View>
+              <StatusView
+                kind="empty"
+                testID="hidden-events-empty"
+                presentation="section"
+                title={t("hiddenEvents.empty.title")}
+                caption={t("hiddenEvents.empty.caption")}
+                artwork={noDataArtwork}
+              />
             ) : (
               <>
                 {namedHiddenEvents.length > 0 && (
@@ -173,7 +165,6 @@ function UnhideButton({
 }
 
 const styles = StyleSheet.create({
-  stateLane: { flex: 1 },
   content: {
     flexGrow: 1,
     paddingTop: Spacing.four,

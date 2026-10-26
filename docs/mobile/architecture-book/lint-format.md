@@ -368,6 +368,21 @@ truth; this file carries the caveats the config can't (R-1).
   `require`, and a `TextInput` reached through another module's re-export is invisible to it. Inject-and-revert proof: a
   migrated file added to the allowlist fails the contract test naming it; a `TextInput` import in
   `src/features/feedback/ui/feedback-screen.tsx` fails `npm run lint`.
+- **Radio groups — `local/no-raw-radio-group`** (`tools/eslint-rules/no-raw-radio-group.js`,
+  block `timecalendar/raw-radio-group`, `files: ["src/features/**/*.tsx", "src/app/**/*.tsx"]`):
+  a JSX `accessibilityRole` or `role` whose value is the literal `"radiogroup"` or `"radio"`
+  (directly, in an expression container, as either branch of a conditional such as
+  `isAndroid ? "radio" : "button"` or of a logical expression such as `isAndroid && "radio"`, or
+  under `as`, `satisfies` or `!`) is an error. A single choice among options is
+  `ColorSwatchField` from `@/design` or a `NativeList` choice row from `@/components/chrome`
+  ([theming.md](./theming.md) → Fields, ADR [078](./decisions/078-color-swatch-field.md)).
+  Ignored: tests; `src/design/**` and `src/components/chrome/**` are outside `files`. No file
+  violates it, so there is no allowlist and no ceiling. `no-raw-radio-group.test.js` is the
+  RuleTester suite. **Caveats:** a role passed through a variable, a spread or a helper is not
+  seen, and a Compose `RadioButton` in chrome carries no React Native role. Inject-and-revert
+  proof: `accessibilityRole="radiogroup"` on a `View` in
+  `src/features/personal-events/ui/personal-event-fields.tsx` fails `npm run lint` naming the
+  rule; the same attribute in `src/design/field/color-swatch-field.tsx` passes.
 - **Raw primitives — `local/no-raw-primitive`** (`tools/eslint-rules/no-raw-primitive.js`, block
   `timecalendar/raw-primitive`, `files: ["src/features/*/ui/**/*.{ts,tsx}"]`, tests ignored): a
   value import or re-export of `Text` or `Modal` from `react-native` (aliases included) is an

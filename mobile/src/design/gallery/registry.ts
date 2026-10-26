@@ -11,6 +11,7 @@ import * as button from "@/design/button/button.gallery"
 import * as buttonRow from "@/design/button/button-row.gallery"
 import * as colorDot from "@/design/color-dot/color-dot.gallery"
 import * as eventSurface from "@/design/event-surface/event-surface.gallery"
+import * as colorSwatchField from "@/design/field/color-swatch-field.gallery"
 import * as dateTimeField from "@/design/field/date-time-field.gallery"
 import * as textField from "@/design/field/text-field.gallery"
 import * as icon from "@/design/icon/icon.gallery"
@@ -41,6 +42,7 @@ export const galleryModules: readonly GalleryModule[] = [
   buttonRow,
   textField,
   dateTimeField,
+  colorSwatchField,
   listRow,
   listSection,
   separator,

@@ -1109,6 +1109,16 @@ module.exports = defineConfig([
     },
   },
   {
+    // A single choice is ColorSwatchField or a NativeList choice row (ADR 078).
+    name: "timecalendar/raw-radio-group",
+    files: ["src/features/**/*.tsx", "src/app/**/*.tsx"],
+    ignores: ["**/*.test.tsx"],
+    plugins: { local: localRules },
+    rules: {
+      "local/no-raw-radio-group": "error",
+    },
+  },
+  {
     // Colocated tests assert against literal UI strings on purpose — they're
     // test fixtures, not user-facing copy, and are never translated.
     name: "timecalendar/tests",

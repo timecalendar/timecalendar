@@ -90,8 +90,9 @@ These rules guard real product touchables (interactive controls declare `accessi
   reader reads the text, then the action.
 - A `ListSection` title is a `header`. A `Separator` is hidden from assistive technology.
 - Rows are at least 44pt (iOS) or 56dp (Android) tall and grow with their text. Line caps are
-  label 8, supporting 8, value 4, overline 2; at accessibility text sizes the value and check
-  stack under the label, and a single-word label shrinks to one line instead of breaking.
+  label 8, supporting 8, value 4, overline 2; at accessibility text sizes the value, the check
+  and a static row's accessory stack under the label, and a single-word label shrinks to one line
+  instead of breaking. A stacked accessory stays outside the text element, its own focus stop.
 - On Android, a `NativeListRow` from the native seam is one TalkBack node whose content
   description is the name, then the value, then the badge, then the hint, with `Role.Button` on
   navigation and action rows (the `timecalendarSemantics` modifier, ADR
@@ -113,8 +114,9 @@ These rules guard real product touchables (interactive controls declare `accessi
 - A `ColorDot` is always decorative and hidden from VoiceOver and TalkBack, like `Icon`, and takes
   no label. Color is never the only carrier at a site that shows a dot: the personal-event row is
   announced by its title, the Home summary by its count.
-- A spoken color name belongs to the control that shows the color, not to the dot. The
-  personal-events swatch picker names its presets through `SWATCH_NAME_KEYS`.
+- A spoken color name belongs to the control that shows the color, not to the dot.
+  `ColorSwatchField` requires a name per option; the personal-events form names its presets
+  through `SWATCH_NAME_KEYS`.
 - Gates: `badge.test.tsx`, `color-dot.test.tsx` and the registry matrix (the badge and color-dot
   stories add no entry to `known-a11y-violations.ts`). What TalkBack and VoiceOver announce on a
   device, and the wrap at the largest size, are device evidence
@@ -181,8 +183,8 @@ These rules guard real product touchables (interactive controls declare `accessi
 - Artwork is decorative and not rendered at accessibility text sizes; `screen` scrolls once the
   text outgrows the viewport, so title and actions stay reachable at AX5 and font scale 2.0.
 - **Field errors live in the field's hint.** React Native forwards `aria-describedby` and
-  `nativeID` relations to neither UIKit nor Android, so `TextField` and `DateTimeField` fold the
-  error into the control's `accessibilityHint` (→ Fields). VoiceOver and TalkBack read it after
+  `nativeID` relations to neither UIKit nor Android, so `TextField`, `DateTimeField` and every
+  `ColorSwatchField` swatch fold the error into the control's `accessibilityHint` (→ Fields). VoiceOver and TalkBack read it after
   the label and value on focus; `FieldError` keeps its alert text, Android live region and iOS
   announcement for the moment it appears. `aria-describedby` is a lint
   error ([lint-format.md](./lint-format.md) → Status). Folding the error into
@@ -208,10 +210,14 @@ These rules guard real product touchables (interactive controls declare `accessi
   Foundation lists, so an app language paired with the device region or an `@hours=` cycle is
   dropped silently. The picker reading the device language rather than the in-app language is a
   known parity gap (`docs/react-native-migration/inbox/2026-10-25-mobile-ios-picker-device-language.md`).
-- Personal-event color swatches announce a translated color name, never a hex code. Android
-  exposes each as a `radio` with `checked` inside the `radiogroup`; iOS, which has no radio trait,
-  exposes a `button` with `selected` (`features/personal-events/ui/color-swatch-picker.test.tsx`).
-  Every preset has a name through the `SWATCH_NAME_KEYS` record.
+- Personal-event color swatches are `ColorSwatchField` and announce a translated color name,
+  never a hex code. Android exposes each as a `radio` with `checked` inside the `radiogroup`; iOS,
+  which has no radio trait, exposes a `button` with `selected`; both carry `disabled` when the
+  field is. Each swatch is its own `MinTouchTarget` circle with no hit slop. Gates:
+  `src/design/field/color-swatch-field.test.tsx` (roles, states, size, ring) and
+  `personal-event-form-screen.test.tsx` (every preset named in English and French through the
+  `SWATCH_NAME_KEYS` record). Encoded: `local/no-raw-radio-group` makes a hand-built radio group
+  in feature or route code a lint error ([lint-format.md](./lint-format.md) → Radio groups).
 - iOS settings rows that show a value (value, navigation and action rows) stack the label above
   the value at accessibility text sizes, with the navigation chevron kept trailing; the
   accessibility identifier, label, hint and value are the same in both layouts. The stacked value

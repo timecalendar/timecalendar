@@ -1,9 +1,9 @@
 import { router, Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
-import { FlatList, StyleSheet, View } from "react-native"
+import { FlatList, Platform, StyleSheet } from "react-native"
 
+import { FloatingAction, useHeaderActions } from "@/components/chrome"
 import {
-  Button,
   ColorDot,
   headerScrollProps,
   ListRow,
@@ -19,62 +19,74 @@ import {
 } from "@/features/personal-events/data"
 import { useDisplayZone } from "@/features/settings/prefs"
 import { useUses24HourClock } from "@/hooks/use-uses-24-hour-clock"
-import { ColorDotSize, Spacing } from "@/theme"
+import { ColorDotSize, Layout, Spacing } from "@/theme"
 
-// The Home-tab personal-events list (B2 / TIM-133) — PRESENTATIONAL (70% floor):
-// it reads B1's reactive usePersonalEvents() (useLiveQuery, so it re-renders on
-// any create/edit/delete) and renders rows + an empty state + an Add control. It
-// owns no data logic. Each row navigates to the form prefilled for edit
-// (/personal-event-form?uid=…); Add opens the blank create form. The route stays
-// thin over this module (route-structure rule).
+const addIcon = { ios: "plus", android: "add" } as const
+
 export function PersonalEventsList() {
   const { t } = useTranslation()
   const events = usePersonalEvents()
   const hasEvents = events.length > 0
   const uses24HourClock = useUses24HourClock()
+  const openCreate = () => router.push("/personal-event-form")
+  const headerActions = useHeaderActions({
+    right: [
+      {
+        icon: addIcon,
+        accessibilityLabel: t("personalEvents.list.add"),
+        testID: "personal-events-add",
+        platform: "ios",
+        onPress: openCreate,
+      },
+    ],
+  })
 
   return (
     <>
-      <Stack.Screen options={{ title: t("personalEvents.list.title") }} />
+      <Stack.Screen
+        options={{ title: t("personalEvents.list.title"), ...headerActions }}
+      />
       <RootPage
         scrollsUnderHeader={hasEvents}
         testID="personal-events-responsive-owner"
         lane="standard"
       >
         {(layout) => (
-          <FlatList
-            {...headerScrollProps(hasEvents)}
-            testID="personal-events-list"
-            data={events}
-            keyExtractor={(event) => event.uid}
-            contentContainerStyle={[layout.laneStyle, styles.list]}
-            ListHeaderComponent={
-              <View style={styles.header}>
-                <Button
-                  variant="tonal"
-                  size="small"
-                  testID="personal-events-add"
-                  label={t("personalEvents.list.add")}
-                  onPress={() => router.push("/personal-event-form")}
+          <>
+            <FlatList
+              {...headerScrollProps(hasEvents)}
+              testID="personal-events-list"
+              data={events}
+              keyExtractor={(event) => event.uid}
+              contentContainerStyle={[
+                layout.laneStyle,
+                styles.list,
+                Platform.OS === "android" && styles.fabClearance,
+              ]}
+              ListEmptyComponent={
+                <StatusView
+                  kind="empty"
+                  presentation="section"
+                  title={t("personalEvents.list.empty")}
+                  caption={t("personalEvents.list.emptyCaption")}
+                  testID="personal-events-empty"
                 />
-              </View>
-            }
-            ListEmptyComponent={
-              <StatusView
-                kind="empty"
-                presentation="section"
-                title={t("personalEvents.list.empty")}
-                testID="personal-events-empty"
-              />
-            }
-            renderItem={({ item, index }) => (
-              <EventRow
-                event={item}
-                position={listRowPosition(index, events.length)}
-                uses24HourClock={uses24HourClock}
-              />
-            )}
-          />
+              }
+              renderItem={({ item, index }) => (
+                <EventRow
+                  event={item}
+                  position={listRowPosition(index, events.length)}
+                  uses24HourClock={uses24HourClock}
+                />
+              )}
+            />
+            <FloatingAction
+              icon={addIcon}
+              label={t("personalEvents.list.add")}
+              testID="personal-events-add"
+              onPress={openCreate}
+            />
+          </>
         )}
       </RootPage>
     </>
@@ -123,15 +135,9 @@ function EventRow({
 }
 
 const styles = StyleSheet.create({
-  header: {
-    marginBottom: Spacing.three,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: Spacing.three,
-  },
   list: {
     flexGrow: 1,
     paddingVertical: Spacing.four,
   },
+  fabClearance: { paddingBottom: Layout.fabClearance },
 })

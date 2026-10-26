@@ -299,8 +299,8 @@ An ordinary destination SHALL present its localized route name through the compa
 ### Requirement: Empty and status content adopts shared composition without semantic loss
 
 Loaded empty Personal events and User calendars collections SHALL use the shared status view while
-retaining their existing localized meaning and stable selectors. User calendars SHALL render no
-empty state or live region until its asynchronous local read has settled. Loading,
+retaining their stable selectors. Personal events SHALL show a title and a caption. User calendars
+SHALL render no empty state or live region until its asynchronous local read has settled. Loading,
 search-no-results, not-found and retryable-error states in school selection, export guides,
 calendar sources, event details and the timezone chooser SHALL render through the shared status
 view with their own localized copy, inside the same `RootPage` frame and measured lane as populated
@@ -310,8 +310,8 @@ illustrated empty-state meaning SHALL remain unchanged.
 #### Scenario: Personal events uses a shared empty state
 
 - **WHEN** the personal-events read returns no entries
-- **THEN** a shared empty state renders in the standard lane with the existing localized meaning
-- **AND** Add, row navigation, list ownership, and `personal-event-*` selectors remain unchanged
+- **THEN** a shared empty state renders in the standard lane with its localized title and caption
+- **AND** the platform create action (iOS header item, Android floating action), row navigation, list ownership, and `personal-event-*` selectors remain available
 
 #### Scenario: User calendars does not flash empty while loading
 
