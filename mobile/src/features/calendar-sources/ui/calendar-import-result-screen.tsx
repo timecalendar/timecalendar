@@ -1,8 +1,8 @@
 import { router } from "expo-router"
 import { useTranslation } from "react-i18next"
-import { ScrollView, StyleSheet, View } from "react-native"
+import { StyleSheet, View } from "react-native"
 
-import { Button, ErrorState, RootPage, ThemedText } from "@/design"
+import { Button, RootPage, StatusView, ThemedText } from "@/design"
 import { Spacing } from "@/theme"
 
 import { ImportProgressView } from "./import-progress-view"
@@ -25,22 +25,22 @@ export default function CalendarImportResultScreen() {
   if (phase === "failed")
     return (
       <RootPage testID="calendar-import-result" lane="readable">
-        <ScrollView contentContainerStyle={styles.content}>
-          <ErrorState
-            title={t("calendarImport.result.failureTitle")}
-            message={t("calendarImport.result.failureBody")}
-            primaryAction={{
-              testID: "calendar-import-result-retry",
-              label: t("calendarImport.action.retry"),
-              onPress: retry,
-            }}
-            secondaryAction={{
-              testID: "calendar-import-result-continue",
-              label: t("calendarImport.action.continue"),
-              onPress: openCalendar,
-            }}
-          />
-        </ScrollView>
+        <StatusView
+          kind="error"
+          presentation="screen"
+          title={t("calendarImport.result.failureTitle")}
+          caption={t("calendarImport.result.failureBody")}
+          action={{
+            testID: "calendar-import-result-retry",
+            label: t("calendarImport.action.retry"),
+            onPress: retry,
+          }}
+          secondaryAction={{
+            testID: "calendar-import-result-continue",
+            label: t("calendarImport.action.continue"),
+            onPress: openCalendar,
+          }}
+        />
       </RootPage>
     )
 

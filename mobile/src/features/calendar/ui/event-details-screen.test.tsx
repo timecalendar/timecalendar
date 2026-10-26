@@ -180,9 +180,9 @@ describe("EventDetailsScreen", () => {
       )
       expect(style.paddingHorizontal).toBe(metrics.gutter)
       expect(
-        loading
-          ? screen.getByLabelText(accessibleText)
-          : screen.getByText(accessibleText),
+        screen.getByRole(loading ? "progressbar" : "header", {
+          name: accessibleText,
+        }),
       ).toBeOnTheScreen()
     },
   )

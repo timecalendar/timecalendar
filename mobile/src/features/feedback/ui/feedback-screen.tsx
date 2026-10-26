@@ -7,6 +7,7 @@ import {
   Button,
   ErrorNotice,
   FieldError,
+  fieldErrorHint,
   KeyboardSafeActionLayout,
   PageIntro,
   RootPage,
@@ -144,6 +145,9 @@ export default function FeedbackScreen() {
                   testID="feedback-email-input"
                   accessibilityLabel={t("feedback.email.label")}
                   accessibilityLabelledBy="feedback-email-label"
+                  accessibilityHint={fieldErrorHint(
+                    errors.email && t(errors.email),
+                  )}
                   value={email}
                   onChangeText={(value) => {
                     setEmail(value)
@@ -181,6 +185,9 @@ export default function FeedbackScreen() {
                   testID="feedback-message-input"
                   accessibilityLabel={t("feedback.message.label")}
                   accessibilityLabelledBy="feedback-message-label"
+                  accessibilityHint={fieldErrorHint(
+                    errors.message && t(errors.message),
+                  )}
                   value={message}
                   onChangeText={(value) => {
                     setMessage(value)

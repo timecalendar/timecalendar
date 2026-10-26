@@ -6,6 +6,7 @@ import { Platform, Pressable, StyleSheet, TextInput } from "react-native"
 import {
   Button,
   FieldError,
+  fieldErrorHint,
   KeyboardSafeActionLayout,
   PageIntro,
   RootPage,
@@ -156,6 +157,7 @@ export default function ProgrammeScreen() {
               testID="onboarding-programme-input"
               accessibilityLabel={t("onboarding.programme.fieldLabel")}
               accessibilityLabelledBy="onboarding-programme-label"
+              accessibilityHint={fieldErrorHint(errorKey && t(errorKey))}
               // Example only — a `placeholder` prop can never reach the draft.
               placeholder={t("onboarding.programme.placeholder")}
               placeholderTextColor={theme.textSecondary}

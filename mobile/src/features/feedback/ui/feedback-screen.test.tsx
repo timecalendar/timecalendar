@@ -129,7 +129,22 @@ it("renders accessible fields and rejects an empty form locally", async () => {
     "alert",
   )
   expect(getByText("Enter your message.").props.accessibilityRole).toBe("alert")
+  expect(getByTestId("feedback-email-input")).toHaveProp(
+    "accessibilityHint",
+    "Enter your e-mail address.",
+  )
+  expect(getByTestId("feedback-message-input")).toHaveProp(
+    "accessibilityHint",
+    "Enter your message.",
+  )
   expect(sendFeedback).not.toHaveBeenCalled()
+  await fireEvent.changeText(
+    getByTestId("feedback-email-input"),
+    "a@example.fr",
+  )
+  expect(
+    getByTestId("feedback-email-input").props.accessibilityHint,
+  ).toBeUndefined()
 })
 
 it("keeps next-key focus traversal wired to the multiline message field", async () => {

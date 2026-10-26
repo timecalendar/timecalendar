@@ -4,9 +4,9 @@ import { FlatList, Pressable, StyleSheet, View } from "react-native"
 
 import {
   Button,
-  EmptyState,
   headerScrollProps,
   RootPage,
+  StatusView,
   ThemedText,
 } from "@/design"
 import {
@@ -60,8 +60,9 @@ export function PersonalEventsList() {
               </View>
             }
             ListEmptyComponent={
-              <EmptyState
-                variant="screen"
+              <StatusView
+                kind="empty"
+                presentation="section"
                 title={t("personalEvents.list.empty")}
                 testID="personal-events-empty"
               />

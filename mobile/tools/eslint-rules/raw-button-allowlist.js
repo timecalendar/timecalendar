@@ -17,7 +17,6 @@ const rawButtonAllowlist = [
   "src/features/onboarding/ui/programme-screen.tsx", // 3.8 header Skip
   "src/features/personal-events/ui/date-time-field.tsx", // 3.4 date-time field trigger
   "src/features/school-selection/ui/school-group-picker-screen.tsx", // 5.5 school-group Confirm
-  "src/features/school-selection/ui/school-picker-screen.tsx", // 5.5 missing-school action
   "src/features/school-selection/ui/school-row.tsx", // 3.6 ListRow
 ]
 

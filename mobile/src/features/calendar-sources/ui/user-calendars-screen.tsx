@@ -8,13 +8,13 @@ import {
   NativeSettingsRow,
   NativeSettingsSection,
 } from "@/components/chrome"
-import { EmptyState, RootPage } from "@/design"
+import { RootPage, StatusView } from "@/design"
 import {
   effectiveCalendarName,
   useUserCalendars,
   useUserCalendarsLoaded,
 } from "@/features/calendar-sources/data"
-import { Spacing, useTheme } from "@/theme"
+import { useTheme } from "@/theme"
 
 const addIcon = { ios: "plus", android: "add" } as const
 
@@ -56,16 +56,13 @@ export function UserCalendarsScreen() {
           state before `loaded` would flash and false-announce "no calendars". */}
         {!loaded ? null : calendars.length === 0 ? (
           <RootPage testID="user-calendars-content" lane="standard">
-            {(layout) => (
-              <View style={[layout.laneStyle, styles.empty]}>
-                <EmptyState
-                  variant="screen"
-                  title={t("userCalendars.emptyTitle")}
-                  caption={t("userCalendars.empty")}
-                  testID="user-calendars-empty"
-                />
-              </View>
-            )}
+            <StatusView
+              kind="empty"
+              presentation="screen"
+              title={t("userCalendars.emptyTitle")}
+              caption={t("userCalendars.empty")}
+              testID="user-calendars-empty"
+            />
           </RootPage>
         ) : (
           <NativeSettingsHost reservesFloatingAction>
@@ -120,5 +117,4 @@ export function UserCalendarsScreen() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  empty: { flex: 1, paddingTop: Spacing.four },
 })

@@ -1,3 +1,33 @@
+## 2026-10-26 — StatusView
+
+- `StatusView` (`@/design`) is the one loading, empty and error state: `kind` `loading`, `empty`
+  or `error`, `presentation` `screen`, `section` or `inline`, a discriminated prop union, a
+  layout-only `style` ([theming.md](./theming.md) → Status, ADR
+  [069](./decisions/069-status-view.md)). `EmptyState`, `ErrorState`, `ErrorTextAction` and
+  `ErrorAction` do not exist; `ErrorNotice`'s action is a `StatusAction` drawn as a `text`
+  `Button`.
+- `screen` scrolls once its text outgrows the viewport and is never nested in a list or scroll
+  view. Artwork is not rendered at accessibility text sizes.
+- Titles are headings, loading is a `progressbar` with `busy`, the error title has no `alert`
+  role. `useErrorAnnouncement` takes a `key`: `StatusView` announces once per appearance and per
+  `announcementKey ?? kind` ([accessibility.md](./accessibility.md) → Accessible async status).
+- Field errors fold into the input's `accessibilityHint` through `fieldErrorHint`; `FieldError`
+  has no `nativeID`, and `aria-describedby` is a restricted-syntax error as a JSX attribute or an
+  object key.
+- The Android polite live region sits on the loading `progressbar` or the title and caption group,
+  not on the actions. The environment runtime gate's recovery progress is a `section` loading
+  `StatusView`.
+- `local/no-ad-hoc-status` reports `react-native` `ActivityIndicator` imports and a
+  `ListEmptyComponent` that is not `StatusView`; two files sit in
+  `ad-hoc-status-allowlist.js` under a ceiling of 2. The raw-button ceiling is 15
+  ([lint-format.md](./lint-format.md) → Status).
+- `status-view.tsx` and `field-error-hint.ts` have 90% coverage keys; `use-error-announcement.ts`
+  has its own test ([testing.md](./testing.md)).
+- Gallery: `status-view` (11 stories) replaces `empty-state`; `error-surfaces` keeps `notice`,
+  `notice-compact`, `field-error`, `long-strings` ([features.md](./features.md) → Design system
+  gallery). School selection, export guides, calendar sources, event details and the timezone
+  chooser render their status UI through `StatusView`.
+
 ## 2026-10-26 — Design layer barrel and ButtonRow
 
 - Design primitives live in family folders under `src/design/` (`text/`, `icon/`, `button/`,

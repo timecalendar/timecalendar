@@ -7,7 +7,7 @@ The exact rules and their options live in `mobile/eslint.config.js` (named block
 `timecalendar/color-scheme-seam`, `timecalendar/developer-tools-home`,
 `timecalendar/environment-home`, `timecalendar/design-home`, `timecalendar/fixtures`,
 `timecalendar/design-tests`, `timecalendar/design-fixtures`, `timecalendar/chrome-fixtures`,
-`timecalendar/icon-seam`, `timecalendar/raw-button`,
+`timecalendar/icon-seam`, `timecalendar/raw-button`, `timecalendar/ad-hoc-status`,
 `timecalendar/calendar-sources-is-a-leaf`, `timecalendar/storage-seams`, and
 `timecalendar/tests`). The config is the source of
 truth; this file carries the caveats the config can't (R-1).
@@ -213,17 +213,17 @@ truth; this file carries the caveats the config can't (R-1).
   - `galleryEntryImportPattern` (`^@/design/gallery(/|$)`, `banGalleryEntry`, default on).
   - `designBarrelImportPattern` (`^@/design$`, `banDesignBarrel`, default off).
 
-  | Files | `@/design` | `@/design/<folder>/…` | `@/design/gallery` | Block |
-  | --- | --- | --- | --- | --- |
-  | features, routes, `components/app-tabs`, `theme`, `hooks`, others | allowed | banned | banned | `architecture`, `routes-not-importable` |
-  | `src/features/developer/**` | allowed | banned | allowed | `developer-tools-home` |
-  | `src/design/**` primitives (not fixtures, tests, `gallery/`) | banned | allowed | banned | `design-home` |
-  | `src/design/icon/icon{,.test}.tsx` | banned | allowed | banned | `icon-seam` (also lifts L9) |
-  | `src/design/**` tests | allowed | allowed | banned | `design-tests` |
-  | `src/design/**` fixtures, `src/design/gallery/**` | allowed | allowed | allowed | `design-fixtures` |
-  | `src/components/chrome/**` runtime files and tests | banned | allowed | banned | `chrome-seams` |
-  | `src/components/chrome/**` fixtures | allowed | allowed | allowed | `chrome-fixtures` |
-  | other `*.gallery.tsx` (`src/theme/tokens.gallery.tsx`) | allowed | banned | allowed | `fixtures` |
+  | Files                                                             | `@/design` | `@/design/<folder>/…` | `@/design/gallery` | Block                                   |
+  | ----------------------------------------------------------------- | ---------- | --------------------- | ------------------ | --------------------------------------- |
+  | features, routes, `components/app-tabs`, `theme`, `hooks`, others | allowed    | banned                | banned             | `architecture`, `routes-not-importable` |
+  | `src/features/developer/**`                                       | allowed    | banned                | allowed            | `developer-tools-home`                  |
+  | `src/design/**` primitives (not fixtures, tests, `gallery/`)      | banned     | allowed               | banned             | `design-home`                           |
+  | `src/design/icon/icon{,.test}.tsx`                                | banned     | allowed               | banned             | `icon-seam` (also lifts L9)             |
+  | `src/design/**` tests                                             | allowed    | allowed               | banned             | `design-tests`                          |
+  | `src/design/**` fixtures, `src/design/gallery/**`                 | allowed    | allowed               | allowed            | `design-fixtures`                       |
+  | `src/components/chrome/**` runtime files and tests                | banned     | allowed               | banned             | `chrome-seams`                          |
+  | `src/components/chrome/**` fixtures                               | allowed    | allowed               | allowed            | `chrome-fixtures`                       |
+  | other `*.gallery.tsx` (`src/theme/tokens.gallery.tsx`)            | allowed    | banned                | allowed            | `fixtures`                              |
 
   Every block re-calls `restrictedImports([routeEntrypointImportPattern], …)` with its full flag
   set. Inside `src/design/`, a folder imports its own files relatively and other folders through
@@ -238,8 +238,10 @@ truth; this file carries the caveats the config can't (R-1).
   and the gallery reaches one, or when a require cycle passes through `src/design/`. **Caveat:**
   the graph test reads static `import`/`export`/`require()`/`import()` with string specifiers; a
   computed specifier is invisible to it.
+
 - **L8 — font scaling is never disabled** (`no-restricted-syntax` in
-  `timecalendar/architecture`, the `restrictedSyntax` constant): two selectors,
+  `timecalendar/architecture`, the `restrictedSyntax` constant, which also carries the
+  `aria-describedby` ban): two selectors,
   `JSXAttribute[name.name='allowFontScaling'][value.expression.value=false]` and
   `Property[key.name='allowFontScaling'][value.value=false]`, so both
   `allowFontScaling={false}` and the object/spread form (`{ allowFontScaling: false }`) fail.
@@ -283,13 +285,37 @@ truth; this file carries the caveats the config can't (R-1).
   tests, and the files listed in `tools/eslint-rules/raw-button-allowlist.js`, each annotated with
   the slice that migrates it. `raw-button-allowlist.test.js` lints every entry with only this rule
   and fails on a stale entry (no report: remove it), a missing file, a duplicate, or a list longer
-  than `RAW_BUTTON_ALLOWLIST_CEILING`; migrating a file means deleting its entry and lowering the
+  than `RAW_BUTTON_ALLOWLIST_CEILING` (15); migrating a file means deleting its entry and lowering the
   ceiling. `no-raw-button.test.js` is the RuleTester suite. **Caveats:** a role passed as a
   variable, text wrapped in a layout `View`, a function child and `Animated` pressables are not
   inspected (rows and tiles legitimately use `Pressable`; review covers the rest). The rule has its
   own block, so it does not share the `no-restricted-syntax` slot (L8). Inject-and-revert proof:
   a migrated file added to the allowlist fails the contract test naming it; a raw text button in
   an unlisted feature file fails `npm run lint`.
+- **Status — `local/no-ad-hoc-status`** (`tools/eslint-rules/no-ad-hoc-status.js`, block
+  `timecalendar/ad-hoc-status`, `files: ["src/**/*.tsx"]`): a named `ActivityIndicator` import
+  from `react-native` (aliases included) is an error, and so is a `ListEmptyComponent` whose value
+  renders anything but `StatusView` (a JSX element, a component identifier or a call), looking
+  through conditional and logical expressions, fragments and expression containers; `null` and
+  `undefined` branches pass. Loading, empty and error states are `StatusView` from `@/design`
+  ([theming.md](./theming.md) → Status, ADR [069](./decisions/069-status-view.md)). Ignored:
+  `src/design/**`, `src/components/chrome/**`, `src/features/calendar/renderer/**`, tests, and the
+  files in `tools/eslint-rules/ad-hoc-status-allowlist.js`, each annotated with its migrating slice
+  (Activity 5.4, developer import 5.7).
+  `ad-hoc-status-allowlist.test.js` fails on a stale entry, a missing file, a duplicate, or a list
+  longer than `AD_HOC_STATUS_ALLOWLIST_CEILING` (2). `no-ad-hoc-status.test.js` is the RuleTester
+  suite. **Caveats:** a plain-text empty outside a list slot, a `screen` `StatusView` nested in a
+  scroll view or list, and a spinner from another package are invisible to it; review and the
+  gallery cover them. Inject-and-revert proof: a migrated file added to the allowlist fails the
+  contract test naming it; an `ActivityIndicator` import in an unlisted feature file fails
+  `npm run lint`.
+- **Status — `aria-describedby` banned** (third and fourth selectors in the `restrictedSyntax`
+  constant, `JSXAttribute[name.name='aria-describedby']` and
+  `Property[key.value='aria-describedby']` for spread props): React Native forwards no described-by relation to
+  UIKit or Android, so a field error is folded into the input's `accessibilityHint` with
+  `fieldErrorHint` ([accessibility.md](./accessibility.md) → Accessible async status). It applies
+  to every file, tests included, wherever L8 applies. Inject-and-revert proof: the attribute in a
+  feature screen and its test fails `npm run lint` in both.
 - **Generated code** (`src/api/generated/`) is exempt from hand-written-code rules but
   still Prettier-formatted; Orval's `afterAllFilesWrite: prettier --write` keeps regen
   output aligned with the committed format.

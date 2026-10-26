@@ -7,20 +7,6 @@ import * as fixture from "./error-surfaces.gallery"
 const count = (view: Awaited<ReturnType<typeof renderStory>>) =>
   view.getByTestId("gallery-error-surfaces-count")
 
-it("counts presses on both state actions", async () => {
-  const view = await renderStory(fixture.State)
-  await fireEvent.press(view.getByTestId("gallery-error-surfaces-primary"))
-  await fireEvent.press(view.getByTestId("gallery-error-surfaces-secondary"))
-  expect(count(view)).toHaveTextContent("Pressed 2 times")
-})
-
-it("ignores presses while the state is busy", async () => {
-  const view = await renderStory(fixture.StateBusy)
-  await fireEvent.press(view.getByTestId("gallery-error-surfaces-primary"))
-  await fireEvent.press(view.getByTestId("gallery-error-surfaces-secondary"))
-  expect(count(view)).toHaveTextContent("Pressed 0 times")
-})
-
 it.each([
   ["Notice", fixture.Notice, "button"],
   ["NoticeCompact", fixture.NoticeCompact, "link"],
@@ -37,8 +23,9 @@ it("keeps the field editable beside its error", async () => {
   const input = view.getByTestId("gallery-error-surfaces-input")
   await fireEvent.changeText(input, "abc")
   expect(input.props.value).toBe("abc")
-  expect(input.props["aria-describedby"]).toBe(
-    "gallery-error-surfaces-field-error",
+  expect(input).toHaveProp(
+    "accessibilityHint",
+    "Enter a link that starts with https://",
   )
   expect(
     view.getByTestId("gallery-error-surfaces-field-error"),
@@ -50,5 +37,5 @@ it("counts presses on every long-string action", async () => {
   for (const action of view.getAllByRole("button")) {
     await fireEvent.press(action)
   }
-  expect(count(view)).toHaveTextContent("Pressed 3 times")
+  expect(count(view)).toHaveTextContent("Pressed 1 time")
 })

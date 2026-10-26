@@ -1,6 +1,7 @@
 import { act, fireEvent, render, within } from "@testing-library/react-native"
 import { router, useFocusEffect } from "expo-router"
 import {
+  AccessibilityInfo,
   AppState,
   type AppStateStatus,
   BackHandler,
@@ -186,6 +187,27 @@ describe("TimezoneChooserScreen", () => {
     fireEvent(view.getByTestId("timezone-results-list"), "scrollBeginDrag")
     expect(getString(SETTINGS_KEYS.timezone)).toBe("Europe/Paris")
     expect(router.back).not.toHaveBeenCalled()
+  })
+
+  it("announces no results once while the query keeps changing", async () => {
+    Platform.OS = "ios"
+    const announce = jest
+      .spyOn(AccessibilityInfo, "announceForAccessibilityWithOptions")
+      .mockImplementation(() => undefined)
+    announce.mockClear()
+    const view = await render(<TimezoneChooserScreen />)
+    await act(() =>
+      view.getByTestId("timezone-search").props.onChangeText("zzzz-no-zone"),
+    )
+    const title = view.getByRole("header")
+    expect(
+      within(view.getByTestId("timezone-no-results")).getByRole("header"),
+    ).toBe(title)
+    await act(() =>
+      view.getByTestId("timezone-search").props.onChangeText("zzzz-no-zones"),
+    )
+    expect(announce).toHaveBeenCalledTimes(1)
+    announce.mockRestore()
   })
 
   it("rejects activation when a catalog result is unavailable at runtime", async () => {

@@ -2,56 +2,38 @@ import { router, Stack, useLocalSearchParams } from "expo-router"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
-  ActivityIndicator,
   FlatList,
   Platform,
-  Pressable,
   StyleSheet,
   useWindowDimensions,
 } from "react-native"
 
 import {
+  Button,
   ErrorNotice,
-  ErrorState,
   PageIntro,
   RootPage,
-  ThemedText,
+  type StatusAction,
+  StatusView,
   ThemedView,
 } from "@/design"
 import { schoolMatches, useSchools } from "@/features/school-selection/data"
 import { Spacing, useTheme } from "@/theme"
 
-import { ListStatus } from "./list-status"
 import { RowSeparator } from "./row-separator"
 import { SchoolRow } from "./school-row"
-import { StatusSymbol } from "./status-symbol"
 
-function MissingSchoolAction() {
+function useMissingSchoolAction(): StatusAction {
   const { t } = useTranslation()
-  const theme = useTheme()
-
-  return (
-    <Pressable
-      testID="onboarding-school-missing"
-      accessibilityRole="button"
-      accessibilityLabel={t("onboarding.school.missing")}
-      accessibilityHint={t("onboarding.school.missingHint")}
-      // The unlisted-institution step (TIM-391): jumping straight to the URL
-      // route used to drop the institution entirely, so an unlisted import
-      // reached support with no way to place it.
-      onPress={() => router.push("/onboarding/institution-name")}
-      android_ripple={{ color: theme.ripple }}
-      style={({ pressed }) => [
-        styles.missingSchool,
-        Platform.OS === "ios" &&
-          pressed && { backgroundColor: theme.backgroundSelected },
-      ]}
-    >
-      <ThemedText type="small" themeColor="actionText">
-        {t("onboarding.school.missing")}
-      </ThemedText>
-    </Pressable>
-  )
+  return {
+    testID: "onboarding-school-missing",
+    label: t("onboarding.school.missing"),
+    accessibilityHint: t("onboarding.school.missingHint"),
+    // The unlisted-institution step (TIM-391): jumping straight to the URL
+    // route used to drop the institution entirely, so an unlisted import
+    // reached support with no way to place it.
+    onPress: () => router.push("/onboarding/institution-name"),
+  }
 }
 
 // Onboarding school step (TIM-134): presentational list over useSchools() —
@@ -64,6 +46,7 @@ export default function SchoolPickerScreen() {
   const { height: windowHeight } = useWindowDimensions()
   const { schools, isLoading, isError, refetch } = useSchools()
   const [filter, setFilter] = useState("")
+  const missingSchool = useMissingSchoolAction()
 
   const visible = useMemo(
     // Accent-insensitive name/code match.
@@ -159,55 +142,51 @@ export default function SchoolPickerScreen() {
             ListFooterComponent={
               browsing ? (
                 <ThemedView style={styles.listFooter}>
-                  <MissingSchoolAction />
+                  <Button variant="text" size="small" {...missingSchool} />
                 </ThemedView>
               ) : null
             }
             ListEmptyComponent={
               isLoading ? (
-                <ListStatus
-                  media={<ActivityIndicator />}
-                  message={t("onboarding.school.loading")}
-                  announceKey="loading"
+                <StatusView
+                  kind="loading"
+                  presentation="section"
+                  title={t("onboarding.school.loading")}
                 />
               ) : isError && schools.length === 0 ? (
-                <ErrorState
+                <StatusView
+                  kind="error"
+                  presentation="section"
                   testID="onboarding-school-error"
-                  style={styles.status}
                   title={t("errors.loadTitle")}
-                  message={t("onboarding.school.error")}
-                  primaryAction={{
+                  caption={t("onboarding.school.error")}
+                  action={{
                     label: t("onboarding.school.retry"),
                     testID: "onboarding-school-retry",
                     onPress: refetch,
                   }}
                 />
               ) : searching ? (
-                <ListStatus
-                  media={
-                    <StatusSymbol
-                      name={{ ios: "magnifyingglass", android: "search" }}
-                    />
-                  }
-                  message={t("onboarding.school.noResults", {
+                <StatusView
+                  kind="empty"
+                  presentation="section"
+                  testID="onboarding-school-no-results"
+                  symbol={{ ios: "magnifyingglass", android: "search" }}
+                  title={t("onboarding.school.noResults", {
                     query: filter.trim(),
                   })}
-                  announceKey="noResults"
-                >
-                  <MissingSchoolAction />
-                </ListStatus>
+                  announcementKey="noResults"
+                  secondaryAction={missingSchool}
+                />
               ) : (
-                <ListStatus
-                  media={
-                    <StatusSymbol
-                      name={{ ios: "graduationcap", android: "school" }}
-                    />
-                  }
-                  message={t("onboarding.school.empty")}
-                  announceKey="empty"
-                >
-                  <MissingSchoolAction />
-                </ListStatus>
+                <StatusView
+                  kind="empty"
+                  presentation="section"
+                  symbol={{ ios: "graduationcap", android: "school" }}
+                  title={t("onboarding.school.empty")}
+                  announcementKey="empty"
+                  secondaryAction={missingSchool}
+                />
               )
             }
           />
@@ -233,16 +212,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.three,
     paddingBottom: Spacing.three,
-  },
-  status: {
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.five,
-  },
-  missingSchool: {
-    minHeight: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
   },
 })

@@ -11,6 +11,9 @@ const simpleImportSort = require("eslint-plugin-simple-import-sort")
 
 const localRules = require("./tools/eslint-rules")
 const {
+  adHocStatusAllowlist,
+} = require("./tools/eslint-rules/ad-hoc-status-allowlist")
+const {
   rawButtonAllowlist,
 } = require("./tools/eslint-rules/raw-button-allowlist")
 
@@ -320,6 +323,16 @@ const restrictedSyntax = [
   message:
     "Text must follow the OS font size — do not disable allowFontScaling. Cap dense UI with maxFontSizeMultiplier instead (accessibility.md → Font scaling).",
 }))
+restrictedSyntax.push(
+  ...[
+    "JSXAttribute[name.name='aria-describedby']",
+    "Property[key.value='aria-describedby']",
+  ].map((selector) => ({
+    selector,
+    message:
+      "React Native forwards no described-by relation; fold the error into accessibilityHint with fieldErrorHint (ADR 069)",
+  })),
+)
 
 // Worklet safety (TIM-554). A worklet may only call functions that are
 // themselves workletized; a plain JS call throws on the UI thread at runtime and
@@ -808,6 +821,24 @@ module.exports = defineConfig([
     plugins: { local: localRules },
     rules: {
       "local/no-raw-button": "error",
+    },
+  },
+  {
+    // Loading and list-empty states are the shared StatusView (ADR 069). The
+    // allowlist holds the files not yet migrated; ad-hoc-status-allowlist.test.js
+    // keeps it shrinking.
+    name: "timecalendar/ad-hoc-status",
+    files: ["src/**/*.tsx"],
+    ignores: [
+      "src/design/**",
+      "src/components/chrome/**",
+      "src/features/calendar/renderer/**",
+      "**/*.test.tsx",
+      ...adHocStatusAllowlist,
+    ],
+    plugins: { local: localRules },
+    rules: {
+      "local/no-ad-hoc-status": "error",
     },
   },
   {

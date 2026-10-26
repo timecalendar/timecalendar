@@ -160,6 +160,51 @@ chooses an intent and a size; the primitive owns colors, geometry, states and pr
   `button-row--pair` and `button-row--long-strings`, captioned with the active layout. No lint rule
   detects a hand-built row of two `Button`s.
 
+## Status — `StatusView` (`src/design/status/`)
+
+Every loading, empty and error state in a feature is `StatusView` from `@/design` (ADR
+[069](./decisions/069-status-view.md)). The caller picks a `kind` and a `presentation`; the
+primitive owns layout, scrolling, media, roles and the announcement.
+
+- `kind`: `loading` (title only), `empty` (caption, `action`, `secondaryAction`, and `artwork` or
+  `symbol`, never both), `error` (caption and actions). The props are a discriminated union, so a
+  spinner with a retry does not type-check.
+
+| `presentation` | Container                                                                            | Alignment | Use                                         |
+| -------------- | ------------------------------------------------------------------------------------ | --------- | ------------------------------------------- |
+| `screen`       | vertical `ScrollView` (`headerScrollProps(false)`), `flexGrow: 1` content, `flex: 1` | centered  | a page whose only content is the status     |
+| `section`      | `View`, `flexGrow: 1`, `paddingHorizontal: Spacing.four`                             | centered  | a `ListEmptyComponent`, a page that scrolls |
+| `inline`       | content-sized `View`, `gap: Spacing.two`; loading is a spinner + title row           | leading   | a status inside a content section (Home)    |
+
+- `screen` scrolls: it centers while it fits and scrolls from the top once the text outgrows the
+  viewport, so nothing rises under the header at the largest sizes. It fills its parent, so it is
+  a non-function `RootPage` child or sits in a `flex: 1` lane. **Never place `screen` inside a
+  list or a scroll view** (a nested vertical scroll); lint cannot see the nesting.
+- Media: loading is `ActivityIndicator` in `textSecondary`, `large` (`small` for `inline`),
+  hidden through a wrapping `View` (`${testID}-progress`). `symbol` is `Icon` 40,
+  `scaling="fixed"`, `textSecondary` (`${testID}-symbol`). The error glyph is fixed:
+  `exclamationmark.circle` / `error_outline`, 40, `error` (`${testID}-glyph`). `artwork` is a
+  decorative `StatusArtwork` light/dark pair (`developerActivityArtwork`, `noDataArtwork`), max
+  280 wide and 200 tall, recolored to each scheme's `primary`, `${testID}-artwork`.
+- **Artwork is not rendered at accessibility text sizes** (`useIsAccessibilityTextSize()`): the
+  text owns the viewport. Symbols and the error glyph stay. The switch follows a live text-size
+  change.
+- Text: title `sectionTitle`, caption `body` in `textSecondary`; centered except `inline`.
+- Actions are `StatusAction`s rendered as `Button`: `action` `filled`, `secondaryAction` `text`,
+  stacked primary first with `Spacing.two`, full width except `inline`. `busy` and `disabled` are
+  `Button`'s.
+- `style` is `StyleProp<StatusLayoutStyle>` (`ButtonLayoutStyle` keys) and merges last.
+- `ErrorNotice` (inline error surface with an optional `StatusAction` drawn as a `text` `Button`)
+  and `FieldError` (alert text under a field) share the folder. A field with a `FieldError`
+  passes `accessibilityHint={fieldErrorHint(error, hint)}` ([Accessibility](./accessibility.md)
+  → Accessible async status).
+- Gates: `status-view.test.tsx` (kinds, presentations, both platforms, announcement, the type
+  tests) and `field-error-hint.test.ts` at 90% per-file coverage tiers; `local/no-ad-hoc-status`
+  and the `aria-describedby` ban ([lint-format.md](./lint-format.md) → Status); the gallery
+  stories `status-view--loading-screen`, `--loading-section`, `--loading-inline`,
+  `--empty-screen`, `--empty-screen-artwork`, `--empty-section`, `--empty-inline`,
+  `--error-screen`, `--error-retry-busy`, `--error-section`, `--long-strings`.
+
 ## Responsive content lanes — measured owners, semantic caps
 
 - `src/theme/responsive.ts` owns the typed portrait responsive policy and re-exports it through
@@ -217,15 +262,13 @@ areas, top padding, and primary lane measurement while leaving `FlatList`, `Sect
 `ScrollView`, keyboard avoidance, refresh, pagination, overlays, and native actions with the
 feature that already owns them.
 
-`EmptyState` accepts optional local light/dark artwork pairs selected through the single
-color-scheme seam. Eligible full-screen illustrations are recolored to each scheme's exact
-`primary` accent; the localized text carries meaning and the image remains decorative. Filled
-body/footer actions are `Button variant="filled"`. Platform-native header actions and FABs retain
-their native placement and sizing.
+Status artwork is a local light/dark pair selected through the single color-scheme seam, recolored
+to each scheme's exact `primary` accent; the localized text carries meaning and the image remains
+decorative. Filled body/footer actions are `Button variant="filled"`. Platform-native header
+actions and FABs retain their native placement and sizing.
 
-Home's true-empty Up next and Today title/caption pairs use section `EmptyState`, retaining
-left alignment while sharing subtitle hierarchy, secondary captions, semantic spacing, and polite
-announcement. Feedback, onboarding Programme, and the personal-event editor compose one readable
+Home's true-empty Up next and Today title/caption pairs use `inline` `StatusView`, keeping leading
+alignment, subtitle hierarchy, secondary captions and the shared announcement. Feedback, onboarding Programme, and the personal-event editor compose one readable
 `KeyboardSafeActionLayout`: the fields remain in its sole scroll body and the filled `Button`
 region is a measured sibling above the keyboard. Programme Skip remains native per platform.
 

@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native"
 
-import { ThemedText } from "@/design"
+import { StatusView, ThemedText } from "@/design"
 import {
   formatTimezoneOffset,
   getTimezoneCityLabel,
@@ -158,13 +158,14 @@ export default function TimezoneChooserScreen() {
         renderItem={renderItem}
         testID="timezone-results-list"
         ListEmptyComponent={
-          <View
-            accessibilityRole="summary"
-            style={styles.empty}
+          <StatusView
+            kind="empty"
+            presentation="section"
+            symbol={{ ios: "magnifyingglass", android: "search" }}
+            title={t("settings.timezone.noResults")}
+            announcementKey="noResults"
             testID="timezone-no-results"
-          >
-            <ThemedText>{t("settings.timezone.noResults")}</ThemedText>
-          </View>
+          />
         }
       />
     </>
@@ -185,5 +186,4 @@ const styles = StyleSheet.create({
   valueColumn: { alignItems: "flex-end" },
   pressed: { opacity: 0.65 },
   disabled: { opacity: 0.45 },
-  empty: { padding: Spacing.four, alignItems: "center" },
 })

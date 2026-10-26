@@ -1,23 +1,17 @@
 import { router } from "expo-router"
 import { useTranslation } from "react-i18next"
-import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native"
 
-import { ErrorState, RootPage, ThemedText } from "@/design"
-import { Spacing, useTheme } from "@/theme"
+import { RootPage, StatusView } from "@/design"
 
-export function GuideLoading() {
+export function GuideProgress() {
   const { t } = useTranslation()
-  const theme = useTheme()
   return (
-    <RootPage lane="readable" contentContainerStyle={styles.container}>
-      <View
-        accessibilityLiveRegion="polite"
-        accessibilityRole="text"
-        style={styles.row}
-      >
-        <ActivityIndicator color={theme.primary} accessible={false} />
-        <ThemedText>{t("exportGuide.loading")}</ThemedText>
-      </View>
+    <RootPage lane="readable">
+      <StatusView
+        kind="loading"
+        presentation="screen"
+        title={t("exportGuide.loading")}
+      />
     </RootPage>
   )
 }
@@ -32,28 +26,23 @@ export function GuideBlockingError({
   const { t } = useTranslation()
   return (
     <RootPage lane="readable">
-      <ScrollView contentContainerStyle={styles.container}>
-        <ErrorState
-          title={t("exportGuide.error.title")}
-          message={`${t("exportGuide.error.body")} ${t("exportGuide.error.required")}`}
-          primaryAction={{
-            testID: "export-guide-retry",
-            label: t("exportGuide.retry"),
-            busy,
-            onPress: retry,
-          }}
-          secondaryAction={{
-            testID: "export-guide-back",
-            label: t("common.back"),
-            onPress: () => router.back(),
-          }}
-        />
-      </ScrollView>
+      <StatusView
+        kind="error"
+        presentation="screen"
+        title={t("exportGuide.error.title")}
+        caption={`${t("exportGuide.error.body")} ${t("exportGuide.error.required")}`}
+        action={{
+          testID: "export-guide-retry",
+          label: t("exportGuide.retry"),
+          busy,
+          onPress: retry,
+        }}
+        secondaryAction={{
+          testID: "export-guide-back",
+          label: t("common.back"),
+          onPress: () => router.back(),
+        }}
+      />
     </RootPage>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { gap: Spacing.four, paddingBottom: Spacing.four },
-  row: { flexDirection: "row", alignItems: "center", gap: Spacing.three },
-})

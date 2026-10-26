@@ -5,9 +5,9 @@ import { Pressable, ScrollView, StyleSheet, View } from "react-native"
 
 import {
   ErrorNotice,
-  ErrorState,
   FieldError,
   RootPage,
+  StatusView,
   ThemedText,
 } from "@/design"
 import {
@@ -76,13 +76,11 @@ export default function SchoolGroupPickerScreen() {
               contentContainerStyle={[laneStyle, styles.list]}
             >
               {isLoading && (
-                <ThemedText
-                  themeColor="textSecondary"
-                  accessibilityLiveRegion="polite"
-                  accessibilityRole="text"
-                >
-                  {t("onboarding.group.loading")}
-                </ThemedText>
+                <StatusView
+                  kind="loading"
+                  presentation="section"
+                  title={t("onboarding.group.loading")}
+                />
               )}
 
               {isError &&
@@ -98,11 +96,13 @@ export default function SchoolGroupPickerScreen() {
                     }}
                   />
                 ) : (
-                  <ErrorState
+                  <StatusView
+                    kind="error"
+                    presentation="section"
                     testID="onboarding-group-error"
                     title={t("errors.loadTitle")}
-                    message={t("onboarding.group.error")}
-                    primaryAction={{
+                    caption={t("onboarding.group.error")}
+                    action={{
                       label: t("onboarding.group.retry"),
                       testID: "onboarding-group-retry",
                       onPress: refetch,
@@ -111,13 +111,11 @@ export default function SchoolGroupPickerScreen() {
                 ))}
 
               {!isLoading && !isError && groups.length === 0 && (
-                <ThemedText
-                  themeColor="textSecondary"
-                  accessibilityLiveRegion="polite"
-                  accessibilityRole="text"
-                >
-                  {t("onboarding.group.empty")}
-                </ThemedText>
+                <StatusView
+                  kind="empty"
+                  presentation="section"
+                  title={t("onboarding.group.empty")}
+                />
               )}
 
               {groups.map((node) => (

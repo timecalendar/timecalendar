@@ -24,7 +24,7 @@ import {
 import { Spacing } from "@/theme"
 
 import { ExportGuideImage } from "./export-guide-image"
-import { GuideBlockingError, GuideLoading } from "./guide-status"
+import { GuideBlockingError, GuideProgress } from "./guide-status"
 import { emitExportGuideEvent } from "./telemetry"
 import { exportGuideLocale, useExportGuideLoad } from "./use-export-guide-load"
 
@@ -172,7 +172,7 @@ export default function GuidePageScreen() {
       {state.phase === "blocked" ? (
         <GuideBlockingError retry={retry} busy={busy} />
       ) : !validPage || pageIndex === null || snapshotState === null ? (
-        <GuideLoading />
+        <GuideProgress />
       ) : (
         <GuidePageContent
           state={snapshotState}

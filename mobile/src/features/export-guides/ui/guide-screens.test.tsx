@@ -394,11 +394,12 @@ describe("GuidePageScreen", () => {
     })
     const view = await render(<GuidePageScreen />)
 
+    expect(view.getByRole("header")).toBeTruthy()
     expect(
       view.getByText(
         /The guide is required before you can import your timetable\./,
-      ).parent?.props.accessibilityRole,
-    ).toBe("alert")
+      ),
+    ).toBeTruthy()
     expect(mockStackScreen).toHaveBeenCalledWith(
       expect.objectContaining({
         options: { title: "Export timetable" },

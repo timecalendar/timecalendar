@@ -54,12 +54,32 @@ These rules guard real product touchables (interactive controls declare `accessi
 
 ## Accessible async status
 
-- Loading/error text carries `accessibilityLiveRegion="polite"` (Android announces the change) and a status role (`text` / `alert`), so assistive tech conveys the state rather than reading a silent node.
-- Shared empty states expose localized title then caption as the complete meaning and hide optional
-  artwork from the accessibility tree. They add no motion. A busy or disabled `Button` keeps one
-  translated label, reports its state on that button, blocks repeat activation, and hides its
-  progress indicator from focus. See ADR [054](./decisions/054-shared-root-page-semantics.md).
-- Home's section empty states keep title-before-caption source order and left alignment. Feedback,
+- Every loading, empty and error state is `StatusView` (ADR [069](./decisions/069-status-view.md)).
+  Empty and error titles are `sectionTitle` (header role), followed by the caption as a separate
+  text stop; the error glyph, symbol and artwork are hidden. The error title has no `alert` role:
+  `alert` collapses the heading into one group and neither screen reader speaks a mounted alert
+  by itself. Loading is one accessible element with role `progressbar`, label = the visible
+  title and `{ busy: true }`; its spinner is hidden; the title is not a heading.
+- `StatusView` announces once per appearance: `useErrorAnnouncement(spoken, { key })` with `key`
+  = `announcementKey ?? kind` speaks on mount and when the key changes, never when the message
+  changes under the same key, so a no-results title that embeds the query is not re-read per
+  keystroke. iOS uses the queued announcer; Android uses a polite live region on the
+  loading `progressbar` or the title and caption group, never the actions, so a Retry busy or
+  disabled toggle does not re-read the state (shared React Native surfaces own one announcement channel). Without `key` the
+  hook announces on every message change (chrome callers).
+- Artwork is decorative and not rendered at accessibility text sizes; `screen` scrolls once the
+  text outgrows the viewport, so title and actions stay reachable at AX5 and font scale 2.0.
+- **Field errors live in the field's hint.** React Native forwards `aria-describedby` and
+  `nativeID` relations to neither UIKit nor Android, so a `TextInput` with a `FieldError` passes
+  `accessibilityHint={fieldErrorHint(error, hint)}` (`error. hint`, `error`, or `hint`). VoiceOver
+  and TalkBack read it after the label and value on focus; `FieldError` keeps its alert text,
+  Android live region and iOS announcement for the moment it appears. `aria-describedby` is a lint
+  error ([lint-format.md](./lint-format.md) → Status). Folding the error into
+  `accessibilityLabel` would rename the field; `accessibilityValue` would mask the typed text.
+- A busy or disabled `Button` keeps one translated label, reports its state on that button, blocks
+  repeat activation, and hides its progress indicator from focus. See ADR
+  [054](./decisions/054-shared-root-page-semantics.md).
+- Home's inline empty states keep title-before-caption source order and leading alignment. Feedback,
   Programme, and personal-event focused forms keep fields and errors in one scroll body followed by
   a sibling primary-action region, so keyboard avoidance does not reorder or cover the action.
 - Ordinary pushed routes expose their localized name once through native compact chrome. Caption-
@@ -139,6 +159,11 @@ Android emulators run on the Windows host, not the Mac.
 - `src/design/text/themed-text.test.tsx` drives a typed `Record<ThemedTextType, { step; heading }>` table through `it.each`: per accepted `type` it renders through the real accessibility tree and asserts the `header` role is present or absent (a _resolved semantic_, not merely that a prop was passed), plus the rendered ramp style and iOS `dynamicTypeRamp`. It also covers explicit-role-wins. `src/theme/typography.test.ts` pins the ramp values on both platforms. Gated by the `test-mobile` job (tsc + lint + Jest), R-1.
 - `src/design/gallery/registry.test.ts` renders every gallery story on the iOS and Android branches in light and dark, and fails when an interactive host element lacks an accessibility role or a non-empty accessible name (its label, else its merged descendant text or labels), or a text input lacks a label, naming the story, platform and element (its `testID`, else `<nearest ancestor testID> > <role>`). A control nested in another control is checked on its own: Compose stops merging at a child with its own click or toggle semantics, so TalkBack gives it a separate stop. A trailing indicator inside a row control therefore takes no handler (a Material `RadioButton` without `onClick`). An `accessible={false}` control is no accessibility node: it is skipped when a descendant control carries the semantics (role and name), checked on its own (Expo UI's Android `MenuView` anchor, whose child button carries them), and otherwise reported as `accessible={false} control has no accessible control inside`, since its activation is unreachable to VoiceOver and TalkBack. The check reads what the suite-wide native mocks in `jest/setup-expo-ui.ts` project, so a mock that drops a real modifier is fixed in the mock; it proves declared semantics, not announcement quality.
 - **Known violations only shrink.** A violation the product really has and cannot fix yet goes in `src/design/gallery/known-a11y-violations.ts`: one typed entry per story id, platform and element, with the problem, the reason and a link to its `docs/react-native-migration/inbox/` note. The registry check fails on any violation not on the list and on any entry that no longer reproduces or names a story absent from its platform, so a fix must delete its entry and nothing is added silently. The list holds the Android switch row's inner Material `Switch` (`native-settings--switches`, `native-settings--long-strings`): Expo UI's `SwitchView` always passes Compose a non-null `onCheckedChange`, so the unlabeled thumb is a second TalkBack stop inside the toggleable row ([inbox](../../react-native-migration/inbox/2026-10-25-mobile-design-system-gallery-device-pass.md)).
+
+- `src/design/status/status-view.test.tsx` proves the status roles, the hidden media, the
+  `progressbar` busy state, the Android-only live region and the once-per-key announcement on both
+  platforms; `src/hooks/use-error-announcement.test.ts` proves the keyed and unkeyed hook paths;
+  `src/design/status/field-error-hint.test.ts` proves the hint composition.
 
 ## What lint can't encode → prose, each with reason + owner
 
