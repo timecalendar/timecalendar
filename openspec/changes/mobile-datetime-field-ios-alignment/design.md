@@ -26,7 +26,7 @@
 
 - The iOS compact pills start at the field's leading edge, under the label, at every text size,
   and never clip.
-- VoiceOver names the iOS field picker by the field label.
+- The iOS field picker carries the field label as its hidden SwiftUI title (the furthest `@expo/ui` reaches: the inner UIKit picker keeps its system name).
 - Callers that do not opt in render exactly what they render today, on both platforms.
 
 **Non-Goals:**
