@@ -284,6 +284,18 @@ describe("Maestro journey contracts", () => {
     ).toBe(true)
   })
 
+  it("waits for the iOS deep-link prompt before its optional confirm", () => {
+    expect(
+      containsOrdered(flow("helpers/confirm-ios-deep-link.yaml"), [
+        "platform: iOS",
+        'visible: "Open in .*"',
+        "optional: true",
+        'text: "Open"',
+        "optional: true",
+      ]),
+    ).toBe(true)
+  })
+
   it("keeps the real listed-school import path and synced detail proof", () => {
     const yaml = flow("01-fresh-user-import.yaml")
     expect(yaml.split(OPEN_AGENDA_FLOW)).toHaveLength(2)
@@ -298,8 +310,7 @@ describe("Maestro journey contracts", () => {
         'id: "export-guide-next"',
         'id: "onboarding-import-url"',
         '- inputText: "http://127.0.0.1:3005/__e2e/ical/import.ics"',
-        "- pressKey: Enter",
-        'notVisible:\n      id: "ical-url-content"',
+        'id: "ical-url-submit"',
         OPEN_AGENDA_FLOW,
         'id: "agenda-section-list"',
         'visible:\n        id: "calendar-empty-refresh"',

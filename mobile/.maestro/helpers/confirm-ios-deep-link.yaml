@@ -1,9 +1,15 @@
 appId: fr.samuelprak.timecalendar.dev
 ---
+# The "Open in …?" prompt can take longer than tapOn's own lookup to appear on
+# a loaded CI simulator; waiting for it first keeps the tap from giving up early.
 - runFlow:
     when:
       platform: iOS
     commands:
+      - extendedWaitUntil:
+          visible: "Open in .*"
+          timeout: 20000
+          optional: true
       - tapOn:
           text: "Open"
           optional: true

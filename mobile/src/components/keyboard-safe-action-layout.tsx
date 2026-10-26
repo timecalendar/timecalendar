@@ -12,10 +12,7 @@ import {
 
 import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { headerScrollProps } from "@/components/header-scroll-props"
-import {
-  resolveKeyboardAvoidingBehavior,
-  resolveKeyboardVerticalOffset,
-} from "@/components/keyboard-avoiding-behavior"
+import { resolveKeyboardAvoidingBehavior } from "@/components/keyboard-avoiding-behavior"
 import { type ResponsiveLane, Spacing } from "@/theme"
 
 type KeyboardSafeActionLayoutProps = {
@@ -50,9 +47,10 @@ export function KeyboardSafeActionLayout({
   const handleLayout = (event: LayoutChangeEvent) => {
     onLayout(event)
     ownerRef.current?.measureInWindow((_x, y) => {
-      if (Number.isFinite(y) && y >= 0) {
-        setKeyboardVerticalOffset(resolveKeyboardVerticalOffset(Platform.OS, y))
-      }
+      // KeyboardAvoidingView compares its parent-relative frame with the
+      // keyboard's window Y, so the owner's window Y must be added back on
+      // both platforms or the action region stays that far behind the keyboard.
+      if (Number.isFinite(y) && y >= 0) setKeyboardVerticalOffset(y)
     })
   }
 

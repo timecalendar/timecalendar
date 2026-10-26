@@ -1,13 +1,10 @@
-import { render } from "@testing-library/react-native"
+import { act, fireEvent, render } from "@testing-library/react-native"
 import type { ReactNode } from "react"
 import { StyleSheet, Text, View } from "react-native"
 
 import { usePlatform } from "@/test-support/platform"
 
-import {
-  resolveKeyboardAvoidingBehavior,
-  resolveKeyboardVerticalOffset,
-} from "./keyboard-avoiding-behavior"
+import { resolveKeyboardAvoidingBehavior } from "./keyboard-avoiding-behavior"
 import { KeyboardSafeActionLayout } from "./keyboard-safe-action-layout"
 
 jest.mock("react-native", () => {
@@ -30,13 +27,6 @@ jest.mock("react-native", () => {
     { KeyboardAvoidingView: TransparentKeyboardAvoidingView },
     descriptors,
   )
-})
-
-it.each([
-  ["ios" as const, 338],
-  ["android" as const, 0],
-])("uses the platform-safe offset on %s", (platform, expectedOffset) => {
-  expect(resolveKeyboardVerticalOffset(platform, 338)).toBe(expectedOffset)
 })
 
 describe.each([
@@ -84,6 +74,38 @@ describe.each([
     ).not.toHaveProperty("position", "absolute")
   })
 })
+
+// The jest preset shares one mocked measureInWindow across every host view.
+const { measureInWindow } = jest.requireActual<{
+  default: { measureInWindow: jest.Mock }
+}>("@react-native/jest-preset/jest/MockNativeMethods").default
+
+describe.each(["ios" as const, "android" as const])(
+  "KeyboardSafeActionLayout keyboard offset on %s",
+  (platform) => {
+    usePlatform(platform)
+
+    it("offsets the keyboard by the owner's measured window Y", async () => {
+      measureInWindow.mockImplementation(
+        (callback: (x: number, y: number) => void) => callback(0, 97),
+      )
+      const view = await render(
+        <KeyboardSafeActionLayout testID="form" actions={<View />}>
+          <View />
+        </KeyboardSafeActionLayout>,
+      )
+
+      await act(() =>
+        fireEvent(view.getByTestId("form-window-owner"), "layout", {
+          nativeEvent: { layout: { width: 390, height: 600, x: 0, y: 0 } },
+        }),
+      )
+
+      expect(view.getByTestId("form")).toHaveProp("keyboardVerticalOffset", 97)
+      measureInWindow.mockReset()
+    })
+  },
+)
 
 describe("KeyboardSafeActionLayout header inset", () => {
   const renderLayout = (scrollsUnderHeader: boolean) =>

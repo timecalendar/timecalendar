@@ -37,10 +37,14 @@
   onboarding-import-url` loop taps `export-guide-next` without a hard-coded page count.
   `maestro-selectors.test.ts` pins the order and forbids `onboarding-connect-continue`
   ([testing.md](./testing.md), `mobile/e2e/README.md`).
-- The add-by-URL field submits from the keyboard return key (`returnKeyType="go"`), like the
-  programme and institution-name fields, and the flow imports with `pressKey: Enter`: on the
-  Android emulator the keyboard covers `ical-url-submit` (inbox
-  `2026-10-26-export-guide-bootstrap-empty-schema.md`).
+- `KeyboardSafeActionLayout` offsets the keyboard by the owner's measured window Y on both
+  platforms. `KeyboardAvoidingView` compares its parent-relative frame with the keyboard's window
+  Y, so the Android offset of `0` left every sibling action (`ical-url-submit`,
+  `personal-event-save`, the onboarding Continue) behind the keyboard by the header height.
+  Proven by `keyboard-safe-action-layout.test.tsx` and the Android Maestro lane.
+- `helpers/confirm-ios-deep-link.yaml` waits up to 20 s for the iOS "Open in …?" prompt before
+  its optional tap: on a loaded simulator the prompt appeared after the tap had given up and
+  covered the app for the rest of the flow.
 
 ## 2026-10-25 — Gallery fixtures for shared components
 
