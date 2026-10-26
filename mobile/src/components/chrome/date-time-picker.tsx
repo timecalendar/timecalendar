@@ -19,23 +19,14 @@ export type DateTimePickerProps = ComponentProps<typeof ExpoDateTimePicker> & {
 //
 // On iOS, `alignment` and `accessibilityLabel` opt into the composed SwiftUI
 // picker, which can hug the leading edge and carry a name; Android ignores them.
-export function DateTimePicker({
-  alignment,
-  accessibilityLabel,
-  ...props
-}: DateTimePickerProps) {
+export function DateTimePicker(pickerProps: DateTimePickerProps) {
+  const { alignment, accessibilityLabel, ...props } = pickerProps
   const { value, mode, onValueChange, onChange } = props
   if (
     Platform.OS === "ios" &&
     (alignment !== undefined || accessibilityLabel !== undefined)
   )
-    return (
-      <IosDateTimePicker
-        {...props}
-        {...(alignment !== undefined ? { alignment } : {})}
-        {...(accessibilityLabel !== undefined ? { accessibilityLabel } : {})}
-      />
-    )
+    return <IosDateTimePicker {...pickerProps} />
   if (Platform.OS !== "android" || mode === "time")
     return <ExpoDateTimePicker {...props} />
 
