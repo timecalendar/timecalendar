@@ -7,7 +7,14 @@ import {
 } from "react-native"
 import { cancelAnimation, withTiming } from "react-native-reanimated"
 
-import { Colors, resolveResponsiveLayout, WordmarkMaxFontScale } from "@/theme"
+import {
+  Colors,
+  MinTouchTarget,
+  Motion,
+  resolveResponsiveLayout,
+  Spacing,
+  WordmarkMaxFontScale,
+} from "@/theme"
 
 import WelcomeScreen from "./welcome-screen"
 
@@ -86,7 +93,7 @@ describe("WelcomeScreen", () => {
     await act(flushMicrotasks)
   })
 
-  it("scrolls each page's content and caps the brand title", async () => {
+  it("scrolls each page, lets every label wrap and caps the brand title", async () => {
     const { getByTestId, getByText } = await render(<WelcomeScreen />)
 
     for (const id of ["welcome", "agenda", "notifications"]) {
@@ -101,6 +108,16 @@ describe("WelcomeScreen", () => {
     expect(
       getByText("Welcome to TimeCalendar!").props.maxFontSizeMultiplier,
     ).toBe(WordmarkMaxFontScale)
+    for (const text of [
+      "Welcome to TimeCalendar!",
+      "See your university timetable",
+      "Skip",
+      "Next",
+    ]) {
+      const { adjustsFontSizeToFit, numberOfLines } = getByText(text).props
+      expect(numberOfLines || Infinity).toBeGreaterThan(2)
+      expect(adjustsFontSizeToFit).toBeFalsy()
+    }
 
     await act(flushMicrotasks)
   })
@@ -150,6 +167,13 @@ describe("WelcomeScreen", () => {
     expect(
       getAllByRole("header").map((heading) => heading.props.children),
     ).toEqual(["Welcome to TimeCalendar!", "See your schedule", "Get notified"])
+    for (const body of [
+      "See your university timetable",
+      "We fetch your calendar directly from your school",
+      "Be alerted when a class is added, changed or cancelled",
+    ]) {
+      expect(getByText(body)).toHaveStyle({ color: Colors.light.textSecondary })
+    }
 
     await act(flushMicrotasks)
   }, 15_000)
@@ -196,6 +220,23 @@ describe("WelcomeScreen", () => {
     expect(queryByTestId("onboarding-skip")).toBeNull()
   })
 
+  it("lets the Skip bar grow with its label above a touch-target floor", async () => {
+    const { getByTestId } = await render(<WelcomeScreen />)
+
+    const lane = getByTestId("onboarding-top-bar").children[0] as unknown as {
+      props: { style: { minHeight?: number }[] }
+    }
+    const bar = StyleSheet.flatten(lane.props.style)
+    expect(bar.minHeight).toBe(MinTouchTarget + Spacing.three)
+    expect(bar).not.toHaveProperty("height")
+    expect(
+      StyleSheet.flatten(getByTestId("onboarding-page-indicator").props.style)
+        .minHeight,
+    ).toBe(MinTouchTarget)
+
+    await act(flushMicrotasks)
+  })
+
   it("pushes the school step from Skip and the final CTA", async () => {
     const { getByTestId } = await render(<WelcomeScreen />)
 
@@ -238,21 +279,21 @@ describe("WelcomeScreen", () => {
     jest.useFakeTimers()
     const { getByTestId, rerender } = await render(<WelcomeScreen />)
     await act(flushMicrotasks)
-    await act(async () => jest.advanceTimersByTime(300))
+    await act(async () => jest.advanceTimersByTime(Motion.base))
     await rerender(<WelcomeScreen />)
 
-    expect(withTiming).toHaveBeenCalledWith(1, { duration: 300 })
+    expect(withTiming).toHaveBeenCalledWith(1, { duration: Motion.base })
     expect(
       StyleSheet.flatten(getByTestId("onboarding-welcome-entrance").props.style)
         .opacity,
     ).toBe(1)
     jest.mocked(withTiming).mockClear()
     await fireEvent.press(getByTestId("onboarding-next"))
-    await act(async () => jest.advanceTimersByTime(150))
+    await act(async () => jest.advanceTimersByTime(Motion.fast))
     await rerender(<WelcomeScreen />)
 
     expect(pagerMock.setPage).toHaveBeenCalledWith(1)
-    expect(withTiming).toHaveBeenCalledWith(24, { duration: 150 })
+    expect(withTiming).toHaveBeenCalledWith(24, { duration: Motion.fast })
     expect(
       [0, 1, 2].map(
         (index) =>

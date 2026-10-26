@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
-import { Platform, StyleSheet, View } from "react-native"
+import { StyleSheet, View } from "react-native"
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
@@ -8,14 +8,12 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated"
 
-import { Radii, Spacing, useTheme } from "@/theme"
+import { MinTouchTarget, Motion, Radii, Spacing, useTheme } from "@/theme"
 
 import { WELCOME_PAGES } from "./welcome-page-catalog"
 
-const INDICATOR_ANIMATION_MS = 150
 const ACTIVE_INDICATOR_WIDTH = 24
 const INACTIVE_INDICATOR_WIDTH = 16
-const CONTROL_MIN_HEIGHT = Platform.OS === "ios" ? 44 : 48
 
 type IndicatorPillProps = {
   active: boolean
@@ -44,7 +42,7 @@ function IndicatorPill({
     if (reduceMotion) {
       width.set(targetWidth)
     } else if (targetChanged) {
-      width.set(withTiming(targetWidth, { duration: INDICATOR_ANIMATION_MS }))
+      width.set(withTiming(targetWidth, { duration: Motion.fast }))
     }
 
     return () => cancelAnimation(width)
@@ -104,7 +102,7 @@ export function WelcomePageIndicator({
 
 const styles = StyleSheet.create({
   indicator: {
-    minHeight: CONTROL_MIN_HEIGHT,
+    minHeight: MinTouchTarget,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

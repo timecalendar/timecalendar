@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next"
 import { StyleSheet } from "react-native"
 
 import { AdaptiveContent, Button } from "@/design"
-import { Spacing } from "@/theme"
+import { MinTouchTarget, Spacing } from "@/theme"
 
 type WelcomeSkipProps = {
   hidden: boolean
@@ -13,7 +13,11 @@ export function WelcomeSkip({ hidden, onPress }: WelcomeSkipProps) {
   const { t } = useTranslation()
 
   return (
-    <AdaptiveContent lane="readable" contentContainerStyle={styles.topBar}>
+    <AdaptiveContent
+      testID="onboarding-top-bar"
+      lane="readable"
+      contentContainerStyle={styles.topBar}
+    >
       {!hidden && (
         <Button
           variant="text"
@@ -75,12 +79,11 @@ export function WelcomeFooter({
 
 const styles = StyleSheet.create({
   topBar: {
-    height: 60,
+    minHeight: MinTouchTarget + Spacing.three,
     justifyContent: "center",
     alignItems: "flex-end",
   },
   footer: {
-    minHeight: 64,
     justifyContent: "center",
     alignItems: "flex-end",
     paddingBottom: Spacing.four,

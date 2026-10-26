@@ -7,6 +7,8 @@ import { Radii, Spacing, WordmarkMaxFontScale } from "@/theme"
 
 import { type WelcomePageDescriptor } from "./welcome-page-catalog"
 
+const ILLUSTRATION_MAX_WIDTH = 480
+
 type WelcomePageProps = {
   illustrationBackgroundColor: string
   illustrationHeight: number
@@ -59,7 +61,7 @@ export function WelcomePage({
             >
               {t(page.titleKey)}
             </ThemedText>
-            <ThemedText themeColor="textSecondary" style={styles.centeredText}>
+            <ThemedText tone="secondary" style={styles.centeredText}>
               {t(page.bodyKey)}
             </ThemedText>
           </View>
@@ -84,7 +86,7 @@ const styles = StyleSheet.create({
   },
   illustrationCard: {
     width: "100%",
-    maxWidth: 480,
+    maxWidth: ILLUSTRATION_MAX_WIDTH,
     alignSelf: "center",
     borderRadius: Radii.large,
     padding: Spacing.three,

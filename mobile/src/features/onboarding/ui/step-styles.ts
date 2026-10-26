@@ -6,11 +6,7 @@ import { Spacing } from "@/theme"
 // to back in one sitting: a padding that drifts on one of them reads as a layout
 // bug rather than as a variation.
 export const stepStyles = StyleSheet.create({
-  fill: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
+  content: {
     justifyContent: "center",
     gap: Spacing.three,
   },

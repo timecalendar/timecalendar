@@ -514,6 +514,24 @@ truth; this file carries the caveats the config can't (R-1).
   `src/features/home/ui/home-screen.tsx` (listed for spacing only) fails; adding
   `feedback-screen.tsx` to the allowlist fails its test (stale and over the ceiling); removing
   `spacingLiteral` from the `home-screen.tsx` entry fails `npm run lint` on that file.
+- **Migrated screens** ([`src/design/screen-migration.contract.test.ts`](../../../mobile/src/design/screen-migration.contract.test.ts),
+  ADR [077](./decisions/077-visual-style-lint-ratchet.md)): `MIGRATED_SCREENS` lists each file a
+  Phase 5 slice has migrated, under its slice; `DRIFT_PATTERNS` holds the audit's drift greps
+  (`docs/mobile/design-system-audit/duplication-and-drift.md` → Method): color and named-color
+  literals, numeric spacing, radius and `fontSize`/`lineHeight`/`letterSpacing`, `fontWeight:`,
+  `fontFamily:`, legacy shadow keys, `useColorScheme`/`Appearance.`, `style={{`, `hairlineWidth`,
+  literal opacity, border width and `hitSlop`, `<ActivityIndicator`, `<SymbolView`,
+  `min(Height|Width): 44|48`, plus three that no lint rule covers: `themeColor=`, the legacy
+  `ThemedText` type aliases (`default`, `small`, `smallBold`, `subtitle`) and `Platform.OS` /
+  `Platform.select` with 44 or 48 on the line. `//` and `/* */` comments are stripped first, line
+  numbers kept. The test fails on any hit (`path:line id`), a listed file that does not exist, or a
+  path listed twice. Platform branching and style arrays stay allowed (they compose animated or
+  measured values). **The list only grows: every Phase 5 slice appends its files in the same PR
+  that migrates them and raises `MIGRATED_FILE_FLOOR` to the new count;** the test fails when the
+  list holds fewer files than the floor. Caveat: a value behind a variable or a computed key is
+  not seen, the same blind spot as the audit greps. Inject-and-revert proof: `themeColor="textSecondary"` in
+  `src/features/onboarding/ui/welcome-pages.tsx` and `const H = Platform.OS === "ios" ? 44 : 48` in
+  `connect-screen.tsx` fail the test with `theme-color-prop` and `touch-target-branch`.
 - **L12 — no identifiers on SwiftUI containers** (`local/no-swiftui-container-identifier` in the
   `timecalendar/swiftui-identifiers` block, `src/**`): SwiftUI applies an accessibility identifier
   set on a container to every child and replaces the children's own, so a row inside an identified

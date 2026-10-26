@@ -190,8 +190,16 @@ The registry lists, in this order (paths under `mobile/src/`):
   `WordmarkMaxFontScale` (`ui/home-screen.test.tsx`).
 - `onboarding/index` keeps its branded safe-area composition. Each welcome page wraps its content
   in a vertical ScrollView that centers when the content fits and scrolls when it does not; at
-  accessibility text sizes the illustration takes half its height, and page titles cap at
-  `WordmarkMaxFontScale` (`ui/welcome-screen.test.tsx`). Every ordinary pushed child uses
+  accessibility text sizes the illustration takes half its height, page titles cap at
+  `WordmarkMaxFontScale`, and no title, body, Skip or Next label sets a one-line cap or
+  shrink-to-fit, so every label wraps. Skip, Next and the final CTA are `Button`s; the Skip bar is
+  at least `MinTouchTarget + Spacing.three` tall and grows with Skip; the page indicator reserves
+  `MinTouchTarget`; the entrance fade and indicator transition take `Motion.base` and `Motion.fast`
+  and snap under reduced motion; body copy uses the `secondary` tone (`ui/welcome-screen.test.tsx`).
+  On iOS, a Dynamic Type change made while the app runs leaves React Native text frames at the
+  previous size until relaunch, app-wide (inbox
+  `2026-10-26-ios-runtime-dynamic-type-stale-text-layout.md`); a cold launch lays the welcome
+  pages out correctly at every size. Every ordinary pushed child uses
   compact native chrome and one shared page frame; form screens retain their keyboard/scroll owners,
   School retains its virtualized list and native search, and QR retains its full-bleed camera below
   the header. These presentation bounds do not change step order, validation, or routing.

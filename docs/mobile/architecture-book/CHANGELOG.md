@@ -1,3 +1,16 @@
+## 2026-10-26 — Onboarding welcome, connect and manual import on the design system
+
+- The welcome page body uses the `secondary` tone, the page indicator reserves `MinTouchTarget`,
+  and the entrance fade and indicator transition take `Motion.base` and `Motion.fast`
+  ([features.md](./features.md) → `onboarding/index`).
+- The welcome Skip bar is at least `MinTouchTarget + Spacing.three` tall (60 pt iOS, 64 dp Android)
+  and grows with Skip at large text sizes instead of clipping it.
+- Migrated Phase 5 screens are listed in a grow-only contract test that fails on any audit drift
+  pattern, including `themeColor`, legacy `ThemedText` type aliases and hand-rolled 44/48 touch
+  targets; slice 5.1 seeds it with the welcome, connect and manual-import files and their shared `step-styles.ts`, and sets its `MIGRATED_FILE_FLOOR` to 13
+  ([lint-format.md](./lint-format.md) → Migrated screens, ADR
+  [077](./decisions/077-visual-style-lint-ratchet.md)). No ratchet allowlist or ceiling changes.
+
 ## 2026-10-26 — Form screens on the design system
 
 - `KeyboardSafeActionLayout` owns the form rhythm: scroll-content gap and top padding, and the
