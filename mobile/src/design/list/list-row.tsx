@@ -209,6 +209,7 @@ type RowModel = {
   disabled: boolean
   selected: boolean
   stacked: boolean
+  accessory: ReactElement | null
   name: string
   textColor: string
   secondaryColor: string
@@ -221,13 +222,16 @@ function useRowModel(props: ListRowProps, grouped: boolean): RowModel {
   const accessibilitySize = useIsAccessibilityTextSize()
   const interactive = props.onPress !== undefined || props.href !== undefined
   const selected = interactive && props.selected === true
-  const accessory = !interactive && props.trailing !== undefined
+  const accessory =
+    props.trailing && props.trailing !== "chevron" ? props.trailing : null
   return {
     interactive,
     disabled: interactive && props.disabled === true,
     selected,
     stacked:
-      accessibilitySize && (Boolean(props.value) || selected || accessory),
+      accessibilitySize &&
+      (Boolean(props.value) || selected || accessory !== null),
+    accessory,
     name:
       props.accessibilityLabel ??
       joinRowName([
@@ -282,8 +286,7 @@ function RowText({
   stackedTrailing: ReactNode
 }) {
   const supporting = keyedLines([row.subtitle, ...(row.details ?? [])])
-  const stackedAccessory =
-    model.stacked && !model.interactive && row.trailing ? row.trailing : null
+  const stackedAccessory = model.stacked ? model.accessory : null
   const text = (
     <View
       style={stackedAccessory ? styles.stackedText : styles.text}
@@ -315,7 +318,7 @@ function RowText({
           {line}
         </ThemedText>
       ))}
-      {model.stacked ? (
+      {model.stacked && stackedTrailing ? (
         <View style={styles.stackedTrailing}>{stackedTrailing}</View>
       ) : null}
     </View>
@@ -358,8 +361,8 @@ function TrailingValue({
   )
 }
 
-function RowContent({ row, model }: { row: ListRowProps; model: RowModel }) {
-  const value = row.value ? (
+function RowValue({ value, model }: { value: string; model: RowModel }) {
+  return (
     <ThemedText
       numberOfLines={LINES.value}
       style={[
@@ -368,14 +371,43 @@ function RowContent({ row, model }: { row: ListRowProps; model: RowModel }) {
         { color: model.secondaryColor },
       ]}
     >
-      {row.value}
+      {value}
     </ThemedText>
-  ) : null
+  )
+}
+
+function InlineTrailing({
+  model,
+  value,
+  check,
+  chevron,
+}: {
+  model: RowModel
+  value: ReactNode
+  check: ReactNode
+  chevron: boolean
+}) {
+  return (
+    <>
+      {value ? (
+        <TrailingValue
+          interactive={model.interactive}
+          spaced={check !== null || chevron}
+        >
+          {value}
+        </TrailingValue>
+      ) : null}
+      {check}
+    </>
+  )
+}
+
+function RowContent({ row, model }: { row: ListRowProps; model: RowModel }) {
+  const value = row.value ? <RowValue value={row.value} model={model} /> : null
   const check = model.selected ? (
     <SelectedCheck testID={`${row.testID}-check`} />
   ) : null
-  const chevron =
-    model.interactive && row.trailing === "chevron" && Platform.OS === "ios"
+  const chevron = row.trailing === "chevron" && Platform.OS === "ios"
   return (
     <>
       {row.leading && model.leadingBox !== undefined ? (
@@ -389,24 +421,25 @@ function RowContent({ row, model }: { row: ListRowProps; model: RowModel }) {
         row={row}
         model={model}
         stackedTrailing={
-          <>
-            {value}
-            {check}
-          </>
+          value || check ? (
+            <>
+              {value}
+              {check}
+            </>
+          ) : null
         }
       />
-      {value && !model.stacked ? (
-        <TrailingValue
-          interactive={model.interactive}
-          spaced={check !== null || chevron}
-        >
-          {value}
-        </TrailingValue>
-      ) : null}
-      {model.stacked ? null : check}
+      {model.stacked ? null : (
+        <InlineTrailing
+          model={model}
+          value={value}
+          check={check}
+          chevron={chevron}
+        />
+      )}
       {chevron ? <DisclosureChevron testID={`${row.testID}-chevron`} /> : null}
-      {!model.interactive && row.trailing && !model.stacked ? (
-        <View style={styles.accessory}>{row.trailing}</View>
+      {model.accessory && !model.stacked ? (
+        <View style={styles.accessory}>{model.accessory}</View>
       ) : null}
     </>
   )

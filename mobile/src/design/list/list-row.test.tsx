@@ -434,6 +434,30 @@ describe.each(["ios", "android"] as const)("ListRow on %s", (platform) => {
     expect(onAccessory).toHaveBeenCalledTimes(1)
   })
 
+  it("stacks an accessory-only row without an empty trailing line", async () => {
+    mockFontScale = 3.571
+    const view = await render(
+      <ListRow
+        label="Seminar demo"
+        testID="row"
+        trailing={<Text testID="accessory">Un-hide</Text>}
+      />,
+    )
+    const text = view.getByLabelText("Seminar demo")
+    expect(view.getByTestId("accessory").parent!.parent).toBe(text.parent)
+    expect(text.children).toEqual([view.getByText("Seminar demo")])
+  })
+
+  it("keeps a null trailing row unstacked at accessibility sizes", async () => {
+    mockFontScale = 3.571
+    const view = await render(
+      <ListRow label="Seminar demo" testID="row" trailing={null!} />,
+    )
+    const text = view.getByLabelText("Seminar demo")
+    expect(text.parent!.props.testID).toBe("row")
+    expect(flat(text)).toMatchObject({ flex: 1 })
+  })
+
   it("wraps a multi-word label at accessibility sizes", async () => {
     mockFontScale = 3.571
     const view = await render(
