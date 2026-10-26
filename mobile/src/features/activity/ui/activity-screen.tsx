@@ -146,6 +146,7 @@ export function ActivityScreen() {
                 refreshFailed ? (
                   <ErrorNotice
                     compact
+                    style={styles.noticeGap}
                     testID="activity-cached-error"
                     message={t("activity.error.cached")}
                     action={{
@@ -327,5 +328,6 @@ const styles = StyleSheet.create({
   },
   stateLane: { flex: 1, paddingTop: Spacing.four },
   sectionGap: { marginTop: Spacing.four },
+  noticeGap: { marginBottom: Spacing.four },
   footer: { marginVertical: Spacing.four },
 })

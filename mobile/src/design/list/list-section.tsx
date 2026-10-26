@@ -88,11 +88,12 @@ export function ListSectionHeader({
     return (
       <ThemedText
         accessibilityRole="header"
+        accessibilityLabel={accessibilityLabel}
         type={titleType}
         tone={titleTone}
         numberOfLines={4}
         style={[inset, style]}
-        {...(testID ? { testID } : {})}
+        testID={testID}
       >
         {title}
       </ThemedText>

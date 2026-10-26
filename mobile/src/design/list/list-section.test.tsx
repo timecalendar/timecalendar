@@ -152,6 +152,13 @@ describe.each(["ios", "android"] as const)(
       )
     })
 
+    it("names a title-only heading by its accessibilityLabel", async () => {
+      const view = await render(
+        <ListSectionHeader title="Title" accessibilityLabel="Spoken title" />,
+      )
+      expect(view.getByRole("header", { name: "Spoken title" })).toBeTruthy()
+    })
+
     it("joins a detail into one heading named by title and detail", async () => {
       const view = await render(
         <ListSectionHeader

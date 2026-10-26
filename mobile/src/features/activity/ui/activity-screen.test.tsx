@@ -189,7 +189,11 @@ describe.each([
         refresh: mockScreenRefresh,
       })
       await render(<ActivityScreen />)
-      expect(screen.getByTestId("activity-cached-error")).toBeTruthy()
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId("activity-cached-error").props.style,
+        ).marginBottom,
+      ).toBe(Spacing.four)
       expect(screen.getByText("Event new")).toBeTruthy()
     })
 
