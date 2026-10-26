@@ -43,7 +43,7 @@ The fixture is a plain YAML file under `modules/feature-flag/fixtures/`, so dev 
 
 ### D4: No Architecture Book rule change
 
-`docs/mobile/architecture-book/testing.md` only says that `ci/e2e-server.sh` owns boot, seed, and teardown, and points to the `e2e-server-lifecycle` spec. It does not describe the order. The spec delta carries the ordering requirement, so the Book needs no edit and gets no CHANGELOG entry.
+`docs/mobile/architecture-book/testing.md` only says that `ci/e2e-server.sh` owns boot, seed, and teardown, and points to the `e2e-server-lifecycle` spec. It does not describe the order. The spec delta carries the ordering requirement, so no Book rule file changes. The CHANGELOG entry records the rewritten harness docs (`app/integration_test/README.md`, `docs/agent-dev-environment.md`).
 
 ## Risks / Trade-offs
 
