@@ -144,7 +144,7 @@ Android on the Mac. Land three commits, following the design's Migration Plan.
 
 ## 5. CI proof
 
-- [ ] 5.1 The CI proof for the runtime behavior is the Jest suite gated by `test-mobile`:
+- [x] 5.1 The CI proof for the runtime behavior is the Jest suite gated by `test-mobile`:
       `badge.test.tsx` (tone tokens per scheme, the required accessibility choice, text scaling),
       `color-dot.test.tsx` (decorative, verbatim color, ring tokens), `theme.test.tsx` (the
       composited brand-wash pairs at 4.5:1), the registry matrix, and the lint rule plus allowlist
