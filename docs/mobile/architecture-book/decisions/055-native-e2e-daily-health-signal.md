@@ -1,5 +1,11 @@
 # ADR 055 — Native E2E is a conditional daily health signal
 
+## Status
+
+Superseded in part by [ADR 071](./071-native-e2e-runs-every-scheduled-day.md): the conditional
+schedule and the previous-attempt boundary. The cadence, the absence of a pull-request trigger,
+the immutable target, concurrency, and evidence sections stand.
+
 ## Context
 
 Android and iOS native E2E exercise the complete application, backend, build toolchain, and device runtime, but each cold platform run is too expensive and environment-sensitive to gate ordinary feature delivery. Fast pull-request checks already protect types, lint, unit/component/integration behavior, Maestro selectors, the shell harness, and the workflow contract.

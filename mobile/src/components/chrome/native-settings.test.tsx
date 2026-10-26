@@ -1,3 +1,4 @@
+import { Section as SwiftSection } from "@expo/ui/swift-ui"
 import { fireEvent, render, within } from "@testing-library/react-native"
 import { router } from "expo-router"
 
@@ -871,7 +872,7 @@ describe("iOS settings rows at accessibility text sizes", () => {
           view.getByTestId(id).props
         return { id, accessibilityLabel, accessibilityValue }
       })
-      view.unmount()
+      await view.unmount()
       return result
     }
 
@@ -894,5 +895,25 @@ describe("iOS settings rows at accessibility text sizes", () => {
         accessibilityValue: { text: "4.0.0" },
       },
     ])
+  })
+})
+
+describe("SwiftUI container identifiers on ios", () => {
+  usePlatform("ios")
+
+  it("rejects an identifier spread onto a SwiftUI Section", async () => {
+    const consoleError = jest
+      .spyOn(console, "error")
+      .mockImplementation(() => {})
+    await expect(
+      render(
+        <NativeSettingsHost>
+          <SwiftSection {...{ testID: "x" }}>{null}</SwiftSection>
+        </NativeSettingsHost>,
+      ),
+    ).rejects.toThrow(
+      "SwiftUI Section received an accessibility identifier; it cascades onto every child (lint-format.md → L12)",
+    )
+    consoleError.mockRestore()
   })
 })

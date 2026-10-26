@@ -120,6 +120,12 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   3 primitive selection, current-buffer submission, retained draft, outside/Back policy, and
   keyboard/focus layout ownership. They do not claim rendered keyboard, rotation, Dynamic Type, or
   screen-reader behavior; those remain the linked device-evidence pass under ADR 056.
+- **SwiftUI container mocks throw on an identifier.** In `jest/setup-expo-ui.ts`, `Form`,
+  `Section`, `Group`, the stacks and `BottomSheet` throw when given a `testID` or an
+  `accessibilityIdentifier` modifier, and `Host` throws for the modifier, because SwiftUI cascades a
+  container identifier onto every child. This catches what lint L12 cannot follow (spread props,
+  modifier arrays from another module). `Group` renders with the fixed `testID` `swiftui-group` so
+  tests can read the sheet's modifiers ([theming.md](./theming.md) → Identifiers).
 - **Native settings chrome has a focused contract suite.** It proves SwiftUI versus Material host
   selection, resolved-scheme propagation, one Form/LazyColumn scroll owner, closed row semantics,
   switch single activation, checkmarked/radio selection, and dialog cancellation. Settings, About,
@@ -160,7 +166,7 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   dialog close and reopen, menu selection, a date pick), using the suite-wide native mocks. The
   `@expo/ui/community/menu` mock wraps the trigger as each platform does: a button on iOS (the
   SwiftUI `Menu` label); on Android a `Pressable` with `accessible={false}` whose press opens the
-  menu, while the children carry their own role (`MenuView.android.tsx`). The `@expo/ui/community/datetime-picker` mock forwards its props and maps `disabled`; its Android date mode (`mode` `date` or `datetime`) confirms a UTC-midnight day, as Compose does.
+  menu, while the children carry their own role (`MenuView.android.tsx`). The `@expo/ui/community/datetime-picker` mock forwards its props and maps `disabled`; its Android date mode (`mode` `date` or `datetime`) confirms the UTC-midnight day 5 January, as Compose does, with the event `buildChangeEvent` builds from that Date. No fixture opens on 5 January, so a gallery test proves a pick reaches the row.
 
 ## Time zones
 
@@ -180,6 +186,8 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   (ADR [035](./decisions/035-display-timezone-preference.md)). The `toZonedTime` proxy pattern
   relies on device-local getters, so a syntactic ban would be noise. The one named trap,
   `date-fns-tz` `getTimezoneOffset`, is lint L11 ([lint-format.md](./lint-format.md)).
+  `mobile/eslint-l11.contract.test.ts` lints every static and dynamic import form through the real
+  ESLint config.
 
 ## E2E — Maestro, real round-trip
 
@@ -214,7 +222,10 @@ table. Native sheet/search placement remains project-owner device evidence under
   `E2E_SERVER_IMAGE`) and `e2e-mobile-ios` (macOS runner, Postgres/Redis provisioned natively
   because GitHub macOS runners have no Docker — the `--native` seam). Both upload Maestro debug
   output + server logs on failure (R-1).
-- This development host has no KVM or iOS simulator, so local work proves server/Jest integration, TypeScript, lint, coverage, wrapper behavior, Maestro syntax, and workflow structure but never claims native execution. The next relevant daily run or a deliberate manual ref/SHA dispatch supplies informational Android/iOS health evidence; physical-device checks remain separate non-blocking evidence.
+- The Jest run includes the native-contract mocks: the SwiftUI container mocks throw on an
+  identifier (L12), the suite-wide Android date mock confirms 5 January with a Compose-shaped
+  event, the RuleTester suites under `tools/eslint-rules/`, and `eslint-l11.contract.test.ts`.
+- This development host has no KVM or iOS simulator, so local work proves server/Jest integration, TypeScript, lint, coverage, wrapper behavior, Maestro syntax, and workflow structure but never claims native execution. The next daily run or a deliberate manual ref/SHA dispatch supplies informational Android/iOS health evidence; physical-device checks remain separate non-blocking evidence.
 
 ### Workflow split + daily/manual E2E
 
@@ -222,7 +233,7 @@ Workflows are split by concern; native E2E is **not** run on every push (cold na
 
 - **`ci-build-deploy.yml`** — server/web images, server tests, deploy (every push; deploy self-gates to main/production).
 - **`ci-mobile.yml`** — `test-mobile` (gen-drift, tsc, lint, Jest under `TZ: UTC` with coverage) and `test-mobile-timezones` (Jest in three zones, see Time zones); path-filtered to `mobile/**` + `openapi/**` + **`.github/workflows/ci-mobile-e2e.yml`**. It also runs `test_run_e2e.sh` and mutation-backed `test_ci_mobile_e2e.sh` — pure bash + node, no device. These are ordinary pull-request gates even though the native workflow itself has no pull-request trigger.
-- **`ci-mobile-e2e.yml`** — one daily schedule plus required-ref manual dispatch. Preparation resolves one immutable target; manual runs always select both platforms, while scheduled runs compare current `main` with the preceding scheduled attempt's `head_sha` and select Android plus iOS only for changes under `mobile/**`, `openapi/**`, `server/**`, the shared E2E lifecycle/key generator, `.nvmrc`, or the workflow. No predecessor initializes health by running; an unusable boundary fails visibly. Daily and manual invocations serialize without cancellation, and platform failures retain Maestro debug output plus server logs (ADR [055](./decisions/055-native-e2e-daily-health-signal.md)).
+- **`ci-mobile-e2e.yml`** — one daily schedule on `main` plus required-ref manual dispatch. Every scheduled and manual run resolves one immutable target, builds the server image and runs Android and iOS against it. No job or step is skipped, so a run's conclusion is the lane's state: `test_ci_mobile_e2e.sh` rejects job conditions, step conditions other than `if: failure()`, `continue-on-error` and change-detection outputs, each with a mutation. Daily and manual invocations serialize without cancellation, and platform failures retain Maestro debug output plus server logs (ADR [071](./decisions/071-native-e2e-runs-every-scheduled-day.md), [055](./decisions/055-native-e2e-daily-health-signal.md)).
 - **`ci-flutter.yml`** — legacy `test-app` + Flutter `test-e2e`, demoted to main/production pushes touching `app/**` (R-5 bounded maintenance).
 - **Branch-protection caveat:** path-filtered jobs that are skipped don't report a status — if any of these become _required_ checks, a skip can block a PR. None are required today.
 

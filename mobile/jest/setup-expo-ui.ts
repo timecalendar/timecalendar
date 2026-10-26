@@ -84,8 +84,10 @@ jest.mock("@expo/ui", () => {
 // renders the received value's ISO string and a pressable that fires
 // onValueChange(changeEvent, picked), matching the real prop shape (value, mode,
 // onValueChange, testID). It follows the native contract it stands in for: the
-// Android date picker (mode "date" or "datetime") confirms a UTC-midnight day,
-// as Compose does (ADR 066); every other picker confirms 2030-01-02T03:04Z.
+// event is built from the picked Date as @expo/ui's buildChangeEvent does; the
+// Android date picker (mode "date" or "datetime") confirms the UTC-midnight day
+// 5 January, as Compose does (ADR 066), a day no fixture opens on so every pick
+// is observable; every other picker confirms 2030-01-02T03:04Z.
 jest.mock("@expo/ui/community/datetime-picker", () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require("react")
@@ -93,7 +95,7 @@ jest.mock("@expo/ui/community/datetime-picker", () => {
   const { Platform, Pressable, Text } = require("react-native")
 
   const FIXED_DATE = new Date("2030-01-02T03:04:00.000Z")
-  const COMPOSE_DAY = new Date(Date.UTC(2030, 0, 2))
+  const COMPOSE_DAY = new Date(Date.UTC(2030, 0, 5))
 
   function DateTimePicker(props: {
     testID?: string
@@ -117,7 +119,12 @@ jest.mock("@expo/ui/community/datetime-picker", () => {
         disabled,
         onPress: () =>
           onValueChange?.(
-            { nativeEvent: { timestamp: 0, utcOffset: 0 } },
+            {
+              nativeEvent: {
+                timestamp: picked.getTime(),
+                utcOffset: -picked.getTimezoneOffset(),
+              },
+            },
             picked,
           ),
       },
@@ -249,6 +256,11 @@ jest.mock("@expo/ui/swift-ui/modifiers", () => {
   }
 })
 
+// SwiftUI applies an identifier set on a container (Form, Section, Group,
+// stacks, BottomSheet) to every child and replaces theirs, so every container
+// mock throws when it receives a testID or an accessibilityIdentifier modifier,
+// and Host throws for the modifier (its testID lands on the UIKit view). This
+// catches the identifiers lint L12 cannot follow, such as spread props.
 jest.mock("@expo/ui/swift-ui", () => {
   const React = jest.requireActual("react")
 
@@ -264,6 +276,21 @@ jest.mock("@expo/ui/swift-ui", () => {
     type: string,
   ) => modifiers?.find((modifier) => modifier.$type === type)?.value
 
+  function assertNoContainerIdentifier(
+    name: string,
+    props: { testID?: unknown; modifiers?: { $type: string }[] },
+    { testIDAllowed = false } = {},
+  ) {
+    const hasModifier = props.modifiers?.some(
+      (modifier) => modifier.$type === "accessibilityIdentifier",
+    )
+    if (hasModifier || (!testIDAllowed && props.testID !== undefined)) {
+      throw new Error(
+        `SwiftUI ${name} received an accessibility identifier; it cascades onto every child (lint-format.md → L12)`,
+      )
+    }
+  }
+
   function useNativeState(initialValue: unknown) {
     const state = React.useRef({
       value: initialValue,
@@ -278,25 +305,39 @@ jest.mock("@expo/ui/swift-ui", () => {
     return state.current
   }
 
-  function Host({ children, ...props }: { children?: unknown }) {
+  function Host({
+    children,
+    ...props
+  }: {
+    children?: unknown
+    modifiers?: { $type: string }[]
+  }) {
+    assertNoContainerIdentifier("Host", props, { testIDAllowed: true })
     return React.createElement(
       View,
       { testID: "swiftui-host", ...props },
       children,
     )
   }
-  function Stack({
-    children,
-    ...props
-  }: {
-    children?: unknown
-    testID?: string
-  }) {
-    return React.createElement(View, props, children)
+  function stack(name: string, fixedTestID?: string) {
+    return function Stack({
+      children,
+      ...props
+    }: {
+      children?: unknown
+      testID?: string
+      modifiers?: { $type: string }[]
+    }) {
+      assertNoContainerIdentifier(name, props)
+      return React.createElement(
+        View,
+        fixedTestID ? { ...props, testID: fixedTestID } : props,
+        children,
+      )
+    }
   }
-  function VStack(props: { children?: unknown }) {
-    return Stack({ testID: "swiftui-vstack", ...props })
-  }
+  const VStack = stack("VStack", "swiftui-vstack")
+  const HStack = stack("HStack")
   function Text({
     children,
     modifiers,
@@ -363,7 +404,7 @@ jest.mock("@expo/ui/swift-ui", () => {
       },
     })
   }
-  Object.assign(TextField, { Placeholder: Stack })
+  Object.assign(TextField, { Placeholder: stack("TextField.Placeholder") })
   function Button(props: {
     testID?: string
     label?: string
@@ -399,16 +440,18 @@ jest.mock("@expo/ui/swift-ui", () => {
   }
   function Form({
     children,
-    modifiers,
+    ...props
   }: {
     children?: unknown
+    testID?: string
     modifiers?: { $type: string; value: unknown }[]
   }) {
+    assertNoContainerIdentifier("Form", props)
     return React.createElement(
       View,
       {
         testID: "swiftui-form-scroll-owner",
-        tint: modifierValue(modifiers, "tint"),
+        tint: modifierValue(props.modifiers, "tint"),
       },
       children,
     )
@@ -417,11 +460,13 @@ jest.mock("@expo/ui/swift-ui", () => {
     title?: string
     footer?: unknown
     children?: unknown
+    testID?: string
     modifiers?: { $type: string; value: unknown }[]
   }) {
+    assertNoContainerIdentifier("Section", props)
     return React.createElement(
       View,
-      { testID: modifierValue(props.modifiers, "accessibilityIdentifier") },
+      null,
       props.title ? React.createElement(NativeText, null, props.title) : null,
       props.children,
       props.footer ?? null,
@@ -484,7 +529,10 @@ jest.mock("@expo/ui/swift-ui", () => {
     isPresented: boolean
     onIsPresentedChange: (value: boolean) => void
     children?: unknown
+    testID?: string
+    modifiers?: { $type: string }[]
   }) {
+    assertNoContainerIdentifier("BottomSheet", props)
     if (!props.isPresented) return null
     return React.createElement(
       View,
@@ -497,14 +545,13 @@ jest.mock("@expo/ui/swift-ui", () => {
   }
   function Group(props: {
     children?: unknown
+    testID?: string
     modifiers?: { $type: string; value: unknown }[]
   }) {
+    assertNoContainerIdentifier("Group", props)
     return React.createElement(
       View,
-      {
-        testID: modifierValue(props.modifiers, "accessibilityIdentifier"),
-        modifiers: props.modifiers,
-      },
+      { testID: "swiftui-group", modifiers: props.modifiers },
       props.children,
     )
   }
@@ -523,7 +570,7 @@ jest.mock("@expo/ui/swift-ui", () => {
     Button,
     Form,
     Group,
-    HStack: Stack,
+    HStack,
     Host,
     Image,
     LabeledContent,

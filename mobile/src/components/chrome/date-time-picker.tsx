@@ -6,17 +6,35 @@ import { ExpoDateTimePicker } from "./expo-ui"
 
 export type DateTimePickerProps = ComponentProps<typeof ExpoDateTimePicker>
 
-// Takes and reports device-local Dates on both platforms. The Android date
-// picker speaks UTC-midnight days, so its day is converted here and the value's
-// local time of day is kept. Invalid and epoch Dates are the Compose "no
-// selection" confirm and pass through for the consumer to treat as a cancel.
+// Takes and reports device-local Dates on both platforms, with events that
+// describe the reported Date. The Android date picker speaks UTC-midnight days,
+// so its day is converted here, the value's local time of day is kept, and the
+// event is rebuilt from the converted Date. Invalid and epoch Dates are the
+// Compose "no selection" confirm and pass through with their event, for the
+// consumer to treat as a cancel.
 export function DateTimePicker(props: DateTimePickerProps) {
   const { value, mode, onValueChange, onChange } = props
   if (Platform.OS !== "android" || mode === "time")
     return <ExpoDateTimePicker {...props} />
 
-  const toLocal = (picked: Date) =>
-    isPickedDay(picked) ? fromComposeDay(picked, value) : picked
+  function toLocal<Event extends { nativeEvent: object }>(
+    event: Event,
+    picked: Date,
+  ): [Event, Date] {
+    if (!isPickedDay(picked)) return [event, picked]
+    const local = fromComposeDay(picked, value)
+    return [
+      {
+        ...event,
+        nativeEvent: {
+          ...event.nativeEvent,
+          timestamp: local.getTime(),
+          utcOffset: -local.getTimezoneOffset(),
+        },
+      },
+      local,
+    ]
+  }
 
   return (
     <ExpoDateTimePicker
@@ -24,13 +42,16 @@ export function DateTimePicker(props: DateTimePickerProps) {
       value={composeDayOf(value)}
       {...(onValueChange
         ? {
-            onValueChange: (event, date) => onValueChange(event, toLocal(date)),
+            onValueChange: (event, date) =>
+              onValueChange(...toLocal(event, date)),
           }
         : {})}
       {...(onChange
         ? {
             onChange: (event, date) =>
-              onChange(event, date === undefined ? date : toLocal(date)),
+              date === undefined
+                ? onChange(event, date)
+                : onChange(...toLocal(event, date)),
           }
         : {})}
     />

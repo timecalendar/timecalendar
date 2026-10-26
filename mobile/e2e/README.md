@@ -111,8 +111,8 @@ requires a new board decision (ADR 057).
 
 ## CI evidence
 
-The native workflow is scheduled daily when relevant inputs changed and may be
-manually dispatched with an explicit ref or SHA. Preparation resolves one
-immutable commit used by the server image and both platform jobs. Android and iOS
+The native workflow runs daily on `main` and may be manually dispatched with an
+explicit ref or SHA. Every run resolves one immutable commit, builds the server
+image and runs both platforms against it; nothing is skipped (ADR 071). Android and iOS
 retain Maestro debug output and server logs on failure. Native results are health
 evidence; ordinary pull requests rely on the static and lower-level gates above.

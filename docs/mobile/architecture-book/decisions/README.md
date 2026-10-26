@@ -47,7 +47,7 @@ decision changes; use Git for its history.
 | [052](./052-eventual-calendar-name-convergence-through-sync.md)       | Converge calendar names through a name-only sync write                                            |
 | [053](./053-react-doctor-changed-code-gate.md)                        | Keep React Doctor advisory globally and blocking on changed code                                  |
 | [054](./054-shared-root-page-semantics.md)                            | Share root-page semantics while keeping platform placement native                                 |
-| [055](./055-native-e2e-daily-health-signal.md)                        | Run native E2E as a conditional daily/manual health signal                                        |
+| [055](./055-native-e2e-daily-health-signal.md)                        | Run native E2E as a daily/manual health signal                                                    |
 | [056](./056-compose-native-dialog-behind-chrome.md)                   | Compose divergent native dialogs behind the chrome seam                                           |
 | [057](./057-three-journey-native-smoke-budget.md)                     | Limit daily native smoke to three durable business journeys                                       |
 | [058](./058-activity-virtual-fragment-pagination.md)                  | Page Activity as stable byte-bounded virtual fragments                                            |
@@ -63,6 +63,7 @@ decision changes; use Git for its history.
 | [068](./068-design-layer-barrel-and-gallery-entry.md)                 | Design primitives behind `@/design`, the gallery behind the developer-only `@/design/gallery`     |
 | [069](./069-status-view.md)                                           | One `StatusView` for loading, empty and error states                                              |
 | [070](./070-text-field.md)                                            | One `TextField` and a product-free `DateTimeField`                                                |
+| [071](./071-native-e2e-runs-every-scheduled-day.md)                   | Run both native E2E platforms on every scheduled day, with no skip                                |
 
 > `045` is intentionally left free: the open source-recovery PR carries an ADR
 > numbered `044` that collides with the merged one above and renumbers to `045`

@@ -4,10 +4,16 @@ import { DateTimePicker } from "@/components/chrome"
 import { usePlatform } from "@/test-support/platform"
 
 let mockPicked = new Date(Date.UTC(2030, 0, 5))
+const mockEvents = new Map<string, unknown>()
+const mockDescribing = (date: Date) => ({
+  timestamp: date.getTime(),
+  utcOffset: -date.getTimezoneOffset(),
+})
 
 // The Compose date picker reads its value as a UTC-midnight day and confirms
 // one, whatever the device zone (DatePickerView.kt, pinned in
-// compose-date-day.test.ts).
+// compose-date-day.test.ts). Events are built from the Date the way @expo/ui's
+// buildChangeEvent does, and a dismissal without onDismiss reports `value`.
 jest.mock("@expo/ui/community/datetime-picker", () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require("react")
@@ -22,7 +28,7 @@ jest.mock("@expo/ui/community/datetime-picker", () => {
     onChange?: (event: unknown, date?: Date) => void
   }) {
     const { value, minimumDate, maximumDate, onValueChange, onChange } = props
-    const event = { nativeEvent: { timestamp: 0, utcOffset: 0 } }
+    const eventOf = (date: Date) => ({ nativeEvent: mockDescribing(date) })
     return React.createElement(
       View,
       null,
@@ -33,15 +39,25 @@ jest.mock("@expo/ui/community/datetime-picker", () => {
           minimumDate,
           maximumDate,
           onPress: () => {
-            onValueChange?.(event, mockPicked)
-            onChange?.({ ...event, type: "set" }, mockPicked)
+            const changeEvent = eventOf(mockPicked)
+            const setEvent = { ...changeEvent, type: "set" }
+            mockEvents.set("onValueChange", changeEvent)
+            mockEvents.set("onChange", setEvent)
+            onValueChange?.(changeEvent, mockPicked)
+            onChange?.(setEvent, mockPicked)
           },
         },
         React.createElement(Text, null, value.toISOString()),
       ),
       React.createElement(Pressable, {
         testID: "native-dismiss",
-        onPress: () => onChange?.({ ...event, type: "dismissed" }, undefined),
+        onPress: () =>
+          onChange?.({ ...eventOf(value), type: "dismissed" }, value),
+      }),
+      React.createElement(Pressable, {
+        testID: "native-dismiss-without-date",
+        onPress: () =>
+          onChange?.({ ...eventOf(value), type: "dismissed" }, undefined),
       }),
     )
   }
@@ -102,6 +118,47 @@ describe("on Android", () => {
         2030, 0, 5, 23, 30,
       ])
     })
+
+    it("reports events that describe the reported Date", async () => {
+      const onValueChange = jest.fn()
+      const onChange = jest.fn()
+      const view = await render(
+        <DateTimePicker
+          mode={mode}
+          presentation={presentation}
+          value={VALUE}
+          onValueChange={onValueChange}
+          onChange={onChange}
+        />,
+      )
+      await fireEvent.press(view.getByTestId("native-picker"))
+      const [changeEvent, changed] = onValueChange.mock.calls[0]
+      expect(changeEvent.nativeEvent).toEqual(mockDescribing(changed))
+      const [setEvent, set] = onChange.mock.calls[0]
+      expect(setEvent).toEqual({
+        type: "set",
+        nativeEvent: mockDescribing(set),
+      })
+    })
+
+    it("reports a dismissal with the original value and a matching event", async () => {
+      const onChange = jest.fn()
+      const view = await render(
+        <DateTimePicker
+          mode={mode}
+          presentation={presentation}
+          value={VALUE}
+          onChange={onChange}
+        />,
+      )
+      await fireEvent.press(view.getByTestId("native-dismiss"))
+      const [event, date] = onChange.mock.calls[0]
+      expect(date.getTime()).toBe(VALUE.getTime())
+      expect(event).toEqual({
+        type: "dismissed",
+        nativeEvent: mockDescribing(VALUE),
+      })
+    })
   })
 
   it("reports a dismissal through the deprecated onChange without a Date", async () => {
@@ -109,7 +166,7 @@ describe("on Android", () => {
     const view = await render(
       <DateTimePicker mode="date" value={VALUE} onChange={onChange} />,
     )
-    await fireEvent.press(view.getByTestId("native-dismiss"))
+    await fireEvent.press(view.getByTestId("native-dismiss-without-date"))
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ type: "dismissed" }),
       undefined,
@@ -154,6 +211,8 @@ describe("on Android", () => {
     await fireEvent.press(view.getByTestId("native-picker"))
     expect(onValueChange.mock.calls[0][1]).toBe(picked)
     expect(onChange.mock.calls[0][1]).toBe(picked)
+    expect(onValueChange.mock.calls[0][0]).toBe(mockEvents.get("onValueChange"))
+    expect(onChange.mock.calls[0][0]).toBe(mockEvents.get("onChange"))
   })
 
   it("passes the bounds through unchanged", async () => {

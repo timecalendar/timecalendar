@@ -226,12 +226,22 @@ const rawTouchablesImportPath = {
   message: "Use Button from @/design (ADR 067, lint-format.md → Buttons).",
 }
 
-// L11: zone offsets come from the instant (lint-format.md → L11).
-const zoneOffsetTrapImportPath = {
-  name: "date-fns-tz",
-  importNames: ["getTimezoneOffset"],
-  message:
-    "getTimezoneOffset reads device-local Date fields; use zoneOffsetMinutes from @/features/calendar/data (lint-format.md → L11).",
+// L11: zone offsets come from the instant (lint-format.md → L11). The root and
+// `fp` barrels expose getTimezoneOffset (also as a default-import member), and
+// each has its own sub-path export; dynamic import() is banned in
+// restrictedSyntax.
+const zoneOffsetTrapMessage =
+  "getTimezoneOffset reads device-local Date fields; use zoneOffsetMinutes from @/features/calendar/data (lint-format.md → L11)."
+const zoneOffsetTrapImportPaths = ["date-fns-tz", "date-fns-tz/fp"].map(
+  (name) => ({
+    name,
+    importNames: ["default", "getTimezoneOffset"],
+    message: zoneOffsetTrapMessage,
+  }),
+)
+const zoneOffsetTrapImportPattern = {
+  regex: "^date-fns-tz/(fp/)?getTimezoneOffset$",
+  message: zoneOffsetTrapMessage,
 }
 
 // Route files are entrypoints, not modules. Named (rather than inlined in the
@@ -292,6 +302,7 @@ const restrictedImports = (
       ...(banDesignDeepImports ? [designDeepImportPattern] : []),
       ...(banGalleryEntry ? [galleryEntryImportPattern] : []),
       ...(banDesignBarrel ? [designBarrelImportPattern] : []),
+      ...(banZoneOffsetTrap ? [zoneOffsetTrapImportPattern] : []),
       ...extraPatterns,
     ],
     paths: [
@@ -300,7 +311,7 @@ const restrictedImports = (
       ...(banDeviceColorScheme ? [deviceColorSchemeImportPath] : []),
       ...(banDeveloperTools ? [developerToolsImportPath] : []),
       ...(banSymbolView ? [symbolViewImportPath] : []),
-      ...(banZoneOffsetTrap ? [zoneOffsetTrapImportPath] : []),
+      ...(banZoneOffsetTrap ? zoneOffsetTrapImportPaths : []),
       rawTouchablesImportPath,
     ],
   },
@@ -316,8 +327,9 @@ const restrictedGlobals = [
 
 // Font scaling is never disabled (accessibility.md → Font scaling). The property
 // selector covers spread props (`{...{ allowFontScaling: false }}`, shared
-// `textProps`). Flat config REPLACES a rule's options, so any later block that
-// sets `no-restricted-syntax` must spread this list or it silently drops the ban.
+// `textProps`). L11 bans dynamic import() of date-fns-tz here. Flat config
+// REPLACES a rule's options, so any later block that sets `no-restricted-syntax`
+// must spread this list or it silently drops the bans.
 const restrictedSyntax = [
   "JSXAttribute[name.name='allowFontScaling'][value.expression.value=false]",
   "Property[key.name='allowFontScaling'][value.value=false]",
@@ -334,6 +346,16 @@ restrictedSyntax.push(
     selector,
     message:
       "React Native forwards no described-by relation; fold the error into accessibilityHint with fieldErrorHint (ADR 069)",
+  })),
+)
+restrictedSyntax.push(
+  ...[
+    "ImportExpression[source.value=/^date-fns-tz/]",
+    "ImportExpression[source.type='TemplateLiteral'][source.quasis.0.value.cooked=/^date-fns-tz/]",
+  ].map((selector) => ({
+    selector,
+    message:
+      "Import date-fns-tz statically so L11 can check it; zone offsets come from zoneOffsetMinutes in @/features/calendar/data (lint-format.md → L11).",
   })),
 )
 
@@ -856,6 +878,14 @@ module.exports = defineConfig([
     plugins: { local: localRules },
     rules: {
       "local/no-raw-text-input": "error",
+    },
+  },
+  {
+    name: "timecalendar/swiftui-identifiers",
+    files: ["src/**/*.{ts,tsx}"],
+    plugins: { local: localRules },
+    rules: {
+      "local/no-swiftui-container-identifier": "error",
     },
   },
   {

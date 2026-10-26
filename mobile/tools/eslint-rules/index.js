@@ -4,6 +4,7 @@ const noAdHocStatus = require("./no-ad-hoc-status")
 const noJsCallInWorklet = require("./no-js-call-in-worklet")
 const noRawButton = require("./no-raw-button")
 const noRawTextInput = require("./no-raw-text-input")
+const noSwiftuiContainerIdentifier = require("./no-swiftui-container-identifier")
 
 module.exports = {
   rules: {
@@ -11,5 +12,6 @@ module.exports = {
     "no-js-call-in-worklet": noJsCallInWorklet,
     "no-raw-button": noRawButton,
     "no-raw-text-input": noRawTextInput,
+    "no-swiftui-container-identifier": noSwiftuiContainerIdentifier,
   },
 }
