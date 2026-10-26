@@ -116,18 +116,18 @@ Never build Android on the Mac. Migrate no screen. Land two commits per design �
 
 ## 5. Local verification
 
-- [ ] 5.1 `npx tsc --noEmit` passes.
-- [ ] 5.2 `npm run lint` passes with zero warnings.
-- [ ] 5.3 `npm test -- --coverage` passes, including the 90% per-file branch tiers,
+- [x] 5.1 `npx tsc --noEmit` passes.
+- [x] 5.2 `npm run lint` passes with zero warnings.
+- [x] 5.3 `npm test -- --coverage` passes, including the 90% per-file branch tiers,
       `tools/eslint-rules`, the design import-policy and import-graph contracts, the shell
       contract and FR/EN parity. Record suite and test counts for the PR.
-- [ ] 5.4 From the repo root, `openspec validate mobile-ds-import-bans` passes; grep the change
+- [x] 5.4 From the repo root, `openspec validate mobile-ds-import-bans` passes; grep the change
       folder, the new rule, its tests and the allowlist for developer or account names. Verify:
       none found.
 
 ## 6. Architecture Book (`docs/mobile/architecture-book/`) — commit 2
 
-- [ ] 6.1 `lint-format.md`: add `timecalendar/components-home`, `timecalendar/routes-shell`,
+- [x] 6.1 `lint-format.md`: add `timecalendar/components-home`, `timecalendar/routes-shell`,
       `timecalendar/raw-primitive` and `timecalendar/raw-primitive-allowlist` to the block list at
       the top. In **Design layer**, add the two patterns and flags and extend the table with
       `@/components/chrome/…` and app-shell columns plus rows for routes and `src/components/`
@@ -140,18 +140,18 @@ Never build Android on the Mac. Migrate no screen. Land two commits per design �
       Restate that every migration slice deletes its files from the allowlist in the same PR.
       Verify: `rg -n "no-raw-primitive|raw-primitive-allowlist|banChromeDeepImports|banAppShellImports|expo-symbols/" docs/mobile/architecture-book/lint-format.md`
       shows each.
-- [ ] 6.2 `decisions/077-visual-style-lint-ratchet.md`: write the 4.2 decisions into Context,
+- [x] 6.2 `decisions/077-visual-style-lint-ratchet.md`: write the 4.2 decisions into Context,
       Decision, Rejected, Consequences and Revisit if, from design.md → Decision (current state,
       no "amended" narration). Widen the `decisions/README.md` row 077 text to cover the import
       bans. Verify: `rg -n "no-raw-primitive" docs/mobile/architecture-book/decisions/077-visual-style-lint-ratchet.md`
       matches and the README table still renders (column count unchanged).
-- [ ] 6.3 `CHANGELOG.md`: add `## 2026-10-26 — Design-system import bans` above the current first
+- [x] 6.3 `CHANGELOG.md`: add `## 2026-10-26 — Design-system import bans` above the current first
       entry, with bullets for the chrome barrel and app-shell bans (lint-format.md → Design layer),
       `local/no-raw-primitive` and its one-entry allowlist (lint-format.md → Raw primitives), the
       completed `expo-symbols` ban (lint-format.md → L9), each linking ADR 077. Verify: the entry
       is first and every link resolves.
-- [ ] 6.4 `docs/mobile/design-system-audit/migration-roadmap.md`: leave it unchanged unless it
+- [x] 6.4 `docs/mobile/design-system-audit/migration-roadmap.md`: leave it unchanged unless it
       tracks slice status (it does not at 0242ab41). Verify: no diff, or a diff that follows the
       file's existing convention.
-- [ ] 6.5 Commit 2. Verify: `npm run lint`, `npm test -- --coverage` and
+- [x] 6.5 Commit 2. Verify: `npm run lint`, `npm test -- --coverage` and
       `openspec validate mobile-ds-import-bans` still pass.

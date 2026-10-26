@@ -630,8 +630,9 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
   `modules/compose-semantics` (Android). Not on the barrel; `native-list.tsx` is its consumer.
 - **`chrome/list-palette.ts`** — `useListPalette()`, the grouped-list surface and text colors
   (Android from Expo UI's `getMaterialColors`, seeded with `primary`), for `ListRow`.
-- **`src/design/icon/icon.tsx`** (from `@/design`) — `Icon`, the only renderer of a symbol glyph (lint L9 bans
-  `SymbolView` elsewhere, ADR [065](./decisions/065-icon-text-scaling.md)). iOS renders
+- **`src/design/icon/icon.tsx`** (from `@/design`) — `Icon`, the only renderer of a symbol glyph outside the chrome seam (lint L9 bans
+  `SymbolView`, the glyph loader and `expo-symbols/*` elsewhere, ADR
+  [065](./decisions/065-icon-text-scaling.md), ADR [077](./decisions/077-visual-style-lint-ratchet.md)). iOS renders
   `SymbolView`; Android draws the Material Symbols glyph from the closed `MATERIAL_GLYPHS` table (`icon-glyphs.ts`)
   in a box sized by the required `scaling` (see [Accessibility → Icon
   scaling](./accessibility.md#icon-scaling--encoded-in-icon)). Callers pass the color token; the

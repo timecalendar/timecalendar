@@ -30,8 +30,10 @@ call sites rendered `SymbolView` directly, each with an implicit and unrecorded 
 - Android glyphs come from the closed `MATERIAL_GLYPHS` table in `src/design/icon/icon-glyphs.ts` (only the glyphs the app uses);
   `icon.test.tsx` pins every codepoint against `expo-symbols`' `symbols.json`.
 - `Icon` is always decorative; the control that contains it owns the accessible name.
-- Lint L9 (`no-restricted-imports`, `importNames: ["SymbolView"]` on `expo-symbols`) applies
-  everywhere except `src/design/icon/icon.tsx` and its test (block `timecalendar/icon-seam`). Symbol name types stay importable.
+- Lint L9 (`no-restricted-imports` on `expo-symbols`: `SymbolView`, the glyph loader and every
+  sub-path) applies everywhere except `src/design/icon/icon.tsx` and its test (block
+  `timecalendar/icon-seam`) and the native chrome seam (ADR
+  [077](./077-visual-style-lint-ratchet.md)). Symbol name types stay importable.
 
 Rejected: patching `expo-symbols` (a patch over a fast-moving package whose fixed box is the
 flaw); an `@expo/ui` Compose `Icon` host per glyph (a native host per icon inside RN pressables,
