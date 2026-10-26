@@ -8,7 +8,7 @@ Android on the Mac. Land three commits, following the design's Migration Plan.
 
 ## 0. Baseline
 
-- [ ] 0.1 Record the selectors the change must keep:
+- [x] 0.1 Record the selectors the change must keep:
       `grep -rhoE 'id: *"?[A-Za-z0-9_${}.-]+' .maestro | sort -u > /tmp/maestro-ids.before`, and
       `grep -rn "about-version\|checklist-progress-\|personal-event-row-" src --include=*.tsx -l > /tmp/badge-ids.before`.
       Re-check that 074 is the next free ADR number. From the repo root, run
@@ -19,13 +19,13 @@ Android on the Mac. Land three commits, following the design's Migration Plan.
 
 ## 1. Theme: `onPrimarySoft`, `ColorDotSize`, composited contrast (D5)
 
-- [ ] 1.1 `src/theme/tokens.ts`: add `onPrimarySoft` (light `#AD1457`, dark `#FF80AB`) next to
+- [x] 1.1 `src/theme/tokens.ts`: add `onPrimarySoft` (light `#AD1457`, dark `#FF80AB`) next to
       `primarySoft`, and `export const ColorDotSize = { small: 8, medium: 12, large: 16 } as const`.
       In the contrast doc comment, add the BRAND WASH block with the computed ratios (light
       5.79 / 5.10 / 4.88, dark 8.11 / 5.90 / 5.89 over `background` / `backgroundElement` /
       `homeHero`) and `destructive` on `background` (6.54 / 12.37). Export `ColorDotSize` from
       `src/theme/index.ts`. Verify: `npx tsc --noEmit` passes.
-- [ ] 1.2 `src/theme/contrast.ts`: add `export function composite(fill: string, over: string): string`
+- [x] 1.2 `src/theme/contrast.ts`: add `export function composite(fill: string, over: string): string`
       (an `#RRGGBBAA` or `#RRGGBB` fill over an opaque `#RRGGBB`, straight alpha, rounded channels,
       returns `#rrggbb`). Add `over?: ThemeColor` to `ContrastPair` and a 4-tuple `PairRow` form.
       Add an exported `pairRatio(pair)` that composites when `over` is set and otherwise calls
@@ -33,7 +33,7 @@ Android on the Mac. Land three commits, following the design's Migration Plan.
       `["onPrimarySoft", "primarySoft", "body", "background"]`, the same with `"backgroundElement"`
       and `"homeHero"`, and `["destructive", "background", "body"]`. Verify:
       `npx jest src/theme` passes with the new `describe.each` rows visible in `--verbose`.
-- [ ] 1.3 `src/theme/theme.test.tsx`: the `documentedContrastPairs` table uses `pairRatio`, and its
+- [x] 1.3 `src/theme/theme.test.tsx`: the `documentedContrastPairs` table uses `pairRatio`, and its
       title includes `over` when set. Add a `composite` block: an opaque fill returns itself, alpha
       `00` returns the surface, `#E91E631F` over `#ffffff` returns `#fce4ec`, and `pairRatio` on a
       translucent background with no `over` throws. Add the `onPrimarySoft` light/dark resolution
@@ -43,12 +43,12 @@ Android on the Mac. Land three commits, following the design's Migration Plan.
 
 ## 2. Primitives (D1–D4, D10, D11)
 
-- [ ] 2.1 `src/design/badge/badge.tsx`: export `Badge`, `BadgeProps`, `BadgeTone`, `BadgeSize`
+- [x] 2.1 `src/design/badge/badge.tsx`: export `Badge`, `BadgeProps`, `BadgeTone`, `BadgeSize`
       and `BadgeLayoutStyle`, following D1–D3 and the button family's layout-style type. Imports:
       `@/theme`, `@/design/text/themed-text` and `@/design/icon/icon` only, never chrome and never
       the barrel. `accessibilityLabel: string | null` is required. Verify: `npx tsc --noEmit`
       passes, and `npx eslint src/design/badge` is clean.
-- [ ] 2.2 `src/design/badge/badge.test.tsx` per D11: tone colors in both schemes (mock
+- [x] 2.2 `src/design/badge/badge.test.tsx` per D11: tone colors in both schemes (mock
       `@/hooks/use-color-scheme`), size → type and padding, icon `scaling: "text"` growth at
       `fontScale` 3 (mock `useWindowDimensions`), named (role `text`, the name, and the visible
       label not separately accessible) vs `null` (hidden), `numberOfLines` 2, style last, and
@@ -56,14 +56,14 @@ Android on the Mac. Land three commits, following the design's Migration Plan.
       and a `fontSize` style key. Run on iOS and Android. Verify:
       `npx jest src/design/badge --coverage --collectCoverageFrom='src/design/badge/badge.tsx'`
       shows 100% branches.
-- [ ] 2.3 `src/design/color-dot/color-dot.tsx`: export `ColorDot`, `ColorDotProps`,
+- [x] 2.3 `src/design/color-dot/color-dot.tsx`: export `ColorDot`, `ColorDotProps`,
       `ColorDotSizeName`, `ColorDotRing` and `ColorDotLayoutStyle` per D4. It is always decorative,
       takes no label prop, and draws `color` verbatim. Add `color-dot.test.tsx`: size → `ColorDotSize`,
       `borderRadius: Radii.pill`, verbatim fill, each ring token per scheme with `borderWidth` 2,
       no border without `ring`, decorative props, style last, and `@ts-expect-error` on
       `accessibilityLabel` and `ringColor`. Verify: `npx jest src/design/color-dot --coverage
       --collectCoverageFrom='src/design/color-dot/color-dot.tsx'` shows 100% branches.
-- [ ] 2.4 Gallery fixtures per D10: `badge.gallery.tsx` (`id: "design-badge"`, stories `Tones`,
+- [x] 2.4 Gallery fixtures per D10: `badge.gallery.tsx` (`id: "design-badge"`, stories `Tones`,
       `Sizes`, `WithIcon`, `Accessibility`, `LongStrings`) and `color-dot.gallery.tsx`
       (`id: "design-color-dot"`, stories `Sizes`, `Presets`, `Rings`, `Stack`). Each has a
       `*.gallery.test.tsx` that renders every story. Register both in `src/design/gallery/registry.ts`
@@ -72,7 +72,7 @@ Android on the Mac. Land three commits, following the design's Migration Plan.
       either file for that story. Verify: `npx jest src/design/gallery src/design/badge
       src/design/color-dot src/i18n` passes (registry light/dark × iOS/Android, orphan and L10
       contract, FR/EN parity), and `git diff main -- src/design/gallery/known-a11y-violations.ts` is empty.
-- [ ] 2.5 Export `Badge`, `ColorDot` and their types from `src/design/index.ts`, in alphabetical
+- [x] 2.5 Export `Badge`, `ColorDot` and their types from `src/design/index.ts`, in alphabetical
       position. Add `"src/design/badge/badge.tsx"` and `"src/design/color-dot/color-dot.tsx"` rows
       at `{ lines: 90, branches: 90 }` to `jest.config.js` `coverageThreshold`. Verify:
       `npx jest src/design/import-graph.contract src/design/gallery/fixture-coverage.contract`
