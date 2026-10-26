@@ -1,4 +1,5 @@
 import { fireEvent, render } from "@testing-library/react-native"
+import type { ComponentProps } from "react"
 
 import { DateTimePicker } from "@/components/chrome"
 import { usePlatform } from "@/test-support/platform"
@@ -38,6 +39,7 @@ jest.mock("@expo/ui/community/datetime-picker", () => {
           testID: "native-picker",
           minimumDate,
           maximumDate,
+          receivedProps: props,
           onPress: () => {
             const changeEvent = eventOf(mockPicked)
             const setEvent = { ...changeEvent, type: "set" }
@@ -215,6 +217,21 @@ describe("on Android", () => {
     expect(onChange.mock.calls[0][0]).toBe(mockEvents.get("onChange"))
   })
 
+  it("hands the community picker neither the alignment nor the label", async () => {
+    const view = await render(
+      <DateTimePicker
+        mode="date"
+        value={VALUE}
+        alignment="leading"
+        accessibilityLabel="Starts"
+      />,
+    )
+    const received = view.getByTestId("native-picker").props.receivedProps
+    expect(received).not.toHaveProperty("alignment")
+    expect(received).not.toHaveProperty("accessibilityLabel")
+    expect(view.queryByTestId("swiftui-host")).toBeNull()
+  })
+
   it("passes the bounds through unchanged", async () => {
     const minimumDate = new Date(2030, 0, 1)
     const maximumDate = new Date(2030, 0, 31, 23, 59)
@@ -247,5 +264,175 @@ describe("on iOS", () => {
     expect(view.getByText(VALUE.toISOString())).toBeOnTheScreen()
     await fireEvent.press(view.getByTestId("native-picker"))
     expect(onValueChange.mock.calls[0][1]).toBe(mockPicked)
+  })
+})
+
+describe("on iOS with the leading alignment or a label", () => {
+  usePlatform("ios")
+
+  type Modifier = { $type: string; value: unknown }
+  const PICKED = new Date("2030-01-02T03:04:00.000Z")
+
+  async function renderComposed(
+    props: Partial<ComponentProps<typeof DateTimePicker>> = {},
+  ) {
+    const view = await render(
+      <DateTimePicker
+        testID="picker"
+        value={VALUE}
+        alignment="leading"
+        {...props}
+      />,
+    )
+    const picker = view.getByTestId("picker")
+    return {
+      ...view,
+      picker,
+      modifiers: (picker.props.modifiers ?? []) as Modifier[],
+    }
+  }
+
+  const typesOf = (modifiers: Modifier[]) => modifiers.map((m) => m.$type)
+
+  it("renders the SwiftUI picker in the host, aligned to the leading edge", async () => {
+    const { picker, modifiers, getByTestId, queryByTestId } =
+      await renderComposed()
+    expect(queryByTestId("native-picker")).toBeNull()
+    expect(getByTestId("swiftui-host")).toContainElement(picker)
+    expect(modifiers).toContainEqual({
+      $type: "frame",
+      value: { maxWidth: Infinity, alignment: "leading" },
+    })
+    expect(typesOf(modifiers)).not.toContain("labelsHidden")
+    expect(picker.props.title).toBeUndefined()
+    expect(picker).toHaveTextContent(VALUE.toISOString())
+  })
+
+  it("names the picker by a hidden title", async () => {
+    const view = await render(
+      <DateTimePicker
+        testID="picker"
+        value={VALUE}
+        accessibilityLabel="Starts"
+      />,
+    )
+    const picker = view.getByTestId("picker")
+    expect(picker.props.title).toBe("Starts")
+    expect(typesOf(picker.props.modifiers)).toEqual([
+      "datePickerStyle",
+      "labelsHidden",
+    ])
+  })
+
+  it.each([
+    [undefined, "automatic"],
+    ["default", "automatic"],
+    ["spinner", "wheel"],
+    ["compact", "compact"],
+    ["inline", "graphical"],
+  ] as const)("maps display %s to the %s style", async (display, style) => {
+    const { modifiers } = await renderComposed(display ? { display } : {})
+    expect(modifiers[0]).toEqual({ $type: "datePickerStyle", value: style })
+  })
+
+  it.each([
+    [undefined, ["date"]],
+    ["date", ["date"]],
+    ["time", ["hourAndMinute"]],
+    ["datetime", ["date", "hourAndMinute"]],
+  ] as const)("maps mode %s to its components", async (mode, components) => {
+    const { picker } = await renderComposed(mode ? { mode } : {})
+    expect(picker.props.displayedComponents).toEqual(components)
+  })
+
+  it("turns the bounds into a range", async () => {
+    const minimumDate = new Date(2030, 0, 1)
+    const maximumDate = new Date(2030, 0, 31)
+    expect(
+      (await renderComposed({ minimumDate, maximumDate })).picker.props.range,
+    ).toEqual({ start: minimumDate, end: maximumDate })
+    expect((await renderComposed({ minimumDate })).picker.props.range).toEqual({
+      start: minimumDate,
+    })
+    expect((await renderComposed({ maximumDate })).picker.props.range).toEqual({
+      end: maximumDate,
+    })
+    expect((await renderComposed()).picker.props.range).toBeUndefined()
+  })
+
+  it("adds no optional modifier for props left unset", async () => {
+    const { modifiers } = await renderComposed()
+    expect(typesOf(modifiers)).toEqual(["datePickerStyle", "frame"])
+  })
+
+  it("maps the tint, disabled and environment props in the community order", async () => {
+    const { modifiers } = await renderComposed({
+      accentColor: "#ff0000",
+      disabled: false,
+      locale: "fr_FR",
+      themeVariant: "dark",
+      timeZoneName: "Pacific/Noumea",
+      accessibilityLabel: "Starts",
+    })
+    expect(modifiers).toEqual([
+      { $type: "datePickerStyle", value: "automatic" },
+      { $type: "tint", value: "#ff0000" },
+      { $type: "disabled", value: false },
+      { $type: "environment", value: { key: "locale", value: "fr_FR" } },
+      { $type: "environment", value: { key: "colorScheme", value: "dark" } },
+      {
+        $type: "environment",
+        value: { key: "timeZone", value: "Pacific/Noumea" },
+      },
+      { $type: "frame", value: { maxWidth: Infinity, alignment: "leading" } },
+      { $type: "labelsHidden", value: undefined },
+    ])
+  })
+
+  it("disables the picker", async () => {
+    const { modifiers, picker } = await renderComposed({ disabled: true })
+    expect(modifiers).toContainEqual({ $type: "disabled", value: true })
+    expect(picker.props.accessibilityState).toEqual({ disabled: true })
+  })
+
+  it("puts the testID on the picker, not the host", async () => {
+    const { getByTestId } = await renderComposed()
+    expect(getByTestId("swiftui-host").props.testID).toBe("swiftui-host")
+    expect(getByTestId("picker").props.accessibilityRole).toBe("adjustable")
+  })
+
+  it("renders without a testID", async () => {
+    const view = await render(
+      <DateTimePicker value={VALUE} accessibilityLabel="Starts" />,
+    )
+    expect(view.getByLabelText("Starts")).toBeOnTheScreen()
+  })
+
+  it("reports a pick through onValueChange only", async () => {
+    const onValueChange = jest.fn()
+    const onChange = jest.fn()
+    const { picker } = await renderComposed({ onValueChange, onChange })
+    await fireEvent.press(picker)
+    expect(onValueChange).toHaveBeenCalledWith(
+      { nativeEvent: mockDescribing(PICKED) },
+      PICKED,
+    )
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
+  it("reports a pick as a set event through onChange alone", async () => {
+    const onChange = jest.fn()
+    const { picker } = await renderComposed({ onChange })
+    await fireEvent.press(picker)
+    expect(onChange).toHaveBeenCalledWith(
+      { type: "set", nativeEvent: mockDescribing(PICKED) },
+      PICKED,
+    )
+  })
+
+  it("ignores a pick with no listener", async () => {
+    const { picker } = await renderComposed()
+    await fireEvent.press(picker)
+    expect(picker).toBeOnTheScreen()
   })
 })

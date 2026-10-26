@@ -93,6 +93,9 @@ The registry lists, in this order (paths under `mobile/src/`):
   days; `src/components/chrome/compose-date-day.ts` owns that conversion inside the seam
   (`date-time-picker.tsx`), and `compose-date-day.test.ts` pins it to `@expo/ui`'s
   `DatePickerView.kt` (ADR [066](./decisions/066-device-local-date-picker-seam-and-timezone-ci.md)).
+  On iOS, the opt-in props `alignment="leading"` and `accessibilityLabel` render the composed
+  SwiftUI picker (`date-time-picker-ios.tsx`, [theming.md](./theming.md) → chrome); Android strips
+  them and renders the community component.
 - `DateTimeField` is a design primitive (`src/design/field/date-time-field.tsx`): it takes the
   label, the stored instant, the display zone and a `formatValue` function from the caller and
   imports no feature and no translation key, so its fixture formats with `Intl.DateTimeFormat`

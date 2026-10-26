@@ -1,3 +1,13 @@
+## 2026-10-26 — iOS DateTimeField alignment and name
+
+- On iOS the chrome `DateTimePicker` takes the opt-in props `alignment="leading"` and
+  `accessibilityLabel`, which render the composed `Host` + SwiftUI `DatePicker`
+  (`chrome/date-time-picker-ios.tsx`) with a leading frame and a hidden title; Android strips them
+  ([theming.md](./theming.md) → Fields and chrome, `date-time-picker.test.tsx`).
+- The iOS `DateTimeField` passes both, so its pills start under the label and the picker's SwiftUI
+  container is named by the label; the inner UIKit picker keeps its system name
+  ([accessibility.md](./accessibility.md), `date-time-field.test.tsx`).
+
 ## 2026-10-26 — Honest E2E lane, SwiftUI identifiers, picker events
 
 - The native E2E workflow runs Android and iOS on every scheduled day and every manual dispatch;

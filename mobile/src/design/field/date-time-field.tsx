@@ -77,6 +77,8 @@ export function DateTimeField({
           mode="datetime"
           value={wallClock}
           disabled={disabled}
+          alignment="leading"
+          accessibilityLabel={label}
           onValueChange={onPicked(commit)}
         />
       </FieldChrome>
