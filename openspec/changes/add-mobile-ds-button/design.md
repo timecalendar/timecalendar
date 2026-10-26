@@ -134,8 +134,9 @@ large control height it becomes a token then.
   onPress={blocked ? undefined : onPress}>` with `blocked = disabled || busy`. Callers cannot set
   `accessibilityState`.
 - Busy: an `ActivityIndicator` (`size="small"`, label color, `accessible={false}`,
-  `accessibilityElementsHidden`, `importantForAccessibility="no-hide-descendants"`,
-  `testID={`${testID}-progress`}`) takes the leading slot and hides the icon; the label stays
+  `testID={`${testID}-progress`}`) inside a `View` carrying `accessibilityElementsHidden` and
+  `importantForAccessibility="no-hide-descendants"` takes the leading slot (props on the indicator
+  itself leave the native `UIActivityIndicatorView` exposed to VoiceOver as "In progress") and hides the icon; the label stays
   rendered and stays the accessible name. VoiceOver reads "Enregistrer, dimmed, button" plus the
   busy trait; TalkBack reads "Enregistrer, button, disabled, busy".
 - Disabled and busy: whole-button opacity `StateOpacity.disabled`, no ripple, no pressed opacity.
@@ -172,10 +173,11 @@ in a column parent like `PrimaryAction` did, and sizes to content in a row.
 ### D7. Label and icon
 
 - Label: `ThemedText type={size === "large" ? "headline" : "label"} tone={…}
-  numberOfLines={3} style={{ textAlign: "center", flexShrink: 1 }}`. No `maxFontSizeMultiplier`:
-  a button label is content and follows Dynamic Type and Android font scale fully. The cap of three
+  numberOfLines={16} style={{ textAlign: "center", flexShrink: 1 }}`. No `maxFontSizeMultiplier`:
+  a button label is content and follows Dynamic Type and Android font scale fully. The cap of sixteen
   lines (N > 0) prevents the iOS uncapped-`Text` trailing-word clip; the default tail ellipsis is
-  the overflow, never `ellipsizeMode="clip"`. The longest-strings story at AX XXXL is the gate.
+  the overflow, never `ellipsizeMode="clip"`. The longest-strings story at AX XXXL is the gate, including
+  its row fixture: the French sentence beside "Continuer" takes fourteen lines there.
 - Icon: `icon?: { ios: SFSymbol; android: MaterialGlyph }`, rendered by `Icon` with
   `scaling="text"`, the label color, and the size from D3. `iconPosition?: "leading" |
   "trailing"` (default `leading`); `trailing` is earned by welcome Next (forward arrow) and the

@@ -40,7 +40,7 @@ These rules guard real product touchables (interactive controls declare `accessi
   `{ disabled: true, busy: false }`. Icons inside a button are decorative.
 - Every size is at least `MinTouchTarget` (44 pt iOS / 48 dp Android) tall and wide, including a
   short `text` button.
-- The label follows the OS text size without a cap and wraps to three lines (N > 0, never
+- The label follows the OS text size without a cap and wraps to sixteen lines (N > 0, never
   `ellipsizeMode="clip"`).
 - Proven by `src/components/button.test.tsx` and the gallery registry matrix; see ADR
   [067](./decisions/067-button-family.md) and [Theming](./theming.md) → Buttons.

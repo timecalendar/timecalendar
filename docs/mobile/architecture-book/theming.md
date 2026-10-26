@@ -132,14 +132,17 @@ chooses an intent and a size; the primitive owns colors, geometry, states and pr
   `IconSize.large`; the others use `label` and `IconSize.medium`. Radius `Radii.large` at every
   size, continuous on iOS.
 - States: `disabled` and `busy` block activation and dim to `StateOpacity.disabled`; `busy` shows a
-  hidden progress indicator in the leading slot (`${testID}-progress`) and hides the icon.
+  progress indicator in the leading slot (`${testID}-progress`) and hides the icon. The indicator
+  is hidden through a wrapping `View` (`accessibilityElementsHidden`,
+  `importantForAccessibility="no-hide-descendants"`): the same props on `ActivityIndicator` leave
+  the native iOS indicator exposed to VoiceOver as "In progress".
 - Press feedback: Android ripple in `ripple`, foreground and clipped to the shape, no opacity
   change; iOS dims to `StateOpacity.pressed`. A blocked button shows neither.
 - `style` is `StyleProp<ButtonLayoutStyle>` (margins, flex, alignment, width, position) and merges
   last, so a caller's `alignSelf` or `width` wins; color, height, padding, radius, border and
   opacity are not in the type. The style callback returns one flattened object, safe under an
   Expo Router `Slot`.
-- Label: `numberOfLines={3}`, centered, no font-scale cap, the default tail ellipsis beyond three
+- Label: `numberOfLines={16}`, centered, no font-scale cap, the default tail ellipsis beyond sixteen
   lines. Icon: `icon={{ ios, android }}` rendered by `Icon` with `scaling="text"` in the label
   color, `iconPosition` `leading` (default) or `trailing`.
 - Gates: `button.test.tsx` (variant tokens per scheme, sizes, states, platform feedback, style

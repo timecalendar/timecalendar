@@ -25,7 +25,7 @@ the phase 5 screen migrations need it.
   - `accessibilityLabel`, `accessibilityHint`, `accessibilityRole` (`button` | `link`), `testID`.
   - `style` is typed layout-only (margins, flex, alignment, width, position) and merges **last**;
     colors, height, padding, radius and opacity cannot be passed.
-  - The label wraps up to three lines at every text size and never clips.
+  - The label wraps up to sixteen lines at every text size and never clips.
 - **`PrimaryAction` is removed, not aliased.** It has eight product call sites; each becomes
   `Button variant="filled"` with its props and `testID` unchanged. **BREAKING** for in-repo
   imports of `@/components/primary-action` (deleted with its test and fixture).

@@ -148,7 +148,7 @@ describe.each(["ios" as const, "android" as const])("Button on %s", (os) => {
         minWidth: MinTouchTarget,
       })
       expect(view.getByText("Save")).toHaveStyle(TypeRamp[step].style)
-      expect(view.getByText("Save")).toHaveProp("numberOfLines", 3)
+      expect(view.getByText("Save")).toHaveProp("numberOfLines", 16)
     },
   )
 
@@ -248,9 +248,15 @@ describe.each(["ios" as const, "android" as const])("Button on %s", (os) => {
     })
     expect(button).toHaveProp("accessibilityLabel", "Save")
     expect(view.getByText("Save")).toBeTruthy()
-    expect(
-      view.getByTestId("button-progress", { includeHiddenElements: true }),
-    ).toHaveProp("accessible", false)
+    const progress = view.getByTestId("button-progress", {
+      includeHiddenElements: true,
+    })
+    expect(progress).toHaveProp("accessible", false)
+    expect(progress.parent).toHaveProp("accessibilityElementsHidden", true)
+    expect(progress.parent).toHaveProp(
+      "importantForAccessibility",
+      "no-hide-descendants",
+    )
     expect(view.queryByTestId("button-progress")).toBeNull()
     expect(mockSymbolView).not.toHaveBeenCalled()
     expect(

@@ -97,7 +97,7 @@ the button's shape, and no opacity change. On iOS a pressed button SHALL dim to
 
 ### Requirement: Button labels scale with the OS text size and never clip
 
-The label SHALL follow the OS text size without a scale cap, wrap onto up to three centered lines,
+The label SHALL follow the OS text size without a scale cap, wrap onto up to sixteen centered lines,
 and grow the button's height rather than clip. An optional icon SHALL render through the shared
 icon primitive with text scaling, take the label's color, stay hidden from assistive technology,
 and sit before the label by default or after it when the caller asks.
@@ -106,6 +106,12 @@ and sit before the label by default or after it when the caller asks.
 
 - **WHEN** the longest French gallery label renders at the largest accessibility text size
 - **THEN** the label wraps within the button and no line is cut mid-glyph
+
+#### Scenario: The longest French label beside another button
+
+- **WHEN** the longest French gallery label renders in a row beside a short button at the largest
+  accessibility text size
+- **THEN** the whole label renders without an ellipsis
 
 #### Scenario: A trailing arrow icon
 

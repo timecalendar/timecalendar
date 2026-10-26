@@ -5,6 +5,7 @@ import {
   Pressable,
   type StyleProp,
   StyleSheet,
+  View,
   type ViewStyle,
 } from "react-native"
 
@@ -182,20 +183,23 @@ export function Button({
       }
     >
       {busy ? (
-        <ActivityIndicator
-          testID={testID === undefined ? undefined : `${testID}-progress`}
-          size="small"
-          color={labelColor}
-          accessible={false}
+        <View
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-        />
+        >
+          <ActivityIndicator
+            testID={testID === undefined ? undefined : `${testID}-progress`}
+            size="small"
+            color={labelColor}
+            accessible={false}
+          />
+        </View>
       ) : null}
       {iconPosition === "leading" ? glyph : null}
       <ThemedText
         type={metrics.type}
         themeColor={spec.label}
-        numberOfLines={3}
+        numberOfLines={16}
         style={styles.label}
       >
         {label}

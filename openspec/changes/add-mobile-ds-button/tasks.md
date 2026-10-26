@@ -22,7 +22,7 @@ current state only.
       `accessibilityHint`, `accessibilityRole` (`"button" | "link"`, default `button`), `icon`,
       `iconPosition`, `disabled`, `busy`, `testID`, `style?: StyleProp<ButtonLayoutStyle>`.
       Tokens only (`MinTouchTarget`, `Spacing`, `Radii.large`, `StateOpacity`, `IconSize`,
-      `useTheme`); label through `ThemedText` `type`/`tone`, `numberOfLines={3}`; icon through
+      `useTheme`); label through `ThemedText` `type`/`tone`, `numberOfLines={16}`; icon through
       `Icon` with `scaling="text"`; Android `android_ripple` `{ color: theme.ripple, foreground:
       true }` + `overflow: "hidden"`, iOS pressed opacity + `borderCurve: "continuous"`; the style
       callback returns `StyleSheet.flatten([base, size, variant, state, style])`. Add any missing
@@ -151,7 +151,7 @@ current state only.
       `Button variant="filled"`).
 - [x] 7.3 `accessibility.md`: a "Buttons — encoded in `Button`" entry (role/label/hint, busy keeps
       the label, `accessibilityState` derived from props, target ≥ `MinTouchTarget`, label scales
-      uncapped and wraps to three lines); rewrite the `PrimaryAction` sentence in "Accessible async
+      uncapped and wraps to sixteen lines); rewrite the `PrimaryAction` sentence in "Accessible async
       status".
 - [x] 7.4 `lint-format.md` rule inventory: the touchables ban and `local/no-raw-button` with its
       allowlist, ceiling test and the inject-and-revert caveat; `testing.md`: the per-file
