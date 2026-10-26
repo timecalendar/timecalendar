@@ -40,10 +40,10 @@ warning and retry the initial publish on the first request that needs the snapsh
   `KeyboardSafeActionLayout` pads its action region by the owner's overlap with the keyboard. It
   converts the `keyboardDidShow` screen Y into the `measureInWindow` frame by subtracting the
   safe-area top. That rests on the safe-area top equalling the visible frame's top (the status
-  bar under edge-to-edge); a hidden status bar, a cutout or split screen can break it. The CI
-  emulator (API 34) showed the action hidden behind the keyboard before (runs 40258402156 and
-  40261770615). Maestro cannot see the keyboard window, so a lane pass only shows the action is
-  tappable. On the OnePlus 6 (Android 11) and an Android 15+ device, open the keyboard on
+  bar under edge-to-edge); a hidden status bar, a cutout or split screen can break it. Evidence
+  that the same-frame arithmetic hides the action: CI emulator (API 34) runs 40258402156
+  and 40261770615. Maestro cannot see the keyboard window, so a lane pass only shows the action
+  is tappable. On the OnePlus 6 (Android 11) and an Android 15+ device, open the keyboard on
   add-by-URL, the personal-event editor and onboarding programme/institution: Submit/Save/Continue
   must sit directly above the keyboard, with the gap measured from a screenshot. Close the
   keyboard: the action returns to the bottom edge. Height changes while the keyboard is open

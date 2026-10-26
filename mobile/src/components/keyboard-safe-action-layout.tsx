@@ -126,6 +126,8 @@ export function KeyboardSafeActionLayout({
       onLayout={handleLayout}
       style={styles.owner}
     >
+      {/* Not KeyboardAvoidingView on Android: its keyboardDidHide screenY is the
+          visible height, not a Y, so no static offset fits open and close. */}
       {Platform.OS === "android" ? (
         <View
           testID={testID}
