@@ -71,7 +71,8 @@ function describeCategoryAllowlist({
     })
 
     it("lists only categories the file still violates", async () => {
-      const results = await eslint.lintFiles(paths)
+      // lintFiles([]) lints the whole tree.
+      const results = paths.length > 0 ? await eslint.lintFiles(paths) : []
       const found = new Map(
         results.map((result) => [
           result.filePath.slice(root.length + 1),

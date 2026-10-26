@@ -238,9 +238,9 @@ truth; this file carries the caveats the config can't (R-1).
   | `src/components/chrome/**` fixtures                          | allowed    | allowed               | allowed            | allowed                 | banned    | `chrome-fixtures` (also lifts L9)       |
   | other `*.gallery.tsx` (`src/theme/tokens.gallery.tsx`)       | allowed    | banned                | allowed            | banned                  | banned    | `fixtures`                              |
 
-  Every block except `routes-shell` re-calls `restrictedImports([routeEntrypointImportPattern], …)`
-  with its full flag set; `routes-shell` re-calls `restrictedImports([], …)` because routes may
-  import `@/app`. No later block matches `src/app/**`. No file is allowlisted against the chrome
+  Every block re-calls `restrictedImports(…)` with its full flag set. Most pass
+  `[routeEntrypointImportPattern]`; `routes-shell` passes `[]` because routes may import `@/app`,
+  and `storage-seams`, `activity-seam` and `export-guide-seam` pass `[]` as well. No later block matches `src/app/**`. No file is allowlisted against the chrome
   barrel or app-shell bans. Inside `src/design/`, a folder imports its own files relatively and other folders through
   `@/design/<folder>/<file>`; fixtures import primitives from `@/design` and gallery types from
   `@/design/gallery` with `import type`. **The R-1 proof is two tests, not inject-and-revert:**
@@ -274,8 +274,9 @@ truth; this file carries the caveats the config can't (R-1).
   (`src/components/chrome/**`), so every icon a feature or design primitive renders declares its
   text scaling. Chrome wraps native symbol APIs at the same level as `SymbolView`, so a chrome
   wrapper that renders a raw symbol view owns the text-scaling contract itself; no chrome file
-  does today. Type imports (`SFSymbol`, `AndroidSymbol`, `SymbolWeight`) stay allowed because
-  `importNames` names only values. The exemptions are the `timecalendar/icon-seam`,
+  does today. Type imports (`SFSymbol`, `AndroidSymbol`, `SymbolWeight`) from the `expo-symbols` root stay
+  allowed because `importNames` names only values; the `^expo-symbols/` pattern bans sub-paths
+  outright, type imports included. The exemptions are the `timecalendar/icon-seam`,
   `timecalendar/chrome-seams` and `timecalendar/chrome-fixtures` blocks, each re-calling
   `restrictedImports([routeEntrypointImportPattern], { banSymbolView: false, … })`; `icon-seam` is
   the last block for its files, so it restates the design-primitive flags. Inject-and-revert proof:
