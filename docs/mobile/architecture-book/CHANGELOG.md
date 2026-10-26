@@ -61,6 +61,9 @@
 - Flow `03-calendar-visibility` taps the visibility switch at `point: "90%,50%"` of its element.
   On iOS a `NativeSettingsSwitchRow` identifier covers the whole SwiftUI `Toggle` row, and only
   the trailing switch flips it; a centred tap lands on the label and leaves the calendar shown.
+- Flow `01-fresh-user-import` waits for `calendar-import-result-calendar` after Import before
+  `stopApp`. `ical-url-content` unmounts as soon as the request starts, so waiting for it to vanish
+  let `stopApp` kill the import before the calendar was persisted.
 
 ## 2026-10-25 — Gallery fixtures for shared components
 

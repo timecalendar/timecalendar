@@ -311,6 +311,7 @@ describe("Maestro journey contracts", () => {
         'id: "onboarding-import-url"',
         '- inputText: "http://127.0.0.1:3005/__e2e/ical/import.ics"',
         'id: "ical-url-submit"',
+        'visible:\n      id: "calendar-import-result-calendar"',
         OPEN_AGENDA_FLOW,
         'id: "agenda-section-list"',
         'visible:\n        id: "calendar-empty-refresh"',
@@ -319,6 +320,7 @@ describe("Maestro journey contracts", () => {
         '- assertVisible: "Room E2E Import"',
       ]),
     ).toBe(true)
+    expect(yaml).not.toContain("ical-url-content")
     expect(yaml).not.toContain("dev-import")
     expect(yaml).not.toContain("onboarding-connect-continue")
   })
