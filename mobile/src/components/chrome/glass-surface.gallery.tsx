@@ -1,9 +1,9 @@
-import { SymbolView } from "expo-symbols"
 import { type ComponentProps, type ReactNode, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet, View } from "react-native"
 
 import { GlassSurface } from "@/components/chrome"
+import { Icon } from "@/components/icon"
 import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import type { GalleryMeta, GalleryStory } from "@/design"
@@ -69,10 +69,12 @@ function InteractiveButtonFixture() {
           onPress={() => setCount((value) => value + 1)}
           style={styles.buttonTarget}
         >
-          <SymbolView
-            name={{ ios: "plus", android: "add" }}
+          <Icon
+            ios="plus"
+            android="add"
             size={IconSize.large}
-            tintColor={theme.text}
+            color={theme.text}
+            scaling="fixed"
           />
         </Pressable>
       </GlassSurface>

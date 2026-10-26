@@ -1,9 +1,9 @@
-import { SymbolView } from "expo-symbols"
 import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { ScrollView, StyleSheet, View } from "react-native"
 
 import { headerScrollProps } from "@/components/header-scroll-props"
+import { Icon } from "@/components/icon"
 import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import type { GalleryMeta, GalleryStory } from "@/design"
@@ -238,10 +238,12 @@ function RadiusSquare({ value }: { value: number }) {
 function IconSample({ value }: { value: number }) {
   const theme = useTheme()
   return (
-    <SymbolView
-      name={{ ios: "calendar", android: "calendar_today" }}
+    <Icon
+      ios="calendar"
+      android="today"
       size={value}
-      tintColor={theme.text}
+      color={theme.text}
+      scaling="fixed"
     />
   )
 }
