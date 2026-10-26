@@ -9,13 +9,11 @@ import {
   NativeList,
   NativeListAlert,
   NativeListHeader,
+  NativeListRow,
+  type NativeListRowProps,
+  NativeListSection,
 } from "@/components/chrome"
 import { readApplicationInfo } from "@/features/about/data"
-import {
-  SettingsRow,
-  type SettingsRowProps,
-  SettingsSection,
-} from "@/features/settings/ui"
 import { recordUnknownError } from "@/firebase"
 
 const PRIVACY_URL = "https://timecalendar.app/privacy-policy"
@@ -56,15 +54,14 @@ export function AboutScreen() {
   const sections: readonly {
     key: string
     title: string
-    rows: readonly SettingsRowProps[]
+    rows: readonly NativeListRowProps[]
   }[] = [
     {
       key: "privacy",
       title: t("about.section.privacy"),
       rows: [
         {
-          variant: "action",
-          first: true,
+          kind: "action",
           icon: {
             ios: "hand.raised",
             android: "privacy_tip",
@@ -84,11 +81,10 @@ export function AboutScreen() {
       title: t("about.section.contact"),
       rows: [
         {
-          variant: "action",
-          first: true,
+          kind: "action",
           icon: { ios: "envelope", android: "mail" },
           label: t("about.contact.label"),
-          secondary: t("about.contact.value"),
+          value: t("about.contact.value"),
           hint: t("about.contact.hint"),
           testID: "about-contact",
           onPress: () =>
@@ -103,8 +99,7 @@ export function AboutScreen() {
       title: t("about.section.app"),
       rows: [
         {
-          variant: "router",
-          first: true,
+          kind: "navigation",
           icon: { ios: "sparkles", android: "history" },
           label: t("about.changelog.label"),
           hint: t("about.changelog.hint"),
@@ -118,8 +113,7 @@ export function AboutScreen() {
       title: t("about.section.developers"),
       rows: [
         {
-          variant: "action",
-          first: true,
+          kind: "action",
           icon: { ios: "person", android: "person" },
           label: t("about.developer.samuel"),
           hint: t("about.developer.hint", {
@@ -132,7 +126,7 @@ export function AboutScreen() {
             ),
         },
         {
-          variant: "action",
+          kind: "action",
           icon: { ios: "person", android: "person" },
           label: t("about.developer.eddy"),
           hint: t("about.developer.hint", {
@@ -169,15 +163,15 @@ export function AboutScreen() {
           />
         ) : null}
         {sections.map((section) => (
-          <SettingsSection
+          <NativeListSection
             key={section.key}
             title={section.title}
             testID={`about-section-${section.key}`}
           >
             {section.rows.map((row) => (
-              <SettingsRow key={row.testID} {...row} />
+              <NativeListRow key={row.testID} {...row} />
             ))}
-          </SettingsSection>
+          </NativeListSection>
         ))}
       </NativeList>
     </>

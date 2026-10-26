@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
 
-import { SettingsRow } from "@/features/settings/ui/settings-row"
+import { NativeListRow } from "@/components/chrome"
 
 import type { EnvironmentSelector } from "./use-environment-selector"
 
@@ -20,13 +20,11 @@ export function EnvironmentSettingsRow({
   )
 
   return (
-    <SettingsRow
-      first
-      variant="action"
-      accessibilityRole="button"
+    <NativeListRow
+      kind="action"
       icon={{ ios: "server.rack", android: "dns" }}
       label={label}
-      secondary={value}
+      value={value}
       hint={t("environment.selector.hint")}
       onPress={selector.choose}
       testID="settings-environment"
