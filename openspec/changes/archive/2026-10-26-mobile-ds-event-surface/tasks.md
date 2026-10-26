@@ -154,7 +154,7 @@ commits, following the design's Migration Plan.
 
 ## 5. CI proof — commit 2
 
-- [ ] 5.1 The CI proof for the runtime behavior is the Jest suite gated by `test-mobile`:
+- [x] 5.1 The CI proof for the runtime behavior is the Jest suite gated by `test-mobile`:
       `event-appearance.test.ts` (palette and grid contrast floors), `event-surface.test.tsx`
       (appearance, one element, capped text), `badge.test.tsx` (`onEventSurface`),
       `checklist-progress-indicator.test.tsx`, the Home and agenda suites, the registry matrix and
@@ -237,7 +237,7 @@ commits, following the design's Migration Plan.
 
 ## 8. Device verification
 
-- [ ] 8.1 iOS simulator pass (run by the conductor): each
+- [x] 8.1 iOS simulator pass (run by the conductor): each
       `timecalendar-dev://developer/gallery/event-surface--<story>` in light and dark at the default
       size and at accessibility-extra-extra-extra-large; then Home (upcoming cards, all-day items,
       timeline and its large-text reflow) and Calendar → Agenda with seeded events of several

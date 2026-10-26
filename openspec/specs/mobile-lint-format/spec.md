@@ -450,22 +450,35 @@ reported.
 
 ### Requirement: Raw event-color fills are a ratcheted lint error
 
-Lint SHALL report an error for a `backgroundColor` or `borderColor` style value read directly from
-a `color` member of a data object (such as an event's or a tag's color) in every React component
-source file except the design layer, the theme module, the calendar renderer and tests. A value
-read from the theme SHALL NOT be reported. Files not yet migrated SHALL be listed in one committed
-allowlist that lint skips, each annotated with the slice that migrates it. A test SHALL fail when an
-allowlisted file no longer exists, when it no longer contains a violation, when it is listed twice,
-or when the list is longer than its pinned ceiling of one, so the list can only shrink.
+Lint SHALL report an error for a `backgroundColor`, `borderColor` or per-side border color
+(`borderLeftColor`, `borderRightColor`, `borderTopColor`, `borderBottomColor`, `borderStartColor`,
+`borderEndColor`) style value read directly from a `color` member of a data object (such as an
+event's or a tag's color), and for a direct call to the event appearance resolver, in every React
+component source file except the design layer, the theme module, the calendar renderer and tests. A
+value read from the theme SHALL NOT be reported. Files not yet migrated SHALL be listed in one
+committed allowlist that lint skips, each annotated with the slice that migrates it. A test SHALL
+fail when an allowlisted file no longer exists, when it no longer contains a violation, when it is
+listed twice, or when the list is longer than its pinned ceiling of one, so the list can only shrink.
 
 #### Scenario: A new screen fills a view with an event color
 
 - **WHEN** a feature file not on the allowlist styles a view with `backgroundColor: event.color`
-- **THEN** `npm run lint` fails with a message that points to the shared color dot
+- **THEN** `npm run lint` fails with a message that points to the shared color dot and event surface
+
+#### Scenario: A feature tile draws a raw-color stripe
+
+- **WHEN** a feature file not on the allowlist styles a view with `borderLeftColor: event.color`
+- **THEN** `npm run lint` fails
+
+#### Scenario: A feature tile resolves its own appearance
+
+- **WHEN** a feature component calls `resolveEventAppearance` to color a tile
+- **THEN** `npm run lint` fails with a message that points to the event surface
 
 #### Scenario: A theme color passes
 
-- **WHEN** a feature file styles a view with `backgroundColor: theme.backgroundElement`
+- **WHEN** a feature file styles a view with `backgroundColor: theme.backgroundElement` or
+  `borderLeftColor: theme.primary`
 - **THEN** the rule reports nothing
 
 #### Scenario: A data object key passes
