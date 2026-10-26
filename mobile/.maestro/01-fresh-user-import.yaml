@@ -1,4 +1,4 @@
-# Fresh student → listed school → programme → real URL import → synced details.
+# Fresh student → listed school → programme → export guide → real URL import → synced details.
 appId: fr.samuelprak.timecalendar.dev
 ---
 - launchApp:
@@ -32,12 +32,26 @@ appId: fr.samuelprak.timecalendar.dev
       text: "E2E Programme"
     timeout: 15000
 - pressKey: Enter
+# The seeded school has no intranet URL, so the journey skips Connect and
+# walks the export guide; the loop tolerates any catalogue page count.
 - extendedWaitUntil:
     visible:
-      id: "onboarding-connect-continue"
+      id: "export-guide-page"
     timeout: 60000
-- tapOn:
-    id: "onboarding-connect-continue"
+- repeat:
+    times: 10
+    while:
+      notVisible:
+        id: "onboarding-import-url"
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: "export-guide-next"
+          direction: DOWN
+      - tapOn:
+          id: "export-guide-next"
+      - waitForAnimationToEnd:
+          timeout: 5000
 - extendedWaitUntil:
     visible:
       id: "onboarding-import-url"

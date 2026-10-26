@@ -21,6 +21,11 @@
 - [x] 2b.3 `grep -rn "127.0.0.1" server/src server/test` shows no test that depends on the loopback asset origin.
 - [x] 2b.4 Amend the `e2e-smoke-flows` onboarding requirement: a school-logo load may resolve DNS; the flow's outcome depends only on the placeholder fallback.
 
+## 2c. Mobile flow follows the export guide
+
+- [x] 2c.1 In `mobile/.maestro/01-fresh-user-import.yaml`, replace the `onboarding-connect-continue` wait and tap with a wait for `export-guide-page` (60s) and a `repeat` (`times: 10`, `while: notVisible: id: onboarding-import-url`) that scrolls to, taps, and settles after `export-guide-next` (design D4b). Update the header comment.
+- [x] 2c.2 Update the `maestro-selectors.test.ts` journey contract to the new order and assert the flow has no `onboarding-connect-continue`. Update `mobile/e2e/README.md` and the `mobile-e2e` fresh-user requirement. Flows 02 and 03 skip onboarding, so they are unchanged.
+
 ## 3. Ordering gate (R-1)
 
 - [x] 3.1 Add an executable `ci/test-e2e-server.sh`, a pure-shell proof in the style of `ci/test-git-hooks.sh`. It works like this:
@@ -41,7 +46,7 @@
 
 ## 5. Verification
 
-- [x] 5.1 `./mobile/e2e/test_ci_mobile_e2e.sh` and `./mobile/e2e/test_run_e2e.sh` pass.
+- [x] 5.1 `./mobile/e2e/test_ci_mobile_e2e.sh` and `./mobile/e2e/test_run_e2e.sh` pass, and in `mobile/` `npx jest e2e src/features/onboarding --coverage=false`, `npx tsc --noEmit` and `npm run lint` pass.
 - [x] 5.2 `./ci/test-e2e-server.sh` passes.
 - [x] 5.3 In `server/`: `npm run lint` is clean for touched files, and `npx jest src/config src/modules/export-guide src/modules/school src/modules/feature-flag` passes. If the suite needs backing services, start them with `bin/server-compose.sh up -d postgres redis`.
 - [ ] 5.4 Optional, if Docker is available locally: `ci/e2e-server.sh up`, then `curl localhost:3005/schools` returns the seeded list and `curl localhost:3005/v1/export-guides` (with the headers the endpoint needs) does not return 503, then `ci/e2e-server.sh down`. Never build Android locally.

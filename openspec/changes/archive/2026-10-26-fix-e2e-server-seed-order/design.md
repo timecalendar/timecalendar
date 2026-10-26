@@ -57,6 +57,14 @@ Alternatives considered:
 - *Add `https://127.0.0.1` to the dev-variant allow-list.* Rejected (see Non-Goals).
 - *Override the origin only in `docker-compose.e2e.yml` and native mode.* Rejected: two places to keep in sync, and server Jest under `NODE_ENV=test` would still build catalogues on an origin no client accepts.
 
+### D4b: The mobile flow follows the export guide, not the seed
+
+The flow follows the app's routing for a listed school without an intranet URL: programme → export guide → URL import. It waits for `export-guide-page`, then loops `scrollUntilVisible` + `tapOn export-guide-next` + `waitForAnimationToEnd` under `repeat: times: 10, while: notVisible: id: onboarding-import-url`. The loop carries no page count, so catalogue edits do not break it, and `waitForAnimationToEnd` keeps a tap from landing twice during a push. The existing `onboarding-import-url` wait after the loop stays the hard assertion.
+
+Alternatives considered:
+- *Seed an `intranetUrl` on "My Gaming Academia" so Connect shows.* Rejected: the Flutter E2E lane shares the seed, so its behavior would change.
+- *Tap Next a fixed number of times.* Rejected: it couples the flow to the catalogue's page count.
+
 ### D5: No Architecture Book rule change
 
 `docs/mobile/architecture-book/testing.md` only says that `ci/e2e-server.sh` owns boot, seed, and teardown, and points to the `e2e-server-lifecycle` spec. It does not describe the order. The spec delta carries the ordering requirement, so no Book rule file changes. The CHANGELOG entry records the rewritten harness docs (`app/integration_test/README.md`, `docs/agent-dev-environment.md`).

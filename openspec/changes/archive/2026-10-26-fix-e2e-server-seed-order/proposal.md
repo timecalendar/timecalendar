@@ -6,6 +6,8 @@ The nightly native Maestro lane (`.github/workflows/ci-mobile-e2e.yml`) has fail
 2. **Both platforms:** `GET /v1/export-guides` is behind the `export-guides-v1` feature flag. The flag defaults to `false`, which returns 503. No fixture seeds the flag, so the onboarding export guide never loads ("We couldn't load the export guide") and the flow fails on `Assert id: onboarding-connect-continue is visible`.
 3. **Both platforms:** `server/src/config/environments/test.ts` sets `S3_PUBLIC_BUCKET_CLIENT_URL` to `https://127.0.0.1`, so every export-guide image URL in the catalogue uses that origin. The dev-variant mobile parser accepts images only on the exact first-party origin it compiles (`EXPORT_GUIDE_ASSET_ORIGINS`, the dev bucket), as both `mobile-export-guide-data` and `server-export-guide-catalogue` require. It rejects the mandatory `generic` provider (`invalid_generic`), so the guide still shows "We couldn't load the export guide" with the flag on.
 
+With the server fixed, the mobile flow `mobile/.maestro/01-fresh-user-import.yaml` still waits for `onboarding-connect-continue`, a step that predates the native export-guide journey (7219ce9c). `nextRouteAfterProgramme` routes to Connect only when the listed school has a safe `intranetUrl`. The seeded "My Gaming Academia" has none, so the app correctly skips Connect (`missing_url`) and opens `/onboarding/export-guide/0`. The guide's last-page Finish button pushes `/onboarding/import`.
+
 Production runs migrations before boot, so the bootstrap behaves correctly there. The bug is the harness boot order plus a missing fixture.
 
 ## What Changes
@@ -14,6 +16,7 @@ Production runs migrations before boot, so the bootstrap behaves correctly there
 - The healthcheck comment in `server/docker-compose.e2e.yml` changes to say the schema is seeded before the server starts.
 - New fixture `server/src/modules/feature-flag/fixtures/feature-flag.fixtures.yml` enables `export-guides-v1`. Every `db:init` loads it (test and dev), because the mobile app needs the guide to finish onboarding.
 - `test.ts` sets `S3_PUBLIC_BUCKET_CLIENT_URL` to the dev bucket origin `https://timecalendar-dev-public.fra1.digitaloceanspaces.com`, the same value as `development.ts` and the origin the dev-variant client compiles. The mobile allow-list is unchanged.
+- `01-fresh-user-import.yaml` waits for `export-guide-page`, then taps `export-guide-next` in a capped `repeat … while notVisible onboarding-import-url` loop, so it does not hard-code the catalogue page count. The seed keeps no `intranetUrl`, because the Flutter E2E lane shares it. `maestro-selectors.test.ts` pins the new order and forbids the Connect step.
 - Regression gates (R-1): an emulator-free fake-`docker` proof `ci/test-e2e-server.sh` (wired into `ci-build-deploy.yml`) checks the compose order and the build-flag placement. A server unit test checks that the feature-flag fixture enables `EXPORT_GUIDE_FEATURE_FLAG`. A server unit test (`test-env.test.ts`) checks that the test-env asset origin equals the development one.
 
 ## Capabilities
@@ -25,6 +28,7 @@ None.
 ### Modified Capabilities
 
 - `e2e-server-lifecycle`: in compose mode `up` seeds before the server process starts, with an enforced ordering proof. The seeded state includes every feature flag the mobile onboarding journey needs, and the test environment serves export-guide assets on the client's first-party origin.
+- `mobile-e2e`: the fresh-user journey walks the export guide, not Connect, to URL import.
 - `e2e-smoke-flows`: the Flutter onboarding flow tolerates a school-logo load that needs DNS; its outcome depends only on the placeholder fallback.
 
 ## Impact
@@ -32,4 +36,5 @@ None.
 - `ci/e2e-server.sh`, `server/docker-compose.e2e.yml`, new `ci/test-e2e-server.sh`, `.github/workflows/ci-build-deploy.yml` (one new pure-shell job).
 - `server/src/modules/feature-flag/fixtures/` (new YAML fixture plus its unit test). Dev `db:init` now enables `export-guides-v1` too.
 - `server/src/config/environments/test.ts` (asset origin) plus `test-env.test.ts`. Seeded school logo URLs in the test env point at the dev bucket instead of an unreachable loopback.
-- No change to server runtime behavior, mobile app, UI, Maestro flows, OpenAPI, migrations, or production configuration. Native mode keeps its current order.
+- `mobile/.maestro/01-fresh-user-import.yaml`, `mobile/e2e/maestro-selectors.test.ts`, `mobile/e2e/README.md`.
+- No change to server runtime behavior, mobile app, UI, OpenAPI, migrations, or production configuration. Native mode keeps its current order.

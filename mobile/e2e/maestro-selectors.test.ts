@@ -293,7 +293,9 @@ describe("Maestro journey contracts", () => {
         '- tapOn: "My Gaming Academia"',
         'id: "onboarding-programme-input"',
         '- inputText: "E2E Programme"',
-        'id: "onboarding-connect-continue"',
+        'id: "export-guide-page"',
+        'while:\n      notVisible:\n        id: "onboarding-import-url"',
+        'id: "export-guide-next"',
         'id: "onboarding-import-url"',
         '- inputText: "http://127.0.0.1:3005/__e2e/ical/import.ics"',
         'id: "ical-url-submit"',
@@ -306,6 +308,7 @@ describe("Maestro journey contracts", () => {
       ]),
     ).toBe(true)
     expect(yaml).not.toContain("dev-import")
+    expect(yaml).not.toContain("onboarding-connect-continue")
   })
 
   it("creates, edits, cold-reopens, and deletes through Calendar", () => {
