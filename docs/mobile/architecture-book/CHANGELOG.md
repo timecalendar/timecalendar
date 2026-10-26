@@ -33,8 +33,9 @@
   origin equals development origin). A local `server/export-guide-catalogues/` written under another
   origin is stale and must be deleted.
 - `01-fresh-user-import.yaml` follows the app's route for the seeded school, which has no intranet
-  URL: programme, export guide, URL import. A capped `repeat … while notVisible
-  onboarding-import-url` loop taps `export-guide-next` without a hard-coded page count.
+  URL: programme, export guide, URL import. A capped
+  `repeat … while notVisible onboarding-import-url` loop taps `export-guide-next` without a
+  hard-coded page count.
   `maestro-selectors.test.ts` pins the order and forbids `onboarding-connect-continue`
   ([testing.md](./testing.md), `mobile/e2e/README.md`).
 - `KeyboardSafeActionLayout` keeps its sibling action region (`ical-url-submit`,
