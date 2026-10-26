@@ -279,7 +279,7 @@ truth; this file carries the caveats the config can't (R-1).
   or `"link"` and that has a direct `ThemedText`/`Text` child (also inside a top-level `&&`,
   conditional or fragment) is an error; text buttons are `Button` from `@/design`
   ([theming.md](./theming.md) → Buttons, ADR [067](./decisions/067-button-family.md)). Ignored:
-  `src/design/button/button.tsx`, `src/design/button/button-row.tsx`, `src/components/chrome/**`, `src/features/calendar/renderer/**`,
+  `src/design/button/button.tsx`, `src/components/chrome/**`, `src/features/calendar/renderer/**`,
   tests, and the files listed in `tools/eslint-rules/raw-button-allowlist.js`, each annotated with
   the slice that migrates it. `raw-button-allowlist.test.js` lints every entry with only this rule
   and fails on a stale entry (no report: remove it), a missing file, a duplicate, or a list longer

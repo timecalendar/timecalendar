@@ -530,8 +530,11 @@ module.exports = defineConfig([
     },
   },
   {
-    // Fixtures (ADR 064) import gallery types from @/design/gallery. Fixture
-    // blocks restate every flag because they are the last word for these files.
+    // Fixtures (ADR 064) import gallery types from @/design/gallery. Flat config
+    // replaces a rule's options wholesale, so each fixture block restates every
+    // flag, and so must any later block that sets this rule on a fixture
+    // (calendar-sources-is-a-leaf would, were a fixture to live under
+    // src/features/calendar-sources/).
     name: "timecalendar/fixtures",
     files: ["src/**/*.gallery.tsx", "src/**/*.gallery.test.tsx"],
     rules: {
@@ -797,7 +800,6 @@ module.exports = defineConfig([
     files: ["src/**/*.tsx"],
     ignores: [
       "src/design/button/button.tsx",
-      "src/design/button/button-row.tsx",
       "src/components/chrome/**",
       "src/features/calendar/renderer/**",
       "**/*.test.tsx",

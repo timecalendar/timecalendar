@@ -38,7 +38,7 @@ function PairFixture() {
         secondary={
           <Button
             variant="outlined"
-            label={t("gallery.buttonRow.back")}
+            label={t("common.back")}
             onPress={noop}
             testID="gallery-button-row-back"
           />

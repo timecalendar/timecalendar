@@ -248,7 +248,6 @@
   "gallery.buttonRow.title": "Button row",
   "gallery.buttonRow.story.pair": "Pair",
   "gallery.buttonRow.story.longStrings": "Long strings",
-  "gallery.buttonRow.back": "Back",
   "gallery.buttonRow.layout.row": "Side by side: the text size is below the accessibility sizes.",
   "gallery.buttonRow.layout.stacked": "Stacked: the text size is an accessibility size.",
   "gallery.numericEditor.title": "Numeric editor",

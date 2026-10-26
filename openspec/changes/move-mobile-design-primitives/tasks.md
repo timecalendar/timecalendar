@@ -140,7 +140,7 @@ from", no history).
       and `SymbolView` path only where L9 applies. Verify: `npx jest tools/eslint-rules` passes;
       then inject-and-revert: temporarily drop `banGalleryEntry: false` from the developer block
       and confirm this test fails naming the developer file.
-- [x] 5.3 `local/no-raw-button`: ignore `src/design/button/button.tsx` (and `button-row.tsx`)
+- [x] 5.3 `local/no-raw-button`: ignore `src/design/button/button.tsx`
       instead of `src/components/button.tsx`; message and file header point at `@/design`;
       update `no-raw-button.test.js` header import to `@/design`. Verify: `npx jest
       tools/eslint-rules` passes and the allowlist ceiling is unchanged.

@@ -263,7 +263,8 @@ describe("design import graph", () => {
     const cycles = stronglyConnectedComponents()
       .filter(
         (component) =>
-          component.length > 1 &&
+          (component.length > 1 ||
+            component.some((id) => graph.get(id)?.includes(id))) &&
           component.some((id) => id.startsWith("src/design/")),
       )
       .map((component) => component.sort().join(" ⇄ "))
