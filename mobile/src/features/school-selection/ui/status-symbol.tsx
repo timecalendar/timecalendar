@@ -1,6 +1,6 @@
 import type { SFSymbol } from "expo-symbols"
 
-import { Icon, type MaterialGlyph } from "@/components/icon"
+import { Icon, type MaterialGlyph } from "@/design"
 import { useTheme } from "@/theme"
 
 export function StatusSymbol({

@@ -2,14 +2,14 @@ import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { ScrollView, StyleSheet, View } from "react-native"
 
-import { headerScrollProps } from "@/components/header-scroll-props"
-import { RootPage } from "@/components/root-page"
 import {
+  headerScrollProps,
+  RootPage,
   type TextTone,
   ThemedText,
   type ThemedTextProps,
-} from "@/components/themed-text"
-import type { GalleryMeta, GalleryStory } from "@/design"
+} from "@/design"
+import type { GalleryMeta, GalleryStory } from "@/design/gallery"
 import {
   Radii,
   Spacing,

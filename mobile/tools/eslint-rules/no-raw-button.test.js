@@ -38,7 +38,7 @@ ruleTester.run("no-raw-button", rule, {
   ],
   invalid: [
     {
-      code: `${header}import { ThemedText } from "@/components/themed-text"\nconst a = <Pressable accessibilityRole="button"><ThemedText>Save</ThemedText></Pressable>`,
+      code: `${header}import { ThemedText } from "@/design"\nconst a = <Pressable accessibilityRole="button"><ThemedText>Save</ThemedText></Pressable>`,
       errors: error,
     },
     {

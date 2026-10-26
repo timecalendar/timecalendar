@@ -1,6 +1,6 @@
 // Rule rationale: docs/mobile/architecture-book/lint-format.md (Buttons) and ADR 067.
 //
-// A text button is the shared `Button` (src/components/button.tsx), which owns
+// A text button is the shared `Button` from `@/design`, which owns
 // fill, label tone, touch target, press feedback and busy/disabled semantics. The
 // rule reports a React Native `Pressable` that declares a `button` or `link` role
 // and renders a text component as a direct child. Text wrapped in a layout view
@@ -77,7 +77,7 @@ module.exports = {
     ],
     messages: {
       rawButton:
-        "Text buttons use Button from @/components/button (ADR 067, lint-format.md → Buttons).",
+        "Text buttons use Button from @/design (ADR 067, lint-format.md → Buttons).",
     },
   },
 

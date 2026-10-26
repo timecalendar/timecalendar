@@ -2,8 +2,7 @@ import { Image } from "expo-image"
 import { useTranslation } from "react-i18next"
 import { ScrollView, StyleSheet, View } from "react-native"
 
-import { AdaptiveContent } from "@/components/adaptive-content"
-import { ThemedText } from "@/components/themed-text"
+import { AdaptiveContent, ThemedText } from "@/design"
 import { Radii, Spacing, WordmarkMaxFontScale } from "@/theme"
 
 import { type WelcomePageDescriptor } from "./welcome-page-catalog"

@@ -9,13 +9,12 @@ import {
   NativeTextEntryDialog,
 } from "@/components/chrome"
 import { isDevVariant } from "@/config/variant"
+import { isDeveloperSurfaceEnabled } from "@/features/developer/access"
 import {
   EnvironmentSelectorDialog,
   EnvironmentSettingsRow,
   useEnvironmentSelector,
 } from "@/features/environment"
-
-import { isDeveloperSurfaceEnabled } from "./developer-access"
 
 // Static declarations keep the selectors discoverable by the Maestro source
 // guard while the chrome contract passes them to either native toolkit.

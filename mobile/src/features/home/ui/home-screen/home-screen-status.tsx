@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next"
 
-import { ErrorNotice } from "@/components/error-surfaces"
+import { ErrorNotice } from "@/design"
 
 export function HomeScreenStatus({
   isError,

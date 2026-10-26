@@ -3,8 +3,7 @@ import * as WebBrowser from "expo-web-browser"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, View } from "react-native"
 
-import { Button } from "@/components/button"
-import { PageIntro, RootPage } from "@/components/root-page"
+import { Button, PageIntro, RootPage } from "@/design"
 import {
   safeIntranetUrl,
   useImportDraft,

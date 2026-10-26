@@ -9,7 +9,7 @@ import {
   NativeSettingsRow,
   NativeSettingsSection,
 } from "@/components/chrome"
-import type { GalleryMeta, GalleryStory } from "@/design"
+import type { GalleryMeta, GalleryStory } from "@/design/gallery"
 
 type Story = GalleryStory<NativeSettingsNumericEditorProps>
 

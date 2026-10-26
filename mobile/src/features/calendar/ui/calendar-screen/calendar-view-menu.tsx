@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet, useWindowDimensions, View } from "react-native"
 
 import { type MenuComponentRef, MenuView } from "@/components/chrome"
-import { ThemedText } from "@/components/themed-text"
+import { ThemedText } from "@/design"
 import { type CalendarView } from "@/features/settings/prefs"
 import { Radii, Spacing, useTheme } from "@/theme"
 

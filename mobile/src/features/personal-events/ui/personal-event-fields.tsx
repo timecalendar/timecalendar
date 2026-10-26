@@ -1,8 +1,7 @@
 import type { TFunction } from "i18next"
 import { StyleSheet, TextInput, View } from "react-native"
 
-import { FieldError } from "@/components/error-surfaces"
-import { ThemedText } from "@/components/themed-text"
+import { FieldError, ThemedText } from "@/design"
 import type { AppLocale } from "@/features/calendar/data"
 import type {
   EventFormErrors,

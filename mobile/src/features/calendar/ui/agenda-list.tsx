@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native"
 
-import { ThemedText } from "@/components/themed-text"
+import { ThemedText } from "@/design"
 import {
   type AppLocale,
   type CalendarEvent,

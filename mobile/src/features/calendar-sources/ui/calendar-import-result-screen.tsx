@@ -2,10 +2,7 @@ import { router } from "expo-router"
 import { useTranslation } from "react-i18next"
 import { ScrollView, StyleSheet, View } from "react-native"
 
-import { Button } from "@/components/button"
-import { ErrorState } from "@/components/error-surfaces"
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
+import { Button, ErrorState, RootPage, ThemedText } from "@/design"
 import { Spacing } from "@/theme"
 
 import { ImportProgressView } from "./import-progress-view"

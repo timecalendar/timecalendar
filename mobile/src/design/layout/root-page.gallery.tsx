@@ -2,10 +2,8 @@ import type { ComponentProps } from "react"
 import { useTranslation } from "react-i18next"
 import { ScrollView, StyleSheet } from "react-native"
 
-import { headerScrollProps } from "@/components/header-scroll-props"
-import { PageIntro, RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
-import type { GalleryMeta, GalleryStory } from "@/design"
+import { headerScrollProps, PageIntro, RootPage, ThemedText } from "@/design"
+import type { GalleryMeta, GalleryStory } from "@/design/gallery"
 import { Spacing } from "@/theme"
 
 type Story = GalleryStory<ComponentProps<typeof RootPage>>

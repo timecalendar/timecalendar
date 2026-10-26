@@ -79,8 +79,8 @@ import {
   materialSymbolSource,
   type NativeSettingsIcon,
 } from "@/components/chrome/native-settings-icons"
-import { useErrorAnnouncement } from "@/components/use-error-announcement"
 import { useColorScheme } from "@/hooks/use-color-scheme"
+import { useErrorAnnouncement } from "@/hooks/use-error-announcement"
 import { useIsAccessibilityTextSize, useTheme } from "@/theme"
 
 export type NativeSettingsRowProps = {

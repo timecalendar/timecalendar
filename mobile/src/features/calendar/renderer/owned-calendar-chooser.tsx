@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { Modal, Pressable, StyleSheet, View } from "react-native"
 
-import { ThemedText } from "@/components/themed-text"
+import { ThemedText } from "@/design"
 import type { PageTileV1 } from "@/features/calendar/data"
 import { useTheme } from "@/theme"
 

@@ -8,10 +8,10 @@ import {
   type ViewStyle,
 } from "react-native"
 
-import { Button } from "@/components/button"
-import { Icon } from "@/components/icon"
-import { ThemedText } from "@/components/themed-text"
-import { useErrorAnnouncement } from "@/components/use-error-announcement"
+import { Button } from "@/design/button/button"
+import { Icon } from "@/design/icon/icon"
+import { ThemedText } from "@/design/text/themed-text"
+import { useErrorAnnouncement } from "@/hooks/use-error-announcement"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 export type ErrorAction = {

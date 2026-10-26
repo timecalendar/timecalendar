@@ -2,11 +2,8 @@ import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { ScrollView, StyleSheet, View } from "react-native"
 
-import { headerScrollProps } from "@/components/header-scroll-props"
-import { Icon } from "@/components/icon"
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
-import type { GalleryMeta, GalleryStory } from "@/design"
+import { headerScrollProps, Icon, RootPage, ThemedText } from "@/design"
+import type { GalleryMeta, GalleryStory } from "@/design/gallery"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import {
   Colors as ColorTokens,

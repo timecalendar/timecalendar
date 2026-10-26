@@ -4,13 +4,12 @@ import { useTranslation } from "react-i18next"
 import { ActivityIndicator, ScrollView, StyleSheet } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { ErrorState } from "@/components/error-surfaces"
-import { ThemedText } from "@/components/themed-text"
 import {
   isBackendRuntimeReady,
   setBackendRuntimeReady,
   subscribeBackendRuntimeReady,
 } from "@/config/backend-runtime"
+import { ErrorState, ThemedText } from "@/design"
 import { useEffectiveBackendEnvironment } from "@/features/environment/data/store"
 import { recoverBackendEnvironmentSwitch } from "@/features/environment/data/switch"
 import { setCrashlyticsAttributes } from "@/firebase"

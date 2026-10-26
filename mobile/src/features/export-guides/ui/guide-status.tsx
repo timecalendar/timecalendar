@@ -2,9 +2,7 @@ import { router } from "expo-router"
 import { useTranslation } from "react-i18next"
 import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native"
 
-import { ErrorState } from "@/components/error-surfaces"
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
+import { ErrorState, RootPage, ThemedText } from "@/design"
 import { Spacing, useTheme } from "@/theme"
 
 export function GuideLoading() {

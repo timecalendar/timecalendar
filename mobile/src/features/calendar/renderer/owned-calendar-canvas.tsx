@@ -15,7 +15,7 @@ import Animated, {
   useAnimatedStyle,
 } from "react-native-reanimated"
 
-import { ThemedText } from "@/components/themed-text"
+import { ThemedText } from "@/design"
 import {
   type AppLocale,
   formatHourStartLabel,

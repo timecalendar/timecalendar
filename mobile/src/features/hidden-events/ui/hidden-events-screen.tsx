@@ -2,13 +2,15 @@ import { Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
 import { ScrollView, StyleSheet, View } from "react-native"
 
-import { Button } from "@/components/button"
-import { EmptyState } from "@/components/empty-state"
-import { noDataArtwork } from "@/components/empty-state-artwork"
-import { ErrorNotice } from "@/components/error-surfaces"
-import { headerScrollProps } from "@/components/header-scroll-props"
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
+import {
+  Button,
+  EmptyState,
+  ErrorNotice,
+  headerScrollProps,
+  noDataArtwork,
+  RootPage,
+  ThemedText,
+} from "@/design"
 import {
   displayEventTitle,
   formatTimeRange,

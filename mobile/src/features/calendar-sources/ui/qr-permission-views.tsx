@@ -1,8 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { Linking, StyleSheet } from "react-native"
 
-import { PageIntro, RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
+import { PageIntro, RootPage, ThemedText } from "@/design"
 import { Spacing } from "@/theme"
 
 import { QrActionButton } from "./qr-action-button"

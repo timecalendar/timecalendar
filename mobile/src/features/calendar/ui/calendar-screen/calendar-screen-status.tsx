@@ -1,8 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet, View } from "react-native"
 
-import { ErrorNotice } from "@/components/error-surfaces"
-import { ThemedText } from "@/components/themed-text"
+import { ErrorNotice, ThemedText } from "@/design"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 export function CalendarScreenStatus({

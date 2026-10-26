@@ -3,11 +3,14 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, TextInput } from "react-native"
 
-import { Button } from "@/components/button"
-import { FieldError } from "@/components/error-surfaces"
-import { KeyboardSafeActionLayout } from "@/components/keyboard-safe-action-layout"
-import { PageIntro, RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
+import {
+  Button,
+  FieldError,
+  KeyboardSafeActionLayout,
+  PageIntro,
+  RootPage,
+  ThemedText,
+} from "@/design"
 import {
   isImportNameWithinLimit,
   normalizeImportName,

@@ -58,8 +58,11 @@ describe.each(["ios", "android"] as const)(
             ]
       expect(sectionIds).toEqual([
         "root-page",
+        "adaptive-content",
         "keyboard-safe-action-layout",
         "themed-text",
+        "themed-view",
+        "icon",
         "empty-state",
         "error-surfaces",
         "button",
@@ -72,6 +75,7 @@ describe.each(["ios", "android"] as const)(
         "design-tokens",
       ])
       const androidOnly = [
+        "icon--glyphs",
         "native-settings--floating-action",
         "native-settings--radio-dialog",
       ]
@@ -92,12 +96,18 @@ describe.each(["ios", "android"] as const)(
           "root-page--scrolls-under-header",
           "root-page--readable-lane",
           "root-page--long-strings",
+          "adaptive-content--standard-lane",
+          "adaptive-content--readable-lane",
+          "adaptive-content--long-strings",
           "keyboard-safe-action-layout--default",
           "keyboard-safe-action-layout--fills-viewport",
           "keyboard-safe-action-layout--long-strings",
           "themed-text--ramp",
           "themed-text--tones",
           "themed-text--long-strings",
+          "themed-view--surfaces",
+          "icon--scaling",
+          "icon--glyphs",
           "empty-state--screen",
           "empty-state--screen-with-artwork",
           "empty-state--section",

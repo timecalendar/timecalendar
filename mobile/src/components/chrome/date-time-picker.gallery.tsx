@@ -8,9 +8,8 @@ import {
   NativeSettingsRow,
   NativeSettingsSection,
 } from "@/components/chrome"
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
-import type { GalleryMeta, GalleryStory } from "@/design"
+import { RootPage, ThemedText } from "@/design"
+import type { GalleryMeta, GalleryStory } from "@/design/gallery"
 import { Spacing } from "@/theme"
 
 type PickerProps = ComponentProps<typeof DateTimePicker>

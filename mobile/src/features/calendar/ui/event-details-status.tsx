@@ -1,8 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { ActivityIndicator, StyleSheet, View } from "react-native"
 
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
+import { RootPage, ThemedText } from "@/design"
 import { Spacing } from "@/theme"
 
 import { EventDetailsHeader } from "./event-details-actions"

@@ -4,8 +4,7 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { FlatList, Pressable, StyleSheet, View } from "react-native"
 
-import { PageIntro, RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
+import { PageIntro, RootPage, ThemedText } from "@/design"
 import {
   type ExportGuideCatalogue,
   type ExportGuideLoadOutcome,

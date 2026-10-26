@@ -1,8 +1,7 @@
 import type { TFunction } from "i18next"
 import { StyleSheet, View } from "react-native"
 
-import { Button } from "@/components/button"
-import { ErrorNotice } from "@/components/error-surfaces"
+import { Button, ErrorNotice } from "@/design"
 import { Spacing } from "@/theme"
 
 type PersonalEventActionsProps = {

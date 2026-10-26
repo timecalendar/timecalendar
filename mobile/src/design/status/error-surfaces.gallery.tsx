@@ -6,11 +6,11 @@ import {
   ErrorNotice,
   ErrorState,
   FieldError as FieldErrorMessage,
-} from "@/components/error-surfaces"
-import { headerScrollProps } from "@/components/header-scroll-props"
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
-import type { GalleryMeta, GalleryStory } from "@/design"
+  headerScrollProps,
+  RootPage,
+  ThemedText,
+} from "@/design"
+import type { GalleryMeta, GalleryStory } from "@/design/gallery"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 type Story = GalleryStory<ComponentProps<typeof ErrorState>>

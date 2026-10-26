@@ -6,7 +6,7 @@ import PagerView, {
 } from "react-native-pager-view"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { ThemedView } from "@/components/themed-view"
+import { ThemedView } from "@/design"
 import { useReducedMotion } from "@/hooks/use-reduced-motion"
 import { useIsAccessibilityTextSize } from "@/theme"
 

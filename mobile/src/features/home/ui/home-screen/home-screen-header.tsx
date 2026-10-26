@@ -3,8 +3,7 @@ import { useTranslation } from "react-i18next"
 import { Platform, Pressable, StyleSheet, View } from "react-native"
 
 import { GlassSurface } from "@/components/chrome"
-import { Icon } from "@/components/icon"
-import { ThemedText } from "@/components/themed-text"
+import { Icon, ThemedText } from "@/design"
 import { Radii, Spacing, useTheme, WordmarkMaxFontScale } from "@/theme"
 
 export function HomeScreenHeader({ onAdd }: { onAdd: () => void }) {

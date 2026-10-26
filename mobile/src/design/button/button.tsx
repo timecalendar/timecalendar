@@ -9,8 +9,8 @@ import {
   type ViewStyle,
 } from "react-native"
 
-import { Icon, type MaterialGlyph } from "@/components/icon"
-import { ThemedText } from "@/components/themed-text"
+import { Icon, type MaterialGlyph } from "@/design/icon/icon"
+import { ThemedText } from "@/design/text/themed-text"
 import {
   IconSize,
   MinTouchTarget,

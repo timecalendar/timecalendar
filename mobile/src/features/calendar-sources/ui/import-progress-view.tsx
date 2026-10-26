@@ -1,7 +1,6 @@
 import { ActivityIndicator, StyleSheet, View } from "react-native"
 
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
+import { RootPage, ThemedText } from "@/design"
 import { Spacing, useTheme } from "@/theme"
 
 interface ImportProgressViewProps {

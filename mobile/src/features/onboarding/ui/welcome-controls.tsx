@@ -1,8 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { StyleSheet } from "react-native"
 
-import { AdaptiveContent } from "@/components/adaptive-content"
-import { Button } from "@/components/button"
+import { AdaptiveContent, Button } from "@/design"
 import { Spacing } from "@/theme"
 
 type WelcomeSkipProps = {

@@ -12,9 +12,10 @@ import {
 } from "react-native"
 import { SafeAreaInsetsContext } from "react-native-safe-area-context"
 
-import { useAdaptiveLayout } from "@/components/adaptive-content"
-import { headerScrollProps } from "@/components/header-scroll-props"
 import { type ResponsiveLane, Spacing } from "@/theme"
+
+import { useAdaptiveLayout } from "./adaptive-content"
+import { headerScrollProps } from "./header-scroll-props"
 
 type KeyboardSafeActionLayoutProps = {
   children: ReactNode

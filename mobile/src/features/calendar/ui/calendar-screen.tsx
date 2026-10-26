@@ -10,8 +10,8 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { ThemedView } from "@/components/themed-view"
 import { isDevVariant } from "@/config/variant"
+import { ThemedView } from "@/design"
 import {
   DEFAULT_PIXELS_PER_HOUR,
   eventRoute,

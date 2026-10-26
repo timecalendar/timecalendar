@@ -10,8 +10,7 @@ import {
   View,
 } from "react-native"
 
-import { ErrorNotice } from "@/components/error-surfaces"
-import { ThemedText } from "@/components/themed-text"
+import { ErrorNotice, ThemedText } from "@/design"
 import {
   type ChecklistItem,
   useChecklist,

@@ -8,7 +8,7 @@ import {
 } from "@expo/ui/swift-ui/modifiers"
 import { Platform } from "react-native"
 
-import { useErrorAnnouncement } from "@/components/use-error-announcement"
+import { useErrorAnnouncement } from "@/hooks/use-error-announcement"
 import { useTheme } from "@/theme"
 
 // Content-only adapter: callers retain their existing native host and layout.

@@ -11,7 +11,8 @@ import {
 import { CalendarViewMenu } from "./calendar-view-menu"
 
 const mockIcon = jest.fn()
-jest.mock("@/components/icon", () => ({
+jest.mock("@/design", () => ({
+  ...jest.requireActual("@/design"),
   Icon: (props: unknown) => {
     mockIcon(props)
     return null

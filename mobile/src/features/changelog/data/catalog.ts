@@ -1,6 +1,6 @@
 import type { SFSymbol } from "expo-symbols"
 
-import type { MaterialGlyph } from "@/components/icon"
+import type { MaterialGlyph } from "@/design"
 
 export const CHANGELOG_VERSION = 4
 

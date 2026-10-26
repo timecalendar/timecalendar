@@ -8,11 +8,11 @@ import {
   type ButtonProps,
   type ButtonSize,
   type ButtonVariant,
-} from "@/components/button"
-import { headerScrollProps } from "@/components/header-scroll-props"
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
-import type { GalleryMeta, GalleryStory } from "@/design"
+  headerScrollProps,
+  RootPage,
+  ThemedText,
+} from "@/design"
+import type { GalleryMeta, GalleryStory } from "@/design/gallery"
 import { Spacing } from "@/theme"
 
 type Story = GalleryStory<ButtonProps>
