@@ -290,6 +290,16 @@ describe("ActivityScreen behavior", () => {
     const cancelled = screen.getByTestId("activity-cancelled-cancelled")
     expect(cancelled.props.onPress).toBeUndefined()
     expect(cancelled.props.accessibilityRole).toBeUndefined()
+    expect(
+      screen.getByTestId("activity-changed-changed-new").props
+        .accessibilityLabel,
+    ).toMatch(/^Changed event .+, .+ changed from .+ to /)
+    expect(
+      screen
+        .getAllByRole("button")
+        .map((button) => String(button.props.testID))
+        .filter((id) => id.startsWith("activity-")),
+    ).toEqual(["activity-new-new", "activity-changed-changed-new"])
   })
 
   it.each(["no-calendars", "cursor-reset"] as const)(

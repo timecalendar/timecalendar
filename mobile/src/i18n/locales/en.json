@@ -465,7 +465,6 @@
   "settings.timezone.choose": "Choose a time zone",
   "settings.timezone.searchPlaceholder": "Search city, country, or time zone",
   "settings.timezone.openChooserHint": "Opens worldwide time-zone search",
-  "settings.timezone.selected": "Selected",
   "settings.timezone.unavailable": "Unavailable on this device",
   "settings.timezone.fallback": "Fallback time zone",
   "settings.timezone.noResults": "No time zones found",

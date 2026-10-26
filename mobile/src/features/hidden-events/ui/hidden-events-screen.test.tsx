@@ -152,8 +152,13 @@ describe("HiddenEventsScreen", () => {
       namedHiddenEvents: ["Algorithms"],
     })
     await render(<HiddenEventsScreen />)
-    expect(screen.getByText("Hidden by name")).toBeTruthy()
-    expect(screen.getByText("Algorithms")).toBeTruthy()
+    expect(screen.getByRole("header", { name: "Hidden by name" })).toBeTruthy()
+    expect(screen.getByTestId("hidden-events-name-section")).toBeTruthy()
+    expect(
+      within(screen.getByTestId("hidden-events-name-Algorithms")).getByText(
+        "Algorithms",
+      ),
+    ).toBeTruthy()
     expect(
       within(screen.getByLabelText("Un-hide Algorithms")).getByText("Un-hide"),
     ).toHaveStyle({ color: Colors.light.actionText })
@@ -170,8 +175,10 @@ describe("HiddenEventsScreen", () => {
     })
     mockUseSyncedEvents.mockReturnValue([syncedEvent("ev-1", "Lecture")])
     await render(<HiddenEventsScreen />)
-    expect(screen.getByText("Lecture")).toBeTruthy()
-    expect(screen.getByText("09:00 – 10:30")).toBeTruthy()
+    expect(screen.getByRole("header", { name: "Hidden events" })).toBeTruthy()
+    const row = screen.getByTestId("hidden-events-uid-ev-1")
+    expect(within(row).getByLabelText("Lecture, 09:00 – 10:30")).toBeTruthy()
+    expect(within(row).getByText("09:00 – 10:30")).toBeTruthy()
 
     const user = userEvent.setup()
     await user.press(screen.getByLabelText("Un-hide Lecture"))

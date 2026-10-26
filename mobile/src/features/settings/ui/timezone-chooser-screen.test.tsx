@@ -163,6 +163,26 @@ describe("TimezoneChooserScreen", () => {
     ).toBe(false)
   })
 
+  it("marks the active zone with a check and the selected state", async () => {
+    setString(SETTINGS_KEYS.timezone, "Europe/Paris")
+    const view = await render(<TimezoneChooserScreen />)
+    await act(() =>
+      view.getByTestId("timezone-search").props.onChangeText("Europe Paris"),
+    )
+
+    const row = view.getByTestId("timezone-result-Europe/Paris")
+    expect(row.props.accessibilityLabel).toMatch(/^Paris, /)
+    expect(row.props.accessibilityLabel).not.toContain("UTC")
+    expect(row.props.accessibilityValue.text).toMatch(/^UTC\+0[12]:00$/)
+    expect(row.props.accessibilityState.selected).toBe(true)
+    expect(
+      view.getByTestId("timezone-result-Europe/Paris-check", {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy()
+    expect(view.queryByText("Selected")).toBeNull()
+  })
+
   it("selects the exact identifier, writes both keys, and navigates once", async () => {
     setString(SETTINGS_KEYS.timezone, "Europe/Paris")
     const view = await render(<TimezoneChooserScreen />)
@@ -299,7 +319,7 @@ describe("TimezoneChooserScreen", () => {
     jest.useRealTimers()
   })
 
-  it("renders French labels and follows the current theme separator", async () => {
+  it("renders French labels in the current theme", async () => {
     await i18n.changeLanguage("fr")
     mockColorScheme.mockReturnValue("dark")
     const view = await render(<TimezoneChooserScreen />)
@@ -308,9 +328,8 @@ describe("TimezoneChooserScreen", () => {
     )
 
     const london = view.getByTestId("timezone-result-Europe/London")
-    expect(within(london).getByText("Londres")).toBeTruthy()
-    expect(StyleSheet.flatten(london.props.style).borderBottomColor).toBe(
-      Colors.dark.separator,
-    )
+    expect(
+      StyleSheet.flatten(within(london).getByText("Londres").props.style).color,
+    ).toBe(Colors.dark.text)
   })
 })

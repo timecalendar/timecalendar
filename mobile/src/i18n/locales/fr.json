@@ -465,7 +465,6 @@
   "settings.timezone.choose": "Choisir un fuseau horaire",
   "settings.timezone.searchPlaceholder": "Rechercher une ville, un pays ou un fuseau",
   "settings.timezone.openChooserHint": "Ouvre la recherche mondiale de fuseaux horaires",
-  "settings.timezone.selected": "Sélectionné",
   "settings.timezone.unavailable": "Indisponible sur cet appareil",
   "settings.timezone.fallback": "Fuseau horaire de secours",
   "settings.timezone.noResults": "Aucun fuseau horaire trouvé",

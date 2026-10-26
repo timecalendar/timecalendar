@@ -409,11 +409,18 @@ export function ListRow(props: ListRowProps) {
   )
 }
 
-export function ListRowSeparator({ leadingWidth }: { leadingWidth?: number }) {
+export function ListRowSeparator({
+  leadingWidth,
+  testID,
+}: {
+  leadingWidth?: number
+  testID?: string
+}) {
   if (Platform.OS !== "ios") return null
   return (
     <Separator
       inset={leadingWidth === undefined ? "leading" : { leadingWidth }}
+      testID={testID}
     />
   )
 }

@@ -1,9 +1,8 @@
-import { router, Stack } from "expo-router"
+import { Stack } from "expo-router"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
   ActivityIndicator,
-  Pressable,
   RefreshControl,
   SectionList,
   StyleSheet,
@@ -14,6 +13,9 @@ import {
   developerActivityArtwork,
   ErrorNotice,
   headerScrollProps,
+  ListRow,
+  type ListRowPosition,
+  listRowPosition,
   RootPage,
   StatusView,
   ThemedText,
@@ -31,7 +33,7 @@ import {
   resolveLocale,
 } from "@/features/calendar/data"
 import { useDisplayZone } from "@/features/settings/prefs"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Spacing, useTheme } from "@/theme"
 
 import {
   type ActivityItem,
@@ -191,9 +193,10 @@ export function ActivityScreen() {
                   )}
                 />
               )}
-              renderItem={({ item }) => (
+              renderItem={({ item, index, section }) => (
                 <ActivityItemRow
                   item={item}
+                  position={listRowPosition(index, section.data.length)}
                   formatTime={(start, end) =>
                     formatEventDateRange(start, end, locale, false, displayZone)
                   }
@@ -233,84 +236,66 @@ function ActivityGroupHeader({
   )
 }
 
+const OVERLINE_TONE = {
+  new: "positive",
+  changed: "informational",
+  cancelled: "destructive",
+} as const
+
 function ActivityItemRow({
   item,
+  position,
   formatTime,
 }: {
   item: ActivityItem
+  position: ListRowPosition
   formatTime: (start: Date, end: Date) => string
 }) {
   const { t } = useTranslation()
-  const theme = useTheme()
   const event = item.kind === "changed" ? item.change.newItem : item.event
   const range = parseRange(event)
-  const time = range === null ? null : formatTime(...range)
-  const kindColor =
-    item.kind === "new"
-      ? theme.positive
-      : item.kind === "changed"
-        ? theme.informational
-        : theme.destructive
-  const content = (
-    <>
-      <ThemedText type="smallBold" style={{ color: kindColor }}>
-        {t(`activity.kind.${item.kind}`)}
-      </ThemedText>
-      <ThemedText>{event.title}</ThemedText>
-      {time !== null ? (
-        <ThemedText type="small" themeColor="textSecondary">
-          {time}
-        </ThemedText>
-      ) : null}
-      {item.kind === "changed"
-        ? describeChangedItem(
-            item.change.previousItem,
-            item.change.newItem,
-            formatTime,
-          ).map((difference) => (
-            <ThemedText
-              key={difference.field}
-              type="small"
-              themeColor="textSecondary"
-              accessibilityLabel={t("activity.change.spoken", {
-                field: t(`activity.change.field.${difference.field}`),
-                from: difference.from,
-                to: difference.to,
-              })}
-            >
-              {t("activity.change.line", {
-                field: t(`activity.change.field.${difference.field}`),
-                from: difference.from,
-                to: difference.to,
-              })}
-            </ThemedText>
-          ))
-        : null}
-    </>
-  )
-  const rowStyle = [styles.item, { backgroundColor: theme.backgroundElement }]
-
-  if (item.kind === "cancelled") {
-    return (
-      <View testID={`activity-cancelled-${event.uid}`} style={rowStyle}>
-        {content}
-      </View>
-    )
+  const time = range === null ? undefined : formatTime(...range)
+  const changes =
+    item.kind === "changed"
+      ? describeChangedItem(
+          item.change.previousItem,
+          item.change.newItem,
+          formatTime,
+        ).map((difference) => {
+          const values = {
+            field: t(`activity.change.field.${difference.field}`),
+            from: difference.from,
+            to: difference.to,
+          }
+          return {
+            line: t("activity.change.line", values),
+            spoken: t("activity.change.spoken", values),
+          }
+        })
+      : []
+  const kindLabel =
+    item.kind === "cancelled"
+      ? `${t("activity.kind.cancelled")}, ${event.title}`
+      : t(`activity.item.${item.kind}.accessibilityLabel`, {
+          title: event.title,
+        })
+  const row = {
+    label: event.title,
+    subtitle: time,
+    details: changes.map((change) => change.line),
+    overline: {
+      text: t(`activity.kind.${item.kind}`),
+      tone: OVERLINE_TONE[item.kind],
+    },
+    position,
+    accessibilityLabel: [kindLabel, time, ...changes.map((c) => c.spoken)]
+      .filter(Boolean)
+      .join(", "),
+    testID: `activity-${item.kind}-${event.uid}`,
   }
 
-  return (
-    <Pressable
-      testID={`activity-${item.kind}-${event.uid}`}
-      accessibilityRole="button"
-      accessibilityLabel={t(`activity.item.${item.kind}.accessibilityLabel`, {
-        title: event.title,
-      })}
-      onPress={() => router.push(`/event-details/${event.uid}`)}
-      style={rowStyle}
-    >
-      {content}
-    </Pressable>
-  )
+  if (item.kind === "cancelled") return <ListRow {...row} />
+  return <ListRow {...row} href={`/event-details/${event.uid}`} />
 }
 
 function OlderFooter({
@@ -356,7 +341,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingTop: Spacing.four,
     paddingBottom: Spacing.four,
-    gap: Spacing.two,
   },
   centered: {
     flex: 1,
@@ -366,12 +350,10 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
   },
   stateLane: { flex: 1, paddingTop: Spacing.four },
-  groupHeader: { paddingTop: Spacing.four, gap: Spacing.half },
-  item: {
-    minHeight: 48,
-    padding: Spacing.three,
-    borderRadius: Radii.medium,
-    gap: Spacing.one,
+  groupHeader: {
+    paddingTop: Spacing.four,
+    paddingBottom: Spacing.two,
+    gap: Spacing.half,
   },
   footer: { marginVertical: Spacing.four },
 })

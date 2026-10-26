@@ -2,9 +2,9 @@ import { Image } from "expo-image"
 import { router, Stack } from "expo-router"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { FlatList, Pressable, StyleSheet, View } from "react-native"
+import { FlatList, StyleSheet } from "react-native"
 
-import { PageIntro, RootPage, ThemedText } from "@/design"
+import { ListRow, listRowPosition, PageIntro, RootPage } from "@/design"
 import {
   type ExportGuideCatalogue,
   type ExportGuideLoadOutcome,
@@ -16,7 +16,7 @@ import {
   useImportDraft,
   useJourneyGateRoute,
 } from "@/features/onboarding/draft"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing } from "@/theme"
 
 import { GuideBlockingError, GuideProgress } from "./guide-status"
 import { emitExportGuideEvent } from "./telemetry"
@@ -24,7 +24,6 @@ import { useExportGuideLoad } from "./use-export-guide-load"
 
 export default function ProviderSelectionScreen() {
   const { t } = useTranslation()
-  const theme = useTheme()
   const { state, dispatch } = useImportDraft()
   const legal = useJourneyGateRoute(state, "providers")
   const [failedImages, setFailedImages] = useState<ReadonlySet<string>>(
@@ -126,59 +125,57 @@ export default function ProviderSelectionScreen() {
               <PageIntro
                 title={t("exportGuide.provider.title")}
                 caption={instructions}
+                style={styles.intro}
               />
             }
-            renderItem={({ item: provider }) => (
-              <Pressable
-                testID={`export-guide-provider-${provider.slug}`}
-                accessibilityRole="button"
-                accessibilityLabel={provider.label}
-                accessibilityHint={providerHint}
-                onPress={() => select(provider, catalogue)}
-                style={[
-                  styles.provider,
-                  {
-                    backgroundColor: theme.backgroundElement,
-                    borderColor: theme.separator,
-                  },
-                ]}
-              >
-                {provider.thumbnail !== undefined &&
-                !failedImages.has(provider.slug) ? (
-                  <Image
-                    source={{ uri: provider.thumbnail.url }}
-                    accessibilityLabel={provider.thumbnail.altText}
-                    accessibilityRole="image"
-                    onError={() => {
-                      setFailedImages((current) =>
-                        new Set(current).add(provider.slug),
-                      )
-                      emitExportGuideEvent({
-                        name: "export_guide_image_failed",
-                        params: {
-                          provider_slug: provider.slug,
-                          image_role: "thumbnail",
-                          failure: "load",
-                        },
-                      })
-                    }}
-                    style={styles.thumbnail}
-                  />
-                ) : null}
-                <View style={styles.label}>
-                  <ThemedText type="smallBold">{provider.label}</ThemedText>
-                  {provider.thumbnail !== undefined &&
-                  failedImages.has(provider.slug) ? (
-                    <ThemedText
-                      themeColor="textSecondary"
-                      accessibilityLabel={provider.thumbnail.altText}
-                    >
-                      {t("exportGuide.imageUnavailable")}
-                    </ThemedText>
-                  ) : null}
-                </View>
-              </Pressable>
-            )}
+            renderItem={({ item: provider, index }) => {
+              const thumbnail = provider.thumbnail
+              const imageFailed = failedImages.has(provider.slug)
+              return (
+                <ListRow
+                  testID={`export-guide-provider-${provider.slug}`}
+                  label={provider.label}
+                  accessibilityLabel={provider.label}
+                  hint={providerHint}
+                  subtitle={
+                    thumbnail !== undefined && imageFailed
+                      ? t("exportGuide.imageUnavailable")
+                      : undefined
+                  }
+                  leading={
+                    thumbnail !== undefined && !imageFailed
+                      ? {
+                          element: (
+                            <Image
+                              source={{ uri: thumbnail.url }}
+                              accessibilityLabel={thumbnail.altText}
+                              accessibilityRole="image"
+                              onError={() => {
+                                setFailedImages((current) =>
+                                  new Set(current).add(provider.slug),
+                                )
+                                emitExportGuideEvent({
+                                  name: "export_guide_image_failed",
+                                  params: {
+                                    provider_slug: provider.slug,
+                                    image_role: "thumbnail",
+                                    failure: "load",
+                                  },
+                                })
+                              }}
+                              style={styles.thumbnail}
+                            />
+                          ),
+                          width: THUMBNAIL,
+                        }
+                      : undefined
+                  }
+                  position={listRowPosition(index, providers.length)}
+                  trailing="chevron"
+                  onPress={() => select(provider, catalogue)}
+                />
+              )
+            }}
           />
         )}
       </RootPage>
@@ -186,18 +183,11 @@ export default function ProviderSelectionScreen() {
   )
 }
 
+const THUMBNAIL = 56
+
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  content: { gap: Spacing.three, paddingVertical: Spacing.four },
-  provider: {
-    minHeight: 56,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: Radii.medium,
-    flexDirection: "row",
-    alignItems: "center",
-    padding: Spacing.three,
-    gap: Spacing.three,
-  },
-  thumbnail: { width: 56, height: 56, borderRadius: Radii.small },
-  label: { flex: 1, gap: Spacing.one },
+  content: { paddingVertical: Spacing.four },
+  intro: { marginBottom: Spacing.three },
+  thumbnail: { width: THUMBNAIL, height: THUMBNAIL, borderRadius: Radii.small },
 })

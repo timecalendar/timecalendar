@@ -1,17 +1,9 @@
 import { router, Stack, useFocusEffect } from "expo-router"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import {
-  AppState,
-  FlatList,
-  Keyboard,
-  Platform,
-  Pressable,
-  StyleSheet,
-  View,
-} from "react-native"
+import { AppState, FlatList, Keyboard, Platform } from "react-native"
 
-import { StatusView, ThemedText } from "@/design"
+import { ListRow, ListRowSeparator, StatusView } from "@/design"
 import {
   formatTimezoneOffset,
   getTimezoneCityLabel,
@@ -25,7 +17,6 @@ import {
   useLastManualTimezoneRead,
   useTimezonePreferenceRead,
 } from "@/features/settings/prefs"
-import { Spacing, useTheme } from "@/theme"
 
 function supportsBottomSearch(): boolean {
   return (
@@ -53,7 +44,6 @@ export default function TimezoneChooserScreen() {
   const [query, setQuery] = useState("")
   const [now, setNow] = useState(() => new Date())
   const navigating = useRef(false)
-  const borderColor = useTheme().separator
   const bottomSearch = supportsBottomSearch()
   const results = searchTimezones(query, locale, pinned)
 
@@ -80,38 +70,18 @@ export default function TimezoneChooserScreen() {
     const territory = getTimezoneTerritoryLabel(item, locale)
     const offset = formatTimezoneOffset(item.id, now)
     const available = offset !== undefined
-    const isSelected = item.id === activeSelection
     return (
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${city}, ${territory ?? item.id}, ${offset ?? t("settings.timezone.unavailable")}`}
-        accessibilityState={{ disabled: !available, selected: isSelected }}
+      <ListRow
+        label={city}
+        subtitle={territory ?? item.id}
+        details={territory ? [item.id] : undefined}
+        value={offset ?? t("settings.timezone.unavailable")}
+        accessibilityLabel={`${city}, ${territory ?? item.id}`}
+        selected={item.id === activeSelection}
         disabled={!available}
         onPress={() => select(item.id)}
-        style={({ pressed }) => [
-          styles.row,
-          { borderBottomColor: borderColor },
-          pressed && styles.pressed,
-          !available && styles.disabled,
-        ]}
         testID={`timezone-result-${item.id}`}
-      >
-        <View style={styles.labelColumn}>
-          <ThemedText>{city}</ThemedText>
-          <ThemedText type="small">{territory ?? item.id}</ThemedText>
-          <ThemedText type="small">{item.id}</ThemedText>
-        </View>
-        <View style={styles.valueColumn}>
-          {isSelected ? (
-            <ThemedText type="smallBold">
-              {t("settings.timezone.selected")}
-            </ThemedText>
-          ) : null}
-          <ThemedText type="small">
-            {offset ?? t("settings.timezone.unavailable")}
-          </ThemedText>
-        </View>
-      </Pressable>
+      />
     )
   }
 
@@ -154,6 +124,7 @@ export default function TimezoneChooserScreen() {
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         keyExtractor={(item) => item.id}
+        ItemSeparatorComponent={ListRowSeparator}
         onScrollBeginDrag={Keyboard.dismiss}
         renderItem={renderItem}
         testID="timezone-results-list"
@@ -171,19 +142,3 @@ export default function TimezoneChooserScreen() {
     </>
   )
 }
-
-const styles = StyleSheet.create({
-  row: {
-    minHeight: 64,
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.three,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.three,
-  },
-  labelColumn: { flex: 1 },
-  valueColumn: { alignItems: "flex-end" },
-  pressed: { opacity: 0.65 },
-  disabled: { opacity: 0.45 },
-})

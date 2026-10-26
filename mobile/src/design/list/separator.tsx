@@ -4,7 +4,7 @@ import { ListGeometry, useTheme } from "@/theme"
 
 export type SeparatorProps = {
   inset?: "none" | "leading" | { leadingWidth: number }
-  testID?: string
+  testID?: string | undefined
 }
 
 export function separatorInset(inset: SeparatorProps["inset"]): number {

@@ -562,4 +562,57 @@ describe("ProviderSelectionScreen", () => {
     )
     expect(router.push).toHaveBeenCalledWith("/onboarding/export-guide/0")
   })
+
+  it("leads a provider with its thumbnail and explains a failed one", async () => {
+    const provider = {
+      slug: "future-provider",
+      label: "Future Provider",
+      kind: "pages" as const,
+      selectable: true,
+      compatibility: { minClientSchema: 1, maxClientSchema: 1 },
+      pages: snapshot.pages,
+      thumbnail: { ...snapshot.pages[0]!.image!, altText: "Provider logo" },
+    }
+    mockUseImportDraft.mockReturnValue({
+      state: {
+        phase: "selecting-provider",
+        draft: {
+          institution: { kind: "unlisted", schoolName: "School" },
+          calendarName: "",
+        },
+        draftRevision: 1,
+        gateProgress: "programme",
+        locale: "en",
+        catalogue: {
+          schemaVersion: 1,
+          catalogueVersion: "v1",
+          locale: "en",
+          providers: [provider],
+          rejectedProviders: {},
+        },
+        providers: [provider],
+      },
+      dispatch,
+    })
+    const view = await render(<ProviderSelectionScreen />)
+    const row = view.getByTestId("export-guide-provider-future-provider")
+    const image = within(row).getByLabelText("Provider logo", {
+      includeHiddenElements: true,
+    })
+    expect(row.props.accessibilityLabel).toBe("Future Provider")
+    await fireEvent(image, "error")
+    expect(emitExportGuideEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "export_guide_image_failed" }),
+    )
+    expect(
+      within(row).queryByLabelText("Provider logo", {
+        includeHiddenElements: true,
+      }),
+    ).toBeNull()
+    expect(
+      within(row).getByText(/^Instructional image unavailable/, {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy()
+  })
 })

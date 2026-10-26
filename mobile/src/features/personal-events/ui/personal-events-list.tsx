@@ -1,13 +1,15 @@
-import { Link, router, Stack } from "expo-router"
+import { router, Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
-import { FlatList, Pressable, StyleSheet, View } from "react-native"
+import { FlatList, StyleSheet, View } from "react-native"
 
 import {
   Button,
   headerScrollProps,
+  ListRow,
+  type ListRowPosition,
+  listRowPosition,
   RootPage,
   StatusView,
-  ThemedText,
 } from "@/design"
 import { formatShortDateTime, resolveLocale } from "@/features/calendar/data"
 import {
@@ -16,7 +18,7 @@ import {
 } from "@/features/personal-events/data"
 import { useDisplayZone } from "@/features/settings/prefs"
 import { useUses24HourClock } from "@/hooks/use-uses-24-hour-clock"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing } from "@/theme"
 
 // The Home-tab personal-events list (B2 / TIM-133) — PRESENTATIONAL (70% floor):
 // it reads B1's reactive usePersonalEvents() (useLiveQuery, so it re-renders on
@@ -64,8 +66,12 @@ export function PersonalEventsList() {
                 testID="personal-events-empty"
               />
             }
-            renderItem={({ item }) => (
-              <EventRow event={item} uses24HourClock={uses24HourClock} />
+            renderItem={({ item, index }) => (
+              <EventRow
+                event={item}
+                position={listRowPosition(index, events.length)}
+                uses24HourClock={uses24HourClock}
+              />
             )}
           />
         )}
@@ -76,60 +82,50 @@ export function PersonalEventsList() {
 
 function EventRow({
   event,
+  position,
   uses24HourClock,
 }: {
   event: PersonalEvent
+  position: ListRowPosition
   uses24HourClock: boolean | null
 }) {
   const { t, i18n } = useTranslation()
-  const theme = useTheme()
   const locale = resolveLocale(i18n.language)
   const displayZone = useDisplayZone()
   const range = `${formatShortDateTime(event.startsAt, locale, displayZone, uses24HourClock)} – ${formatShortDateTime(event.endsAt, locale, displayZone, uses24HourClock)}`
 
   return (
-    <Link href={`/personal-event-form?uid=${event.uid}`} asChild>
-      <Pressable
-        testID={`personal-event-row-${event.uid}`}
-        accessibilityRole="button"
-        // The label is exactly the title (not "Edit event {title}"): iOS merges
-        // an accessible Pressable's children into this single label, so the title
-        // is only reachable here — keeping it verbatim lets the shared Maestro
-        // flow match the row by its title cross-platform. The edit affordance
-        // moves to the hint.
-        accessibilityLabel={event.title}
-        accessibilityHint={t("personalEvents.list.rowHint")}
-        // Flatten: Link asChild forwards through expo-router's radix <Slot>, whose
-        // dev-only shim throws on an array `style` child.
-        style={StyleSheet.flatten([
-          styles.row,
-          { backgroundColor: theme.backgroundElement },
-        ])}
-      >
-        <View
-          style={[styles.rowSwatch, { backgroundColor: event.color }]}
-          accessibilityElementsHidden
-          importantForAccessibility="no"
-        />
-        <View style={styles.rowText}>
-          <ThemedText type="smallBold">{event.title}</ThemedText>
-          <ThemedText themeColor="textSecondary" type="small">
-            {range}
-          </ThemedText>
-          {event.location !== undefined && (
-            <ThemedText themeColor="textSecondary" type="small">
-              {event.location}
-            </ThemedText>
-          )}
-        </View>
-      </Pressable>
-    </Link>
+    <ListRow
+      testID={`personal-event-row-${event.uid}`}
+      label={event.title}
+      subtitle={range}
+      details={event.location !== undefined ? [event.location] : undefined}
+      leading={{
+        element: (
+          <View
+            style={[styles.swatch, { backgroundColor: event.color }]}
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+          />
+        ),
+        width: SWATCH,
+      }}
+      position={position}
+      trailing="chevron"
+      href={`/personal-event-form?uid=${event.uid}`}
+      // The label is exactly the title: the shared Maestro flow matches the
+      // row by its title cross-platform, and the edit affordance is the hint.
+      accessibilityLabel={event.title}
+      hint={t("personalEvents.list.rowHint")}
+    />
   )
 }
 
+const SWATCH = 24
+
 const styles = StyleSheet.create({
   header: {
-    marginBottom: Spacing.one,
+    marginBottom: Spacing.three,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -138,23 +134,10 @@ const styles = StyleSheet.create({
   list: {
     flexGrow: 1,
     paddingVertical: Spacing.four,
-    gap: Spacing.two,
   },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.three,
-    minHeight: 48,
-    padding: Spacing.three,
-    borderRadius: Radii.medium,
-  },
-  rowSwatch: {
-    width: 24,
-    height: 24,
+  swatch: {
+    width: SWATCH,
+    height: SWATCH,
     borderRadius: Radii.small,
-  },
-  rowText: {
-    flex: 1,
-    gap: Spacing.half,
   },
 })

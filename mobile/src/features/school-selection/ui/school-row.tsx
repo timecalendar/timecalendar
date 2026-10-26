@@ -1,27 +1,32 @@
 import { router } from "expo-router"
 import { useTranslation } from "react-i18next"
-import { Platform, Pressable, StyleSheet } from "react-native"
 
-import { Icon, ThemedText } from "@/design"
+import { ListRow } from "@/design"
 import { emitExportGuideEvent } from "@/features/export-guides/ui"
 import { decideIntranetUrl, useImportDraft } from "@/features/onboarding"
 import { type SchoolListItem } from "@/features/school-selection/data"
-import { ChevronMaxFontScale, Spacing, useTheme } from "@/theme"
 
-import { SchoolLogo } from "./school-logo"
+import { LogoSize, SchoolLogo } from "./school-logo"
 
 export function SchoolRow({ school }: { school: SchoolListItem }) {
   const { t } = useTranslation()
-  const theme = useTheme()
   const { setListedInstitution, setCalendarName } = useImportDraft()
 
   return (
-    <Pressable
+    <ListRow
       testID={`onboarding-school-row-${school.id}`}
-      accessibilityRole="button"
-      // Label = name verbatim: iOS merges children in, and Maestro matches rows by name.
-      accessibilityLabel={school.name}
-      accessibilityHint={t("onboarding.school.rowHint")}
+      label={school.name}
+      hint={t("onboarding.school.rowHint")}
+      leading={{
+        element: (
+          <SchoolLogo
+            key={`${school.imageUrl}:${school.imageUrlDark ?? ""}`}
+            school={school}
+          />
+        ),
+        width: LogoSize,
+      }}
+      trailing="chevron"
       // The import journey (TIM-391), not the group step: `groups` persists a
       // selection and dismisses WITHOUT creating a calendar — a dead end. It
       // keeps its route and stays deep-linkable; deleting it is a separate
@@ -50,49 +55,6 @@ export function SchoolRow({ school }: { school: SchoolListItem }) {
         }
         router.push("/onboarding/export-guide/0")
       }}
-      // foreground ripple: the background lane regresses on New Arch (RN #52939/#54372).
-      android_ripple={{ color: theme.ripple, foreground: true }}
-      style={({ pressed }) => [
-        styles.row,
-        Platform.OS === "ios" &&
-          pressed && { backgroundColor: theme.backgroundSelected },
-      ]}
-    >
-      <SchoolLogo
-        key={`${school.imageUrl}:${school.imageUrlDark ?? ""}`}
-        school={school}
-      />
-      <ThemedText style={styles.rowName}>{school.name}</ThemedText>
-      {Platform.OS === "ios" && (
-        <Icon
-          ios="chevron.forward"
-          size={14}
-          iosWeight="semibold"
-          color={theme.textTertiary}
-          scaling="text"
-          maxFontSizeMultiplier={ChevronMaxFontScale}
-        />
-      )}
-    </Pressable>
+    />
   )
 }
-
-const styles = StyleSheet.create({
-  row: {
-    minHeight: 56,
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-  },
-  rowName: {
-    flex: 1,
-    // Platform body: iOS 17pt / Android 16sp regular (ThemedText default reads as emphasis).
-    ...Platform.select({
-      ios: { fontSize: 17, lineHeight: 22, fontWeight: "400" as const },
-      default: { fontWeight: "400" as const },
-    }),
-  },
-})

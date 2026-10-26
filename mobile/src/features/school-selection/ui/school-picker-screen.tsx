@@ -11,6 +11,7 @@ import {
 import {
   Button,
   ErrorNotice,
+  ListRowSeparator,
   PageIntro,
   RootPage,
   type StatusAction,
@@ -20,8 +21,17 @@ import {
 import { schoolMatches, useSchools } from "@/features/school-selection/data"
 import { Spacing, useTheme } from "@/theme"
 
-import { RowSeparator } from "./row-separator"
+import { LogoSize } from "./school-logo"
 import { SchoolRow } from "./school-row"
+
+function SchoolRowSeparator() {
+  return (
+    <ListRowSeparator
+      leadingWidth={LogoSize}
+      testID="onboarding-school-separator"
+    />
+  )
+}
 
 function useMissingSchoolAction(): StatusAction {
   const { t } = useTranslation()
@@ -104,7 +114,7 @@ export default function SchoolPickerScreen() {
             data={visible}
             keyExtractor={(school) => school.id}
             renderItem={({ item }) => <SchoolRow school={item} />}
-            ItemSeparatorComponent={Platform.OS === "ios" ? RowSeparator : null}
+            ItemSeparatorComponent={SchoolRowSeparator}
             contentInsetAdjustmentBehavior="automatic"
             // No automaticallyAdjustKeyboardInsets: it sticks content under the
             // header after the keyboard hides (RN #47731).

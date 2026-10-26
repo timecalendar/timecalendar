@@ -12,16 +12,14 @@ import { PersonalEventsList } from "./personal-events-list"
 
 // Presentational (70% floor): renders rows from a mocked usePersonalEvents, the
 // localized empty state when empty, and the accessible Add control. Localized
-// copy resolves through the real i18n tree. expo-router's Link is stubbed (no
-// router context under Jest) — it just renders its child so the row's a11y
-// props are assertable.
+// copy resolves through the real i18n tree. expo-router is stubbed (no router
+// context under Jest); rows navigate through `router.push`.
 jest.mock("@/features/personal-events/data", () => ({
   usePersonalEvents: jest.fn(),
 }))
 
 const mockPush = jest.fn()
 jest.mock("expo-router", () => ({
-  Link: ({ children }: { children: unknown }) => children,
   router: { push: (href: string) => mockPush(href) },
   Stack: { Screen: () => null },
 }))
@@ -93,6 +91,8 @@ describe("PersonalEventsList", () => {
     // is the hint.
     expect(row.props.accessibilityLabel).toBe("Lunch")
     expect(row.props.accessibilityHint).toBe("Opens the event to edit")
+    await fireEvent.press(row)
+    expect(mockPush).toHaveBeenCalledWith("/personal-event-form?uid=u1")
     expect(getByTestId("personal-events-list")).toHaveProp(
       "contentInsetAdjustmentBehavior",
       "automatic",
