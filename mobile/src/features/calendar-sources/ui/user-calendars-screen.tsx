@@ -8,8 +8,7 @@ import {
   NativeSettingsRow,
   NativeSettingsSection,
 } from "@/components/chrome"
-import { EmptyState } from "@/components/empty-state"
-import { RootPage } from "@/components/root-page"
+import { EmptyState, RootPage } from "@/design"
 import {
   effectiveCalendarName,
   useUserCalendars,

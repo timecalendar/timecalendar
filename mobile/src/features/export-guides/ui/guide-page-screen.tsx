@@ -9,9 +9,7 @@ import {
   View,
 } from "react-native"
 
-import { Button } from "@/components/button"
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
+import { Button, RootPage, ThemedText } from "@/design"
 import {
   type ExportGuideLoadOutcome,
   type ExportGuideSelector,

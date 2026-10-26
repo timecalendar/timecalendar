@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useRef } from "react"
 import { AccessibilityInfo, Platform, StyleSheet, View } from "react-native"
 
-import { ThemedText } from "@/components/themed-text"
+import { ThemedText } from "@/design"
 import { Spacing } from "@/theme"
 
 export function ListStatus({

@@ -2,13 +2,11 @@ import type { ReactNode } from "react"
 import { type StyleProp, StyleSheet, View, type ViewStyle } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import {
-  type AdaptiveLayout,
-  useAdaptiveLayout,
-} from "@/components/adaptive-content"
 import { useHeaderOverlapInset } from "@/components/chrome"
-import { ThemedText } from "@/components/themed-text"
+import { ThemedText } from "@/design/text/themed-text"
 import { type ResponsiveLane, Spacing, useTheme } from "@/theme"
+
+import { type AdaptiveLayout, useAdaptiveLayout } from "./adaptive-content"
 
 type RootPageProps = {
   children: ReactNode | ((layout: AdaptiveLayout) => ReactNode)

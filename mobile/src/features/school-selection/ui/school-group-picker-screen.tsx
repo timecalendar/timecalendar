@@ -7,9 +7,9 @@ import {
   ErrorNotice,
   ErrorState,
   FieldError,
-} from "@/components/error-surfaces"
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
+  RootPage,
+  ThemedText,
+} from "@/design"
 import {
   type SchoolGroupNode,
   useSchoolGroups,

@@ -2,7 +2,7 @@ import { Image } from "expo-image"
 import { useState } from "react"
 import { StyleSheet, View } from "react-native"
 
-import { ThemedText } from "@/components/themed-text"
+import { ThemedText } from "@/design"
 import { type SchoolListItem } from "@/features/school-selection/data"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { Radii, useTheme } from "@/theme"

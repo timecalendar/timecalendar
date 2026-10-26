@@ -8,11 +8,11 @@ import {
   type ButtonProps,
   type ButtonSize,
   type ButtonVariant,
-} from "@/components/button"
-import { headerScrollProps } from "@/components/header-scroll-props"
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
-import type { GalleryMeta, GalleryStory } from "@/design"
+  headerScrollProps,
+  RootPage,
+  ThemedText,
+} from "@/design"
+import type { GalleryMeta, GalleryStory } from "@/design/gallery"
 import { Spacing } from "@/theme"
 
 type Story = GalleryStory<ButtonProps>
@@ -188,22 +188,6 @@ function LongStringsFixture() {
             testID="gallery-button-long-text"
             onPress={onPress}
           />
-          <View style={styles.row}>
-            <Sample
-              variant="outlined"
-              size="small"
-              testID="gallery-button-long-row-short"
-              onPress={onPress}
-            />
-            <Sample
-              variant="filled"
-              size="small"
-              label={sentence}
-              testID="gallery-button-long-row-long"
-              onPress={onPress}
-              style={styles.grow}
-            />
-          </View>
         </>
       )}
     </Page>
@@ -213,8 +197,6 @@ function LongStringsFixture() {
 const styles = StyleSheet.create({
   scroll: { gap: Spacing.four, paddingVertical: Spacing.four },
   group: { gap: Spacing.two },
-  row: { flexDirection: "row", alignItems: "center", gap: Spacing.two },
-  grow: { flex: 1 },
 })
 
 const meta: GalleryMeta<ButtonProps> = {

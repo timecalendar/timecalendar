@@ -81,7 +81,7 @@ module.exports = {
     //  - src/api/config.ts: a build-time base-URL constant (no logic to unit);
     //    its resolution is proven end to end by the Maestro round-trip.
     //  - src/app/**: route entrypoints / layout wiring — thin `export default`
-    //    re-exports over @/components (route-screen rule) and the root layout;
+    //    re-exports over feature ui/ screens (route-screen rule) and the root layout;
     //    exercised by the Maestro app launch, not unit tests.
     // NOTE: src/api/mutator.ts is NO LONGER excluded — it now has a direct unit
     // test (mutator.test.ts, the one suite that does not mock the mutator) proving
@@ -105,22 +105,22 @@ module.exports = {
   // hide; presentational covered by behavior tests but exempt from the 90%:
   //  - logic globs at 90% lines+branches (features [minus ui/ screens], hooks,
   //    storage, db, theme, i18n, firebase — the domain/logic seams);
-  //  - 70% global floor for the remainder (presentational feature ui/ screens +
-  //    the shared src/components primitives/shell incl. the chrome wrappers —
-  //    exempt from the 90% per ADR 003).
+  //  - 70% global floor for the remainder (presentational feature ui/ screens,
+  //    the src/design primitives, the app shell and the chrome wrappers —
+  //    exempt from the 90% per ADR 003), except the keyed design files below.
   // Re-export barrels are imported by the suites, so they self-cover at 100%
   // and need no special handling.
   coverageThreshold: {
     global: { lines: 70, branches: 70 },
     // Logic sublayers (data/store/form/prefs + the feature barrels) are 90%-gated;
-    // the presentational ui/ screens that moved in from src/components fall to the
+    // the presentational ui/ screens fall to the
     // global 70% floor instead (ADR 003 — screens are exempt from the 90% logic
     // gate). We EXCLUDE ui from the broad glob (the `!(ui)` extglob) rather than
     // overlay a separate 70 key, because Jest coverage thresholds are ADDITIVE, not
     // most-specific-wins: an overlay key wouldn't exempt ui from this 90 group (it
     // gets checked against BOTH) and would also evict ui from the global pool. With
-    // ui excluded, the screens land in `global` — the same posture they had in
-    // src/components, which also keeps the global pool (they're well-tested) ≥70.
+    // ui excluded, the screens land in `global`, which also keeps the global pool
+    // (they're well-tested) ≥70.
     "src/features/*/!(ui|renderer)/**": { lines: 90, branches: 90 },
     "src/hooks/**": { lines: 90, branches: 90 },
     "src/storage/**": { lines: 90, branches: 90 },
@@ -129,6 +129,7 @@ module.exports = {
     "src/firebase/**": { lines: 90, branches: 90 },
     "src/theme/**": { lines: 90, branches: 90 },
     "src/design/gallery/*.ts": { lines: 90, branches: 90 },
-    "src/components/button.tsx": { lines: 90, branches: 90 },
+    "src/design/button/button.tsx": { lines: 90, branches: 90 },
+    "src/design/button/button-row.tsx": { lines: 90, branches: 90 },
   },
 }

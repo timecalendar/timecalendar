@@ -4,7 +4,7 @@ import Animated, {
   useAnimatedStyle,
 } from "react-native-reanimated"
 
-import { ThemedText } from "@/components/themed-text"
+import { ThemedText } from "@/design"
 import {
   HOURS_COLUMN_WIDTH,
   type PagePresentationV1,

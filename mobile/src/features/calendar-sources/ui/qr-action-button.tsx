@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet } from "react-native"
 
-import { ThemedText } from "@/components/themed-text"
+import { ThemedText } from "@/design"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 interface QrActionButtonProps {

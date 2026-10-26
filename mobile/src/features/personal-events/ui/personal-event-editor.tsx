@@ -3,7 +3,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { StyleSheet } from "react-native"
 
-import { KeyboardSafeActionLayout } from "@/components/keyboard-safe-action-layout"
+import { KeyboardSafeActionLayout } from "@/design"
 import type { AppLocale } from "@/features/calendar/data"
 import type { PersonalEvent } from "@/features/personal-events/data"
 import {

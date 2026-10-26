@@ -18,8 +18,11 @@ src/features/<feature>/
 ```
 
 Each sublayer has a small public `index.ts`. A sublayer imports a sibling's barrel, never
-the feature barrel that re-exports it. Put reusable primitives in `src/components/`, not
-feature-specific screens.
+the feature barrel that re-exports it. Screens import shared primitives (`Button`, `ButtonRow`,
+`ThemedText`, `RootPage`, `EmptyState`, …) from the `@/design` barrel and tokens from `@/theme`.
+A product-agnostic primitive goes into a family folder under `src/design/` with a fixture and a
+test, exported from `@/design` ([ADR 068](./decisions/068-design-layer-barrel-and-gallery-entry.md));
+`src/components/` holds only the app shell and the chrome seam.
 
 ## Keep infrastructure behind seams
 

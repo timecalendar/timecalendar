@@ -3,7 +3,7 @@ import { createElement, type ReactNode } from "react"
 import { Pressable, Text, View } from "react-native"
 import type { TestInstance } from "test-renderer"
 
-import { galleryEntries } from "@/design"
+import { galleryEntries } from "@/design/gallery"
 import { usePlatform } from "@/test-support/platform"
 
 import { knownA11yViolations } from "./known-a11y-violations"

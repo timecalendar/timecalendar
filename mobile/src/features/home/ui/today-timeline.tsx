@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native"
 
-import { ThemedText } from "@/components/themed-text"
+import { ThemedText } from "@/design"
 import {
   addDaysInZone,
   type AppLocale,

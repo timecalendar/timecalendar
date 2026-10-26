@@ -8,8 +8,7 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { useAdaptiveLayout } from "@/components/adaptive-content"
-import { ThemedView } from "@/components/themed-view"
+import { ThemedView, useAdaptiveLayout } from "@/design"
 import { Spacing, useTheme } from "@/theme"
 
 import { HomeAddFab, HomeScreenHeader } from "./home-screen/home-screen-header"

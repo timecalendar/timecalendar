@@ -3,9 +3,8 @@ import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet, View } from "react-native"
 
 import { type MenuComponentRef, MenuView } from "@/components/chrome"
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
-import type { GalleryMeta, GalleryStory } from "@/design"
+import { RootPage, ThemedText } from "@/design"
+import type { GalleryMeta, GalleryStory } from "@/design/gallery"
 import { MinTouchTarget, Radii, Spacing, useTheme } from "@/theme"
 
 type Story = GalleryStory<ComponentProps<typeof MenuView>>

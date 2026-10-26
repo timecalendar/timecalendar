@@ -1,9 +1,9 @@
 import { Redirect, Stack, useLocalSearchParams } from "expo-router"
 import { useTranslation } from "react-i18next"
 
-import { findGalleryEntry, GalleryStoryContent } from "@/design"
+import { findGalleryEntry, GalleryStoryContent } from "@/design/gallery"
+import { isDeveloperSurfaceEnabled } from "@/features/developer/access"
 
-import { isDeveloperSurfaceEnabled } from "./developer-access"
 import { useGalleryIndexAnchor } from "./gallery-anchor"
 
 export function GalleryStoryScreen() {

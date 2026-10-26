@@ -1,8 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { Platform, Pressable, StyleSheet, View } from "react-native"
 
-import { EmptyState } from "@/components/empty-state"
-import { ThemedText } from "@/components/themed-text"
+import { EmptyState, ThemedText } from "@/design"
 import { type CalendarEvent, displayEventTitle } from "@/features/calendar/data"
 import {
   ChecklistProgressIndicator,

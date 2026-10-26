@@ -1,7 +1,7 @@
 import { Image, type ImageSource } from "expo-image"
 import { type StyleProp, StyleSheet, View, type ViewStyle } from "react-native"
 
-import { ThemedText } from "@/components/themed-text"
+import { ThemedText } from "@/design/text/themed-text"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { Spacing } from "@/theme"
 

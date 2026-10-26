@@ -1,3 +1,37 @@
+## 2026-10-26 — Design layer barrel and ButtonRow
+
+- Design primitives live in family folders under `src/design/` (`text/`, `icon/`, `button/`,
+  `status/`, `layout/`) and are imported from the `@/design` barrel, which exports primitives and
+  their types only. The gallery runtime is the developer-only `@/design/gallery` entry.
+  `src/components/` holds the app shell and the chrome seam; `useErrorAnnouncement` is in
+  `src/hooks/` ([architecture.md](./architecture.md) → Structure, ADR
+  [068](./decisions/068-design-layer-barrel-and-gallery-entry.md); ADRs
+  [064](./decisions/064-in-house-component-gallery.md),
+  [065](./decisions/065-icon-text-scaling.md) and [067](./decisions/067-button-family.md) name
+  the paths).
+- Layering `@/theme` ← `@/hooks` ← `@/components/chrome` ← `@/design` ← features: chrome and
+  design primitives import design leaves by path, never the barrel ([theming.md](./theming.md) →
+  Lint boundary).
+- Lint: `@/design/gallery` is banned outside the developer feature, fixtures and
+  `src/design/gallery/`; the `@/design` barrel is banned in design primitives and chrome runtime
+  files. `tools/eslint-rules/design-import-policy.test.js` pins the effective policy per file
+  class ([lint-format.md](./lint-format.md) → Design layer).
+- `src/design/import-graph.contract.test.ts` fails when the barrel reaches a gallery module, when a
+  module outside the developer UI, its routes, fixtures and the gallery reaches one, or when a
+  require cycle passes through `src/design/`; `src/components/shell.contract.test.ts` keeps
+  `src/components/` to the shell ([testing.md](./testing.md)).
+- The developer capability gate is `src/features/developer/access/`, the only export of the
+  developer feature barrel, so Settings no longer evaluates gallery modules
+  ([features.md](./features.md)).
+- `ButtonRow` (`@/design`) lays a secondary + primary `Button` side by side and stacks them full
+  width, primary first, at accessibility text sizes (font scale 1.786; Android 1.8 and 2.0). The
+  onboarding Connect footer uses it ([theming.md](./theming.md) → Buttons,
+  [accessibility.md](./accessibility.md) → Buttons). `button-row.tsx` has its own 90% coverage
+  key.
+- New gallery metas `adaptive-content`, `themed-view`, `icon` and `button-row`; the Button
+  `long-strings` row moves to `button-row--long-strings` ([features.md](./features.md) → Design
+  system gallery).
+
 ## 2026-10-26 — Button family
 
 - `Button` (`src/components/button.tsx`) is the one in-content button: a required closed

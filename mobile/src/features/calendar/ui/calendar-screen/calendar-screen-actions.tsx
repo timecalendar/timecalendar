@@ -2,8 +2,7 @@ import type { SFSymbol } from "expo-symbols"
 import { useTranslation } from "react-i18next"
 import { Platform, Pressable, StyleSheet, View } from "react-native"
 
-import { Icon } from "@/components/icon"
-import { ThemedText } from "@/components/themed-text"
+import { Icon, ThemedText } from "@/design"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 const HEADER_ICON_SIZE = 24

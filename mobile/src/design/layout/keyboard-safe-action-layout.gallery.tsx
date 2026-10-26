@@ -2,11 +2,14 @@ import { type ComponentProps, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, TextInput } from "react-native"
 
-import { Button } from "@/components/button"
-import { KeyboardSafeActionLayout } from "@/components/keyboard-safe-action-layout"
-import { PageIntro, RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
-import type { GalleryMeta, GalleryStory } from "@/design"
+import {
+  Button,
+  KeyboardSafeActionLayout,
+  PageIntro,
+  RootPage,
+  ThemedText,
+} from "@/design"
+import type { GalleryMeta, GalleryStory } from "@/design/gallery"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 type Story = GalleryStory<ComponentProps<typeof KeyboardSafeActionLayout>>

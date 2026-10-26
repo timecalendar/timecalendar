@@ -2,8 +2,7 @@ import { router, Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
 import { StyleSheet } from "react-native"
 
-import { Button } from "@/components/button"
-import { PageIntro, RootPage } from "@/components/root-page"
+import { Button, PageIntro, RootPage } from "@/design"
 import {
   useImportDraft,
   useProtectedImportRoute,

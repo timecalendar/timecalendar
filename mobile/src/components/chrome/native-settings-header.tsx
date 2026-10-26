@@ -16,7 +16,7 @@ import {
   View,
 } from "react-native"
 
-import { ThemedText } from "@/components/themed-text"
+import { ThemedText } from "@/design/text/themed-text"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 const APP_ICON = require("@/assets/images/icon.png") as ImageSourcePropType

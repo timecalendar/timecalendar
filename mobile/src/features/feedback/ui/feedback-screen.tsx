@@ -3,11 +3,15 @@ import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Alert, StyleSheet, TextInput, View } from "react-native"
 
-import { Button } from "@/components/button"
-import { ErrorNotice, FieldError } from "@/components/error-surfaces"
-import { KeyboardSafeActionLayout } from "@/components/keyboard-safe-action-layout"
-import { PageIntro, RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
+import {
+  Button,
+  ErrorNotice,
+  FieldError,
+  KeyboardSafeActionLayout,
+  PageIntro,
+  RootPage,
+  ThemedText,
+} from "@/design"
 import {
   getRememberedEmail,
   setRememberedEmail,

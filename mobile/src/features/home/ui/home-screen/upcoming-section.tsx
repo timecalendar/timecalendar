@@ -7,8 +7,7 @@ import {
   type ViewStyle,
 } from "react-native"
 
-import { EmptyState } from "@/components/empty-state"
-import { ThemedText } from "@/components/themed-text"
+import { EmptyState, ThemedText } from "@/design"
 import {
   type CalendarEvent,
   formatFullDay,

@@ -258,7 +258,7 @@ describe("MATERIAL_GLYPHS", () => {
       readFileSync(
         join(
           __dirname,
-          "../../node_modules/expo-symbols/src/android/symbols.json",
+          "../../../node_modules/expo-symbols/src/android/symbols.json",
         ),
         "utf8",
       ),

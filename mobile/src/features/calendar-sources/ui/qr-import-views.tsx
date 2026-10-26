@@ -3,11 +3,14 @@ import { useTranslation } from "react-i18next"
 import { ScrollView, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { AdaptiveContent } from "@/components/adaptive-content"
-import { ErrorNotice, ErrorState } from "@/components/error-surfaces"
-import { headerScrollProps } from "@/components/header-scroll-props"
-import { RootPage } from "@/components/root-page"
-import { ThemedView } from "@/components/themed-view"
+import {
+  AdaptiveContent,
+  ErrorNotice,
+  ErrorState,
+  headerScrollProps,
+  RootPage,
+  ThemedView,
+} from "@/design"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 import { ImportProgressView } from "./import-progress-view"

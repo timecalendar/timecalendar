@@ -11,7 +11,7 @@ The lint half is a set of `react-native-a11y` + `i18next` rules (see [Lint & for
   - `maxFontSizeMultiplier` caps are allowed for dense UI sized to a cell. They live in calendar chrome and the owned renderer: the calendar view menu (1.3), the calendar screen header (1.75), the owned canvas (1.2) and the owned header (1 and 1.2). Whether the `maxFontSizeMultiplier={1}` header numerals stay is owned by the accessibility workstream.
   - **Brand text cap.** "TimeCalendar" is one unbreakable word, so text that carries it caps at `WordmarkMaxFontScale` (1.5, `@/theme`): the Home app name (`title2`, one line, `features/home/ui/home-screen.test.tsx`) and the onboarding page titles (`features/onboarding/ui/welcome-screen.test.tsx`). Body copy beside them is uncapped.
   - **Accessibility text size seam.** A layout that changes shape at accessibility sizes reads `useIsAccessibilityTextSize()` / `isAccessibilityTextSize(fontScale)` from `@/theme`, true at `fontScale >= AccessibilityFontScale` (1.786, the UIKit `accessibilityMedium` multiplier; on Android it falls between system scales 1.5 and 1.8). It follows a live size change (`src/theme/text-scale.test.ts`). Users: iOS settings rows and the onboarding illustration.
-- **Icons on the seam (L9, `no-restricted-imports`):** importing `SymbolView` from `expo-symbols` is a lint error outside `src/components/icon.tsx` and its test (block `timecalendar/icon-seam`); symbol name types stay importable. See [Icon scaling](#icon-scaling--encoded-in-icon) and [Lint & format](./lint-format.md).
+- **Icons on the seam (L9, `no-restricted-imports`):** importing `SymbolView` from `expo-symbols` is a lint error outside `src/design/icon/icon.tsx` and its test (block `timecalendar/icon-seam`); symbol name types stay importable. See [Icon scaling](#icon-scaling--encoded-in-icon) and [Lint & format](./lint-format.md).
 
 These rules guard real product touchables (interactive controls declare `accessibilityRole` + a translated `accessibilityLabel`).
 
@@ -25,9 +25,9 @@ These rules guard real product touchables (interactive controls declare `accessi
 
 ## Icon scaling — encoded in `Icon`
 
-- Every icon renders through `Icon` (`src/components/icon.tsx`) and declares a required `scaling`. `"text"` icons sit beside or inside text: the glyph and its box grow with the font scale, optionally capped with the neighbor text's `maxFontSizeMultiplier` (a row chevron caps at `ChevronMaxFontScale`, 2, so a cue never rivals the row text), and their container uses `minWidth` / `minHeight` so it grows too. `"fixed"` icons are standalone chrome (header actions, FABs, status and error glyphs) and keep their design size at every font scale, above and below the default. No glyph clips its own box at any scale, including Android 2.0.
+- Every icon renders through `Icon` (`src/design/icon/icon.tsx`, from `@/design`) and declares a required `scaling`. `"text"` icons sit beside or inside text: the glyph and its box grow with the font scale, optionally capped with the neighbor text's `maxFontSizeMultiplier` (a row chevron caps at `ChevronMaxFontScale`, 2, so a cue never rivals the row text), and their container uses `minWidth` / `minHeight` so it grows too. `"fixed"` icons are standalone chrome (header actions, FABs, status and error glyphs) and keep their design size at every font scale, above and below the default. No glyph clips its own box at any scale, including Android 2.0.
 - `Icon` is always decorative (`accessible={false}`, hidden from VoiceOver and TalkBack); the control that contains it owns the label.
-- Encoded by the type (`scaling` is required) and lint L9; proven by `src/components/icon.test.tsx` (box and glyph sizes per scaling on Android, `SymbolView` size on iOS, decorative props, the Material codepoint pin). See ADR [065](./decisions/065-icon-text-scaling.md).
+- Encoded by the type (`scaling` is required) and lint L9; proven by `src/design/icon/icon.test.tsx` (box and glyph sizes per scaling on Android, `SymbolView` size on iOS, decorative props, the Material codepoint pin). See ADR [065](./decisions/065-icon-text-scaling.md).
 
 ## Buttons — encoded in `Button`
 
@@ -42,8 +42,15 @@ These rules guard real product touchables (interactive controls declare `accessi
   short `text` button.
 - The label follows the OS text size without a cap and wraps to sixteen lines (N > 0, never
   `ellipsizeMode="clip"`).
-- Proven by `src/components/button.test.tsx` and the gallery registry matrix; see ADR
-  [067](./decisions/067-button-family.md) and [Theming](./theming.md) → Buttons.
+- Two buttons side by side are a `ButtonRow`: at accessibility text sizes
+  (`useIsAccessibilityTextSize()`, iOS AX1 and above, Android 1.8 and 2.0) the pair stacks full
+  width with the primary first, the HIG/Material switch from horizontal to vertical, so no label
+  breaks mid-word. Reading and focus order follow the visual order in both layouts. **Caveat lint
+  can't carry:** no rule detects two `Button`s laid out in a hand-built `flexDirection: "row"`
+  view; review and the gallery catch it.
+- Proven by `src/design/button/button.test.tsx`, `src/design/button/button-row.test.tsx` and the
+  gallery registry matrix; see ADR [067](./decisions/067-button-family.md) and
+  [Theming](./theming.md) → Buttons.
 
 ## Accessible async status
 
@@ -129,7 +136,7 @@ Android emulators run on the Windows host, not the Mac.
 
 ## Proof in CI
 
-- `src/components/themed-text.test.tsx` drives a typed `Record<ThemedTextType, { step; heading }>` table through `it.each`: per accepted `type` it renders through the real accessibility tree and asserts the `header` role is present or absent (a _resolved semantic_, not merely that a prop was passed), plus the rendered ramp style and iOS `dynamicTypeRamp`. It also covers explicit-role-wins. `src/theme/typography.test.ts` pins the ramp values on both platforms. Gated by the `test-mobile` job (tsc + lint + Jest), R-1.
+- `src/design/text/themed-text.test.tsx` drives a typed `Record<ThemedTextType, { step; heading }>` table through `it.each`: per accepted `type` it renders through the real accessibility tree and asserts the `header` role is present or absent (a _resolved semantic_, not merely that a prop was passed), plus the rendered ramp style and iOS `dynamicTypeRamp`. It also covers explicit-role-wins. `src/theme/typography.test.ts` pins the ramp values on both platforms. Gated by the `test-mobile` job (tsc + lint + Jest), R-1.
 - `src/design/gallery/registry.test.ts` renders every gallery story on the iOS and Android branches in light and dark, and fails when an interactive host element lacks an accessibility role or a non-empty accessible name (its label, else its merged descendant text or labels), or a text input lacks a label, naming the story, platform and element (its `testID`, else `<nearest ancestor testID> > <role>`). A control nested in another control is checked on its own: Compose stops merging at a child with its own click or toggle semantics, so TalkBack gives it a separate stop. A trailing indicator inside a row control therefore takes no handler (a Material `RadioButton` without `onClick`). An `accessible={false}` control is no accessibility node: it is skipped when a descendant control carries the semantics (role and name), checked on its own (Expo UI's Android `MenuView` anchor, whose child button carries them), and otherwise reported as `accessible={false} control has no accessible control inside`, since its activation is unreachable to VoiceOver and TalkBack. The check reads what the suite-wide native mocks in `jest/setup-expo-ui.ts` project, so a mock that drops a real modifier is fixed in the mock; it proves declared semantics, not announcement quality.
 - **Known violations only shrink.** A violation the product really has and cannot fix yet goes in `src/design/gallery/known-a11y-violations.ts`: one typed entry per story id, platform and element, with the problem, the reason and a link to its `docs/react-native-migration/inbox/` note. The registry check fails on any violation not on the list and on any entry that no longer reproduces or names a story absent from its platform, so a fix must delete its entry and nothing is added silently. The list holds the Android switch row's inner Material `Switch` (`native-settings--switches`, `native-settings--long-strings`): Expo UI's `SwitchView` always passes Compose a non-null `onCheckedChange`, so the unlabeled thumb is a second TalkBack stop inside the toggleable row ([inbox](../../react-native-migration/inbox/2026-10-25-mobile-design-system-gallery-device-pass.md)).
 

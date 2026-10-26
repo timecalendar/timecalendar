@@ -2,6 +2,7 @@ import { fireEvent, render } from "@testing-library/react-native"
 import { AccessibilityInfo } from "react-native"
 
 import { useColorScheme } from "@/hooks/use-color-scheme"
+import { useErrorAnnouncement } from "@/hooks/use-error-announcement"
 import { usePlatform } from "@/test-support/platform"
 import { Colors, Spacing } from "@/theme"
 
@@ -11,7 +12,6 @@ import {
   ErrorTextAction,
   FieldError,
 } from "./error-surfaces"
-import { useErrorAnnouncement } from "./use-error-announcement"
 
 jest.mock("@/hooks/use-color-scheme", () => ({ useColorScheme: jest.fn() }))
 const scheme = jest.mocked(useColorScheme)

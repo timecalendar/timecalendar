@@ -1,11 +1,8 @@
 import type { ComponentProps } from "react"
 import { useTranslation } from "react-i18next"
 
-import { EmptyState } from "@/components/empty-state"
-import { noDataArtwork } from "@/components/empty-state-artwork"
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
-import type { GalleryMeta, GalleryStory } from "@/design"
+import { EmptyState, noDataArtwork, RootPage, ThemedText } from "@/design"
+import type { GalleryMeta, GalleryStory } from "@/design/gallery"
 
 type Story = GalleryStory<ComponentProps<typeof EmptyState>>
 

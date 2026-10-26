@@ -6,9 +6,8 @@ import {
   NativeSettingsRow,
   NativeSettingsSection,
 } from "@/components/chrome"
-import { availableGalleryEntries, type GalleryEntry } from "@/design"
-
-import { isDeveloperSurfaceEnabled } from "./developer-access"
+import { availableGalleryEntries, type GalleryEntry } from "@/design/gallery"
+import { isDeveloperSurfaceEnabled } from "@/features/developer/access"
 
 type Fixture = Pick<GalleryEntry, "metaId" | "title"> & {
   entries: GalleryEntry[]

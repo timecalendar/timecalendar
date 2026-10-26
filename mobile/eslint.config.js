@@ -178,9 +178,23 @@ const developerToolsDeepImportPattern = {
 }
 
 const designDeepImportPattern = {
-  regex: "^@/design/",
+  regex: "^@/design/(?!gallery(/|$))",
   message:
     "Import the design system through the @/design barrel (design-system-proposal §3, lint-format.md → Design layer).",
+}
+
+const galleryEntryImportPattern = {
+  regex: "^@/design/gallery(/|$)",
+  message:
+    "The component gallery is developer-only: import @/design/gallery only from src/features/developer, fixtures and src/design/gallery (ADR 068).",
+}
+
+// Design primitives and chrome import design leaves by path: the barrel would
+// close a require cycle (design/index → root-page → chrome → design/index).
+const designBarrelImportPattern = {
+  regex: "^@/design$",
+  message:
+    "Import the design module by its leaf path (@/design/<folder>/<file>), not the @/design barrel — the barrel would close a require cycle (ADR 068, lint-format.md → Design layer).",
 }
 
 // L9: every symbol icon declares its text scaling through the Icon primitive
@@ -189,7 +203,7 @@ const symbolViewImportPath = {
   name: "expo-symbols",
   importNames: ["SymbolView"],
   message:
-    "Render icons through @/components/icon (accessibility.md → Icon scaling).",
+    "Render icons through Icon from @/design (accessibility.md → Icon scaling).",
 }
 
 // Buttons are the shared Button (ADR 067, lint-format.md → Buttons). No file
@@ -203,8 +217,7 @@ const rawTouchablesImportPath = {
     "TouchableWithoutFeedback",
     "TouchableNativeFeedback",
   ],
-  message:
-    "Use Button from @/components/button (ADR 067, lint-format.md → Buttons).",
+  message: "Use Button from @/design (ADR 067, lint-format.md → Buttons).",
 }
 
 // L11: zone offsets come from the instant (lint-format.md → L11).
@@ -254,6 +267,8 @@ const restrictedImports = (
     banDeviceColorScheme = true,
     banDeveloperTools = true,
     banDesignDeepImports = true,
+    banGalleryEntry = true,
+    banDesignBarrel = false,
     banSymbolView = true,
     banZoneOffsetTrap = true,
   } = {},
@@ -269,6 +284,8 @@ const restrictedImports = (
       ...(banDeviceColorScheme ? [deviceColorSchemeDeepImportPattern] : []),
       ...(banDeveloperTools ? [developerToolsDeepImportPattern] : []),
       ...(banDesignDeepImports ? [designDeepImportPattern] : []),
+      ...(banGalleryEntry ? [galleryEntryImportPattern] : []),
+      ...(banDesignBarrel ? [designBarrelImportPattern] : []),
       ...extraPatterns,
     ],
     paths: [
@@ -392,7 +409,17 @@ module.exports = defineConfig([
     // Re-includes the route-entrypoint pattern because `routes-not-importable`
     // also matches these files and flat config would otherwise drop the @/app ban.
     name: "timecalendar/developer-tools-home",
-    files: ["src/features/developer/**", "src/features/environment/**"],
+    files: ["src/features/developer/**"],
+    rules: {
+      "no-restricted-imports": restrictedImports(
+        [routeEntrypointImportPattern],
+        { banDeveloperTools: false, banGalleryEntry: false },
+      ),
+    },
+  },
+  {
+    name: "timecalendar/environment-home",
+    files: ["src/features/environment/**"],
     rules: {
       "no-restricted-imports": restrictedImports(
         [routeEntrypointImportPattern],
@@ -401,13 +428,19 @@ module.exports = defineConfig([
     },
   },
   {
-    // Re-includes the route-entrypoint pattern for the same reason as above.
+    // Design primitives import each other by leaf path, never the barrel (ADR 068).
+    // Fixtures, tests and the gallery get their own blocks below.
     name: "timecalendar/design-home",
     files: ["src/design/**"],
+    ignores: [
+      "src/design/gallery/**",
+      "**/*.gallery.tsx",
+      "**/*.test.{ts,tsx}",
+    ],
     rules: {
       "no-restricted-imports": restrictedImports(
         [routeEntrypointImportPattern],
-        { banDesignDeepImports: false },
+        { banDesignDeepImports: false, banDesignBarrel: true },
       ),
     },
   },
@@ -446,12 +479,20 @@ module.exports = defineConfig([
     // wrapped native-chrome API (expo-router/unstable-native-tabs, expo-glass-effect,
     // @expo/ui) the ban keeps out of feature/route code, so
     // re-set no-restricted-imports without the chrome-seam ban (mirrors storage-seams).
+    // Chrome sits below the design layer: it may import a design leaf, never the
+    // @/design barrel (ADR 068). Fixtures get their own block below.
     name: "timecalendar/chrome-seams",
     files: ["src/components/chrome/**"],
+    ignores: ["**/*.gallery.tsx", "**/*.gallery.test.tsx"],
     rules: {
-      "no-restricted-imports": restrictedImports([], {
-        banChromeSeam: false,
-      }),
+      "no-restricted-imports": restrictedImports(
+        [routeEntrypointImportPattern],
+        {
+          banChromeSeam: false,
+          banDesignDeepImports: false,
+          banDesignBarrel: true,
+        },
+      ),
     },
   },
   {
@@ -489,14 +530,74 @@ module.exports = defineConfig([
     },
   },
   {
-    // The Icon primitive is the one SymbolView renderer (L9). It re-includes the
-    // route-entrypoint pattern for the same reason as color-scheme-seam.
-    name: "timecalendar/icon-seam",
-    files: ["src/components/icon.tsx", "src/components/icon.test.tsx"],
+    // Fixtures (ADR 064) import gallery types from @/design/gallery. Flat config
+    // replaces a rule's options wholesale, so each fixture block restates every
+    // flag, and so must any later block that sets this rule on a fixture
+    // (calendar-sources-is-a-leaf would, were a fixture to live under
+    // src/features/calendar-sources/).
+    name: "timecalendar/fixtures",
+    files: ["src/**/*.gallery.tsx", "src/**/*.gallery.test.tsx"],
     rules: {
       "no-restricted-imports": restrictedImports(
         [routeEntrypointImportPattern],
-        { banSymbolView: false },
+        { banGalleryEntry: false },
+      ),
+    },
+  },
+  {
+    name: "timecalendar/design-tests",
+    files: ["src/design/**/*.test.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": restrictedImports(
+        [routeEntrypointImportPattern],
+        { banDesignDeepImports: false },
+      ),
+    },
+  },
+  {
+    name: "timecalendar/design-fixtures",
+    files: [
+      "src/design/**/*.gallery.tsx",
+      "src/design/**/*.gallery.test.tsx",
+      "src/design/gallery/**",
+    ],
+    rules: {
+      "no-restricted-imports": restrictedImports(
+        [routeEntrypointImportPattern],
+        { banDesignDeepImports: false, banGalleryEntry: false },
+      ),
+    },
+  },
+  {
+    name: "timecalendar/chrome-fixtures",
+    files: [
+      "src/components/chrome/**/*.gallery.tsx",
+      "src/components/chrome/**/*.gallery.test.tsx",
+    ],
+    rules: {
+      "no-restricted-imports": restrictedImports(
+        [routeEntrypointImportPattern],
+        {
+          banChromeSeam: false,
+          banDesignDeepImports: false,
+          banGalleryEntry: false,
+        },
+      ),
+    },
+  },
+  {
+    // The Icon primitive is the one SymbolView renderer (L9). Last block for
+    // these files, so it restates the design-primitive flags.
+    name: "timecalendar/icon-seam",
+    files: ["src/design/icon/icon.tsx", "src/design/icon/icon.test.tsx"],
+    rules: {
+      "no-restricted-imports": restrictedImports(
+        [routeEntrypointImportPattern],
+        {
+          banSymbolView: false,
+          banDesignDeepImports: false,
+          banDesignBarrel: true,
+        },
       ),
     },
   },
@@ -536,14 +637,11 @@ module.exports = defineConfig([
     //
     // The config file IS the rule's documentation (R-1): the four boundaries are
     //   B-1 — only a feature's data/ sublayer may import @/api/generated/** or @/db;
-    //         every OTHER sublayer — including the ui/ screens that moved in from
-    //         src/components/ — must go through a barrel (src/features/*/ui/ matches
-    //         the feature-sublayer element, so this already governs it, no new rule).
+    //         every OTHER sublayer (ui/ included) must go through a barrel.
     //   B-2 — a feature sublayer must not import its own feature-level barrel (cycle);
     //         it imports a sibling's sub-barrel directly.
-    //   B-3 — routes (src/app/**) and shared components (src/components/**, now only
-    //         shared primitives/shell — feature screens moved to src/features/*/ui/,
-    //         governed by B-1/B-2) consume a feature through its barrel, never
+    //   B-3 — routes (src/app/**) and src/components/** (the app shell and the
+    //         chrome seam) consume a feature through its barrel, never
     //         @/api/generated/** or @/db directly.
     //   B-4 — the ADR-009 infra→feature edge (@/hooks/use-color-scheme and @/i18n
     //         importing @/features/settings/prefs[/store]) is ALLOWED — the absence
@@ -625,11 +723,8 @@ module.exports = defineConfig([
                 "B-1: only a feature's data/ sublayer may import @/api/generated or @/db — wrap the seam in data/ and re-export (golden-path.md → Seam conventions).",
             },
             {
-              // B-3: routes and shared components never touch the seam directly —
-              // they consume the feature through its barrel. Feature screens have
-              // moved to src/features/*/ui/ (now governed as feature-sublayers by
-              // B-1/B-2); src/components/ holds only shared primitives/shell, which
-              // this still guards should any reach for a seam.
+              // B-3: routes, the app shell and the chrome seam never touch the
+              // data seams directly — they consume the feature through its barrel.
               from: { type: ["component", "route"] },
               disallow: { to: { type: ["generated-api", "db-seam"] } },
               message:
@@ -648,7 +743,8 @@ module.exports = defineConfig([
               allow: { to: { type: "db-seam", internalPath: "migrate.*" } },
             },
             {
-              // B-7: the design layer never knows a product feature or a route.
+              // B-7: the design layer (primitives and gallery) never knows a
+              // product feature or a route.
               from: { type: "design" },
               disallow: {
                 to: {
@@ -703,7 +799,7 @@ module.exports = defineConfig([
     name: "timecalendar/raw-button",
     files: ["src/**/*.tsx"],
     ignores: [
-      "src/components/button.tsx",
+      "src/design/button/button.tsx",
       "src/components/chrome/**",
       "src/features/calendar/renderer/**",
       "**/*.test.tsx",

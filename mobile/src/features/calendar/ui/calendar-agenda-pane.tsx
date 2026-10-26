@@ -1,7 +1,7 @@
 import type { ReactElement } from "react"
 import { type RefreshControlProps, StyleSheet, View } from "react-native"
 
-import { useAdaptiveLayout } from "@/components/adaptive-content"
+import { useAdaptiveLayout } from "@/design"
 import {
   addDaysInZone,
   type AppLocale,

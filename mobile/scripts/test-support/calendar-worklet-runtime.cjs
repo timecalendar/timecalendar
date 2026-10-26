@@ -154,7 +154,7 @@ function createRuntime(initialScale = 60, platform = "ios", pixelRatio = 3) {
     },
     "react-native-gesture-handler": { GestureDetector: "GestureDetector" },
     "react-native-reanimated": reanimated,
-    "@/components/themed-text": { ThemedText: "Text" },
+    "@/design": { ThemedText: "Text" },
     "@/features/calendar/data": { ...timeGrid, PAGE_WINDOW_RADIUS: 260 },
     "@/features/event-checklists": { ChecklistProgressIndicator: "Checklist" },
     "@/theme": { useTheme: () => ({ separator: "gray", primary: "blue" }) },

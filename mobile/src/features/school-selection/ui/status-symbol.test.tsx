@@ -7,7 +7,7 @@ import { ListStatus } from "./list-status"
 import { StatusSymbol } from "./status-symbol"
 
 const mockIcon = jest.fn()
-jest.mock("@/components/icon", () => ({
+jest.mock("@/design/icon/icon", () => ({
   Icon: (props: unknown) => {
     mockIcon(props)
     return null

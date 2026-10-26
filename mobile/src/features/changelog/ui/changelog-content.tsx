@@ -1,9 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { Platform, ScrollView, StyleSheet, View } from "react-native"
 
-import { Icon } from "@/components/icon"
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
+import { Icon, RootPage, ThemedText } from "@/design"
 import type { ChangelogRelease } from "@/features/changelog/data"
 import { Radii, Spacing, useTheme } from "@/theme"
 

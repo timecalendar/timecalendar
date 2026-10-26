@@ -2,8 +2,7 @@ import { useLocalSearchParams } from "expo-router"
 import { useTranslation } from "react-i18next"
 import { ScrollView, StyleSheet } from "react-native"
 
-import { ErrorNotice } from "@/components/error-surfaces"
-import { RootPage } from "@/components/root-page"
+import { ErrorNotice, RootPage } from "@/design"
 import {
   type EventDetails,
   resolveLocale,

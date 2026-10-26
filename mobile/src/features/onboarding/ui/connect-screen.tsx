@@ -1,10 +1,9 @@
 import { router, Stack } from "expo-router"
 import * as WebBrowser from "expo-web-browser"
 import { useTranslation } from "react-i18next"
-import { StyleSheet, View } from "react-native"
+import { StyleSheet } from "react-native"
 
-import { Button } from "@/components/button"
-import { PageIntro, RootPage } from "@/components/root-page"
+import { Button, ButtonRow, PageIntro, RootPage } from "@/design"
 import {
   safeIntranetUrl,
   useImportDraft,
@@ -74,25 +73,28 @@ export default function ConnectScreen() {
           />
         )}
 
-        <View style={styles.footer}>
-          <Button
-            variant="outlined"
-            testID="onboarding-connect-back"
-            label={t("common.back")}
-            onPress={() => router.back()}
-          />
-          <Button
-            variant="filled"
-            testID="onboarding-connect-continue"
-            label={t("onboarding.connect.continue")}
-            accessibilityLabel={t("onboarding.connect.continueLabel")}
-            onPress={() => {
-              dispatch({ type: "complete-connect" })
-              router.push("/onboarding/export-guide/0")
-            }}
-            style={styles.grow}
-          />
-        </View>
+        <ButtonRow
+          secondary={
+            <Button
+              variant="outlined"
+              testID="onboarding-connect-back"
+              label={t("common.back")}
+              onPress={() => router.back()}
+            />
+          }
+          primary={
+            <Button
+              variant="filled"
+              testID="onboarding-connect-continue"
+              label={t("onboarding.connect.continue")}
+              accessibilityLabel={t("onboarding.connect.continueLabel")}
+              onPress={() => {
+                dispatch({ type: "complete-connect" })
+                router.push("/onboarding/export-guide/0")
+              }}
+            />
+          }
+        />
       </RootPage>
     </>
   )
@@ -105,10 +107,4 @@ const styles = StyleSheet.create({
     gap: Spacing.four,
   },
   stretch: { alignSelf: "stretch" },
-  footer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.three,
-  },
-  grow: { flex: 1 },
 })

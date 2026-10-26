@@ -2,8 +2,7 @@ import type { SFSymbol } from "expo-symbols"
 import type { TFunction } from "i18next"
 import { StyleSheet, View } from "react-native"
 
-import { Icon, type MaterialGlyph } from "@/components/icon"
-import { ThemedText } from "@/components/themed-text"
+import { Icon, type MaterialGlyph, ThemedText } from "@/design"
 import type { ChecklistProgress } from "@/features/event-checklists/data"
 import { Radii, Spacing, useTheme } from "@/theme"
 

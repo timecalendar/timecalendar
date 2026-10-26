@@ -60,6 +60,7 @@ decision changes; use Git for its history.
 | [065](./065-icon-text-scaling.md)                                     | Make icons declare their text scaling, and draw Android glyphs in their own box                   |
 | [066](./066-device-local-date-picker-seam-and-timezone-ci.md)         | Convert the Android date picker day in the chrome seam, and prove the suite in three time zones   |
 | [067](./067-button-family.md)                                         | One `Button` family with closed variants and a layout-only style                                  |
+| [068](./068-design-layer-barrel-and-gallery-entry.md)               | Design primitives behind `@/design`, the gallery behind the developer-only `@/design/gallery`      |
 
 > `045` is intentionally left free: the open source-recovery PR carries an ADR
 > numbered `044` that collides with the merged one above and renumbers to `045`

@@ -3,8 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Pressable } from "react-native"
 
-import { Button } from "@/components/button"
-import { ThemedText } from "@/components/themed-text"
+import { Button, ThemedText } from "@/design"
 import {
   CHANGELOG_VERSION,
   getChangelogReleasesAfter,

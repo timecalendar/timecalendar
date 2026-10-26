@@ -2,7 +2,7 @@ import { Stack, useRouter } from "expo-router"
 import { useTranslation } from "react-i18next"
 import { Alert, Pressable, StyleSheet } from "react-native"
 
-import { ThemedText } from "@/components/themed-text"
+import { ThemedText } from "@/design"
 import type { EventDetails } from "@/features/calendar/data"
 import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
 import { Spacing } from "@/theme"

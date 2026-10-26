@@ -1,13 +1,10 @@
 import { render } from "@testing-library/react-native"
 import { StyleSheet } from "react-native"
 
-import {
-  type TextTone,
-  ThemedText,
-  type ThemedTextType,
-} from "@/components/themed-text"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { Colors, type ThemeColor, TypeRamp, type TypeVariant } from "@/theme"
+
+import { type TextTone, ThemedText, type ThemedTextType } from "./themed-text"
 
 jest.mock("@/hooks/use-color-scheme", () => ({
   useColorScheme: jest.fn(),

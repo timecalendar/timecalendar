@@ -10,10 +10,14 @@ import {
   useWindowDimensions,
 } from "react-native"
 
-import { ErrorNotice, ErrorState } from "@/components/error-surfaces"
-import { PageIntro, RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
-import { ThemedView } from "@/components/themed-view"
+import {
+  ErrorNotice,
+  ErrorState,
+  PageIntro,
+  RootPage,
+  ThemedText,
+  ThemedView,
+} from "@/design"
 import { schoolMatches, useSchools } from "@/features/school-selection/data"
 import { Spacing, useTheme } from "@/theme"
 

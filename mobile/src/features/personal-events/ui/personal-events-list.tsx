@@ -2,11 +2,13 @@ import { Link, router, Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
 import { FlatList, Pressable, StyleSheet, View } from "react-native"
 
-import { Button } from "@/components/button"
-import { EmptyState } from "@/components/empty-state"
-import { headerScrollProps } from "@/components/header-scroll-props"
-import { RootPage } from "@/components/root-page"
-import { ThemedText } from "@/components/themed-text"
+import {
+  Button,
+  EmptyState,
+  headerScrollProps,
+  RootPage,
+  ThemedText,
+} from "@/design"
 import {
   formatShortDateTime,
   resolveLocale,

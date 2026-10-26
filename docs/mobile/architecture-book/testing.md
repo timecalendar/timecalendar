@@ -39,9 +39,11 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   boundary; CalendarKit's focused rerender test asserts a progress-only change retains
   the projected vendor array and objects.
 - **Coverage** is collected via `npm test -- --coverage`. The `coverageThreshold` is **enforced** — 90% logic / 70% global; see [ADR 003](./decisions/003-coverage-threshold.md). Gated by the `test-mobile` job (R-1).
-- **`src/components/button.tsx` has its own 90% lines/branches key** in `coverageThreshold`: the
-  shared `Button` carries every button's states and platform branches (ADR
-  [067](./decisions/067-button-family.md)). `button.test.tsx` reads the `Pressable`'s own props
+- **`src/design/button/button.tsx` and `src/design/button/button-row.tsx` have their own 90%
+  lines/branches keys** in `coverageThreshold`: `Button` carries every button's states and
+  platform branches, and `ButtonRow` its two layouts (ADR [067](./decisions/067-button-family.md)).
+  `button-row.test.tsx` mocks `react-native/Libraries/Utilities/useWindowDimensions` for the font
+  scale, as `src/theme/text-scale.test.ts` does. `button.test.tsx` reads the `Pressable`'s own props
   (style callback, `android_ripple`) through a module mock of
   `react-native/Libraries/Components/Pressable/Pressable`, since the host view only receives the
   resolved style. `MinTouchTarget` resolves at module load, so a test under `usePlatform` compares
@@ -112,8 +114,23 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   too ([accessibility.md](./accessibility.md) → Proof in CI).
   `src/design/gallery/no-storybook.contract.test.ts` fails on a Storybook or `react-native-web`
   dependency or configuration directory (ADR 064). `src/design/gallery/*.ts` is in the 90% lines and
-  branches tier; fixtures under `src/components/` and `story-content.tsx` sit in the 70% global
-  floor, and `src/theme/tokens.gallery.tsx` in the `src/theme/**` 90% tier.
+  branches tier (`index.ts`, the `@/design/gallery` entry, included); fixtures under `src/design/`
+  and `src/components/chrome/`, and `story-content.tsx`, sit in the 70% global floor, and
+  `src/theme/tokens.gallery.tsx` in the `src/theme/**` 90% tier.
+- **Three contract tests hold the design layer's shape** (ADR
+  [068](./decisions/068-design-layer-barrel-and-gallery-entry.md)):
+  `src/design/import-graph.contract.test.ts` parses every non-test `src/**/*.ts(x)` with the
+  TypeScript compiler, builds the value-import graph (type-only imports skipped, `@/` and `./`
+  resolved, platform files followed, an unresolved specifier fails) and asserts that the `@/design`
+  barrel reaches no gallery module, that only the developer UI, developer routes, fixtures and
+  `src/design/gallery/` reach one (Settings included in the check), and that no require cycle
+  passes through `src/design/`; each failure prints a witness import path. It is the bundle sanity
+  check: Metro ships every route, so what matters is which modules evaluate gallery code.
+  `src/components/shell.contract.test.ts` fails on any top-level entry of `src/components/` other
+  than the app shell and `chrome/`. `tools/eslint-rules/design-import-policy.test.js` computes the
+  effective `no-restricted-imports` options per file class in a child Node process (ESLint cannot
+  load its config under Jest's module resolution) and pins the design, route-entrypoint, storage,
+  chrome-seam and `SymbolView` bans.
 - **Every design primitive ships with a fixture and a test (L10).**
   `src/design/gallery/fixture-coverage.contract.test.ts` fails, naming the module, when a `.tsx`
   under `src/design/` (other than tests, fixtures and the `galleryInfrastructure` list) has no

@@ -6,11 +6,9 @@ import {
 } from "@testing-library/react-native"
 import { type LayoutChangeEvent, StyleSheet, Text } from "react-native"
 
-import {
-  AdaptiveContent,
-  useAdaptiveLayout,
-} from "@/components/adaptive-content"
 import { resolveResponsiveLayout, ResponsiveContentWidths } from "@/theme"
+
+import { AdaptiveContent, useAdaptiveLayout } from "./adaptive-content"
 
 jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({
   __esModule: true,

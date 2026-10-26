@@ -1,7 +1,7 @@
 import { Stack, useLocalSearchParams } from "expo-router"
 import { useTranslation } from "react-i18next"
 
-import { RootPage } from "@/components/root-page"
+import { RootPage } from "@/design"
 import { resolveLocale } from "@/features/calendar/data"
 import { useEventToEdit } from "@/features/personal-events/form"
 import { useDisplayZone } from "@/features/settings/prefs"
