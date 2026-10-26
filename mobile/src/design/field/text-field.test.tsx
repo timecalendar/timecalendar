@@ -5,7 +5,8 @@ import { AccessibilityInfo, Pressable, StyleSheet } from "react-native"
 import { usePlatform } from "@/test-support/platform"
 import { Colors, MinTouchTarget, StateOpacity } from "@/theme"
 
-import { FieldInset, TextField, type TextFieldRef } from "./text-field"
+import { FieldInset } from "./field-box"
+import { TextField, type TextFieldRef } from "./text-field"
 
 let mockFontScale = 1
 jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({

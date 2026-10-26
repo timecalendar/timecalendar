@@ -240,7 +240,7 @@ The error stays at full opacity when the field is disabled.
   function and `onChange`, and imports no feature and no translation key: the caller formats
   (personal events pass `formatShortDateTime` with the device clock), so the field and the list
   read the same. It shares `TextField`'s label, error and disabled chrome (`FieldChrome`, a leaf
-  export of `text-field.tsx`). iOS renders the chrome `DateTimePicker` inline; Android renders a
+  export of `text-field.tsx`; the box border and inset live in `field-box.ts`). iOS renders the chrome `DateTimePicker` inline; Android renders a
   row drawn like a resting `TextField` that opens the date dialog, then the time dialog, and
   commits both together; becoming disabled while a dialog is open closes it without committing.
   Picker values are device-local (ADR

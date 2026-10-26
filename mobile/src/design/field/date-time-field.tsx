@@ -3,12 +3,11 @@ import { useState } from "react"
 import { Platform, Pressable, type StyleProp, StyleSheet } from "react-native"
 
 import { DateTimePicker } from "@/components/chrome"
+import { FieldInset, useFieldBoxStyle } from "@/design/field/field-box"
 import { fieldErrorHint } from "@/design/field/field-error-hint"
 import {
   FieldChrome,
-  FieldInset,
   type TextFieldLayoutStyle,
-  useFieldBoxStyle,
 } from "@/design/field/text-field"
 import { ThemedText } from "@/design/text/themed-text"
 import { useUses24HourClock } from "@/hooks/use-uses-24-hour-clock"
