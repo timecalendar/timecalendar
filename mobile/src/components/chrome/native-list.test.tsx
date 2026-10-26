@@ -350,6 +350,28 @@ describe("native list chrome on ios", () => {
 describe("native list rows with subtitles, destructive actions, and a FAB on ios", () => {
   usePlatform("ios")
 
+  it("reads the badge after the name, keeping the value and hint apart", async () => {
+    const view = await render(
+      <NativeList>
+        <NativeListSection>
+          <NativeListRow
+            kind="navigation"
+            label="Zone"
+            value="Paris"
+            badge="Unavailable"
+            hint="Opens the chooser"
+            href="/about"
+            testID="row"
+          />
+        </NativeListSection>
+      </NativeList>,
+    )
+    const row = view.getByTestId("row")
+    expect(row.props.accessibilityLabel).toBe("Zone, Unavailable")
+    expect(row.props.accessibilityValue).toEqual({ text: "Paris" })
+    expect(row.props.accessibilityHint).toBe("Opens the chooser")
+  })
+
   it("stacks a secondary subtitle, reads it in the default label, and colors destructive labels", async () => {
     const view = await render(
       <NativeList>
@@ -722,6 +744,25 @@ describe("android row semantics", () => {
     ).toBe("row")
   })
 
+  it("reads the badge between the value and the hint", async () => {
+    const view = await render(
+      <NativeList>
+        <NativeListRow
+          kind="navigation"
+          label="Activity"
+          value="Today"
+          badge="3"
+          hint="Opens activity"
+          href="/about"
+          testID="row"
+        />
+      </NativeList>,
+    )
+    expect(view.getByTestId("row").props.accessibilityLabel).toBe(
+      "Activity, Today, 3, Opens activity",
+    )
+  })
+
   it("gives a value row its description and no role", async () => {
     const view = await render(
       <NativeList>
@@ -969,7 +1010,7 @@ describe("iOS list rows at accessibility text sizes", () => {
     expect(large).toEqual([
       {
         id: "nav",
-        accessibilityLabel: "Environment",
+        accessibilityLabel: "Environment, 1",
         accessibilityValue: { text: "Production" },
       },
       {

@@ -12,7 +12,7 @@ import {
 
 import { Button } from "@/design/button/button"
 import { usePlatform } from "@/test-support/platform"
-import { Colors, ListGeometry, StateOpacity } from "@/theme"
+import { Colors, ListGeometry, Spacing, StateOpacity } from "@/theme"
 
 import { ListRow, ListRowSeparator } from "./list-row"
 import { listRowPosition } from "./list-row-position"
@@ -158,7 +158,8 @@ describe.each(["ios", "android"] as const)("ListRow on %s", (platform) => {
     const row = view.getByTestId("row")
     await fireEvent.press(row)
     expect(onPress).not.toHaveBeenCalled()
-    expect(flat(row.parent!).opacity).toBe(StateOpacity.disabled)
+    expect(pressableStyle("row", false).opacity).toBe(StateOpacity.disabled)
+    expect(flat(row.parent!).opacity).toBeUndefined()
     expect(row.props.accessibilityState).toEqual({
       selected: false,
       disabled: true,
@@ -229,10 +230,14 @@ describe.each(["ios", "android"] as const)("ListRow on %s", (platform) => {
     const text = view.getByLabelText("Course, Room")
     expect(text.props.accessible).toBe(true)
     expect(text.props.accessibilityValue).toEqual({ text: "3" })
-    expect(
-      view.getByText("3", { includeHiddenElements: true }).parent!.props
-        .importantForAccessibility,
-    ).toBe("no-hide-descendants")
+    const trailing = view.getByText("3", {
+      includeHiddenElements: true,
+    }).parent!
+    expect(trailing.props.importantForAccessibility).toBe("no-hide-descendants")
+    expect(flat(trailing)).toMatchObject({
+      maxWidth: "45%",
+      marginStart: Spacing.two,
+    })
     await fireEvent.press(view.getByTestId("accessory"))
     expect(onAccessory).toHaveBeenCalledTimes(1)
   })
@@ -322,7 +327,9 @@ describe.each(["ios", "android"] as const)("ListRow on %s", (platform) => {
     const render1 = await render(
       <ListRow label="Zone" value="+01:00" onPress={jest.fn()} testID="row" />,
     )
-    expect(render1.getByText("+01:00").parent!.props.testID).toBe("row")
+    const trailing = render1.getByText("+01:00").parent!
+    expect(flat(trailing).maxWidth).toBe("45%")
+    expect(trailing.parent!.props.testID).toBe("row")
     await render1.unmount()
 
     mockFontScale = 3.571

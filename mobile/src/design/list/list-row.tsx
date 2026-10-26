@@ -17,6 +17,7 @@ import {
   type ListRowPosition,
   ListRowPositionContext,
 } from "@/design/list/list-row-position"
+import { joinRowName } from "@/design/list/row-name"
 import { Separator } from "@/design/list/separator"
 import { ThemedText } from "@/design/text/themed-text"
 import {
@@ -109,17 +110,6 @@ function groupedShape(position: ListRowPosition): ViewStyle {
   }
 }
 
-function composedRowLabel({
-  overline,
-  label,
-  subtitle,
-  details,
-}: Pick<ListRowProps, "overline" | "label" | "subtitle" | "details">) {
-  return [overline?.text, label, subtitle, ...(details ?? [])]
-    .filter(Boolean)
-    .join(", ")
-}
-
 function LeadingSlot({
   leading,
   width,
@@ -179,7 +169,11 @@ function SelectedCheck({ testID }: { testID: string }) {
     <Icon
       ios="checkmark"
       android="check"
-      size={Platform.OS === "ios" ? IconSize.medium : 24}
+      size={
+        Platform.OS === "ios"
+          ? IconSize.medium
+          : ListGeometry.android.leadingIcon
+      }
       iosWeight="semibold"
       color={theme.primary}
       scaling="text"
@@ -227,7 +221,14 @@ function useRowModel(props: ListRowProps, grouped: boolean): RowModel {
     disabled: interactive && props.disabled === true,
     selected,
     stacked: accessibilitySize && Boolean(props.value || selected),
-    name: props.accessibilityLabel ?? composedRowLabel(props),
+    name:
+      props.accessibilityLabel ??
+      joinRowName([
+        props.overline?.text,
+        props.label,
+        props.subtitle,
+        ...(props.details ?? []),
+      ]),
     textColor: grouped ? palette.text : theme.text,
     secondaryColor: grouped ? palette.textSecondary : theme.textSecondary,
     leadingBox: leadingWidth(props.leading),
@@ -318,7 +319,7 @@ function RowContent({ row, model }: { row: ListRowProps; model: RowModel }) {
       numberOfLines={LINES.value}
       style={[
         styles.value,
-        model.stacked ? null : styles.trailingValue,
+        model.stacked ? null : styles.valueText,
         { color: model.secondaryColor },
       ]}
     >
@@ -335,13 +336,13 @@ function RowContent({ row, model }: { row: ListRowProps; model: RowModel }) {
       <View
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
-        style={styles.value}
+        style={styles.trailingValue}
       >
         {value}
       </View>
-    ) : (
-      value
-    )
+    ) : value ? (
+      <View style={styles.trailingValue}>{value}</View>
+    ) : null
   return (
     <>
       {row.leading && model.leadingBox !== undefined ? (
@@ -420,7 +421,6 @@ export function ListRow(props: ListRowProps) {
         styles.container,
         position ? { backgroundColor: palette.surface } : null,
         position ? groupedShape(position) : null,
-        disabled ? { opacity: StateOpacity.disabled } : null,
         props.style,
       ])}
     >
@@ -445,6 +445,7 @@ export function ListRow(props: ListRowProps) {
             StyleSheet.flatten([
               styles.content,
               contentStyle,
+              disabled ? { opacity: StateOpacity.disabled } : null,
               ios && pressed && !disabled
                 ? { backgroundColor: theme.backgroundSelected }
                 : null,
@@ -495,11 +496,8 @@ const styles = StyleSheet.create({
   },
   text: { flex: 1, gap: Spacing.half },
   value: { flexShrink: 1 },
-  trailingValue: {
-    marginStart: Spacing.two,
-    textAlign: "right",
-    maxWidth: "45%",
-  },
+  valueText: { textAlign: "right" },
+  trailingValue: { flexShrink: 1, marginStart: Spacing.two, maxWidth: "45%" },
   stackedTrailing: {
     flexDirection: "row",
     alignItems: "center",

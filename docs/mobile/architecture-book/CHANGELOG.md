@@ -1,7 +1,7 @@
 ## 2026-10-26 — List row family and Android row semantics
 
 - On Android every `NativeListRow` is one TalkBack node with a content description (name, value,
-  hint) and, on navigation and action rows, the button role, through the `timecalendarSemantics`
+  badge, hint) and, on navigation and action rows, the button role, through the `timecalendarSemantics`
   modifier from the local module `modules/compose-semantics` ([theming.md](./theming.md) →
   Native-chrome wrapper seam, [runtime.md](./runtime.md), ADR
   [073](./decisions/073-list-row-family.md)).

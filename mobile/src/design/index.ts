@@ -39,6 +39,7 @@ export {
 } from "./list/list-row"
 export { type ListRowPosition, listRowPosition } from "./list/list-row-position"
 export { ListSection, type ListSectionProps } from "./list/list-section"
+export { joinRowName } from "./list/row-name"
 export { Separator, type SeparatorProps } from "./list/separator"
 export { ErrorNotice, FieldError } from "./status/error-surfaces"
 export {

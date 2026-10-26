@@ -84,6 +84,7 @@ import {
   type ListRowPosition,
   listRowPosition,
 } from "@/design/list/list-row-position"
+import { joinRowName } from "@/design/list/row-name"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { useErrorAnnouncement } from "@/hooks/use-error-announcement"
 import { ListGeometry, useIsAccessibilityTextSize, useTheme } from "@/theme"
@@ -744,20 +745,17 @@ export function NativeListRow(props: NativeListRowProps) {
   return <ComposeListRow {...props} />
 }
 
-function defaultAccessibilityLabel({
-  label,
-  subtitle,
-}: Pick<NativeListRowProps, "label" | "subtitle">) {
-  return subtitle ? `${label}, ${subtitle}` : label
+function rowName(
+  props: Pick<NativeListRowProps, "accessibilityLabel" | "label" | "subtitle">,
+) {
+  return props.accessibilityLabel ?? joinRowName([props.label, props.subtitle])
 }
 
 function SwiftListRow(props: NativeListRowProps) {
   const stacked = useIsAccessibilityTextSize() && Boolean(props.value)
   const modifiers = [
     accessibilityIdentifier(props.testID),
-    accessibilityLabel(
-      props.accessibilityLabel ?? defaultAccessibilityLabel(props),
-    ),
+    accessibilityLabel(joinRowName([rowName(props), props.badge])),
     ...(props.hint ? [accessibilityHint(props.hint)] : []),
     ...(props.value ? [accessibilityValue(props.value)] : []),
   ]
@@ -834,13 +832,12 @@ function ComposeListRow(props: NativeListRowProps) {
   const interactive = props.kind !== "value"
   const supporting = props.subtitle ?? props.value
   const trailingValue = props.subtitle ? props.value : undefined
-  const contentDescription = [
-    props.accessibilityLabel ?? defaultAccessibilityLabel(props),
+  const contentDescription = joinRowName([
+    rowName(props),
     props.value,
+    props.badge,
     props.hint,
-  ]
-    .filter(Boolean)
-    .join(", ")
+  ])
   return (
     <ListItem
       colors={listItemColors(palette)}

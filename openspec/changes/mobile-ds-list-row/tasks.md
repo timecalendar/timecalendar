@@ -155,9 +155,8 @@ A, then primitives with lint, then call sites with docs.
       - type tests: `@ts-expect-error` on `onPress` + `trailing={<Button …/>}`, on
         `onPress` + `href`, on `style={{ backgroundColor: "red" }}`, and on `hint` without
         activation;
-      - a test that `listRowPosition` agrees with the seam's private `segmentPosition` for counts
-        1 to 4 (export `segmentPosition` by leaf path from `native-list.tsx` if needed, not on the
-        barrel).
+      - no duplicate of `listRowPosition` in the seam: `native-list.tsx` imports it from the leaf
+        `@/design/list/list-row-position`, so no agreement test is needed.
 
       Verify: `npx jest src/design/list/list-row --coverage --collectCoverageFrom=src/design/list/list-row.tsx`
       shows at least 90% lines and branches.

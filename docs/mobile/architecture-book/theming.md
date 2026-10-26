@@ -533,7 +533,7 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
   positions, Material text roles, and the radio-dialog structure are wired. Rendered geometry stays
   device evidence, checked through the `native-list` stories of `/developer/gallery`.
 - Its "android row semantics" block asserts that every Android row carries the
-  `timecalendarSemantics` modifier last, with the composed description (name, value, hint) and the
+  `timecalendarSemantics` modifier last, with the composed description (name, value, badge, hint) and the
   button role on navigation and action rows only. Maestro flow 03 asserts the description on a
   real Android row. Whether TalkBack speaks it in that order is device evidence (the inbox note
   `2026-10-26-mobile-ds-list-row-device-pass.md`).

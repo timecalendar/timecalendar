@@ -27,7 +27,9 @@ slightly different from the seam and from each other.
   `src/components/chrome/compose-semantics.ts` is the only place that names the type.
   `ComposeListRow` appends it last, so it clears `ListItem`'s own text while the `testID` tag and
   the click action outside it survive. The description is the row's name, then its value, then
-  its hint, joined with ", "; navigation and action rows add the button role, value rows do not.
+  its badge, then its hint, joined with ", " by `joinRowName` (`src/design/list/row-name.ts`, shared
+  with `ListRow`); navigation and action rows add the button role, value rows do not. The iOS row's
+  accessibility label is its name then its badge.
 - **The mock tells the truth.** `jest/setup-expo-ui.ts` derives a role only from `selectable`,
   `toggleable` and `timecalendarSemantics`.
 - **One RN row family.** `ListRow`, `ListSection` and `Separator` in `src/design/list/`. The props
@@ -59,7 +61,7 @@ Rejected:
 - A sampled `listSurface` token pair: constants that drift when the seed or Expo UI's scheme
   variant changes.
 - `title` for the row's main text: a second name for the seam's `label`.
-- A raw-number separator inset: call-site geometry, the drift this replaces.
+- A raw-number separator inset: call-site geometry that drifts from `ListGeometry`.
 - A lint rule for hand-built rows: a `Pressable` with a label and chevron has no reliable static
   signature.
 
@@ -69,7 +71,7 @@ Rejected:
   the module loads and the modifier applies. The Kotlin compiles only in the Android native build
   (CI E2E or a Windows host), not in Jest.
 - `ModifierRegistry` is undocumented API; an `@expo/ui` bump re-checks it.
-- The registry a11y check now reports any bare `clickable`; `ComposeListRow` is its only user.
+- The registry a11y check reports any bare `clickable`; `ComposeListRow` is its only user.
 - The dormant school-group picker keeps its own tree rows: its expand/collapse state has no other
   user, and the route is slated for removal.
 - Rendered geometry, colors and screen-reader announcements are device evidence

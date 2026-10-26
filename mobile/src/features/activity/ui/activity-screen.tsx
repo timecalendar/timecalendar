@@ -13,6 +13,7 @@ import {
   developerActivityArtwork,
   ErrorNotice,
   headerScrollProps,
+  joinRowName,
   ListRow,
   type ListRowPosition,
   listRowPosition,
@@ -273,12 +274,6 @@ function ActivityItemRow({
           }
         })
       : []
-  const kindLabel =
-    item.kind === "cancelled"
-      ? `${t("activity.kind.cancelled")}, ${event.title}`
-      : t(`activity.item.${item.kind}.accessibilityLabel`, {
-          title: event.title,
-        })
   const row = {
     label: event.title,
     subtitle: time,
@@ -288,14 +283,24 @@ function ActivityItemRow({
       tone: OVERLINE_TONE[item.kind],
     },
     position,
-    accessibilityLabel: [kindLabel, time, ...changes.map((c) => c.spoken)]
-      .filter(Boolean)
-      .join(", "),
+    accessibilityLabel: joinRowName([
+      t(`activity.item.${item.kind}.accessibilityLabel`, {
+        title: event.title,
+      }),
+      time,
+      ...changes.map((change) => change.spoken),
+    ]),
     testID: `activity-${item.kind}-${event.uid}`,
   }
 
   if (item.kind === "cancelled") return <ListRow {...row} />
-  return <ListRow {...row} href={`/event-details/${event.uid}`} />
+  return (
+    <ListRow
+      {...row}
+      href={`/event-details/${event.uid}`}
+      hint={t("activity.item.hint")}
+    />
+  )
 }
 
 function OlderFooter({

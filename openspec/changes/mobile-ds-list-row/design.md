@@ -124,14 +124,14 @@ Rejected:
 ### D2. What the Android row announces
 
 - `contentDescription` = the row's name (`accessibilityLabel`, else `label`, else
-  `label, subtitle`, the iOS default), then `value`, then `hint`, joined with `", "` and skipping
-  absent parts.
+  `label, subtitle`, the iOS default), then `value`, then `badge`, then `hint`, joined with `", "`
+  by `joinRowName` (`src/design/list/row-name.ts`) and skipping absent parts.
 - Navigation and action rows add `role = Role.Button`. A value row gets the description and no role.
-- The `badge` is not in the description. iOS hides it too: the row's `accessibilityLabel`
-  replaces the button's children.
+- The `badge` is in the description. On iOS the row's `accessibilityLabel` replaces the button's
+  children, so the label is the name followed by the badge.
 
 TalkBack therefore reads "Calendar name, School, Shown, Opens this calendar's settings, Button".
-VoiceOver reads the same parts in the order name, value, button, hint.
+VoiceOver reads the same parts in the order name (and badge), value, button, hint.
 
 Rejected:
 
@@ -244,9 +244,10 @@ export const ListGeometry = {
 - iOS grouped corners use `glass` on iOS 26 and later (`Platform.Version`) and `legacy` below.
   (Unverified against SwiftUI's rendered Form; the `list-section--seam-comparison` story is the
   device check, and a mismatch is a one-number token edit.)
-- `theme.test.tsx` pins the values. `segmentPosition` (first/middle/last/single) moves to a pure
-  `listRowPosition(index, count)` exported from `@/design`. The seam keeps its private copy because
-  chrome may not import design, and a test asserts the two agree.
+- `theme.test.tsx` pins the values. `segmentPosition` (first/middle/last/single) becomes a pure
+  `listRowPosition(index, count)` in the leaf `@/design/list/list-row-position`, exported from
+  `@/design`. The seam imports that leaf directly (chrome may import design leaves), so there is one
+  copy.
 
 ### D6. Colors: theme tokens on iOS, the seeded Material palette on Android
 

@@ -93,10 +93,10 @@ These rules guard real product touchables (interactive controls declare `accessi
   label 8, supporting 8, value 4, overline 2; at accessibility text sizes the value and check
   stack under the label, and a single-word label shrinks to one line instead of breaking.
 - On Android, a `NativeListRow` from the native seam is one TalkBack node whose content
-  description is the name, then the value, then the hint, with `Role.Button` on navigation and
-  action rows (the `timecalendarSemantics` modifier, ADR
-  [073](./decisions/073-list-row-family.md)). VoiceOver reads the iOS row as name, value, button,
-  hint.
+  description is the name, then the value, then the badge, then the hint, with `Role.Button` on
+  navigation and action rows (the `timecalendarSemantics` modifier, ADR
+  [073](./decisions/073-list-row-family.md)). VoiceOver reads the iOS row as name and badge,
+  value, button, hint.
 - The screen-reader pass for both is owner-led
   (`docs/react-native-migration/inbox/2026-10-26-mobile-ds-list-row-device-pass.md`).
 
