@@ -19,3 +19,20 @@ Any other boot-before-migrate path hits the same trap: a local `npm run start` b
 `db:init`, or a deployment whose migrations run after the new pod starts. Candidates: log a
 warning and retry the initial publish on the first request that needs the snapshot, or fail
 `/health` while no catalogue is active so orchestration restarts the pod. Neither is decided.
+
+## Related gaps found by the same investigation
+
+- **Asset-origin contract has no cross-package gate.** The mobile parser accepts guide images only
+  from `EXPORT_GUIDE_ASSET_ORIGINS` (`mobile/src/features/export-guides/data/constants.ts`, the dev
+  bucket only). The server serves them from `S3_PUBLIC_BUCKET_CLIENT_URL`. `test-env.test.ts`
+  pins test == development on the server side only; a change to the mobile constant alone turns
+  every guide load into `invalid_generic` again, and only the nightly lane notices.
+- **Production origin is not in the allow-list.** A release build talking to a server whose
+  `S3_PUBLIC_BUCKET_CLIENT_URL` is not the dev bucket rejects the whole catalogue and blocks
+  onboarding at the export guide. The production value lives in the platform repo, not here, so
+  this was not verified. Decide the production origin (or a per-variant compiled list) before the
+  v4 cutover.
+- **Stale local catalogues.** `server/export-guide-catalogues/` is cwd-relative, shared by dev and
+  test, and not in `server/.dockerignore`, so a catalogue published under another origin survives
+  restarts and can be copied into a locally built e2e image. The bootstrap skips publishing when a
+  catalogue is already active. CI starts clean.
