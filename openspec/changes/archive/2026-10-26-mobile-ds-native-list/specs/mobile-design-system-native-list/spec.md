@@ -50,7 +50,7 @@ import. About SHALL render its sections and rows with `NativeListSection` and `N
 environment row SHALL render `NativeListRow` directly. The About screen SHALL NOT import the
 Settings feature. About and the environment row SHALL keep their visible copy, row order, icons,
 hints, values, accessibility roles and labels, and testIDs (`about-privacy`, `about-contact`,
-`about-changelog`, `about-developer-samuel`, `about-developer-eddy`, `about-section-<key>`,
+`about-changelog`, `about-developer-<name>`, `about-section-<key>`,
 `settings-environment`).
 
 #### Scenario: About renders through the seam

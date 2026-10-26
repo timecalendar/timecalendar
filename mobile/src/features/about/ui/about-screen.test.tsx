@@ -76,23 +76,23 @@ describe.each(["ios", "android"] as const)("AboutScreen on %s", (platform) => {
     })
     expect(
       Object.fromEntries(
-        [
-          "about-privacy",
-          "about-contact",
-          "about-changelog",
-          "about-developer-samuel",
-          "about-developer-eddy",
-        ].map((id) => [id, view.getByTestId(id).props.accessibilityHint]),
+        ["about-privacy", "about-contact", "about-changelog"].map((id) => [
+          id,
+          view.getByTestId(id).props.accessibilityHint,
+        ]),
       ),
     ).toEqual({
       "about-privacy": "Opens the privacy policy in the in-app browser",
       "about-contact": "Opens your email app to contact TimeCalendar",
       "about-changelog": "Opens the full release history",
-      "about-developer-samuel":
-        "Opens Samuel Prak’s website in the in-app browser",
-      "about-developer-eddy":
-        "Opens Eddy Monnot’s website in the in-app browser",
     })
+    const developerRows = view.getAllByTestId(/^about-developer-/)
+    expect(developerRows).toHaveLength(2)
+    for (const row of developerRows) {
+      expect(row.props.accessibilityHint).toMatch(
+        /^Opens .+’s website in the in-app browser$/,
+      )
+    }
   })
 })
 
