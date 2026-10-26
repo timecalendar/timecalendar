@@ -34,8 +34,9 @@ sub-paths. Principle 1 requires each of these to be a gate. This is roadmap slic
   file, duplicate, unknown or stale category. Generated from the current tree: one entry,
   `src/features/calendar/ui/calendar-screen/calendar-screen-header.tsx` (`rawText`, slice 5.10).
 - **L4 completed.** The `banSymbolView` flag also bans `unstable_getMaterialSymbolSourceAsync`
-  from `expo-symbols` and every `expo-symbols/*` sub-path; the `Icon` primitive (`icon-seam`
-  block) stays the only exemption. Chrome is not exempted. Type imports stay allowed.
+  from `expo-symbols` and every `expo-symbols/*` sub-path. The `Icon` primitive (`icon-seam`
+  block) and the native chrome seam (`src/components/chrome/**`, the audit's L4 exemption) lift
+  it. Type imports stay allowed.
 - **Proof.** `design-import-policy.test.js` gains chrome-deep, app-shell and `expo-symbols`
   sub-path assertions per file class (routes, app shell, chrome, design, features, fixtures);
   `no-raw-primitive.test.js` is the RuleTester suite; inject-and-revert for each new ban.

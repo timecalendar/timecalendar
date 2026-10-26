@@ -26,6 +26,10 @@ const {
   rawEventColorAllowlist,
 } = require("./tools/eslint-rules/raw-event-color-allowlist")
 const {
+  rawPrimitiveAllowlist,
+  rawPrimitiveCategoryOption,
+} = require("./tools/eslint-rules/raw-primitive-allowlist")
+const {
   rawTextInputAllowlist,
 } = require("./tools/eslint-rules/raw-text-input-allowlist")
 const {
@@ -219,6 +223,20 @@ const designDeepImportPattern = {
     "Import the design system through the @/design barrel (design-system-proposal §3, lint-format.md → Design layer).",
 }
 
+// Only the @/components/chrome barrel is public; the design layer and
+// src/components/ reach chrome leaves by path (ADR 068, ADR 077).
+const chromeDeepImportPattern = {
+  regex: "^@/components/chrome/",
+  message:
+    "Import the native chrome seam through the @/components/chrome barrel (ADR 077, lint-format.md → Design layer).",
+}
+
+const appShellImportPattern = {
+  regex: "^@/components/(?!chrome(/|$))",
+  message:
+    "src/components/ outside chrome is the app shell, composed by routes; shared UI comes from @/design or @/components/chrome (ADR 077, lint-format.md → Design layer).",
+}
+
 const galleryEntryImportPattern = {
   regex: "^@/design/gallery(/|$)",
   message:
@@ -234,12 +252,18 @@ const designBarrelImportPattern = {
 }
 
 // L9: every symbol icon declares its text scaling through the Icon primitive
-// (accessibility.md → Icon scaling, ADR 065). Type imports stay allowed.
+// (accessibility.md → Icon scaling, ADR 065); the chrome seam wraps native
+// symbol APIs itself (ADR 077). Type imports stay allowed.
 const symbolViewImportPath = {
   name: "expo-symbols",
-  importNames: ["SymbolView"],
+  importNames: ["SymbolView", "unstable_getMaterialSymbolSourceAsync"],
   message:
     "Render icons through Icon from @/design (accessibility.md → Icon scaling).",
+}
+
+const symbolsDeepImportPattern = {
+  regex: "^expo-symbols/",
+  message: symbolViewImportPath.message,
 }
 
 // Buttons are the shared Button (ADR 067, lint-format.md → Buttons). No file
@@ -313,6 +337,8 @@ const restrictedImports = (
     banDeviceColorScheme = true,
     banDeveloperTools = true,
     banDesignDeepImports = true,
+    banChromeDeepImports = true,
+    banAppShellImports = true,
     banGalleryEntry = true,
     banDesignBarrel = false,
     banSymbolView = true,
@@ -330,8 +356,11 @@ const restrictedImports = (
       ...(banDeviceColorScheme ? [deviceColorSchemeDeepImportPattern] : []),
       ...(banDeveloperTools ? [developerToolsDeepImportPattern] : []),
       ...(banDesignDeepImports ? [designDeepImportPattern] : []),
+      ...(banChromeDeepImports ? [chromeDeepImportPattern] : []),
+      ...(banAppShellImports ? [appShellImportPattern] : []),
       ...(banGalleryEntry ? [galleryEntryImportPattern] : []),
       ...(banDesignBarrel ? [designBarrelImportPattern] : []),
+      ...(banSymbolView ? [symbolsDeepImportPattern] : []),
       ...(banZoneOffsetTrap ? [zoneOffsetTrapImportPattern] : []),
       ...extraPatterns,
     ],
@@ -474,6 +503,16 @@ module.exports = defineConfig([
     },
   },
   {
+    // Routes compose the app shell; they may import @/app, so no route pattern.
+    name: "timecalendar/routes-shell",
+    files: ["src/app/**"],
+    rules: {
+      "no-restricted-imports": restrictedImports([], {
+        banAppShellImports: false,
+      }),
+    },
+  },
+  {
     // Re-includes the route-entrypoint pattern because `routes-not-importable`
     // also matches these files and flat config would otherwise drop the @/app ban.
     name: "timecalendar/developer-tools-home",
@@ -508,7 +547,11 @@ module.exports = defineConfig([
     rules: {
       "no-restricted-imports": restrictedImports(
         [routeEntrypointImportPattern],
-        { banDesignDeepImports: false, banDesignBarrel: true },
+        {
+          banDesignDeepImports: false,
+          banChromeDeepImports: false,
+          banDesignBarrel: true,
+        },
       ),
     },
   },
@@ -543,6 +586,17 @@ module.exports = defineConfig([
     },
   },
   {
+    // The app shell and the chrome seam reach each other by path.
+    name: "timecalendar/components-home",
+    files: ["src/components/**"],
+    rules: {
+      "no-restricted-imports": restrictedImports(
+        [routeEntrypointImportPattern],
+        { banChromeDeepImports: false, banAppShellImports: false },
+      ),
+    },
+  },
+  {
     // The chrome wrappers ARE the seam — each is the single import site for one
     // wrapped native-chrome API (expo-router/unstable-native-tabs, expo-glass-effect,
     // @expo/ui) the ban keeps out of feature/route code, so
@@ -558,6 +612,8 @@ module.exports = defineConfig([
         {
           banChromeSeam: false,
           banDesignDeepImports: false,
+          banChromeDeepImports: false,
+          banSymbolView: false,
           banDesignBarrel: true,
         },
       ),
@@ -618,7 +674,7 @@ module.exports = defineConfig([
     rules: {
       "no-restricted-imports": restrictedImports(
         [routeEntrypointImportPattern],
-        { banDesignDeepImports: false },
+        { banDesignDeepImports: false, banChromeDeepImports: false },
       ),
     },
   },
@@ -632,7 +688,11 @@ module.exports = defineConfig([
     rules: {
       "no-restricted-imports": restrictedImports(
         [routeEntrypointImportPattern],
-        { banDesignDeepImports: false, banGalleryEntry: false },
+        {
+          banDesignDeepImports: false,
+          banChromeDeepImports: false,
+          banGalleryEntry: false,
+        },
       ),
     },
   },
@@ -648,6 +708,8 @@ module.exports = defineConfig([
         {
           banChromeSeam: false,
           banDesignDeepImports: false,
+          banChromeDeepImports: false,
+          banSymbolView: false,
           banGalleryEntry: false,
         },
       ),
@@ -664,6 +726,7 @@ module.exports = defineConfig([
         {
           banSymbolView: false,
           banDesignDeepImports: false,
+          banChromeDeepImports: false,
           banDesignBarrel: true,
         },
       ),
@@ -958,6 +1021,38 @@ module.exports = defineConfig([
       "local/no-raw-text-input": "error",
     },
   },
+  {
+    // Feature screens render ThemedText and Router sheets, not raw Text or
+    // Modal. One block per not-yet-migrated file turns off only the
+    // primitives it still imports (ADR 077).
+    name: "timecalendar/raw-primitive",
+    files: ["src/features/*/ui/**/*.{ts,tsx}"],
+    ignores: ["**/*.test.{ts,tsx}"],
+    plugins: { local: localRules },
+    rules: {
+      "local/no-raw-primitive": ["error", { text: true, modal: true }],
+    },
+  },
+  ...rawPrimitiveAllowlist.map(({ path, categories }) => ({
+    name: "timecalendar/raw-primitive-allowlist",
+    files: [path],
+    plugins: { local: localRules },
+    rules: {
+      "local/no-raw-primitive": [
+        "error",
+        {
+          text: true,
+          modal: true,
+          ...Object.fromEntries(
+            categories.map((category) => [
+              rawPrimitiveCategoryOption[category],
+              false,
+            ]),
+          ),
+        },
+      ],
+    },
+  })),
   {
     // Visual-style values come from the tokens and the type ramp (ADR 077).
     name: "timecalendar/style-literals",

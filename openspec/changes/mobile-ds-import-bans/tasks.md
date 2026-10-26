@@ -9,14 +9,14 @@ Never build Android on the Mac. Migrate no screen. Land two commits per design â
 
 ## 0. Baseline
 
-- [ ] 0.1 Re-run the offender census from design.md â†’ Offender census against the branch head
+- [x] 0.1 Re-run the offender census from design.md â†’ Offender census against the branch head
       (a throwaway ESLint-API script outside the repo, or `npx eslint` with `--rule` overrides).
       Verify: the counts match the table (L2 0 outside routes, L3 `Text` 1, `Modal` 0, L4 0);
       if they differ, use the fresh counts everywhere the design's numbers appear.
 
 ## 1. `local/no-raw-primitive` and its RuleTester suite (D1, D2) â€” commit 1
 
-- [ ] 1.1 Create `tools/eslint-rules/no-raw-primitive.js`: header rationale (link lint-format.md
+- [x] 1.1 Create `tools/eslint-rules/no-raw-primitive.js`: header rationale (link lint-format.md
       â†’ Raw primitives and ADR 077; say `TextInput`, `ActivityIndicator`, `Button` and the
       touchables are gated elsewhere; name the namespace-import/`require` blind spot), schema
       `{ text: boolean, modal: boolean }` with `additionalProperties: false`, both default `true`,
@@ -26,7 +26,7 @@ Never build Android on the Mac. Migrate no screen. Land two commits per design â
       `source.value === "react-native"` (skip `exportKind === "type"`, match `local.name` of each
       non-type specifier). Register it in `tools/eslint-rules/index.js` in alphabetical order.
       Verify: `node -e "require('./tools/eslint-rules').rules['no-raw-primitive']"` exits 0.
-- [ ] 1.2 Create `tools/eslint-rules/no-raw-primitive.test.js` (pattern `no-raw-text-input.test.js`,
+- [x] 1.2 Create `tools/eslint-rules/no-raw-primitive.test.js` (pattern `no-raw-text-input.test.js`,
       `@typescript-eslint/parser`, JSX on) with the D5 valid and invalid cases. Verify:
       `npx jest tools/eslint-rules/no-raw-primitive` passes, and
       `npx jest tools/eslint-rules/no-raw-primitive --coverage --collectCoverageFrom='tools/eslint-rules/no-raw-primitive.js'`
@@ -34,7 +34,7 @@ Never build Android on the Mac. Migrate no screen. Land two commits per design â
 
 ## 2. Config wiring and the ratchet (D2â€“D4) â€” commit 1
 
-- [ ] 2.1 L3 wiring in `eslint.config.js`, right after `timecalendar/raw-text-input`: a
+- [x] 2.1 L3 wiring in `eslint.config.js`, right after `timecalendar/raw-text-input`: a
       `timecalendar/raw-primitive` block (`files: ["src/features/*/ui/**/*.{ts,tsx}"]`,
       `ignores: ["**/*.test.{ts,tsx}"]`, options `{ text: true, modal: true }`), then one
       `timecalendar/raw-primitive-allowlist` block per `rawPrimitiveAllowlist` entry, built by a
@@ -42,21 +42,21 @@ Never build Android on the Mac. Migrate no screen. Land two commits per design â
       comment naming ADR 077. Verify:
       `npx eslint --print-config src/features/calendar/ui/calendar-screen/calendar-screen-header.tsx | grep -A4 no-raw-primitive`
       shows `text: false, modal: true`.
-- [ ] 2.2 Create `tools/eslint-rules/raw-primitive-allowlist.js` from the census (header comment
+- [x] 2.2 Create `tools/eslint-rules/raw-primitive-allowlist.js` from the census (header comment
       modelled on `style-literal-allowlist.js:1-7`): the single entry
       `src/features/calendar/ui/calendar-screen/calendar-screen-header.tsx`, `["rawText"]`,
       trailing comment `// 5.10 calendar header title`. Export `rawPrimitiveAllowlist` and
       `rawPrimitiveCategoryOption`. Verify: `npm run lint` passes with zero warnings and
       `rg -n "src/(design|components)/" tools/eslint-rules/raw-primitive-allowlist.js` finds
       nothing.
-- [ ] 2.3 Create `tools/eslint-rules/raw-primitive-allowlist.test.js` mirroring
+- [x] 2.3 Create `tools/eslint-rules/raw-primitive-allowlist.test.js` mirroring
       `style-literal-allowlist.test.js`: `RAW_PRIMITIVE_ALLOWLIST_CEILING = { rawText: 1, rawModal: 0 }`
       with the comment "Raising this needs a reason in review: the allowlist only shrinks.", an
       ESLint instance with only `local/no-raw-primitive` on and both options `true`, and the six
       tests (keys equal the category map, exact per-category count, unique paths, paths exist,
       known categories, no stale `path:category`). Verify:
       `npx jest tools/eslint-rules/raw-primitive-allowlist` passes.
-- [ ] 2.4 L2 wiring (D3): add `chromeDeepImportPattern` and `appShellImportPattern` beside
+- [x] 2.4 L2 wiring (D3): add `chromeDeepImportPattern` and `appShellImportPattern` beside
       `designDeepImportPattern`, and the flags `banChromeDeepImports` / `banAppShellImports`
       (default `true`) to `restrictedImports`. Set `banChromeDeepImports: false` in `design-home`,
       `design-tests`, `design-fixtures`, `icon-seam`, `chrome-seams` and `chrome-fixtures`. Add a
@@ -65,12 +65,12 @@ Never build Android on the Mac. Migrate no screen. Land two commits per design â
       and a `timecalendar/routes-shell` block (`files: ["src/app/**"]`, after `architecture`,
       `restrictedImports([], { banAppShellImports: false })`). Verify: `npm run lint` passes with
       zero warnings.
-- [ ] 2.5 L4 wiring (D4): add `unstable_getMaterialSymbolSourceAsync` to
+- [x] 2.5 L4 wiring (D4): add `unstable_getMaterialSymbolSourceAsync` to
       `symbolViewImportPath.importNames` and a `symbolsDeepImportPattern` (`^expo-symbols/`, same
-      message) appended to `patterns` under `banSymbolView`. Do not lift `banSymbolView` for
-      chrome. Update the `// L9` comment above it if its wording no longer fits. Verify:
+      message) appended to `patterns` under `banSymbolView`. Lift `banSymbolView` in
+      `chrome-seams` and `chrome-fixtures` (D4). Update the `// L9` comment above it if its wording no longer fits. Verify:
       `npm run lint` passes (only `icon.tsx` imports `expo-symbols/androidWeights/regular`).
-- [ ] 2.6 Extend `tools/eslint-rules/design-import-policy.test.js` (D5): constants for the two L2
+- [x] 2.6 Extend `tools/eslint-rules/design-import-policy.test.js` (D5): constants for the two L2
       regexes and the deep-symbols regex; per class `chromeDeep` and `appShell` (allowed or not,
       per the D3 table) and assert the deep-symbols pattern and both `expo-symbols` import names
       follow `symbolView`; add the classes `src/app/(tabs)/_layout.tsx` (chromeDeep banned,
@@ -79,12 +79,12 @@ Never build Android on the Mac. Migrate no screen. Land two commits per design â
       banned), one file under `src/features/calendar-sources/ui/` and
       `src/features/developer/ui/gallery-story-screen.tsx` (both banned; gallery allowed for the
       developer file). Verify: `npx jest tools/eslint-rules/design-import-policy` passes.
-- [ ] 2.7 Commit 1. Verify: `npx tsc --noEmit`, `npm run lint` and `npx jest tools/eslint-rules`
+- [x] 2.7 Commit 1. Verify: `npx tsc --noEmit`, `npm run lint` and `npx jest tools/eslint-rules`
       pass.
 
 ## 3. Inject-and-revert proof
 
-- [ ] 3.1 Record the output of each for the PR, then revert all:
+- [x] 3.1 Record the output of each for the PR, then revert all:
       (a) `import { Text } from "react-native"` in `src/features/feedback/ui/feedback-screen.tsx`:
       lint fails with `local/no-raw-primitive` `rawText`;
       (b) `import { Modal } from "react-native"` there: `rawModal`;
@@ -96,8 +96,10 @@ Never build Android on the Mac. Migrate no screen. Land two commits per design â
       in a calendar-sources screen: `no-restricted-imports` names the chrome barrel in both;
       (f) `import AppTabs from "@/components/app-tabs"` in a feature screen: lint fails;
       the existing import in `src/app/(tabs)/_layout.tsx` stays green;
-      (g) `import { SymbolView } from "expo-symbols"` in `src/components/chrome/floating-action.tsx`
-      and `import x from "expo-symbols/androidWeights/regular"` in a feature file: both fail;
+      (g) `import { SymbolView } from "expo-symbols"` in a feature file and in
+      `src/design/badge/badge.tsx`, and `import x from "expo-symbols/androidWeights/regular"` in a
+      feature file: all fail; the same `SymbolView` import in
+      `src/components/chrome/floating-action.tsx` stays green;
       (h) add `{ path: "src/features/feedback/ui/feedback-screen.tsx", categories: ["rawText"] }`
       to the allowlist: `raw-primitive-allowlist.test.js` fails (stale and over the ceiling);
       (i) drop `banChromeDeepImports` from the `chrome-fixtures` block: the policy test fails
@@ -130,7 +132,7 @@ Never build Android on the Mac. Migrate no screen. Land two commits per design â
       the top. In **Design layer**, add the two patterns and flags and extend the table with
       `@/components/chrome/â€¦` and app-shell columns plus rows for routes and `src/components/`
       (D3), and mention the policy test's new columns. In **L9 â€” icons**, name both import names,
-      the `expo-symbols/*` sub-path ban, and that chrome is not exempt (D4). Add a
+      the `expo-symbols/*` sub-path ban, and the chrome exemption (D4). Add a
       **Raw primitives â€” `local/no-raw-primitive`** entry after **Fields**: names, messages,
       scope (`src/features/*/ui/**`, tests out, renderer outside `ui/`), which gate owns
       `TextInput`, `ActivityIndicator`, `Button` and the touchables (D1), the per-category

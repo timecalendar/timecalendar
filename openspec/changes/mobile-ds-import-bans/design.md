@@ -45,7 +45,7 @@ patterns below; tests excluded where the rule's scope excludes them):
 | L3 `TextInput` | same | 1 file, `event-checklists/ui/event-checklist.tsx` (already on `raw-text-input-allowlist.js`, 5.8) |
 | L3 `ActivityIndicator` | same | 2 files, `activity/ui/activity-screen.tsx`, `calendar-sources/ui/dev-import-screen.tsx` (already on `ad-hoc-status-allowlist.js`, 5.4 and 5.7) |
 | L3 `Button`/touchables | same | 0 (already banned everywhere) |
-| L4 | `SymbolView`, `unstable_getMaterialSymbolSourceAsync`, `^expo-symbols/` outside the icon seam | 0 |
+| L4 | `SymbolView`, `unstable_getMaterialSymbolSourceAsync`, `^expo-symbols/` outside the icon seam and chrome | 0 |
 
 `src/design/**` and `src/components/chrome/**` have no offender under any new ban.
 
@@ -153,19 +153,22 @@ exempts `src/design/**` (row L2); the gallery registry imports chrome fixtures b
 a design primitive may need a chrome leaf to avoid a require cycle through the chrome barrel,
 mirroring chrome's leaf access to design (ADR 068).
 
-### D4. L4: complete the existing ban; chrome is not exempt
+### D4. L4: complete the existing ban; the Icon primitive and chrome are exempt
 
 Extend `symbolViewImportPath.importNames` to `["SymbolView",
 "unstable_getMaterialSymbolSourceAsync"]` and add `symbolsDeepImportPattern`
-(`^expo-symbols/`, same message) under the existing `banSymbolView` flag, so `icon-seam` keeps
-being the one lift. Type imports stay allowed (`importNames` names only values; the deep pattern
-has no type-only users: `icon.tsx` is the one `androidWeights` importer).
+(`^expo-symbols/`, same message) under the existing `banSymbolView` flag. Type imports stay
+allowed (`importNames` names only values; the deep pattern has no type-only users: `icon.tsx` is
+the one `androidWeights` importer).
 
-The audit table (design-system-proposal row L4) lists `chrome/` as exempt. This change does not
-exempt it: no chrome file imports `SymbolView`, and ADR 065 / accessibility.md → Icon scaling
-make `Icon` the single renderer so every symbol declares its text scaling. An unused exemption
-would be speculative divergence. Chrome that needs a glyph uses `Icon` from a design leaf or the
-native `sf`/`md` props of the wrapped API.
+Two lifts, per the audit table (design-system-proposal row L4) and the owner brief: `icon-seam`
+(the `Icon` primitive, `src/design/icon/icon{,.test}.tsx`) and the native chrome seam
+(`chrome-seams` and `chrome-fixtures`, `src/components/chrome/**`). Chrome wraps platform APIs
+whose own symbol rendering (SwiftUI `Image(systemName:)` through `@expo/ui`, tab and menu
+glyphs) sits next to `SymbolView` at the same native level; a chrome wrapper that needs a raw
+symbol view takes on the text-scaling contract of accessibility.md → Icon scaling itself. No
+chrome file imports `SymbolView` today. Every other directory, the rest of `src/design/**`
+included, renders symbols through `Icon`.
 
 ### D5. Proof
 
@@ -202,16 +205,16 @@ its Decision, Rejected, Consequences and Revisit sections, written as current st
   each name is gated once.
 - The chrome seam is reached only through its barrel; the app shell only from routes and
   `src/components/`; both are `restrictedImports` flags pinned by the design import-policy test.
-- `expo-symbols` values and sub-paths are reachable only from the `Icon` primitive; chrome is not
-  exempt.
+- `expo-symbols` values and sub-paths are reachable only from the `Icon` primitive and the native
+  chrome seam.
 
 Rejected: one fold-everything L3 rule (scope regressions, a split allowlist); `no-restricted-imports`
 per-file allowlist blocks (must restate every seam flag per directory, the silent-drop hazard);
-an allowlist entry for the tabs route (permanent, no migrating slice); a chrome `SymbolView`
-exemption (unused, bypasses icon scaling).
+an allowlist entry for the tabs route (permanent, no migrating slice); banning `SymbolView` in
+chrome (the seam wraps native APIs at the same level and owns their text scaling).
 
 Revisit if: the `Text`/`Modal` allowlist reaches zero (drop its per-file block machinery); a
-chrome wrapper genuinely needs a raw symbol view; `src/components/` gains a second shell module
+chrome wrapper renders a symbol that does not follow the OS text size; `src/components/` gains a second shell module
 that features legitimately need.
 
 ## Risks / Trade-offs

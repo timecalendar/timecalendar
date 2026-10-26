@@ -62,9 +62,9 @@ chrome seam SHALL carry no entry.
 
 Lint SHALL report an error for any value import from `expo-symbols` that renders or loads a
 symbol (the `SymbolView` component and the Material symbol source loader) and for any import of
-an `expo-symbols` sub-path, outside the app's icon primitive module and its test, so every icon
-passes through the text-scaling contract. The native chrome seam SHALL NOT be exempt. Type-only
-imports from `expo-symbols` (symbol name types) SHALL stay allowed.
+an `expo-symbols` sub-path, outside the app's icon primitive module and its test and the native
+chrome seam, so every icon a feature or design primitive renders passes through the text-scaling
+contract. Type-only imports from `expo-symbols` (symbol name types) SHALL stay allowed.
 
 #### Scenario: A feature imports SymbolView
 
@@ -77,9 +77,15 @@ imports from `expo-symbols` (symbol name types) SHALL stay allowed.
   `expo-symbols` or imports any `expo-symbols/…` sub-path
 - **THEN** `npm run lint` fails with a message that points to the icon primitive
 
-#### Scenario: Chrome renders a symbol
+#### Scenario: Chrome wraps a native symbol view
 
 - **WHEN** a file under `src/components/chrome/` imports `SymbolView` from `expo-symbols`
+- **THEN** lint reports no error for that import
+
+#### Scenario: A design primitive other than the icon renders a symbol directly
+
+- **WHEN** a file under `src/design/` outside the icon primitive imports `SymbolView` from
+  `expo-symbols`
 - **THEN** `npm run lint` fails with a message that points to the icon primitive
 
 #### Scenario: Symbol name types stay importable
