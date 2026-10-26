@@ -58,9 +58,34 @@ const optionsFor = async (sides: Parameters<typeof useHeaderActions>[0]) =>
 describe("useHeaderActions on ios", () => {
   usePlatform("ios")
 
-  it("returns no option for an empty side or a side with only Android items", async () => {
+  it("leaves undeclared sides out and clears declared sides with no iOS item", async () => {
     expect(await optionsFor({})).toEqual({})
-    expect(await optionsFor({ left: [androidOnly], right: [] })).toEqual({})
+    const options = await optionsFor({ left: [androidOnly], right: [] })
+    expect(options).toEqual({
+      unstable_headerLeftItems: undefined,
+      unstable_headerRightItems: undefined,
+    })
+    expect(Object.keys(options)).toHaveLength(2)
+  })
+
+  it("clears a side whose last item goes away", async () => {
+    const { result, rerender } = await renderHook(
+      (right: HeaderAction[]) => useHeaderActions({ right }),
+      { initialProps: [today()] },
+    )
+    await rerender([])
+    expect(result.current).toHaveProperty("unstable_headerRightItems")
+    expect(result.current.unstable_headerRightItems).toBeUndefined()
+    expect(result.current).not.toHaveProperty("unstable_headerLeftItems")
+  })
+
+  it("skips an empty hint", async () => {
+    const options = await optionsFor({
+      right: [done({ accessibilityHint: "" })],
+    })
+    expect(headerBarItem(options, "right", "done")).not.toHaveProperty(
+      "accessibilityHint",
+    )
   })
 
   it("keeps iOS-only items and drops Android-only items", async () => {
@@ -108,8 +133,22 @@ describe("useHeaderActions on ios", () => {
 describe("useHeaderActions on android", () => {
   usePlatform("android")
 
-  it("returns no option for an empty side or a side with only iOS items", async () => {
-    expect(await optionsFor({ left: [iosOnly] })).toEqual({})
+  it("leaves undeclared sides out and clears declared sides with no Android item", async () => {
+    const options = await optionsFor({ left: [iosOnly] })
+    expect(Object.keys(options)).toEqual(["headerLeft"])
+    expect(options.headerLeft).toBeUndefined()
+  })
+
+  it("clears a side whose last item goes away", async () => {
+    const { result, rerender } = await renderHook(
+      (right: HeaderAction[]) => useHeaderActions({ right }),
+      { initialProps: [today()] },
+    )
+    expect(result.current.headerRight).toEqual(expect.any(Function))
+    await rerender([])
+    expect(result.current).toHaveProperty("headerRight")
+    expect(result.current.headerRight).toBeUndefined()
+    expect(result.current).not.toHaveProperty("headerLeft")
   })
 
   it("renders an icon button named by its label that presses its handler", async () => {
@@ -150,13 +189,18 @@ describe("useHeaderActions on android", () => {
     },
   )
 
-  it("names a text button by its label alone without a hint", async () => {
-    const options = await optionsFor({ right: [androidOnly] })
-    const view = await renderHeaderSide(options, "right")
-    expect(
-      view.getByRole("button", { name: "Skip this step" }).props.testID,
-    ).toBe("skip-android")
-  })
+  it.each([undefined, ""])(
+    "names a text button by its label alone with hint %p",
+    async (accessibilityHint) => {
+      const options = await optionsFor({
+        right: [{ ...androidOnly, accessibilityHint }],
+      })
+      const view = await renderHeaderSide(options, "right")
+      expect(
+        view.getByRole("button", { name: "Skip this step" }).props.testID,
+      ).toBe("skip-android")
+    },
+  )
 
   it("does not press a disabled action", async () => {
     const onPress = jest.fn()

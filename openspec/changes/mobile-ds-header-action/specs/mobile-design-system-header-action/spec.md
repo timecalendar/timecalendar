@@ -16,8 +16,9 @@ SHALL take an ordered list of `HeaderAction` items. An item SHALL be either an i
 SF Symbol / Material Symbol pair) or a text action (a visible label), never both and never
 neither. Every item SHALL require an accessibility label, a testID and a press handler. An item
 MAY take an accessibility hint, a disabled flag and a platform restriction (iOS only or Android
-only). When a side has no item for the current platform, the hook SHALL return no option for that
-side.
+only). When a declared side has no item for the current platform, the hook SHALL return that
+side's option set to `undefined`, so a button from an earlier render is cleared. The hook SHALL
+return no option for a side the caller does not declare.
 
 #### Scenario: An item without an accessibility label does not compile
 
@@ -33,6 +34,12 @@ side.
 
 - **WHEN** the calendar declares its Add action for iOS only and renders on Android
 - **THEN** the returned options contain only the Today action on the right side
+
+#### Scenario: A side that empties is cleared
+
+- **WHEN** the calendar's Today action goes away after the user taps it on Android
+- **THEN** the hook returns `headerRight` set to `undefined`, no Today button remains, and the
+  view menu in `headerLeft` is kept
 
 ### Requirement: iOS header actions are native bar button items
 

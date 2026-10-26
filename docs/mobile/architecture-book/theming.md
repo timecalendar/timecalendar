@@ -581,8 +581,11 @@ platform's own control. See ADR [075](./decisions/075-header-and-floating-action
   a screen spreads into its one `Stack.Screen options={{ title, ...headerActions }}`. A
   `HeaderAction` is an `icon` (`NativeIcon`) or a visible `label`, never both, with a required
   `accessibilityLabel`, a `testID`, an optional `accessibilityHint`, `disabled`, and `platform`
-  (`"ios"` / `"android"`) for a one-platform action. An empty side, or a side whose actions all
-  belong to the other platform, returns no key, so the native back button area stays untouched.
+  (`"ios"` / `"android"`) for a one-platform action. Only a declared side returns a key:
+  `setOptions` merges into the previous options, so a declared side with no action for this
+  platform returns its key set to `undefined`, which clears a button set by an earlier render
+  (Today on the calendar). An undeclared side returns no key, so a slot the screen sets by hand
+  (the calendar view menu in `headerLeft`) survives the spread whatever its order.
 - **iOS:** each action is a native `UIBarButtonItem` header item (`unstable_headerLeftItems` /
   `unstable_headerRightItems`): an SF Symbol (named by `accessibilityLabel`, which also feeds the
   Large Content Viewer) or the visible label, the hint, `identifier: testID`, `disabled`.

@@ -50,3 +50,18 @@ export function renderHeaderSide(
   const header = side === "left" ? options?.headerLeft : options?.headerRight
   return render(<>{header?.({})}</>)
 }
+
+// Mirrors navigation.setOptions, which merges each call into the previous
+// options: a mock that replaces them would hide a slot that is never cleared.
+export function mergedScreenOptions() {
+  let current: NativeStackNavigationOptions = {}
+  return {
+    set: (options: NativeStackNavigationOptions) => {
+      current = { ...current, ...options }
+    },
+    get: () => current,
+    reset: () => {
+      current = {}
+    },
+  }
+}

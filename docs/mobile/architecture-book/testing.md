@@ -85,7 +85,9 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   required name, the icon-or-label union and the missing tint field. Feature tests that mock
   `Stack.Screen` render its options through `HeaderActionsPreview`
   (`@/test-support/header-actions-preview`), which turns iOS bar items into pressables keyed by
-  their identifier. The header-action allowlist is a contract test like the raw-text-input one
+  their identifier. A test that rerenders a header to check a cleared action records options
+  through `mergedScreenOptions()` (`@/test-support/header-actions`), which merges like
+  `setOptions`; a mock that replaces them hides a button that is never cleared. The header-action allowlist is a contract test like the raw-text-input one
   below.
 - **The raw-text-input allowlist is a contract test.**
   `tools/eslint-rules/raw-text-input-allowlist.test.js` lints each allowlisted file with only

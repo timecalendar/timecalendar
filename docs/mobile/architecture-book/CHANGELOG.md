@@ -6,7 +6,8 @@
   (`native-icons.ts`) as the chrome icon pair ([theming.md](./theming.md) → Header and floating
   actions, ADR [075](./decisions/075-header-and-floating-actions.md)).
 - Screens declare header actions through `useHeaderActions` and set no header item themselves
-  ([navigation.md](./navigation.md)).
+  ([navigation.md](./navigation.md)). A declared side with no action returns its key as
+  `undefined` to clear the merged option; an undeclared side returns no key.
 - A header action requires `accessibilityLabel`; Android text actions are one line with the full
   name (label, then hint) in semantics ([accessibility.md](./accessibility.md) → Header and
   floating actions).

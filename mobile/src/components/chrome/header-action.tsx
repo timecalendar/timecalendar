@@ -18,6 +18,7 @@ import {
   materialSymbolSource,
   type NativeIcon,
 } from "@/components/chrome/native-icons"
+import { joinRowName } from "@/design/list/row-name"
 import { useTheme } from "@/theme"
 
 type HeaderActionBase = {
@@ -46,34 +47,42 @@ type HeaderActionSides = {
   right?: readonly HeaderAction[] | undefined
 }
 
-export function useHeaderActions({
-  left = [],
-  right = [],
-}: HeaderActionSides): HeaderActionOptions {
+// setOptions merges, so a declared side left empty is cleared with an explicit
+// undefined (the navigation types omit it, hence `cleared`), while an
+// undeclared side stays absent and never overwrites a slot the screen sets.
+const cleared = undefined as never
+
+export function useHeaderActions(
+  sides: HeaderActionSides,
+): HeaderActionOptions {
   const theme = useTheme()
-  const leftItems = left.filter(onThisPlatform)
-  const rightItems = right.filter(onThisPlatform)
+  const declared = (side: keyof HeaderActionSides) => {
+    if (!(side in sides)) return null
+    return (sides[side] ?? []).filter(onThisPlatform)
+  }
+  const left = declared("left")
+  const right = declared("right")
 
   if (Platform.OS === "ios") {
-    const barItems = (items: HeaderAction[]) => () =>
-      items.map((item) => barButtonItem(item, theme.text))
+    const barItems = (items: HeaderAction[]) =>
+      items.length > 0
+        ? () => items.map((item) => barButtonItem(item, theme.text))
+        : cleared
     return {
-      ...(leftItems.length > 0 && {
-        unstable_headerLeftItems: barItems(leftItems),
-      }),
-      ...(rightItems.length > 0 && {
-        unstable_headerRightItems: barItems(rightItems),
-      }),
+      ...(left && { unstable_headerLeftItems: barItems(left) }),
+      ...(right && { unstable_headerRightItems: barItems(right) }),
     }
   }
 
   const bar = (items: HeaderAction[]) =>
-    function HeaderActions() {
-      return <HeaderActionBar items={items} contentColor={theme.text} />
-    }
+    items.length > 0
+      ? function HeaderActions() {
+          return <HeaderActionBar items={items} contentColor={theme.text} />
+        }
+      : cleared
   return {
-    ...(leftItems.length > 0 && { headerLeft: bar(leftItems) }),
-    ...(rightItems.length > 0 && { headerRight: bar(rightItems) }),
+    ...(left && { headerLeft: bar(left) }),
+    ...(right && { headerRight: bar(right) }),
   }
 }
 
@@ -93,7 +102,7 @@ function barButtonItem(
     }),
     tintColor,
     accessibilityLabel: item.accessibilityLabel,
-    ...(item.accessibilityHint !== undefined && {
+    ...(item.accessibilityHint && {
       accessibilityHint: item.accessibilityHint,
     }),
     identifier: item.testID,
@@ -103,9 +112,7 @@ function barButtonItem(
 }
 
 function spokenName(item: HeaderAction) {
-  return item.accessibilityHint
-    ? `${item.accessibilityLabel}, ${item.accessibilityHint}`
-    : item.accessibilityLabel
+  return joinRowName([item.accessibilityLabel, item.accessibilityHint])
 }
 
 function HeaderActionBar({
