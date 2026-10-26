@@ -63,8 +63,9 @@ These rules guard real product touchables (interactive controls declare `accessi
 - `StatusView` announces once per appearance: `useErrorAnnouncement(spoken, { key })` with `key`
   = `announcementKey ?? kind` speaks on mount and when the key changes, never when the message
   changes under the same key, so a no-results title that embeds the query is not re-read per
-  keystroke. iOS uses the queued announcer; Android uses the polite live region on the
-  `StatusView` root (shared React Native surfaces own one announcement channel). Without `key` the
+  keystroke. iOS uses the queued announcer; Android uses a polite live region on the
+  loading `progressbar` or the title and caption group, never the actions, so a Retry busy or
+  disabled toggle does not re-read the state (shared React Native surfaces own one announcement channel). Without `key` the
   hook announces on every message change (chrome callers).
 - Artwork is decorative and not rendered at accessibility text sizes; `screen` scrolls once the
   text outgrows the viewport, so title and actions stay reachable at AX5 and font scale 2.0.

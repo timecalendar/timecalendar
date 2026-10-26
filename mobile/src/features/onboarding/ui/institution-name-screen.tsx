@@ -94,9 +94,7 @@ export default function InstitutionNameScreen() {
               testID="onboarding-institution-input"
               accessibilityLabel={t("onboarding.institution.fieldLabel")}
               accessibilityLabelledBy="onboarding-institution-label"
-              accessibilityHint={fieldErrorHint(
-                errorKey === null ? undefined : t(errorKey),
-              )}
+              accessibilityHint={fieldErrorHint(errorKey && t(errorKey))}
               placeholder={t("onboarding.institution.placeholder")}
               placeholderTextColor={theme.textSecondary}
               value={name}

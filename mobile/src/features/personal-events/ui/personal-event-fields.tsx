@@ -51,9 +51,7 @@ export function PersonalEventFields({
         <TextInput
           testID="personal-event-title-input"
           accessibilityLabel={t("personalEvents.form.titleLabel")}
-          accessibilityHint={fieldErrorHint(
-            errors.title === undefined ? undefined : t(errors.title),
-          )}
+          accessibilityHint={fieldErrorHint(errors.title && t(errors.title))}
           placeholder={t("personalEvents.form.titlePlaceholder")}
           placeholderTextColor={theme.textSecondary}
           value={values.title}

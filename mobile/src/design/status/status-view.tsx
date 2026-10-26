@@ -93,6 +93,7 @@ export function StatusView(props: StatusViewProps) {
   const accessibilitySize = useIsAccessibilityTextSize()
   const inline = presentation === "inline"
   const progressID = childID(testID, "progress")
+  const liveRegion = Platform.OS === "android" ? "polite" : undefined
 
   useErrorAnnouncement(
     kind !== "loading" && caption ? `${title}. ${caption}` : title,
@@ -107,6 +108,7 @@ export function StatusView(props: StatusViewProps) {
         accessibilityRole="progressbar"
         accessibilityLabel={title}
         accessibilityState={{ busy: true }}
+        accessibilityLiveRegion={liveRegion}
         style={inline ? styles.loadingRow : styles.loadingColumn}
       >
         <View
@@ -135,6 +137,7 @@ export function StatusView(props: StatusViewProps) {
     const glyphID = childID(testID, "glyph")
     const symbolID = childID(testID, "symbol")
     const artworkID = childID(testID, "artwork")
+    const textID = childID(testID, "text")
     body = (
       <>
         {kind === "error" ? (
@@ -167,7 +170,11 @@ export function StatusView(props: StatusViewProps) {
             style={styles.artwork}
           />
         )}
-        <View style={[styles.text, inline ? null : styles.fill]}>
+        <View
+          {...textID}
+          accessibilityLiveRegion={liveRegion}
+          style={[styles.text, inline ? null : styles.fill]}
+        >
           <ThemedText type="sectionTitle" style={textAlign}>
             {title}
           </ThemedText>
@@ -191,13 +198,10 @@ export function StatusView(props: StatusViewProps) {
     )
   }
 
-  const liveRegion = Platform.OS === "android" ? "polite" : undefined
-
   if (presentation === "screen") {
     return (
       <ScrollView
         testID={testID}
-        accessibilityLiveRegion={liveRegion}
         {...headerScrollProps(false)}
         style={StyleSheet.flatten([styles.screen, style])}
         contentContainerStyle={styles.screenContent}
@@ -210,7 +214,6 @@ export function StatusView(props: StatusViewProps) {
   return (
     <View
       testID={testID}
-      accessibilityLiveRegion={liveRegion}
       style={StyleSheet.flatten([
         inline ? styles.inline : styles.section,
         style,

@@ -146,7 +146,7 @@ export default function FeedbackScreen() {
                   accessibilityLabel={t("feedback.email.label")}
                   accessibilityLabelledBy="feedback-email-label"
                   accessibilityHint={fieldErrorHint(
-                    errors.email ? t(errors.email) : undefined,
+                    errors.email && t(errors.email),
                   )}
                   value={email}
                   onChangeText={(value) => {
@@ -186,7 +186,7 @@ export default function FeedbackScreen() {
                   accessibilityLabel={t("feedback.message.label")}
                   accessibilityLabelledBy="feedback-message-label"
                   accessibilityHint={fieldErrorHint(
-                    errors.message ? t(errors.message) : undefined,
+                    errors.message && t(errors.message),
                   )}
                   value={message}
                   onChangeText={(value) => {

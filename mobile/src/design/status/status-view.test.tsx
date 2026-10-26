@@ -1,4 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react-native"
+import {
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react-native"
 import { AccessibilityInfo, StyleSheet } from "react-native"
 
 import { useColorScheme } from "@/hooks/use-color-scheme"
@@ -210,18 +215,40 @@ describe.each(["ios", "android"] as const)("StatusView on %s", (os) => {
     expect(screen.getByText("Empty")).not.toHaveStyle({ textAlign: "center" })
   })
 
-  it("marks the root as a polite live region on Android only", async () => {
-    await render(
+  it("scopes the Android polite live region to the text, not the actions", async () => {
+    const polite = os === "android" ? "polite" : undefined
+    const view = await render(
       <StatusView
         kind="error"
         presentation="section"
         title="Failed"
+        action={{ label: "Retry", onPress: () => {}, testID: "retry" }}
         testID="s"
       />,
     )
-    expect(screen.getByTestId("s").props.accessibilityLiveRegion).toBe(
-      os === "android" ? "polite" : undefined,
+    expect(
+      screen.getByTestId("s").props.accessibilityLiveRegion,
+    ).toBeUndefined()
+    expect(screen.getByTestId("s-text").props.accessibilityLiveRegion).toBe(
+      polite,
     )
+    expect(within(screen.getByTestId("s-text")).queryByText("Retry")).toBeNull()
+
+    await view.rerender(
+      <StatusView
+        kind="loading"
+        presentation="screen"
+        title="Loading"
+        testID="s"
+      />,
+    )
+    expect(
+      screen.getByTestId("s").props.accessibilityLiveRegion,
+    ).toBeUndefined()
+    expect(
+      screen.getByRole("progressbar", { name: "Loading" }).props
+        .accessibilityLiveRegion,
+    ).toBe(polite)
   })
 
   it("announces once per appearance and once per key change", async () => {

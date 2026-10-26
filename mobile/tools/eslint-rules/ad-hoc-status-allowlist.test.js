@@ -8,7 +8,7 @@ const localRules = require("./index")
 const { adHocStatusAllowlist } = require("./ad-hoc-status-allowlist")
 
 // Raising this needs a reason in review: the allowlist only shrinks.
-const AD_HOC_STATUS_ALLOWLIST_CEILING = 3
+const AD_HOC_STATUS_ALLOWLIST_CEILING = 2
 
 const root = resolve(__dirname, "../..")
 

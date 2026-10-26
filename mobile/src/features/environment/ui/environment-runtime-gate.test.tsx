@@ -72,7 +72,9 @@ it("blocks children and resumes a valid cold-start journal", async () => {
   )
 
   expect(screen.queryByText("normal routes")).toBeNull()
-  expect(screen.getByText("Finishing environment switch…")).toBeTruthy()
+  expect(
+    screen.getByRole("progressbar", { name: "Finishing environment switch…" }),
+  ).toBeTruthy()
   await waitFor(() => expect(mockRecover).toHaveBeenCalledWith(journal))
 })
 

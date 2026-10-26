@@ -323,11 +323,16 @@ const restrictedSyntax = [
   message:
     "Text must follow the OS font size — do not disable allowFontScaling. Cap dense UI with maxFontSizeMultiplier instead (accessibility.md → Font scaling).",
 }))
-restrictedSyntax.push({
-  selector: "JSXAttribute[name.name='aria-describedby']",
-  message:
-    "React Native forwards no described-by relation; fold the error into accessibilityHint with fieldErrorHint (ADR 069)",
-})
+restrictedSyntax.push(
+  ...[
+    "JSXAttribute[name.name='aria-describedby']",
+    "Property[key.value='aria-describedby']",
+  ].map((selector) => ({
+    selector,
+    message:
+      "React Native forwards no described-by relation; fold the error into accessibilityHint with fieldErrorHint (ADR 069)",
+  })),
+)
 
 // Worklet safety (TIM-554). A worklet may only call functions that are
 // themselves workletized; a plain JS call throws on the UI thread at runtime and

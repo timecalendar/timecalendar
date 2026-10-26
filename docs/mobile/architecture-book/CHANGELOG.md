@@ -12,10 +12,14 @@
   role. `useErrorAnnouncement` takes a `key`: `StatusView` announces once per appearance and per
   `announcementKey ?? kind` ([accessibility.md](./accessibility.md) → Accessible async status).
 - Field errors fold into the input's `accessibilityHint` through `fieldErrorHint`; `FieldError`
-  has no `nativeID`, and `aria-describedby` is a restricted-syntax error.
+  has no `nativeID`, and `aria-describedby` is a restricted-syntax error as a JSX attribute or an
+  object key.
+- The Android polite live region sits on the loading `progressbar` or the title and caption group,
+  not on the actions. The environment runtime gate's recovery progress is a `section` loading
+  `StatusView`.
 - `local/no-ad-hoc-status` reports `react-native` `ActivityIndicator` imports and a
-  `ListEmptyComponent` that is not `StatusView`; three files sit in
-  `ad-hoc-status-allowlist.js` under a ceiling of 3. The raw-button ceiling is 15
+  `ListEmptyComponent` that is not `StatusView`; two files sit in
+  `ad-hoc-status-allowlist.js` under a ceiling of 2. The raw-button ceiling is 15
   ([lint-format.md](./lint-format.md) → Status).
 - `status-view.tsx` and `field-error-hint.ts` have 90% coverage keys; `use-error-announcement.ts`
   has its own test ([testing.md](./testing.md)).

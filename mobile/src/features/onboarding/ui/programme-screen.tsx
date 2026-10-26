@@ -157,9 +157,7 @@ export default function ProgrammeScreen() {
               testID="onboarding-programme-input"
               accessibilityLabel={t("onboarding.programme.fieldLabel")}
               accessibilityLabelledBy="onboarding-programme-label"
-              accessibilityHint={fieldErrorHint(
-                errorKey === null ? undefined : t(errorKey),
-              )}
+              accessibilityHint={fieldErrorHint(errorKey && t(errorKey))}
               // Example only — a `placeholder` prop can never reach the draft.
               placeholder={t("onboarding.programme.placeholder")}
               placeholderTextColor={theme.textSecondary}

@@ -188,9 +188,7 @@ export default function IcalUrlScreen() {
             <TextInput
               testID="ical-url-input"
               accessibilityLabel={t("calendarSources.icalUrl.fieldLabel")}
-              accessibilityHint={fieldErrorHint(
-                errorKey === null ? undefined : t(errorKey),
-              )}
+              accessibilityHint={fieldErrorHint(errorKey && t(errorKey))}
               placeholder={t("calendarSources.icalUrl.placeholder")}
               placeholderTextColor={theme.textSecondary}
               value={url}

@@ -41,12 +41,13 @@ text sizes it rose under the header and clipped its actions. `ErrorTextAction` w
   `text` secondary) stacked primary first.
 - Announcement: `useErrorAnnouncement(spoken, { key: announcementKey ?? kind })` speaks once per
   appearance and per key change, not on every message change under the same key. iOS uses the
-  queued announcement; Android relies on the polite live region on the `StatusView` root.
+  queued announcement; Android relies on a polite live region on the loading `progressbar` or the
+  title and caption group, never on the actions, so a Retry busy toggle does not re-read the state.
 - `EmptyState`, `ErrorState`, `ErrorTextAction` and `ErrorAction` are removed, not aliased.
   `ErrorNotice`'s action is a `StatusAction` rendered as `Button variant="text"`.
-- Field errors fold into the input's `accessibilityHint` through `fieldErrorHint(error, hint)`.
+- Field errors fold into the input's `accessibilityHint` through `fieldErrorHint(error, hint)`, which takes `string | null | undefined`.
   `FieldError` keeps its alert text and live region and has no `nativeID`. `aria-describedby` is
-  a restricted-syntax error.
+  a restricted-syntax error as a JSX attribute or an object key.
 - Lint: `local/no-ad-hoc-status` reports a `react-native` `ActivityIndicator` import and a
   `ListEmptyComponent` that renders anything but `StatusView`. Unmigrated files sit in
   `tools/eslint-rules/ad-hoc-status-allowlist.js`, pinned by a ceiling test.

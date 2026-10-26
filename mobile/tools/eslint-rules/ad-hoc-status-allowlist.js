@@ -5,7 +5,6 @@
 const adHocStatusAllowlist = [
   "src/features/activity/ui/activity-screen.tsx", // 5.4 loading and older-page footer
   "src/features/calendar-sources/ui/dev-import-screen.tsx", // 5.7 developer import progress
-  "src/features/environment/ui/environment-runtime-gate.tsx", // 3.5 recovery progress
 ]
 
 module.exports = { adHocStatusAllowlist }

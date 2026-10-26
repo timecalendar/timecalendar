@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from "react"
 import { useEffect, useState, useSyncExternalStore } from "react"
 import { useTranslation } from "react-i18next"
-import { ActivityIndicator, ScrollView, StyleSheet } from "react-native"
+import { ScrollView, StyleSheet } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import {
@@ -9,7 +9,7 @@ import {
   setBackendRuntimeReady,
   subscribeBackendRuntimeReady,
 } from "@/config/backend-runtime"
-import { StatusView, ThemedText } from "@/design"
+import { StatusView } from "@/design"
 import { useEffectiveBackendEnvironment } from "@/features/environment/data/store"
 import { recoverBackendEnvironmentSwitch } from "@/features/environment/data/switch"
 import { setCrashlyticsAttributes } from "@/firebase"
@@ -79,12 +79,11 @@ export function EnvironmentRuntimeGate({ children }: PropsWithChildren) {
           testID="backend-environment-recovery"
         >
           {isRecovering ? (
-            <>
-              <ActivityIndicator color={theme.textSecondary} />
-              <ThemedText accessibilityLiveRegion="polite">
-                {t("environment.recovery.progress")}
-              </ThemedText>
-            </>
+            <StatusView
+              kind="loading"
+              presentation="section"
+              title={t("environment.recovery.progress")}
+            />
           ) : (
             <StatusView
               kind="error"
