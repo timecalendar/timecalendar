@@ -70,22 +70,22 @@ Never build Android on the Mac. Land three commits, following the design's Migra
 
 ## 2. Design-layer fixes, config wiring and the ratchet (D5–D7) — commit 2
 
-- [ ] 2.1 Tokens (D7): in `src/theme/tokens.ts` add the iOS icon-tile corner radius (7) next to
+- [x] 2.1 Tokens (D7): in `src/theme/tokens.ts` add the iOS icon-tile corner radius (7) next to
       `ListGeometry.ios.leadingIconTile`, and the native list header icon size (88) and its iOS
       corner radius (20). Point `src/design/list/list-row.tsx` `iconTile` and
       `src/components/chrome/native-list-header.tsx` (`ICON_SIZE`, `iosIcon`) at them. Values are
       unchanged. Verify: `npx tsc --noEmit` passes and `npx jest src/theme src/design/list src/components/chrome/native-list-header`
       passes unedited.
-- [ ] 2.2 `src/design/status/error-surfaces.tsx`: the `ErrorMessage` title uses
+- [x] 2.2 `src/design/status/error-surfaces.tsx`: the `ErrorMessage` title uses
       `ThemedText type="sectionTitle"`, keeps `accessibilityRole="header"` and
       `marginBottom: Spacing.two`, and drops the literal type keys. Update any assertion in
       `error-surfaces.test.tsx` that pinned the old size to the ramp's iOS and Android values.
       Verify: `npx jest src/design/status` passes on both platforms with ≥ 90% branches on the
       file (`--coverage --collectCoverageFrom='src/design/status/error-surfaces.tsx'`).
-- [ ] 2.3 `src/design/badge/badge.gallery.tsx:65`: move `"#E91E63"` into a module-level sample
+- [x] 2.3 `src/design/badge/badge.gallery.tsx:65`: move `"#E91E63"` into a module-level sample
       event-color constant used by the `EventSurface` there. Verify:
       `npx jest src/design/badge src/design/gallery` passes.
-- [ ] 2.4 Wire the rule in `eslint.config.js` (D5, D6), after `timecalendar/raw-text-input`:
+- [x] 2.4 Wire the rule in `eslint.config.js` (D5, D6), after `timecalendar/raw-text-input`:
       a `timecalendar/style-literals` block (`files: ["src/**/*.{ts,tsx}"]`, ignores
       `generatedCode`, `src/theme/**`, `src/features/personal-events/ui/color-swatch-presets.ts`,
       `src/test-support/**`, `**/*.test.{ts,tsx}`; all five options `true`); a
@@ -96,7 +96,7 @@ Never build Android on the Mac. Land three commits, following the design's Migra
       comment naming ADR 077, matching the sibling blocks. Add the new block names to the list at
       the top of lint-format.md in group 5. Verify: `npx eslint --print-config src/components/chrome/native-list-header.tsx`
       shows `typography: false` and the other four `true`.
-- [ ] 2.5 Generate the allowlist (D6). With the allowlist empty, run
+- [x] 2.5 Generate the allowlist (D6). With the allowlist empty, run
       `npx eslint --no-cache --format json src > /tmp/style-literals.json` (exit non-zero is
       expected) and reduce it with a one-off `node -e` to the distinct
       `local/no-style-literals` message ids per relative path. Write
@@ -111,7 +111,7 @@ Never build Android on the Mac. Land three commits, following the design's Migra
       PR body. Verify: `npm run lint` passes with zero warnings, and
       `rg -n "src/design/" tools/eslint-rules/style-literal-allowlist.js` shows only entries
       with a reason comment (ideally none).
-- [ ] 2.6 Create `tools/eslint-rules/style-literal-allowlist.test.js` (pattern:
+- [x] 2.6 Create `tools/eslint-rules/style-literal-allowlist.test.js` (pattern:
       `raw-event-color-allowlist.test.js`): a committed
       `STYLE_LITERAL_ALLOWLIST_CEILING` object keyed by the five message ids, set to the
       generated per-category counts (with the comment "Raising this needs a reason in review: the
@@ -120,7 +120,7 @@ Never build Android on the Mac. Land three commits, following the design's Migra
       category is one of the five ids; every listed category still has a message of that id in
       that file (the failure lists `path:category`). Verify:
       `npx jest tools/eslint-rules/style-literal-allowlist` passes.
-- [ ] 2.7 Inject-and-revert proof (record the output for the PR):
+- [x] 2.7 Inject-and-revert proof (record the output for the PR):
       (a) add `color: "#333"` to a style in `src/features/feedback/ui/feedback-screen.tsx`:
       `npm run lint` fails with `local/no-style-literals` `colorLiteral`;
       (b) add `paddingTop: 12` there: lint fails with `spacingLiteral`;
@@ -135,7 +135,7 @@ Never build Android on the Mac. Land three commits, following the design's Migra
       (g) remove one category from a listed entry whose file still violates it: `npm run lint`
       fails on that file.
       Revert all. Verify: `git status` shows no change in those files afterwards.
-- [ ] 2.8 Commit 2. Verify: `npx tsc --noEmit`, `npm run lint` and
+- [x] 2.8 Commit 2. Verify: `npx tsc --noEmit`, `npm run lint` and
       `npx jest tools/eslint-rules src/design src/theme src/components/chrome` pass.
 
 ## 3. CI proof — commit 2

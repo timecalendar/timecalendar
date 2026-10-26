@@ -29,6 +29,7 @@ const tones: readonly Exclude<BadgeTone, "onEventSurface">[] = [
 const sizes: readonly BadgeSize[] = ["small", "medium"]
 
 const NARROW_COLUMN = 160
+const SAMPLE_EVENT_COLOR = "#E91E63"
 
 function Page({ children }: { children: ReactNode }) {
   return (
@@ -62,7 +63,7 @@ function TonesFixture() {
         )
       })}
       <EventSurface
-        eventColor="#E91E63"
+        eventColor={SAMPLE_EVENT_COLOR}
         accessibilityLabel={t("gallery.badge.tone.onEventSurface")}
         onPress={() => undefined}
         testID="gallery-badge-tone-onEventSurface-surface"

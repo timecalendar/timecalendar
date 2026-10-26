@@ -18,11 +18,11 @@ import {
 
 import { Badge } from "@/design/badge/badge"
 import { ThemedText } from "@/design/text/themed-text"
-import { Spacing, useTheme } from "@/theme"
+import { ListGeometry, Spacing, useTheme } from "@/theme"
 
 const APP_ICON = require("@/assets/images/icon.png") as ImageSourcePropType
 
-const ICON_SIZE = 88
+const ICON_SIZE = ListGeometry.headerIcon
 const MAX_WIDTH = 560
 const IOS_ROW_MARGIN = 20
 const ANDROID_LIST_INSET = 16
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.two,
   },
   iosIcon: {
-    borderRadius: 20,
+    borderRadius: ListGeometry.ios.headerIconRadius,
     borderCurve: "continuous",
   },
   androidIcon: {

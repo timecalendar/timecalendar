@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
   content: { flexDirection: "row", alignItems: "center" },
   leading: { marginEnd: ListGeometry.leadingGap, alignItems: "center" },
   iconTile: {
-    borderRadius: 7,
+    borderRadius: ListGeometry.ios.leadingIconTileRadius,
     borderCurve: "continuous",
     alignItems: "center",
     justifyContent: "center",

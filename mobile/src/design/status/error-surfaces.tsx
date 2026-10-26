@@ -33,7 +33,11 @@ function ErrorMessage({
       accessibilityLiveRegion={Platform.OS === "android" ? "polite" : undefined}
     >
       {title ? (
-        <ThemedText accessibilityRole="header" style={styles.title}>
+        <ThemedText
+          type="sectionTitle"
+          accessibilityRole="header"
+          style={styles.title}
+        >
           {title}
         </ThemedText>
       ) : null}
@@ -93,11 +97,6 @@ export function ErrorNotice({
 }
 
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 20,
-    lineHeight: 28,
-    fontWeight: "600",
-    marginBottom: Spacing.two,
-  },
+  title: { marginBottom: Spacing.two },
   notice: { borderRadius: Radii.medium, gap: Spacing.two },
 })
