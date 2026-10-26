@@ -63,15 +63,15 @@ describe("NotificationSettingsScreen on iOS", () => {
     ]) {
       expect(view.getByText(help)).toBeOnTheScreen()
     }
-    expect(view.queryByTestId("notifications-sync-error")).toBeNull()
+    expect(view.queryByTestId("notifications-sync-message")).toBeNull()
 
     mockPrefs({ status: { state: "error" } })
     await view.rerender(<NotificationSettingsScreen />)
     const ids = view
-      .getAllByTestId(/^notifications-(sync-error|is-active-switch)$/)
+      .getAllByTestId(/^notifications-(sync-message|is-active-switch)$/)
       .map((node) => node.props.testID as string)
     expect(ids).toEqual([
-      "notifications-sync-error",
+      "notifications-sync-message",
       "notifications-is-active-switch",
     ])
   })

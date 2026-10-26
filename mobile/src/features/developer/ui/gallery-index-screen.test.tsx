@@ -37,27 +37,40 @@ describe.each(["ios", "android"] as const)(
       expect(mockScreenOptions).toHaveBeenLastCalledWith({
         title: "Component gallery",
       })
-      expect(
-        screen
-          .getAllByTestId(/^gallery-section-/)
-          .map((node) => node.props.testID),
-      ).toEqual(
-        [
-          "root-page",
-          "keyboard-safe-action-layout",
-          "themed-text",
-          "empty-state",
-          "error-surfaces",
-          "primary-action",
-          "native-settings",
-          "native-text-entry-dialog",
-          "native-settings-numeric-editor",
-          "menu-view",
-          "date-time-picker",
-          "glass-surface",
-          "design-tokens",
-        ].map((id) => `gallery-section-${id}`),
-      )
+      const sectionIds =
+        platform === "android"
+          ? screen
+              .getAllByTestId(/^gallery-section-/)
+              .map((node) =>
+                String(node.props.testID).replace("gallery-section-", ""),
+              )
+          : [
+              ...new Set(
+                screen
+                  .getAllByTestId(/^gallery-story-/)
+                  .map(
+                    (node) =>
+                      String(node.props.testID)
+                        .replace("gallery-story-", "")
+                        .split("--")[0],
+                  ),
+              ),
+            ]
+      expect(sectionIds).toEqual([
+        "root-page",
+        "keyboard-safe-action-layout",
+        "themed-text",
+        "empty-state",
+        "error-surfaces",
+        "primary-action",
+        "native-settings",
+        "native-text-entry-dialog",
+        "native-settings-numeric-editor",
+        "menu-view",
+        "date-time-picker",
+        "glass-surface",
+        "design-tokens",
+      ])
       const androidOnly = [
         "native-settings--floating-action",
         "native-settings--radio-dialog",

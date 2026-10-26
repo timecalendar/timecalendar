@@ -52,6 +52,11 @@
 - `helpers/confirm-ios-deep-link.yaml` waits up to 20 s for the iOS "Open in …?" prompt before
   its optional tap: on a loaded simulator the prompt appeared after the tap had given up and
   covered the app for the rest of the flow.
+- On iOS, `NativeSettingsSection` and `NativeSettingsAlert` carry no accessibility identifier,
+  because SwiftUI applies a Section's identifier to every row in it. Row testIDs reach Maestro,
+  which flow `03-calendar-visibility` needs for `user-calendar-row-*` and
+  `user-calendar-visibility-*`. Android keeps section and alert testIDs
+  ([theming.md](./theming.md) → Identifiers, pinned by `native-settings.test.tsx`).
 
 ## 2026-10-25 — Gallery fixtures for shared components
 

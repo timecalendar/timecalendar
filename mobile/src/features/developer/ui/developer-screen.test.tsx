@@ -96,15 +96,23 @@ describe.each(["ios", "android"] as const)(
 
     it("orders the backend, test data and design sections", async () => {
       await render(<DeveloperScreen />)
-      expect(
-        screen
-          .getAllByTestId(/^developer-section-/)
-          .map((node) => node.props.testID),
-      ).toEqual([
-        "developer-section-backend",
-        "developer-section-test-data",
-        "developer-section-design",
-      ])
+      if (platform === "android") {
+        expect(
+          screen
+            .getAllByTestId(/^developer-section-/)
+            .map((node) => node.props.testID),
+        ).toEqual([
+          "developer-section-backend",
+          "developer-section-test-data",
+          "developer-section-design",
+        ])
+      } else {
+        expect(
+          screen
+            .getAllByText(/^(Backend|Test data|Design)$/)
+            .map((node) => node.props.children),
+        ).toEqual(["Backend", "Test data", "Design"])
+      }
       expect(screen.getByTestId("settings-environment")).toBeOnTheScreen()
     })
 
@@ -113,6 +121,7 @@ describe.each(["ios", "android"] as const)(
       mockDevVariant = false
       await render(<DeveloperScreen />)
       expect(screen.queryByTestId("developer-section-test-data")).toBeNull()
+      expect(screen.queryByText("Test data")).toBeNull()
       expect(screen.queryByTestId("developer-dev-import")).toBeNull()
       expect(screen.getByTestId("developer-gallery")).toBeOnTheScreen()
     })

@@ -120,7 +120,9 @@ describe("UserCalendarDetailScreen", () => {
       accessibilityValue: { text: "Toulouse INP" },
     })
     expect(screen.getByRole("button", { name: "Delete calendar" })).toBeTruthy()
-    expect(screen.queryByTestId("user-calendars-write-error")).toBeNull()
+    expect(
+      screen.queryByTestId("user-calendars-write-error-message"),
+    ).toBeNull()
   })
 
   it("falls back to the placeholder name and omits the school of a personal calendar", async () => {
@@ -488,11 +490,15 @@ describe("UserCalendarDetailScreen", () => {
   it("shows the write failure as the page's first alert", async () => {
     mockUseUserCalendarActions.mockReturnValue({ ...actions, failed: true })
     await render(<UserCalendarDetailScreen />)
-    expect(screen.getByTestId("user-calendars-write-error")).toBeTruthy()
     expect(screen.getByText("Couldn't update calendar")).toBeTruthy()
     expect(
       screen.getByTestId("user-calendars-write-error-message").props.children,
     ).toBe("We couldn't update your calendars. Please try again.")
+    expect(
+      screen
+        .getAllByTestId(/^user-calendars?-(write-error-message|rename)$/)
+        .map((node) => node.props.testID),
+    ).toEqual(["user-calendars-write-error-message", "user-calendar-rename"])
   })
 
   it("opens the rename dialog seeded with the current name and closes it on cancel", async () => {
