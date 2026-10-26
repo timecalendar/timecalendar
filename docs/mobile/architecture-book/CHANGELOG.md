@@ -37,11 +37,17 @@
   onboarding-import-url` loop taps `export-guide-next` without a hard-coded page count.
   `maestro-selectors.test.ts` pins the order and forbids `onboarding-connect-continue`
   ([testing.md](./testing.md), `mobile/e2e/README.md`).
-- `KeyboardSafeActionLayout` offsets the keyboard by the owner's measured window Y on both
-  platforms. `KeyboardAvoidingView` compares its parent-relative frame with the keyboard's window
-  Y, so the Android offset of `0` left every sibling action (`ical-url-submit`,
-  `personal-event-save`, the onboarding Continue) behind the keyboard by the header height.
-  Proven by `keyboard-safe-action-layout.test.tsx` and the Android Maestro lane.
+- `KeyboardSafeActionLayout` keeps its sibling action region (`ical-url-submit`,
+  `personal-event-save`, the onboarding Continue) right above the keyboard. iOS wraps body and
+  actions in `KeyboardAvoidingView` (`behavior="height"`) offset by the owner's measured window Y,
+  because the view compares its parent-relative frame with the keyboard's window Y. Android does not
+  use `KeyboardAvoidingView`: its `keyboardDidHide` reports the visible height as `screenY`, not a
+  window Y, so no single static offset is right for both open and close. Android listens to
+  `keyboardDidShow`/`keyboardDidHide` and pads the region by
+  `max(0, ownerWindowY + ownerHeight - keyboardTop)`, recomputed on owner layout while the keyboard
+  is up (a resizing window yields ~0, no double avoidance) and reset to `0` on hide.
+  `keyboard-safe-action-layout.test.tsx` proves the open/close contract on both platforms; the
+  Android Maestro lane exercises the open path.
 - `helpers/confirm-ios-deep-link.yaml` waits up to 20 s for the iOS "Open in …?" prompt before
   its optional tap: on a loaded simulator the prompt appeared after the tap had given up and
   covered the app for the rest of the flow.

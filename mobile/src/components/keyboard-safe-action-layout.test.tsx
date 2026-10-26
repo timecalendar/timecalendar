@@ -1,10 +1,9 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
 import type { ReactNode } from "react"
-import { StyleSheet, Text, View } from "react-native"
+import { DeviceEventEmitter, StyleSheet, Text, View } from "react-native"
 
 import { usePlatform } from "@/test-support/platform"
 
-import { resolveKeyboardAvoidingBehavior } from "./keyboard-avoiding-behavior"
 import { KeyboardSafeActionLayout } from "./keyboard-safe-action-layout"
 
 jest.mock("react-native", () => {
@@ -18,7 +17,11 @@ jest.mock("react-native", () => {
     children?: ReactNode
     [key: string]: unknown
   }) {
-    return React.createElement(actual.View, props, children)
+    return React.createElement(
+      actual.View,
+      { ...props, nativeID: "keyboard-avoiding-view" },
+      children,
+    )
   }
 
   const descriptors = Object.getOwnPropertyDescriptors(actual)
@@ -29,83 +32,170 @@ jest.mock("react-native", () => {
   )
 })
 
-describe.each([
-  ["ios" as const, "height"],
-  ["android" as const, "height"],
-])("KeyboardSafeActionLayout on %s", (platform, behavior) => {
-  usePlatform(platform)
+describe.each(["ios" as const, "android" as const])(
+  "KeyboardSafeActionLayout on %s",
+  (platform) => {
+    usePlatform(platform)
 
-  it("keeps scrollable content before a sibling measured action region", async () => {
-    const view = await render(
-      <KeyboardSafeActionLayout
-        testID="form"
-        contentContainerStyle={{ paddingTop: 10 }}
-        actionContainerStyle={{ paddingBottom: 12 }}
-        actions={
-          <View testID="action">
-            <Text>Save</Text>
+    it("keeps scrollable content before a sibling measured action region", async () => {
+      const view = await render(
+        <KeyboardSafeActionLayout
+          testID="form"
+          contentContainerStyle={{ paddingTop: 10 }}
+          actionContainerStyle={{ paddingBottom: 12 }}
+          actions={
+            <View testID="action">
+              <Text>Save</Text>
+            </View>
+          }
+        >
+          <View testID="field">
+            <Text>Field</Text>
           </View>
-        }
-      >
-        <View testID="field">
-          <Text>Field</Text>
-        </View>
-      </KeyboardSafeActionLayout>,
-    )
-    expect(resolveKeyboardAvoidingBehavior(platform)).toBe(behavior)
-    const content = view.getByTestId("form-content")
-    const windowOwner = view.getByTestId("form-window-owner")
-    expect(content).toHaveProp("keyboardShouldPersistTaps", "handled")
-    expect(windowOwner).toContainElement(view.getByTestId("form"))
-    expect(view.getByTestId("form")).toHaveProp("keyboardVerticalOffset", 0)
-    expect(
-      StyleSheet.flatten(content.props.contentContainerStyle),
-    ).toMatchObject({
-      paddingTop: 10,
+        </KeyboardSafeActionLayout>,
+      )
+      const content = view.getByTestId("form-content")
+      const windowOwner = view.getByTestId("form-window-owner")
+      expect(content).toHaveProp("keyboardShouldPersistTaps", "handled")
+      expect(windowOwner).toContainElement(view.getByTestId("form"))
+      expect(
+        StyleSheet.flatten(content.props.contentContainerStyle),
+      ).toMatchObject({
+        paddingTop: 10,
+      })
+      expect(StyleSheet.flatten(content.props.style)).toMatchObject({ flex: 1 })
+      expect(view.getByTestId("form-actions")).toContainElement(
+        view.getByTestId("action"),
+      )
+      expect(content).toContainElement(view.getByTestId("field"))
+      expect(content).not.toContainElement(view.getByTestId("action"))
+      expect(
+        StyleSheet.flatten(view.getByTestId("form").props.style),
+      ).not.toHaveProperty("position", "absolute")
     })
-    expect(StyleSheet.flatten(content.props.style)).toMatchObject({ flex: 1 })
-    expect(view.getByTestId("form-actions")).toContainElement(
-      view.getByTestId("action"),
-    )
-    expect(content).toContainElement(view.getByTestId("field"))
-    expect(content).not.toContainElement(view.getByTestId("action"))
-    expect(
-      StyleSheet.flatten(view.getByTestId("form").props.style),
-    ).not.toHaveProperty("position", "absolute")
-  })
-})
+  },
+)
 
 // The jest preset shares one mocked measureInWindow across every host view.
 const { measureInWindow } = jest.requireActual<{
   default: { measureInWindow: jest.Mock }
 }>("@react-native/jest-preset/jest/MockNativeMethods").default
 
-describe.each(["ios" as const, "android" as const])(
-  "KeyboardSafeActionLayout keyboard offset on %s",
-  (platform) => {
-    usePlatform(platform)
+const measureOwner = (y: number, height: number) =>
+  measureInWindow.mockImplementation(
+    (callback: (x: number, y: number, width: number, height: number) => void) =>
+      callback(0, y, 390, height),
+  )
 
-    it("offsets the keyboard by the owner's measured window Y", async () => {
-      measureInWindow.mockImplementation(
-        (callback: (x: number, y: number) => void) => callback(0, 97),
-      )
-      const view = await render(
-        <KeyboardSafeActionLayout testID="form" actions={<View />}>
-          <View />
-        </KeyboardSafeActionLayout>,
-      )
+const renderForm = () =>
+  render(
+    <KeyboardSafeActionLayout testID="form" actions={<View />}>
+      <View />
+    </KeyboardSafeActionLayout>,
+  )
 
-      await act(() =>
-        fireEvent(view.getByTestId("form-window-owner"), "layout", {
-          nativeEvent: { layout: { width: 390, height: 600, x: 0, y: 0 } },
-        }),
-      )
+const layoutOwner = (view: Awaited<ReturnType<typeof renderForm>>) =>
+  act(() =>
+    fireEvent(view.getByTestId("form-window-owner"), "layout", {
+      nativeEvent: { layout: { width: 390, height: 600, x: 0, y: 0 } },
+    }),
+  )
 
-      expect(view.getByTestId("form")).toHaveProp("keyboardVerticalOffset", 97)
-      measureInWindow.mockReset()
+const emitKeyboard = (
+  event: "keyboardDidShow" | "keyboardDidHide",
+  screenY: number,
+) =>
+  act(() => {
+    DeviceEventEmitter.emit(event, {
+      endCoordinates: { screenX: 0, screenY, width: 390, height: 300 },
     })
-  },
-)
+  })
+
+const paddingBottom = (view: Awaited<ReturnType<typeof renderForm>>) =>
+  StyleSheet.flatten(view.getByTestId("form").props.style).paddingBottom
+
+afterEach(() => {
+  measureInWindow.mockReset()
+})
+
+describe("KeyboardSafeActionLayout keyboard on iOS", () => {
+  usePlatform("ios")
+
+  it("avoids the keyboard by height, offset by the owner's measured window Y", async () => {
+    measureOwner(97, 600)
+    const view = await renderForm()
+    expect(view.getByTestId("form")).toHaveProp("keyboardVerticalOffset", 0)
+
+    await layoutOwner(view)
+
+    expect(view.getByTestId("form")).toHaveProp(
+      "nativeID",
+      "keyboard-avoiding-view",
+    )
+    expect(view.getByTestId("form")).toHaveProp("behavior", "height")
+    expect(view.getByTestId("form")).toHaveProp("keyboardVerticalOffset", 97)
+  })
+})
+
+describe("KeyboardSafeActionLayout keyboard on Android", () => {
+  usePlatform("android")
+
+  it("insets the actions above the keyboard in window coordinates and drops the inset on hide", async () => {
+    measureOwner(97, 600)
+    const view = await renderForm()
+    expect(view.getByTestId("form")).not.toHaveProp("nativeID")
+    expect(paddingBottom(view)).toBe(0)
+
+    await emitKeyboard("keyboardDidShow", 400)
+    expect(paddingBottom(view)).toBe(97 + 600 - 400)
+
+    await emitKeyboard("keyboardDidHide", 750)
+    expect(paddingBottom(view)).toBe(0)
+  })
+
+  it("recomputes on layout while the keyboard is up, so a resized window is not avoided twice", async () => {
+    measureOwner(97, 600)
+    const view = await renderForm()
+    await emitKeyboard("keyboardDidShow", 400)
+    expect(paddingBottom(view)).toBe(297)
+
+    measureOwner(97, 303)
+    await layoutOwner(view)
+    expect(paddingBottom(view)).toBe(0)
+  })
+
+  it("drops a measurement that resolves after the keyboard hid", async () => {
+    let resolveMeasure = () => {}
+    measureInWindow.mockImplementation(
+      (
+        callback: (x: number, y: number, width: number, height: number) => void,
+      ) => {
+        resolveMeasure = () => callback(0, 97, 390, 600)
+      },
+    )
+    const view = await renderForm()
+    await emitKeyboard("keyboardDidShow", 400)
+    await emitKeyboard("keyboardDidHide", 750)
+    await act(() => resolveMeasure())
+    expect(paddingBottom(view)).toBe(0)
+  })
+
+  it("ignores owner layout while the keyboard is hidden", async () => {
+    measureOwner(97, 600)
+    const view = await renderForm()
+    await layoutOwner(view)
+    expect(measureInWindow).not.toHaveBeenCalled()
+    expect(paddingBottom(view)).toBe(0)
+  })
+
+  it("stops listening once unmounted", async () => {
+    measureOwner(97, 600)
+    const view = await renderForm()
+    await view.unmount()
+    await emitKeyboard("keyboardDidShow", 400)
+    expect(measureInWindow).not.toHaveBeenCalled()
+  })
+})
 
 describe("KeyboardSafeActionLayout header inset", () => {
   const renderLayout = (scrollsUnderHeader: boolean) =>

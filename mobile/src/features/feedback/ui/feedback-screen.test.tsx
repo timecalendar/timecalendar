@@ -2,7 +2,6 @@ import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
 import { router, useLocalSearchParams } from "expo-router"
 import { Alert, StyleSheet } from "react-native"
 
-import { resolveKeyboardAvoidingBehavior } from "@/components/keyboard-avoiding-behavior"
 import {
   getRememberedEmail,
   setRememberedEmail,
@@ -83,9 +82,9 @@ it.each([390, 768, 800, 1024])(
 )
 
 describe.each([
-  ["ios" as const, "height", 44],
-  ["android" as const, "height", 48],
-])("FeedbackScreen on %s", (platform, behavior, minimumTarget) => {
+  ["ios" as const, 44],
+  ["android" as const, 48],
+])("FeedbackScreen on %s", (platform, minimumTarget) => {
   usePlatform(platform)
 
   it("keeps one scroll body before a semantic sibling action region", async () => {
@@ -93,8 +92,6 @@ describe.each([
     const body = view.getByTestId("feedback-scroll-owner")
     const actions = view.getByTestId("feedback-action-region")
     const submit = view.getByTestId("feedback-submit")
-
-    expect(resolveKeyboardAvoidingBehavior(platform)).toBe(behavior)
     expect(body.props.keyboardShouldPersistTaps).toBe("handled")
     expect(body).toContainElement(view.getByTestId("feedback-email-input"))
     expect(body).toContainElement(view.getByTestId("feedback-message-input"))

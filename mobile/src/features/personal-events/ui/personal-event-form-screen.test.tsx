@@ -8,7 +8,6 @@ import {
 import { router, useLocalSearchParams } from "expo-router"
 import { Alert, StyleSheet } from "react-native"
 
-import { resolveKeyboardAvoidingBehavior } from "@/components/keyboard-avoiding-behavior"
 import type { PersonalEvent } from "@/features/personal-events/data"
 import {
   useDeleteEvent,
@@ -121,9 +120,9 @@ afterEach(() => {
 
 describe("PersonalEventFormScreen", () => {
   describe.each([
-    ["ios" as const, "height", 44],
-    ["android" as const, "height", 48],
-  ])("shared editor contract on %s", (platform, behavior, minimumTarget) => {
+    ["ios" as const, 44],
+    ["android" as const, 48],
+  ])("shared editor contract on %s", (platform, minimumTarget) => {
     usePlatform(platform)
 
     it("keeps semantic Save and ordered errors/actions beside the sole scroll body", async () => {
@@ -142,8 +141,6 @@ describe("PersonalEventFormScreen", () => {
       const save = view.getByTestId("personal-event-save")
       const remove = view.getByTestId("personal-event-delete")
       const error = view.getByText("Could not save the event.")
-
-      expect(resolveKeyboardAvoidingBehavior(platform)).toBe(behavior)
       expect(body).toContainElement(
         view.getByTestId("personal-event-title-input"),
       )
