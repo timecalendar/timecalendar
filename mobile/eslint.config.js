@@ -889,6 +889,15 @@ module.exports = defineConfig([
     },
   },
   {
+    // The native list seam is NativeList* with no aliases or adapters (ADR 072).
+    name: "timecalendar/retired-list-names",
+    files: ["src/**/*.{ts,tsx}"],
+    plugins: { local: localRules },
+    rules: {
+      "local/no-retired-list-names": "error",
+    },
+  },
+  {
     // Colocated tests assert against literal UI strings on purpose — they're
     // test fixtures, not user-facing copy, and are never translated.
     name: "timecalendar/tests",
