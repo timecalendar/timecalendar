@@ -19,17 +19,14 @@ import {
   useJourneyGateRoute,
 } from "@/features/onboarding/draft"
 
-// The programme step (TIM-391 / design D4, D5) — "Nom de formation" (the
-// *formation*, i.e. programme of study, not a grade: TIM-274 established this is
-// what students actually type and what support recognises a cohort by).
+// "Nom de formation" is the programme of study, not a grade: it is what
+// students actually type and what support recognises a cohort by.
 //
-// Skip is a QUIET TRAILING NATIVE HEADER ACTION, not a second in-body button.
-// That is the spec's requirement and it is also what keeps the naming default
-// right: with one primary Continue in the body, skipping is a deliberate
-// secondary act rather than an equally-weighted choice, so an empty name is
-// never the path of least resistance. Continue is disabled while the field is
-// empty, which makes Skip the ONLY route to an empty name — the app never
-// invents one.
+// Skip is a quiet trailing header action, not a second in-body button: with one
+// primary Continue in the body, skipping is a deliberate secondary act, so an
+// empty name is never the path of least resistance. Continue is disabled while
+// the field is empty, which makes Skip the only route to an empty name; the app
+// never invents one.
 export default function ProgrammeScreen() {
   const { t } = useTranslation()
   const { state, draft, setCalendarName } = useImportDraft()
