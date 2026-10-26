@@ -133,7 +133,7 @@ large control height it becomes a token then.
   accessibilityHint accessibilityState={{ disabled: blocked, busy }} disabled={blocked}
   onPress={blocked ? undefined : onPress}>` with `blocked = disabled || busy`. Callers cannot set
   `accessibilityState`.
-- Busy: an `ActivityIndicator` (`size="small"`, label color, `accessible={false}`,
+- Busy: an `ActivityIndicator` (`size="small"`, label color,
   `testID={`${testID}-progress`}`) inside a `View` carrying `accessibilityElementsHidden` and
   `importantForAccessibility="no-hide-descendants"` takes the leading slot (props on the indicator
   itself leave the native `UIActivityIndicatorView` exposed to VoiceOver as "In progress") and hides the icon; the label stays

@@ -39,7 +39,7 @@ current state only.
         `{ disabled: true, busy: false }`, opacity `StateOpacity.disabled`, no `android_ripple`;
       - busy: `onPress` not called, `accessibilityState` `{ disabled: true, busy: true }`,
         `accessibilityLabel` still the label, the label text still rendered, `${testID}-progress`
-        has `accessible={false}` and is hidden (`includeHiddenElements`), the icon is not rendered;
+        sits in a wrapper hidden from assistive technology (`accessibilityElementsHidden`, `no-hide-descendants`) and is hidden (`includeHiddenElements`), the icon is not rendered;
       - pressed on iOS → opacity `StateOpacity.pressed` (call the style function with
         `{ pressed: true }`); on Android → opacity 1 and `android_ripple.color === theme.ripple`;
       - style merges last: `style={{ alignSelf: "flex-end", width: 120 }}` survives in the
