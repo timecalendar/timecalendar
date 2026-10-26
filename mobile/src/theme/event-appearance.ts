@@ -26,6 +26,8 @@ function parseOpaqueHex(value: unknown): Rgb | undefined {
   ]
 }
 
+const FALLBACK_RGB = parseOpaqueHex(EventFallbackColor)!
+
 function rgbToHex(rgb: Rgb): string {
   return `#${rgb.map((channel) => Math.round(channel).toString(16).padStart(2, "0")).join("")}`.toUpperCase()
 }
@@ -52,9 +54,9 @@ function relativeLuminance(rgb: Rgb): number {
 }
 
 function contrastRatio(left: Rgb, right: Rgb): number {
-  const brighter = Math.max(relativeLuminance(left), relativeLuminance(right))
-  const darker = Math.min(relativeLuminance(left), relativeLuminance(right))
-  return (brighter + 0.05) / (darker + 0.05)
+  const a = relativeLuminance(left)
+  const b = relativeLuminance(right)
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
 }
 
 function contrastingEndpoint(background: Rgb): Rgb {
@@ -80,8 +82,7 @@ export function resolveEventAppearance(input: {
   scheme: EventAppearanceScheme
   increasedContrast: boolean
 }): Readonly<EventAppearance> {
-  const source =
-    parseOpaqueHex(input.color) ?? parseOpaqueHex(EventFallbackColor)!
+  const source = parseOpaqueHex(input.color) ?? FALLBACK_RGB
   const canvas = input.scheme === "dark" ? BLACK : WHITE
   const surface = compositeRgb(
     source,
