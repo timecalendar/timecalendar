@@ -32,16 +32,13 @@ const variants: readonly ButtonVariant[] = [
 const plus: ButtonIcon = { ios: "plus", android: "add" }
 const forward: ButtonIcon = { ios: "arrow.forward", android: "arrow_forward" }
 
-type SampleProps = {
-  variant: ButtonVariant
-  size?: ButtonSize
+type SampleProps = Pick<
+  ButtonProps,
+  "variant" | "size" | "icon" | "iconPosition" | "onPress" | "style"
+> & {
   state?: State
   label?: string
-  icon?: ButtonIcon
-  iconPosition?: "leading" | "trailing"
   testID: string
-  onPress: () => void
-  style?: ButtonProps["style"]
 }
 
 function Sample({

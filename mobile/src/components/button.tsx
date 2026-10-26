@@ -141,13 +141,7 @@ export function Button({
 
   const glyph =
     icon && !busy ? (
-      <Icon
-        ios={icon.ios}
-        android={icon.android}
-        size={metrics.icon}
-        color={labelColor}
-        scaling="text"
-      />
+      <Icon {...icon} size={metrics.icon} color={labelColor} scaling="text" />
     ) : null
 
   return (
