@@ -77,6 +77,15 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   accessibility choice, a color prop and non-layout style keys. `src/theme/theme.test.tsx`
   composites each translucent contrast pair over its `over` surface (`pairRatio`) and unit-tests
   `composite`. The raw-event-color allowlist is a contract test like the raw-text-input one below.
+- **`src/design/event-surface/event-surface.tsx` and `event-surface-context.ts` have their own 90%
+  lines/branches keys** in `coverageThreshold` (ADR [076](./decisions/076-event-surface.md)). The
+  surface test runs both platforms and both schemes with `@/hooks/use-color-scheme` and
+  `@/hooks/use-increased-contrast` mocked, spies `Pressable` props to read the pressed style and
+  ripple, and pins the missing label, the missing line cap, paint style keys and a color prop with
+  `@ts-expect-error`. `src/theme/event-appearance.test.ts` is the contrast proof: one case per
+  swatch preset plus the fallback, and per color of a 6×6×6 sRGB grid, in light and dark with
+  increased contrast off and on, each asserting foreground on surface ≥ 4.5:1, accent on the
+  canvas ≥ 3:1 and opaque outputs; a failing case names its color, scheme and policy.
 - **`src/components/chrome/header-action.tsx` and `floating-action.tsx` have their own 90%
   lines/branches keys** in `coverageThreshold` (ADR [075](./decisions/075-header-and-floating-actions.md)).
   `useHeaderActions` is tested as data on iOS (the bar items through `headerBarItems` /

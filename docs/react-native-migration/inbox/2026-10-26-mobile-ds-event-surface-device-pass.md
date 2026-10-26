@@ -42,6 +42,6 @@ cannot run this pass.
 
 - For each item, record pass or fail with a screenshot (and the TalkBack transcript for item 5) in
   this file, then move it to done.
-- If the stripe renders curved or tapered at the corners (item 1), file the finding here. The fix
-  belongs in `mobile/src/design/event-surface/event-surface.tsx` (draw the stripe as a clipped
-  leading view instead of a border).
+- The stripe is a clipped leading child view, not a border. If it renders curved, tapered or
+  outside the corners (item 1), file the finding here; the fix belongs in
+  `mobile/src/design/event-surface/event-surface.tsx`.

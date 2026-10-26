@@ -164,7 +164,7 @@ commits, following the design's Migration Plan.
 
 ## 6. Architecture Book, ADR and docs (`docs/mobile/architecture-book/`) — commit 3
 
-- [ ] 6.1 Create `decisions/076-event-surface.md` from `TEMPLATE.md` (number from 0.1), status
+- [x] 6.1 Create `decisions/076-event-surface.md` from `TEMPLATE.md` (number from 0.1), status
       Accepted, per D12: Context (three vocabularies, the 3.28–4.51:1 Home text, the agenda shadow,
       the owner decision), Decision (D1–D4, D6, D9 and the event-tile exception), Rejected,
       Consequences (event details stays allowlisted for 5.8; the grid's compact pill keeps status
@@ -172,7 +172,7 @@ commits, following the design's Migration Plan.
       `decisions/README.md`. In ADR 074's "Revisit if", the `EventSurface` trigger stays as written;
       ADR 076 answers it. Verify: from the repo root, `rg -n "076" docs/mobile/architecture-book`
       shows the index row and every link.
-- [ ] 6.2 `theming.md`:
+- [x] 6.2 `theming.md`:
       - Under "Do not add a colored leading rail…", add the event-tile exception: an event tile's
         stripe is its resolved accent, drawn only by `EventSurface` or the week-grid renderer
         (`local/no-raw-event-color`, ADR 076).
@@ -186,21 +186,21 @@ commits, following the design's Migration Plan.
 
       Verify: `rg -n "EventSurface|event-appearance|ADR 076|076-event-surface" docs/mobile/architecture-book/theming.md`
       shows each.
-- [ ] 6.3 `accessibility.md`: add `## Event tiles — encoded in EventSurface` (one element, the
+- [x] 6.3 `accessibility.md`: add `## Event tiles — encoded in EventSurface` (one element, the
       required label from the existing builders, title-first names for Maestro, foreground text at
       4.5:1 proven by test, type-required line caps, no shrink-to-fit). Link the inbox note.
       Verify: the section exists and every link resolves.
-- [ ] 6.4 `lint-format.md`: rewrite the `local/no-raw-event-color` entry for the eight keys, the
+- [x] 6.4 `lint-format.md`: rewrite the `local/no-raw-event-color` entry for the eight keys, the
       resolver-call check and its message, the unchanged allowlist at ceiling 1, the remaining
       caveats (variables, arbitrary helpers, `color=` props, `.ts` files outside `files`), and the
       4.3 proof. Remove the per-side-border caveat. Verify:
       `rg -n "borderLeftColor|eventAppearanceCall" docs/mobile/architecture-book/lint-format.md`
       shows both.
-- [ ] 6.5 `calendar.md`: the appearance paragraph says imported colors pass through the theme
+- [x] 6.5 `calendar.md`: the appearance paragraph says imported colors pass through the theme
       layer's resolver (`@/theme`), shared with `EventSurface`, and the high-text-contrast signal is
       `useIncreasedContrast` in `src/hooks/`. Verify: `rg -n "Calendar-owned deterministic" docs/mobile/architecture-book/calendar.md`
       finds nothing.
-- [ ] 6.6 Update the rest:
+- [x] 6.6 Update the rest:
       - `features.md`: the gallery registry table gets an `event-surface` row; Home (cards,
         all-day items, timeline tiles as `EventSurface`), Calendar (agenda tiles as
         `EventSurface`, no shadow) and Event checklists (surface-aware pills).
@@ -210,12 +210,12 @@ commits, following the design's Migration Plan.
 
       Verify: `rg -n "EventSurface|event-surface" docs/mobile/architecture-book/{features,testing,architecture}.md`
       covers each file.
-- [ ] 6.7 `CHANGELOG.md`: add `## 2026-10-26 — Event surface` at the top, with bullets for the
+- [x] 6.7 `CHANGELOG.md`: add `## 2026-10-26 — Event surface` at the top, with bullets for the
       primitive and the event-tile exception (theming.md, ADR 076), the theme-owned resolver and
       shared hook (theming.md, calendar.md), the accessibility contract (accessibility.md), the lint
       extension at ceiling 1 (lint-format.md), and the migrated sites (features.md). Leave earlier
       entries as they are. Verify: the entry is first and every link resolves.
-- [ ] 6.8 Outside the Book: `docs/react-native-migration/inbox/2026-10-26-mobile-ds-event-surface-device-pass.md`
+- [x] 6.8 Outside the Book: `docs/react-native-migration/inbox/2026-10-26-mobile-ds-event-surface-device-pass.md`
       exists (written at planning). Update its story ids if they changed. Mark the 3.9 row done in
       `docs/mobile/design-system-audit/migration-roadmap.md` only if earlier slices are marked
       there (follow the file's convention). Verify: every story id the note names is produced by
@@ -223,16 +223,16 @@ commits, following the design's Migration Plan.
 
 ## 7. Verification
 
-- [ ] 7.1 `npx tsc --noEmit` passes.
-- [ ] 7.2 `npm run lint` passes with zero warnings.
-- [ ] 7.3 `npm test -- --coverage` passes, including the 90% per-file tiers (`src/theme/**`,
+- [x] 7.1 `npx tsc --noEmit` passes.
+- [x] 7.2 `npm run lint` passes with zero warnings.
+- [x] 7.3 `npm test -- --coverage` passes, including the 90% per-file tiers (`src/theme/**`,
       `src/hooks/**`, the two event-surface modules, `badge.tsx`), the registry matrix with an
       unchanged known-violation list, `tools/eslint-rules`, the design import-policy and
       import-graph contracts, FR/EN parity and `e2e/maestro-selectors.test.ts`. Record the suite and
       test counts for the PR.
-- [ ] 7.4 Timezone legs: `TZ=Pacific/Kiritimati npm test`, `TZ=Pacific/Pago_Pago npm test` and
+- [x] 7.4 Timezone legs: `TZ=Pacific/Kiritimati npm test`, `TZ=Pacific/Pago_Pago npm test` and
       `TZ=America/St_Johns npm test` (or `npm run test:timezones`) each pass.
-- [ ] 7.5 From the repo root, `openspec validate mobile-ds-event-surface` passes. Grep the change
+- [x] 7.5 From the repo root, `openspec validate mobile-ds-event-surface` passes. Grep the change
       folder, the new tests and the inbox note for developer or account names. Verify: none found.
 
 ## 8. Device verification

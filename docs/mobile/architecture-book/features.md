@@ -71,6 +71,7 @@ The registry lists, in this order (paths under `mobile/src/`):
 | `design/list/separator.gallery.tsx`                            | `separator`                      | `insets`                                                                                                                                                                                            |
 | `design/badge/badge.gallery.tsx`                               | `badge`                          | `tones`, `sizes`, `with-icon`, `accessibility`, `long-strings`                                                                                                                                      |
 | `design/color-dot/color-dot.gallery.tsx`                       | `color-dot`                      | `sizes`, `presets`, `rings`, `stack`                                                                                                                                                                |
+| `design/event-surface/event-surface.gallery.tsx`               | `event-surface`                  | `palette`, `placements`, `increased-contrast`, `checklist`, `long-strings`                                                                                                                          |
 | `components/chrome/native-list.gallery.tsx`                    | `native-list`                    | `rows`, `destructive`, `switches`, `choices`, `header-and-alert`, `radio-dialog` (Android), `long-strings`                                                             |
 | `components/chrome/native-text-entry-dialog.gallery.tsx`       | `native-text-entry-dialog`       | `default`, `submit-disabled`, `pending`                                                                                                                                                             |
 | `components/chrome/native-list-numeric-editor.gallery.tsx`     | `native-list-numeric-editor`     | `default`, `validation-error`, `long-strings`                                                                                                                                                       |
@@ -171,11 +172,20 @@ The registry lists, in this order (paths under `mobile/src/`):
 - Home's welcome card summarizes the day with at most five overlapping medium `ColorDot`s ringed
   in `homeHero`, then a `+N` count, in a container hidden from assistive technology; the summary
   text carries the count (`ui/home-screen.test.tsx`).
+- Event tiles are `EventSurface` ([theming.md](./theming.md) → Event tiles, ADR
+  [076](./decisions/076-event-surface.md)): the Home upcoming card (`upcoming-card-<id>`, flow,
+  regular), the Home all-day item (in `home-all-day`, flow, compact), the Home today-timeline tile
+  (`today-tile-<id>`, absolute at the overlap engine's geometry; flow in the large-text
+  `today-timeline-list`) and the agenda tile (`agenda-event-<id>[-progress-<c>-<t>]`, flow,
+  regular, no shadow, the brand now marker outside the tile). Each keeps its testID and its label
+  builder (`homeEventOpenLabel`, the agenda `calendar.agenda.event.openLabel*` keys)
+  (`ui/home-screen.test.tsx`, `ui/today-timeline.test.tsx`, `calendar/ui/calendar-screen.test.tsx`).
 - The inline checklist progress pill (Home today, upcoming and timeline cards, the agenda) is a
-  hidden `Badge`, `positive` when complete and `informational` otherwise, with the checked or
-  pending glyph and `completed/total`; the owning summary carries the progress phrase. The
-  `compact` variant fitted inside calendar grid tiles keeps its own drawing
-  (`event-checklists/ui/checklist-progress-indicator.test.tsx`).
+  hidden `Badge` with the checked or pending glyph and `completed/total`; the owning summary
+  carries the progress phrase. On an `EventSurface` it is tone `onEventSurface` and the `compact`
+  pill draws in the surface foreground; elsewhere (the week grid) the pills are `positive` when
+  complete and `informational` otherwise. The `compact` variant fitted inside calendar grid tiles
+  keeps its own drawing (`event-checklists/ui/checklist-progress-indicator.test.tsx`).
 - Home's brand lockup renders the app name as a one-line `title2` header capped at
   `WordmarkMaxFontScale` (`ui/home-screen.test.tsx`).
 - `onboarding/index` keeps its branded safe-area composition. Each welcome page wraps its content
