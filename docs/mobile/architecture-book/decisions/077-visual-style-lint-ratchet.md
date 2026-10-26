@@ -59,6 +59,12 @@ exit as the style literals. This is roadmap slice 4.2.
   symbol APIs at the same level and owns their text scaling. Type imports stay allowed.
 - **Every migration slice deletes its files (or the categories it cleans) from both allowlists in
   the same PR** and lowers the matching ceilings.
+- **Migrated screens stay migrated.** `mobile/src/design/screen-migration.contract.test.ts` holds
+  a grow-only list of the files each Phase 5 slice has migrated, grouped by slice, and fails on any
+  hit of the design-system audit's drift greps in them (comments excluded), including the three
+  patterns no lint rule carries: the `themeColor` prop, the legacy `ThemedText` type aliases and a
+  hand-rolled 44/48 touch target. Every Phase 5 slice appends its files in the same PR. Platform
+  branching and style arrays composing an animated or measured value stay allowed.
 
 Rejected:
 
@@ -79,7 +85,8 @@ Rejected:
 
 ## Consequences
 
-- Phase 5 slices have a measurable exit: their allowlist rows disappear.
+- Phase 5 slices have a measurable exit: their allowlist rows disappear and their files join the
+  migrated-screen contract, which fails if a later edit brings any audit drift pattern back.
 - A new screen cannot add a style literal; a token without a scale step is named next to its
   family (`ListGeometry.ios.leadingIconTileRadius`, `ListGeometry.headerIcon`,
   `ListGeometry.ios.headerIconRadius`).
