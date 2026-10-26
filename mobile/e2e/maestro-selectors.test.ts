@@ -353,7 +353,7 @@ describe("Maestro journey contracts", () => {
     const openCalendar =
       '- tapOn:\n    id: "user-calendar-row-e2e0e2e0-0000-4000-8000-000000000001"'
     const toggle =
-      '- tapOn:\n    id: "user-calendar-visibility-e2e0e2e0-0000-4000-8000-000000000001"'
+      '- tapOn:\n    id: "user-calendar-visibility-e2e0e2e0-0000-4000-8000-000000000001"\n    point: "90%,50%"'
     expect(yaml.split(openCalendar)).toHaveLength(3)
     expect(yaml.split(toggle)).toHaveLength(3)
     expect(yaml.split(OPEN_AGENDA_FLOW)).toHaveLength(3)

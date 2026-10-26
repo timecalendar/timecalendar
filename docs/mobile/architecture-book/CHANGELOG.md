@@ -57,6 +57,9 @@
   which flow `03-calendar-visibility` needs for `user-calendar-row-*` and
   `user-calendar-visibility-*`. Android keeps section and alert testIDs
   ([theming.md](./theming.md) → Identifiers, pinned by `native-settings.test.tsx`).
+- Flow `03-calendar-visibility` taps the visibility switch at `point: "90%,50%"` of its element.
+  On iOS a `NativeSettingsSwitchRow` identifier covers the whole SwiftUI `Toggle` row, and only
+  the trailing switch flips it; a centred tap lands on the label and leaves the calendar shown.
 
 ## 2026-10-25 — Gallery fixtures for shared components
 
