@@ -251,7 +251,6 @@ describe.each(["ios" as const, "android" as const])("Button on %s", (os) => {
     const progress = view.getByTestId("button-progress", {
       includeHiddenElements: true,
     })
-    expect(progress).toHaveProp("accessible", false)
     expect(progress.parent).toHaveProp("accessibilityElementsHidden", true)
     expect(progress.parent).toHaveProp(
       "importantForAccessibility",

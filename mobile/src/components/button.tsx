@@ -191,7 +191,6 @@ export function Button({
             testID={testID === undefined ? undefined : `${testID}-progress`}
             size="small"
             color={labelColor}
-            accessible={false}
           />
         </View>
       ) : null}

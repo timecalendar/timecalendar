@@ -121,7 +121,7 @@ an unverified pair, and no consumer wants a pink wash).
 - Gap between icon and label `Spacing.two`. Radius `Radii.large` (16) at every size; on iOS with
   `borderCurve: "continuous"`. 16 is the M3 Expressive square shape for a medium button, and on a
   44–56 single-line button it reads close to the iOS 26 capsule while staying correct for a
-  three-line label at accessibility sizes (a `Radii.pill` stadium would cut into wrapped text, and
+  multi-line label at accessibility sizes (a `Radii.pill` stadium would cut into wrapped text, and
   Android clips content to the ripple shape).
 
 No new token: `large` derives from `MinTouchTarget` and `Spacing`. If a second primitive needs the
@@ -304,9 +304,8 @@ check open PRs for a reserved number first (README note).
 - [Visual change on every migrated screen: radius 8 → 16, outlined border pink 2px → neutral 1dp,
   text labels from `primary` to `actionText`, Android ripple added where there was none] → device
   pass in both schemes on iOS and Android (tasks §9); a rejected value is one row in D2/D3.
-- [Three-line cap truncates the longest French sentence at AX XXXL in a narrow row] → the
-  `LongStrings` story at the largest size is the acceptance gate; real labels are short; a
-  rejected cap changes one constant.
+- [A narrower device or longer translation can still pass sixteen lines at AX XXXL] → the
+  `LongStrings` story on device is the gate; the cap is one constant.
 - [`overflow: "hidden"` on Android clips a descendant that overflows (a shadow, a badge)] → buttons
   carry neither; the gallery shows every variant.
 - [The rule misses text buttons whose text is wrapped in a `View`, or built from `Animated`
