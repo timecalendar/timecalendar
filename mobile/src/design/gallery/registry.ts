@@ -4,8 +4,10 @@ import * as menuView from "@/components/chrome/menu-view.gallery"
 import * as nativeList from "@/components/chrome/native-list.gallery"
 import * as nativeListNumericEditor from "@/components/chrome/native-list-numeric-editor.gallery"
 import * as nativeTextEntryDialog from "@/components/chrome/native-text-entry-dialog.gallery"
+import * as badge from "@/design/badge/badge.gallery"
 import * as button from "@/design/button/button.gallery"
 import * as buttonRow from "@/design/button/button-row.gallery"
+import * as colorDot from "@/design/color-dot/color-dot.gallery"
 import * as dateTimeField from "@/design/field/date-time-field.gallery"
 import * as textField from "@/design/field/text-field.gallery"
 import * as icon from "@/design/icon/icon.gallery"
@@ -39,6 +41,8 @@ export const galleryModules: readonly GalleryModule[] = [
   listRow,
   listSection,
   separator,
+  badge,
+  colorDot,
   nativeList,
   nativeTextEntryDialog,
   nativeListNumericEditor,

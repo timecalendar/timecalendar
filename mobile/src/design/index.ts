@@ -1,4 +1,12 @@
 export {
+  Badge,
+  type BadgeIcon,
+  type BadgeLayoutStyle,
+  type BadgeProps,
+  type BadgeSize,
+  type BadgeTone,
+} from "./badge/badge"
+export {
   Button,
   type ButtonIcon,
   type ButtonLayoutStyle,
@@ -7,6 +15,13 @@ export {
   type ButtonVariant,
 } from "./button/button"
 export { ButtonRow, type ButtonRowProps } from "./button/button-row"
+export {
+  ColorDot,
+  type ColorDotLayoutStyle,
+  type ColorDotProps,
+  type ColorDotRing,
+  type ColorDotSizeName,
+} from "./color-dot/color-dot"
 export { DateTimeField, type DateTimeFieldProps } from "./field/date-time-field"
 export {
   TextField,

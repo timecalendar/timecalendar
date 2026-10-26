@@ -141,6 +141,8 @@ module.exports = {
     "src/design/list/separator.tsx": { lines: 90, branches: 90 },
     "src/design/list/list-row-position.ts": { lines: 90, branches: 90 },
     "src/design/list/separator-inset.ts": { lines: 90, branches: 90 },
+    "src/design/badge/badge.tsx": { lines: 90, branches: 90 },
+    "src/design/color-dot/color-dot.tsx": { lines: 90, branches: 90 },
     "src/components/chrome/compose-semantics.ts": { lines: 90, branches: 90 },
     "src/components/chrome/list-palette.ts": { lines: 90, branches: 90 },
   },

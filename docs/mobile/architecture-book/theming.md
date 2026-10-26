@@ -31,7 +31,8 @@ through its brand color, calendar data, and logo-derived graphic language.
 
 Use a small vocabulary consistently:
 
-1. **Dot:** identifies a calendar, subject, or event in a list or summary.
+1. **Dot:** identifies a calendar, subject, or event in a list or summary. It is `ColorDot` from
+   `@/design` (see [Badges and color dots](#badges-and-color-dots--badge-colordot-srcdesignbadge-srcdesigncolor-dot)).
 2. **Wash:** gives a card, selected item, or contextual header a very pale version of one event
    color. Text remains on a verified neutral foreground rather than inheriting the event color.
 3. **Block:** uses the stronger pastel fill for actual event geometry in a timeline or calendar
@@ -106,9 +107,11 @@ surfaces and calendar content; native controls are tinted and composed rather th
 - **`outline` and `scrim` color roles:** `outline` (`#7C7F87` light / `#80838D` dark) is the input/control boundary stroke and clears the WCAG 1.4.11 3:1 bar against `background`, `backgroundElement` and `backgroundSelected` in both schemes (`separator` is decorative and does not). `scrim` (`#00000066` light / `#00000099` dark) is the modal/sheet backdrop, an overlay with no foreground and no contrast obligation.
 - **Type ramp (`src/theme/typography.ts`, ADR [063](./decisions/063-platform-type-ramp.md)):** `TypeRamp` is keyed by the closed `TypeVariant` union `largeTitle`, `title`, `title2`, `sectionTitle`, `headline`, `body`, `callout`, `label`, `footnote`, `caption`, `captionSmall`; each `TypeStep` is a `style` (`fontSize` / `lineHeight` / `fontWeight` / `letterSpacing`) plus an optional `dynamicTypeRamp`. It resolves by `Platform.select` at module load. iOS follows the HIG text styles at the Large content size, names the matching UIKit Dynamic Type ramp on every step, and sets no `letterSpacing` (SF tracks optically). Android follows the Material 3 type scale (headline/title-large/body at weight 400, title-medium/label at 500) with its letter spacing and no Dynamic Type ramp. `caption` (12/14/600) and `captionSmall` (11/13/400) are the dense calendar-tile steps, identical on both platforms and without a Dynamic Type ramp. Both per-platform records `satisfies Record<TypeVariant, TypeStep>`, so a step missing on either platform is a `tsc` error; `src/theme/typography.test.ts` pins every value on both platforms. A rejected size is one row in `typography.ts` and its test table.
 - `src/theme/use-theme.ts` owns light/dark resolution: `useTheme()` reads the `@/hooks/use-color-scheme` seam and returns `Colors[scheme]`.
+- **`onPrimarySoft` color role:** the label on the translucent `primarySoft` brand wash (`#AD1457` light / `#FF80AB` dark), the text of the brand `Badge`. `actionText` stays the brand text tone on neutral surfaces. The wash is translucent, so its pairs are composited: a `documentedContrastPairs` row can name the opaque surface it sits on (`over`), and the test composites the wash over that surface before computing the ratio. `onPrimarySoft` on `primarySoft` is checked over `background`, `backgroundElement` and `homeHero` in both schemes (5.79 / 5.10 / 4.88 light, 8.11 / 5.90 / 5.89 dark).
+- **`ColorDotSize`** (`small` 8 / `medium` 12 / `large` 16), the diameters of `ColorDot`.
 - **Home welcome surface:** `homeHero` is a quiet pink paper (`#FCE4EC` light / `#321824` dark) carrying normal `text`; `homeHeroDate` is its stronger eyebrow (`#AD1457` light / `#FF80AB` dark). These are fixed scheme tokens rather than call-site alpha math. Event colors on Home remain non-text accent bars/dots because imported calendar colors cannot guarantee text contrast.
 - **Single color-scheme seam (C1):** `@/hooks/use-color-scheme` is the **one** scheme source — both `useTheme` _and_ the root `_layout.tsx` read it (never `useColorScheme` from `react-native` directly), so a theme override is a single-file change. The seam resolves the stored theme preference (a `"light"`/`"dark"` override wins, `"system"` falls through to the device scheme), **preserving the `ColorSchemeName` return contract** so `useTheme` / `buildNavTheme` / `theme.test.tsx` are untouched. **Lint-enforced (L1):** `no-restricted-imports` bans `useColorScheme` and `Appearance` from `react-native` everywhere except `src/hooks/use-color-scheme.ts` (block `timecalendar/color-scheme-seam`; see `lint-format.md`).
-- `src/theme/index.ts` re-exports the public surface (`Colors` / `Spacing` / `Radii` / `Fonts` / `MaxContentWidth` / `MinTouchTarget` / `IconSize` / `WordmarkMaxFontScale` / `ChevronMaxFontScale` / `StateOpacity` / `Elevation` / `Motion` / `Layout` / `AccessibilityFontScale` / `isAccessibilityTextSize` / `useIsAccessibilityTextSize` / `ThemeColor` / `TypeRamp` / `TypeVariant` / `TypeStep` / `useTheme` / `buildNavTheme` / the responsive exports) — **call sites import `@/theme`**, import-source-only. `Fonts.mono` resolves via `Platform.select` (`ios` → `ui-monospace`, `default` → `monospace`).
+- `src/theme/index.ts` re-exports the public surface (`Colors` / `Spacing` / `Radii` / `Fonts` / `MaxContentWidth` / `MinTouchTarget` / `IconSize` / `WordmarkMaxFontScale` / `ChevronMaxFontScale` / `StateOpacity` / `ColorDotSize` / `Elevation` / `Motion` / `Layout` / `AccessibilityFontScale` / `isAccessibilityTextSize` / `useIsAccessibilityTextSize` / `ThemeColor` / `TypeRamp` / `TypeVariant` / `TypeStep` / `useTheme` / `buildNavTheme` / the responsive exports) — **call sites import `@/theme`**, import-source-only. `Fonts.mono` resolves via `Platform.select` (`ios` → `ui-monospace`, `default` → `monospace`).
 - `ThemedText` and `ThemedView` (`src/design/text/`) are imported from `@/design` and read their tokens from `@/theme`. `ThemedText` owns no type scale: it renders the `TypeRamp` step named by `type` (default `body`) and passes the step's `dynamicTypeRamp`; caller `style` and props win. The aliases `default` → `body`, `small` → `callout`, `smallBold` → `label` and `subtitle` → `sectionTitle` resolve inside the component. Color comes from `tone` (`primary` → `text`, `secondary` → `textSecondary`, `action` → `actionText`, `destructive` → `destructive`, `onPrimary` → `onPrimary`; `primary` is the label color, not brand pink, and the union has no brand or tertiary member) or from `themeColor` (any `ThemeColor`); the two props are mutually exclusive at the type level, and with neither the text is `text`. The heading role per step follows [Accessibility](./accessibility.md#the-heading-role-contract--encoded-in-themedtext).
 
 ## Buttons — `Button` and `ButtonRow` (`src/design/button/`)
@@ -319,6 +322,63 @@ colors, so an RN list and a `NativeList` on the same page read as one surface.
   chevron has no reliable static signature). Review checks that a new list uses `ListRow` or the
   native seam.
 
+## Badges and color dots — Badge, ColorDot (src/design/badge/, src/design/color-dot/)
+
+A short status or count label is `Badge` and an event or calendar color marker is `ColorDot`, both
+from `@/design` (ADR [074](./decisions/074-badge-and-color-dot.md)).
+
+- **Badge tones.** `tone` is closed and fixes the appearance; there is no color, font or height
+  prop, and `style` takes layout keys only (`BadgeLayoutStyle`) and merges last.
+
+  | tone            | fill                | stroke                   | label           |
+  | --------------- | ------------------- | ------------------------ | --------------- |
+  | `brand`         | `primarySoft`       | none                     | `onPrimarySoft` |
+  | `neutral`       | `backgroundElement` | none                     | `textSecondary` |
+  | `positive`      | none                | 1 unit `positive`        | `positive`      |
+  | `informational` | none                | 1 unit `informational`   | `informational` |
+  | `destructive`   | none                | 1 unit `destructive`     | `destructive`   |
+
+  Every label is a documented contrast pair at the body floor in both schemes; the brand wash is
+  composited over `background`, `backgroundElement` and `homeHero`.
+- **Badge sizes.** `small` is `ThemedText type="caption"` with `Spacing.two` × `Spacing.half`
+  padding; `medium` (the default) is `type="label"` with `Spacing.twoHalf` × `Spacing.one`. Gap
+  `Spacing.one`, `Radii.pill`, `alignSelf: "flex-start"`, `maxWidth: "100%"`.
+- **Badge icon.** The optional `icon` (`{ ios?, android? }`) is an `Icon` with `scaling="text"`,
+  sized to the label's `TypeRamp` font size and drawn in the label color. It is decorative.
+- **Badge scaling.** No fixed height and no `adjustsFontSizeToFit`. The label has
+  `numberOfLines={2}`, tabular figures and centered text, so at accessibility sizes the badge grows
+  and wraps into a stadium with both lines centered instead of clipping.
+- **Badge accessibility.** `accessibilityLabel: string | null` is required: a string makes the
+  badge one `text` element with that name, `null` hides it for an owner that already announces it
+  ([Accessibility → Badges and dots](./accessibility.md#badges-and-dots--encoded-in-badge-and-colordot)).
+- **ColorDot.** `color` is the stored `#RRGGBB` (ADR [011](./decisions/011-personal-event-storage.md)), drawn verbatim in a
+  circle of `ColorDotSize[size]` (`small` 8, `medium` 12 default, `large` 16). Its size is fixed,
+  not text-scaled, so `ListRow` leading widths stay stable. The optional `ring` names the surface
+  the dot sits on (`background`, `backgroundElement`, `homeHero`) and draws a 2-unit border in that
+  token inside the box, so overlapping dots read as cut out in both schemes. There is no ring color
+  value and no label: a dot is always hidden from VoiceOver and TalkBack.
+- **Color names belong to the control.** Where a color is the subject, the control that shows it
+  names it (the personal-events swatch picker through `SWATCH_NAME_KEYS`). `src/design/` cannot
+  import feature data, and server colors have no names.
+- **Chrome import.** `NativeListHeader` imports `Badge` by path (`@/design/badge/badge`), a design
+  leaf like `text/` and `list/`; `badge.tsx` imports only `@/theme`, `@/design/text/themed-text`
+  and `@/design/icon/icon`, so no cycle forms.
+- **Gates:** `badge.test.tsx` and `color-dot.test.tsx` at 90% per-file tiers; the composited
+  brand-wash pairs in `theme.test.tsx`; `local/no-raw-event-color`
+  ([lint-format.md](./lint-format.md) → Event colors); the gallery stories `badge--tones`,
+  `--sizes`, `--with-icon`, `--accessibility`, `--long-strings`, `color-dot--sizes`, `--presets`,
+  `--rings` and `--stack`.
+- **Sites:** the About header caption (brand, small), the inline checklist progress pill
+  (positive or informational with the checked or pending glyph, hidden), the personal-events list
+  dot (large) and the Home welcome summary dots (medium, `homeHero` ring, at most five then `+N`).
+- **Deferred:** the event-details title dot and `TagBubble` (slice 5.8, allowlisted), the calendar
+  view-menu pill (a menu trigger, 5.10), the agenda indicator column (3.9 `EventSurface`), the
+  swatch picker's 48 pt swatches (an input control, 5.3), the onboarding page indicator (a pager,
+  5.1), the checklist `compact` grid-tile variant (renderer-fitted geometry, 3.9/5.11), and
+  `SwiftBadge` / Compose `Badge` in the native list seam (native idiom, stays).
+- **What lint cannot carry:** an event color reached through a variable or a call, or passed as a
+  `color=` prop, is not matched. Review checks that new event-color UI uses `ColorDot`.
+
 ## Responsive content lanes — measured owners, semantic caps
 
 - `src/theme/responsive.ts` owns the typed portrait responsive policy and re-exports it through
@@ -482,7 +542,7 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
   - **`NativeListHeader`** (`chrome/native-list-header.tsx`) is the centered brand header
     for a page's top: the 88pt app icon (continuous rounded square on iOS, circle on Android), the
     app name as a `ThemedText` heading, a tagline, optional secondary detail, and an optional
-    caption pill in `actionText` on `primarySoft`. SwiftUI and Compose text cannot carry a heading
+    caption, a brand `Badge` (`size="small"`, named by its text, `captionTestID` on its root). SwiftUI and Compose text cannot carry a heading
     role, so the content is React Native hosted through `RNHostView` (`matchContents`) at a width
     derived from the window, inside a clear, zero-inset Form row on iOS and a centered Row on
     Android. It follows the app theme tokens and the OS font scale.
@@ -518,16 +578,17 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
 ## Contrast — documented AA token pairs, computed in CI
 
 - `src/theme/tokens.ts` documents the foreground/background **pairs** for both schemes (`text` / `textSecondary` on `background` / `backgroundElement` / `backgroundSelected`, plus the brand, status, error, destructive, home-hero, `logoSurface` and `outline` pairs), each with its two-decimal WCAG ratio. The DoD's manual contrast review checks rendered screens against these named pairs.
-- **The gate:** `src/theme/contrast.ts` holds the `contrastRatio` helper (WCAG 2.x relative luminance; it throws on a translucent hex so an alpha token cannot pass by accident) and the typed `documentedContrastPairs` table keyed on scheme and `ThemeColor`. `src/theme/theme.test.tsx` calibrates the helper against 21:1, 5.87:1 and 4.35:1 and asserts every pair against its floor: 4.5:1 for body text, 3:1 for large text and UI components. A renamed token is a `tsc` error; a value change that breaks a floor fails `test-mobile`. The gallery story `design-tokens--contrast-pairs` draws the same table with each computed ratio, so the page cannot list a pair the gate does not check. The module is not re-exported from `@/theme`.
+- **The gate:** `src/theme/contrast.ts` holds the `contrastRatio` helper (WCAG 2.x relative luminance; it throws on a translucent hex so an alpha token cannot pass by accident), `composite(fill, over)` (straight-alpha blend of a translucent fill over an opaque surface), `pairRatio(pair)` (composites when the pair names `over`) and the typed `documentedContrastPairs` table keyed on scheme and `ThemeColor`. `src/theme/theme.test.tsx` calibrates the helper against 21:1, 5.87:1 and 4.35:1 and asserts every pair against its floor: 4.5:1 for body text, 3:1 for large text and UI components. A renamed token is a `tsc` error; a value change that breaks a floor fails `test-mobile`. The gallery story `design-tokens--contrast-pairs` draws the same table with each computed ratio, so the page cannot list a pair the gate does not check. The module is not re-exported from `@/theme`.
 - **Manual link (R-1 caveat):** the test cannot read the `tokens.ts` comment. A pair added to the comment needs a row in `documentedContrastPairs`, and review checks both land together.
 - **Brand pairs:** white-on-`#E91E63` is **4.35:1** (large/UI only, below the 4.5:1 body floor), so **white text on brand rides `#C2185B`** (5.87:1, AA body); the identity pink `#E91E63` is the **accent/tint** (4.35:1 on white meets the 3:1 large/UI-component bar); the dark-scheme brand is `#FF4081` (6.30:1 on `#000`, AA body).
 - **Button pairs:** every `Button` variant draws a documented pair: `onPrimary` on `primaryStrong`, `text` on `backgroundElement`, `actionText` on `background` and on `backgroundElement` (a `text` button inside an element-filled row), `destructive` on `backgroundElement`, all at the body floor, and the `outline` boundary at the UI floor.
+- **Brand-wash pairs:** `onPrimarySoft` on `primarySoft` over `background`, `backgroundElement` and `homeHero`, composited (`over`), at the body floor in both schemes. `contrastRatio` still throws on a translucent background with no `over`.
 - **Status pairs:** `positive` and `informational` on `background` and `backgroundElement` for light and dark, each an AA body-text pair. Status colors remain semantic and never substitute for event/calendar colors.
 - **Call-site placement is not checked:** a static tool can't know which token lands on which background at a given site. That stays the DoD's manual review.
 
 ## What CI proves vs. what's manual
 
-- `src/theme/theme.test.tsx` (gated by `test-mobile`: tsc + lint + Jest, R-1) asserts: (a) `useTheme` resolves a token to its expected **light** and **dark** values (mocking `@/hooks/use-color-scheme`), plus the brand **`primary`**, status, `outline` and `scrim` roles per scheme; (b) `GlassSurface` renders its children in Jest, where `isLiquidGlassAvailable()` is `false`, exercising the **fallback** path (a real `View`, not a throw); (c) **`buildNavTheme`** maps `colors.background` / `colors.primary` to the scheme-appropriate `@/theme` tokens for both schemes — the nav↔token contract; (d) every documented opaque contrast pair clears its floor (`documentedContrastPairs`); (e) the `Spacing`, `IconSize`, `StateOpacity`, `Elevation`, `Motion` and `Layout` values, and `MinTouchTarget` per platform (the module re-evaluated under the iOS and Android `Platform` implementations).
+- `src/theme/theme.test.tsx` (gated by `test-mobile`: tsc + lint + Jest, R-1) asserts: (a) `useTheme` resolves a token to its expected **light** and **dark** values (mocking `@/hooks/use-color-scheme`), plus the brand **`primary`**, status, `outline` and `scrim` roles per scheme; (b) `GlassSurface` renders its children in Jest, where `isLiquidGlassAvailable()` is `false`, exercising the **fallback** path (a real `View`, not a throw); (c) **`buildNavTheme`** maps `colors.background` / `colors.primary` to the scheme-appropriate `@/theme` tokens for both schemes — the nav↔token contract; (d) every documented contrast pair clears its floor (`documentedContrastPairs`, translucent backgrounds composited over their `over` surface), and `composite` blends as specified; (e) the `Spacing`, `IconSize`, `StateOpacity`, `Elevation`, `Motion` and `Layout` values, and `MinTouchTarget` per platform (the module re-evaluated under the iOS and Android `Platform` implementations).
 - `src/components/chrome/native-list.test.tsx` asserts that the same resolved scheme reaches the
   SwiftUI and Material hosts, that each platform composition contains one native scroll owner, that
   the brand reaches the iOS Form tint and every Compose `seedColor`, and that icons, footers, segment

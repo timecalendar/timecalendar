@@ -81,7 +81,9 @@ describe("PersonalEventsList", () => {
         description: undefined,
       },
     ])
-    const { getByText, getByTestId } = await render(<PersonalEventsList />)
+    const { getByText, getByTestId, queryByTestId } = await render(
+      <PersonalEventsList />,
+    )
 
     expect(getByText("Lunch")).toBeTruthy()
     expect(getByText("Office")).toBeTruthy()
@@ -91,6 +93,15 @@ describe("PersonalEventsList", () => {
     // is the hint.
     expect(row.props.accessibilityLabel).toBe("Lunch")
     expect(row.props.accessibilityHint).toBe("Opens the event to edit")
+    expect(queryByTestId("personal-event-row-u1-color")).toBeNull()
+    const dot = getByTestId("personal-event-row-u1-color", {
+      includeHiddenElements: true,
+    })
+    expect(StyleSheet.flatten(dot.props.style)).toMatchObject({
+      backgroundColor: "#E91E63",
+      width: 16,
+    })
+    expect(dot.props.accessibilityElementsHidden).toBe(true)
     await fireEvent.press(row)
     expect(mockPush).toHaveBeenCalledWith("/personal-event-form?uid=u1")
     expect(getByTestId("personal-events-list")).toHaveProp(

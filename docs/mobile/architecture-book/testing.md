@@ -70,6 +70,13 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   The list tests run both platforms with `usePlatform`; the iOS grouped radius reads
   `Platform.Version`, a getter, so tests mock it with `jest.spyOn(Platform, "Version", "get")`.
   The ad-hoc-separator allowlist is a contract test like the raw-text-input one below.
+- **`src/design/badge/badge.tsx` and `src/design/color-dot/color-dot.tsx` have their own 90%
+  lines/branches keys** in `coverageThreshold` (ADR [074](./decisions/074-badge-and-color-dot.md)).
+  Both tests run both platforms and both schemes; the badge test mocks `useWindowDimensions` to
+  prove the icon grows at `fontScale` 3, and `@ts-expect-error` cases pin the missing
+  accessibility choice, a color prop and non-layout style keys. `src/theme/theme.test.tsx`
+  composites each translucent contrast pair over its `over` surface (`pairRatio`) and unit-tests
+  `composite`. The raw-event-color allowlist is a contract test like the raw-text-input one below.
 - **The raw-text-input allowlist is a contract test.**
   `tools/eslint-rules/raw-text-input-allowlist.test.js` lints each allowlisted file with only
   `local/no-raw-text-input` and fails on a stale, missing or duplicate entry and on growth past

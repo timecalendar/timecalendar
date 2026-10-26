@@ -5,6 +5,7 @@ import { GlassSurface } from "@/components/chrome"
 import {
   buildNavTheme,
   ChevronMaxFontScale,
+  ColorDotSize,
   Colors,
   Elevation,
   IconSize,
@@ -17,9 +18,11 @@ import {
   WordmarkMaxFontScale,
 } from "@/theme"
 import {
+  composite,
   contrastFloorRatio,
   contrastRatio,
   documentedContrastPairs,
+  pairRatio,
 } from "@/theme/contrast"
 
 // Drive the device color scheme the token layer resolves through.
@@ -96,6 +99,16 @@ describe("theme", () => {
     expect(dark.result.current.outline).toBe("#80838D")
     expect(dark.result.current.scrim).toBe("#00000099")
   })
+
+  it("resolves the brand-wash label role per scheme", async () => {
+    mockUseColorScheme.mockReturnValue("light")
+    const light = await renderHook(() => useTheme())
+    expect(light.result.current.onPrimarySoft).toBe("#AD1457")
+
+    mockUseColorScheme.mockReturnValue("dark")
+    const dark = await renderHook(() => useTheme())
+    expect(dark.result.current.onPrimarySoft).toBe("#FF80AB")
+  })
 })
 
 describe("contrastRatio", () => {
@@ -116,14 +129,72 @@ describe("contrastRatio", () => {
   })
 })
 
-describe.each(documentedContrastPairs)(
-  "$scheme $foreground on $background",
-  ({ scheme, foreground, background, floor }) => {
-    it(`clears the ${floor} contrast floor`, () => {
-      expect(
-        contrastRatio(Colors[scheme][foreground], Colors[scheme][background]),
-      ).toBeGreaterThanOrEqual(contrastFloorRatio[floor])
-    })
+describe("composite", () => {
+  it("returns an opaque fill unchanged", () => {
+    expect(composite("#AD1457", "#ffffff")).toBe("#ad1457")
+  })
+
+  it("returns the surface under a fully transparent fill", () => {
+    expect(composite("#E91E6300", "#F0F0F3")).toBe("#f0f0f3")
+  })
+
+  it("returns the fill under a fully opaque alpha", () => {
+    expect(composite("#E91E63FF", "#000000")).toBe("#e91e63")
+  })
+
+  it("blends the brand wash over white", () => {
+    expect(composite("#E91E631F", "#ffffff")).toBe("#fce4ec")
+  })
+
+  it("refuses a malformed fill or a translucent surface", () => {
+    expect(() => composite("pink", "#ffffff")).toThrow("6- or 8-digit hex")
+    expect(() => composite("#E91E63", "#00000066")).toThrow("opaque")
+  })
+
+  it("refuses a translucent background with no surface", () => {
+    expect(() =>
+      pairRatio({
+        scheme: "light",
+        foreground: "onPrimarySoft",
+        background: "primarySoft",
+        floor: "body",
+      }),
+    ).toThrow("opaque 6-digit hex")
+  })
+})
+
+describe.each(
+  documentedContrastPairs.map((pair) => ({
+    ...pair,
+    surface: pair.over === undefined ? "" : ` over ${pair.over}`,
+  })),
+)("$scheme $foreground on $background$surface", (pair) => {
+  it(`clears the ${pair.floor} contrast floor`, () => {
+    expect(pairRatio(pair)).toBeGreaterThanOrEqual(
+      contrastFloorRatio[pair.floor],
+    )
+  })
+})
+
+it.each([
+  ["light", "background", 5.79],
+  ["light", "backgroundElement", 5.1],
+  ["light", "homeHero", 4.88],
+  ["dark", "background", 8.11],
+  ["dark", "backgroundElement", 5.9],
+  ["dark", "homeHero", 5.89],
+] as const)(
+  "computes %s onPrimarySoft on primarySoft over %s at %d:1",
+  (scheme, over, ratio) => {
+    expect(
+      pairRatio({
+        scheme,
+        foreground: "onPrimarySoft",
+        background: "primarySoft",
+        floor: "body",
+        over,
+      }),
+    ).toBeCloseTo(ratio, 2)
   },
 )
 
@@ -144,6 +215,7 @@ describe("design tokens", () => {
 
   it("exposes the icon, state, motion and layout scales", () => {
     expect(IconSize).toEqual({ small: 14, medium: 17, large: 22, xlarge: 28 })
+    expect(ColorDotSize).toEqual({ small: 8, medium: 12, large: 16 })
     expect(StateOpacity).toEqual({ pressed: 0.65, disabled: 0.55 })
     expect(Motion).toEqual({ fast: 150, base: 250, slow: 400 })
     expect(Layout.fabClearance).toBe(96)

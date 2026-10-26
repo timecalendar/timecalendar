@@ -4,6 +4,7 @@ import { FlatList, StyleSheet, View } from "react-native"
 
 import {
   Button,
+  ColorDot,
   headerScrollProps,
   ListRow,
   type ListRowPosition,
@@ -18,7 +19,7 @@ import {
 } from "@/features/personal-events/data"
 import { useDisplayZone } from "@/features/settings/prefs"
 import { useUses24HourClock } from "@/hooks/use-uses-24-hour-clock"
-import { Radii, Spacing } from "@/theme"
+import { ColorDotSize, Spacing } from "@/theme"
 
 // The Home-tab personal-events list (B2 / TIM-133) — PRESENTATIONAL (70% floor):
 // it reads B1's reactive usePersonalEvents() (useLiveQuery, so it re-renders on
@@ -102,13 +103,13 @@ function EventRow({
       details={event.location !== undefined ? [event.location] : undefined}
       leading={{
         element: (
-          <View
-            style={[styles.swatch, { backgroundColor: event.color }]}
-            accessibilityElementsHidden
-            importantForAccessibility="no"
+          <ColorDot
+            color={event.color}
+            size="large"
+            testID={`personal-event-row-${event.uid}-color`}
           />
         ),
-        width: SWATCH,
+        width: ColorDotSize.large,
       }}
       position={position}
       trailing="chevron"
@@ -121,8 +122,6 @@ function EventRow({
   )
 }
 
-const SWATCH = 24
-
 const styles = StyleSheet.create({
   header: {
     marginBottom: Spacing.three,
@@ -134,10 +133,5 @@ const styles = StyleSheet.create({
   list: {
     flexGrow: 1,
     paddingVertical: Spacing.four,
-  },
-  swatch: {
-    width: SWATCH,
-    height: SWATCH,
-    borderRadius: Radii.small,
   },
 })

@@ -100,6 +100,26 @@ These rules guard real product touchables (interactive controls declare `accessi
 - The screen-reader pass for both is owner-led
   (`docs/react-native-migration/inbox/2026-10-26-mobile-ds-list-row-device-pass.md`).
 
+## Badges and dots — encoded in `Badge` and `ColorDot`
+
+- A `Badge` requires `accessibilityLabel: string | null`, with no default, so a count read as a
+  bare number is a type error. A string makes the badge one `text` element with that name, and
+  its visible label is not a separate stop: a checklist count `2/5` reads "2 of 5 checklist items
+  completed". `null` hides the badge (`accessibilityElementsHidden`,
+  `importantForAccessibility="no-hide-descendants"`) where its owner already announces the same
+  information, as the event summaries do with the checklist progress phrase.
+- A badge grows with the OS text size: no fixed height, no shrink-to-fit, and a two-line cap that
+  wraps instead of clipping. Its icon scales with the text.
+- A `ColorDot` is always decorative and hidden from VoiceOver and TalkBack, like `Icon`, and takes
+  no label. Color is never the only carrier at a site that shows a dot: the personal-event row is
+  announced by its title, the Home summary by its count.
+- A spoken color name belongs to the control that shows the color, not to the dot. The
+  personal-events swatch picker names its presets through `SWATCH_NAME_KEYS`.
+- Gates: `badge.test.tsx`, `color-dot.test.tsx` and the registry matrix (the badge and color-dot
+  stories add no entry to `known-a11y-violations.ts`). What TalkBack and VoiceOver announce on a
+  device, and the wrap at the largest size, are device evidence
+  ([inbox note](../../react-native-migration/inbox/2026-10-26-mobile-ds-badge-color-dot-device-pass.md)).
+
 ## Accessible async status
 
 - Every loading, empty and error state is `StatusView` (ADR [069](./decisions/069-status-view.md)).
@@ -161,6 +181,7 @@ These rules guard real product touchables (interactive controls declare `accessi
   not change (`src/components/chrome/native-list.test.tsx`).
 - The event-details color dot is decorative and centers on the first title line: it sits in a
   hidden strut sized by one `title`-step line (`features/calendar/ui/event-details-screen.test.tsx`).
+  It moves to `ColorDot` in slice 5.8.
 - Controlled native text-entry dialogs isolate the background accessibility tree, keep native input
   and Cancel/Save actions present while pending, announce inline validation/write failure and
   persistence-gated success, and expose stable native identifiers on both platforms. On iOS the

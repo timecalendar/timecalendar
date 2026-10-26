@@ -2,7 +2,7 @@ import type { SFSymbol } from "expo-symbols"
 import type { TFunction } from "i18next"
 import { StyleSheet, View } from "react-native"
 
-import { Icon, type MaterialGlyph, ThemedText } from "@/design"
+import { Badge, Icon, type MaterialGlyph, ThemedText } from "@/design"
 import type { ChecklistProgress } from "@/features/event-checklists/data"
 import { Radii, Spacing, useTheme } from "@/theme"
 
@@ -19,10 +19,9 @@ export function checklistProgressLabel(
   })
 }
 
-type Density = "inline" | "compact" | "dense"
+type Density = "compact" | "dense"
 
 const GLYPH_SIZE: Record<Density, number> = {
-  inline: 16,
   compact: 11,
   dense: 7,
 }
@@ -36,10 +35,8 @@ const GLYPH: Record<
 }
 
 function densityOf(
-  variant: ChecklistProgressVariant,
   bounds: { width: number; height: number } | undefined,
 ): Density {
-  if (variant === "inline") return "inline"
   if (bounds !== undefined && (bounds.width < 48 || bounds.height < 24)) {
     return "dense"
   }
@@ -58,20 +55,33 @@ export function ChecklistProgressIndicator({
   const theme = useTheme()
   if (progress === undefined || progress.total === 0) return null
 
-  const compact = variant === "compact"
-  const density = densityOf(variant, bounds)
+  const glyph = GLYPH[progress.isComplete ? "complete" : "pending"]
+  const count = `${progress.completed}/${progress.total}`
+
+  if (variant === "inline") {
+    return (
+      <Badge
+        tone={progress.isComplete ? "positive" : "informational"}
+        size="medium"
+        icon={glyph}
+        label={count}
+        accessibilityLabel={null}
+        testID="checklist-progress-inline"
+      />
+    )
+  }
+
+  const density = densityOf(bounds)
   const dense = density === "dense"
   const color = progress.isComplete ? theme.positive : theme.informational
-  const glyph = GLYPH[progress.isComplete ? "complete" : "pending"]
 
   return (
     <View
-      testID={`checklist-progress-${variant}`}
+      testID="checklist-progress-compact"
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       style={[
         styles.base,
-        compact ? styles.compact : styles.inline,
         dense && styles.dense,
         bounds && { maxWidth: bounds.width, maxHeight: bounds.height },
         { borderColor: color },
@@ -87,13 +97,13 @@ export function ChecklistProgressIndicator({
       />
       <ThemedText
         testID="checklist-progress-count"
-        type={compact ? "captionSmall" : "small"}
+        type="captionSmall"
         style={[styles.count, dense && styles.denseCount, { color }]}
         numberOfLines={1}
-        adjustsFontSizeToFit={compact}
-        minimumFontScale={compact ? 0.75 : undefined}
+        adjustsFontSizeToFit
+        minimumFontScale={0.75}
       >
-        {`${progress.completed}/${progress.total}`}
+        {count}
       </ThemedText>
     </View>
   )
@@ -107,13 +117,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: "row",
     flexShrink: 1,
-  },
-  inline: {
-    gap: Spacing.one,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
-  },
-  compact: {
     gap: Spacing.half,
     maxWidth: 64,
     paddingHorizontal: Spacing.one,

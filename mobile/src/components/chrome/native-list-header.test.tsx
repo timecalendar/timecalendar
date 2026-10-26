@@ -32,8 +32,17 @@ describe.each([
     expect(view.getByText("Detail")).toHaveStyle({
       color: Colors.dark.textSecondary,
     })
+    expect(view.getByTestId("caption").props).toMatchObject({
+      accessible: true,
+      accessibilityRole: "text",
+      accessibilityLabel: "Version 4",
+    })
     expect(view.getByTestId("caption")).toHaveStyle({
-      color: Colors.dark.actionText,
+      backgroundColor: Colors.dark.primarySoft,
+      alignSelf: "center",
+    })
+    expect(view.getByTestId("caption-label")).toHaveStyle({
+      color: Colors.dark.onPrimarySoft,
     })
   })
 

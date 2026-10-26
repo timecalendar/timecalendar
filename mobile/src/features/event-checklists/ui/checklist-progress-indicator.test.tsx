@@ -31,44 +31,61 @@ describe("ChecklistProgressIndicator", () => {
     expect(view.toJSON()).toBeNull()
   })
 
-  it("renders partial inline progress and stays out of the accessibility tree", async () => {
+  const hidden = { includeHiddenElements: true }
+  const styleOf = (testID: string) =>
+    StyleSheet.flatten(screen.getByTestId(testID, hidden).props.style)
+
+  it("renders partial inline progress as an informational badge out of the accessibility tree", async () => {
     await render(<ChecklistProgressIndicator progress={partial} />)
 
-    const indicator = screen.getByTestId("checklist-progress-inline", {
-      includeHiddenElements: true,
-    })
-    expect(
-      screen.getByTestId("checklist-progress-glyph", {
-        includeHiddenElements: true,
-      }).props.name,
-    ).toBeDefined()
-    expect(
-      screen.getByText("1/3", { includeHiddenElements: true }),
-    ).toBeTruthy()
+    const indicator = screen.getByTestId("checklist-progress-inline", hidden)
+    expect(screen.queryByTestId("checklist-progress-inline")).toBeNull()
     expect(indicator.props.accessibilityElementsHidden).toBe(true)
     expect(indicator.props.importantForAccessibility).toBe(
       "no-hide-descendants",
     )
+    expect(
+      screen.getByTestId("checklist-progress-inline-label", hidden),
+    ).toHaveTextContent("1/3")
+    expect(
+      screen.getByTestId("checklist-progress-inline-icon", hidden).props.name,
+    ).toBe("square")
+    expect(styleOf("checklist-progress-inline")).toMatchObject({
+      borderWidth: 1,
+      borderColor: Colors.light.informational,
+    })
+    expect(styleOf("checklist-progress-inline-label").color).toBe(
+      Colors.light.informational,
+    )
   })
 
-  it("uses an explicit checked glyph and positive light/dark theme tokens when complete", async () => {
-    const light = await render(
-      <ChecklistProgressIndicator progress={complete} />,
+  it.each(["light", "dark"] as const)(
+    "switches the inline badge to the checked glyph and the %s positive tone when complete",
+    async (scheme) => {
+      mockScheme = scheme
+      await render(<ChecklistProgressIndicator progress={complete} />)
+      const icon = screen.getByTestId("checklist-progress-inline-icon", hidden)
+      expect(icon.props.name).toBe("checkmark.square.fill")
+      expect(icon.props.tintColor).toBe(Colors[scheme].positive)
+      expect(styleOf("checklist-progress-inline").borderColor).toBe(
+        Colors[scheme].positive,
+      )
+      expect(styleOf("checklist-progress-inline-label").color).toBe(
+        Colors[scheme].positive,
+      )
+    },
+  )
+
+  it("draws the compact glyph in the tone color", async () => {
+    await render(
+      <ChecklistProgressIndicator progress={complete} variant="compact" />,
     )
     expect(
-      screen.getByTestId("checklist-progress-glyph", {
-        includeHiddenElements: true,
-      }).props.tintColor,
+      screen.getByTestId("checklist-progress-glyph", hidden).props.tintColor,
     ).toBe(Colors.light.positive)
-
-    await light.unmount()
-    mockScheme = "dark"
-    await render(<ChecklistProgressIndicator progress={complete} />)
     expect(
-      screen.getByTestId("checklist-progress-glyph", {
-        includeHiddenElements: true,
-      }).props.tintColor,
-    ).toBe(Colors.dark.positive)
+      screen.getByTestId("checklist-progress-count", hidden),
+    ).toHaveTextContent("3/3")
   })
 
   it("bounds compact output and clamps the numeric count", async () => {

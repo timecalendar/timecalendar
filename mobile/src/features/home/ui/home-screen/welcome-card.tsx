@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { StyleSheet, View } from "react-native"
 
-import { ThemedText } from "@/design"
+import { ColorDot, ThemedText } from "@/design"
 import {
   type CalendarEvent,
   formatDayMonth,
@@ -70,21 +70,28 @@ export function WelcomeCard({
       </ThemedText>
       <ThemedText>{captionText}</ThemedText>
       <View style={styles.summaryRow}>
-        <View style={styles.dots} accessibilityElementsHidden>
+        <View
+          style={styles.dots}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          testID="home-welcome-dots"
+        >
           {events.slice(0, MAX_EVENT_DOTS).map((event, index) => (
-            <View
+            <ColorDot
               key={event.id}
-              style={[
-                styles.dot,
-                {
-                  backgroundColor: event.color,
-                  marginLeft: index === 0 ? 0 : -Spacing.one,
-                },
-              ]}
+              color={event.color}
+              size="medium"
+              ring="homeHero"
+              testID={`home-welcome-dot-${index}`}
+              style={{ marginLeft: index === 0 ? 0 : -Spacing.one }}
             />
           ))}
           {events.length > MAX_EVENT_DOTS && (
-            <ThemedText type="smallBold" style={styles.extraDots}>
+            <ThemedText
+              type="smallBold"
+              style={styles.extraDots}
+              testID="home-welcome-dots-overflow"
+            >
               {`+${events.length - MAX_EVENT_DOTS}`}
             </ThemedText>
           )}
@@ -115,12 +122,5 @@ const styles = StyleSheet.create({
     marginTop: Spacing.one,
   },
   dots: { flexDirection: "row", alignItems: "center" },
-  dot: {
-    width: 12,
-    height: 12,
-    borderRadius: Radii.pill,
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
-  },
   extraDots: { marginLeft: Spacing.one },
 })

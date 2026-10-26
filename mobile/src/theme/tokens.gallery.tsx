@@ -14,7 +14,11 @@ import {
   type ThemeColor,
   useTheme,
 } from "@/theme"
-import { contrastRatio, documentedContrastPairs } from "@/theme/contrast"
+import {
+  documentedContrastPairs,
+  pairBackground,
+  pairRatio,
+} from "@/theme/contrast"
 
 type TokenSwatchProps = {
   name: string
@@ -137,19 +141,23 @@ function ContrastPairsFixture() {
           <ThemedText type="sectionTitle">
             {t(`gallery.designTokens.scheme.${scheme}`)}
           </ThemedText>
-          {pairsByScheme[scheme].map(({ foreground, background, floor }) => {
-            const palette = ColorTokens[scheme]
-            const ratio = contrastRatio(
-              palette[foreground],
-              palette[background],
-            ).toLocaleString(i18n.language, {
+          {pairsByScheme[scheme].map((pair) => {
+            const { foreground, floor, over } = pair
+            const background =
+              over === undefined
+                ? pair.background
+                : t("gallery.designTokens.composited", {
+                    background: pair.background,
+                    over,
+                  })
+            const ratio = pairRatio(pair).toLocaleString(i18n.language, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })
             const floorLabel = t(`gallery.designTokens.floor.${floor}`)
             return (
               <TokenSwatch
-                key={`${foreground}-${background}`}
+                key={`${foreground}-${pair.background}-${over ?? ""}`}
                 name={t("gallery.designTokens.pairName", {
                   foreground,
                   background,
@@ -168,12 +176,12 @@ function ContrastPairsFixture() {
                 <View
                   style={[
                     styles.sampleTile,
-                    { backgroundColor: palette[background] },
+                    { backgroundColor: pairBackground(pair) },
                   ]}
                 >
                   <ThemedText
                     type="headline"
-                    style={{ color: palette[foreground] }}
+                    style={{ color: ColorTokens[scheme][foreground] }}
                   >
                     {t("gallery.designTokens.sample")}
                   </ThemedText>

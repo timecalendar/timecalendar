@@ -13,6 +13,7 @@ export const Colors = {
     actionText: "#C2185B",
     onPrimary: "#ffffff",
     primarySoft: "#E91E631F",
+    onPrimarySoft: "#AD1457",
     positive: "#146C43",
     informational: "#0B57D0",
     destructive: "#B3261E",
@@ -37,6 +38,7 @@ export const Colors = {
     actionText: "#FF4081",
     onPrimary: "#ffffff",
     primarySoft: "#FF40811F",
+    onPrimarySoft: "#FF80AB",
     positive: "#7EE2A8",
     informational: "#A8C7FA",
     destructive: "#FFB4AB",
@@ -106,6 +108,16 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark
  *       actionText on backgroundElement #C2185B on #F0F0F3 → 5.16:1  (light, body ✅)
  *       actionText on backgroundElement #FF4081 on #212225 → 4.78:1  (dark, body ✅)
  *
+ *   BRAND WASH — `onPrimarySoft` is the label on the translucent `primarySoft`
+ *   wash (the brand Badge). The wash is composited over the surface it sits on
+ *   before the ratio is computed (`over` in `documentedContrastPairs`):
+ *   - onPrimarySoft light #AD1457 on primarySoft over background        → 5.79:1 (body ✅)
+ *   - onPrimarySoft light #AD1457 on primarySoft over backgroundElement → 5.10:1 (body ✅)
+ *   - onPrimarySoft light #AD1457 on primarySoft over homeHero          → 4.88:1 (body ✅)
+ *   - onPrimarySoft dark  #FF80AB on primarySoft over background        → 8.11:1 (body AAA)
+ *   - onPrimarySoft dark  #FF80AB on primarySoft over backgroundElement → 5.90:1 (body ✅)
+ *   - onPrimarySoft dark  #FF80AB on primarySoft over homeHero          → 5.89:1 (body ✅)
+ *
  *   ERROR (WCAG luminance recomputed for error surfaces):
  *   - error light on background #B3261E on #fff → 6.54:1 (body AA)
  *   - error light on backgroundElement #B3261E on #F0F0F3 → 5.75:1 (body AA)
@@ -113,6 +125,8 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark
  *   - error dark on backgroundElement #FFB4AB on #212225 → 9.37:1 (body AAA)
  *
  *   DESTRUCTIVE
+ *   - destructive light #B3261E on background #fff → 6.54:1 (body ✅)
+ *   - destructive dark #FFB4AB on background #000 → 12.37:1 (body AAA)
  *   - destructive light #B3261E on backgroundElement #F0F0F3 → 5.75:1 (body ✅)
  *   - destructive dark #FFB4AB on backgroundElement #212225 → 9.37:1 (body AAA)
  *
@@ -161,7 +175,8 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark
  *   monogram letter rides `primary` over it; the letter is a decorative image
  *   stand-in (the row label carries the accessible name), so no text ratio
  *   applies — for reference the pair reads at effectively primary-on-
- *   background: 4.35:1 light / 6.30:1 dark.
+ *   background: 4.35:1 light / 6.30:1 dark. It is also the brand Badge fill,
+ *   whose text rides `onPrimarySoft` (BRAND WASH above).
  * - `ripple` — the Android pressed-state layer (on-surface at 12%, M3 States).
  *   A transient overlay, no contrast obligation.
  * - `scrim` — the modal / sheet backdrop (black at 40% light, 60% dark). An
@@ -250,6 +265,12 @@ export const IconSize = {
   medium: 17,
   large: 22,
   xlarge: 28,
+} as const
+
+export const ColorDotSize = {
+  small: 8,
+  medium: 12,
+  large: 16,
 } as const
 
 export const StateOpacity = {
