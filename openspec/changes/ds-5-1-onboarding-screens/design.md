@@ -144,8 +144,10 @@ dependency):
   and `\b(44|48)\b` inside a `Platform.OS`/`Platform.select` expression.
 - `findDrift(source)` strips `//` line comments and `/* */` blocks before matching and returns
   `{ id, line }[]`.
+- `MIGRATED_FILE_FLOOR` (12 after slice 5.1): the list length must stay at or above it; each
+  slice raises it with its append, which is what makes "grow-only" enforced rather than stated.
 - Tests: detector fixture (one example per pattern, one commented-out `themeColor=` that must not
-  match), every listed file exists, no listed file has drift, no path listed twice.
+  match), every listed file exists, no listed file has drift, no path listed twice, the floor holds.
 
 Why a test and not an ESLint rule: the patterns are the audit's own regexes, the scope is an
 explicit grow-only file list rather than a glob, and a Jest scan is the established form for

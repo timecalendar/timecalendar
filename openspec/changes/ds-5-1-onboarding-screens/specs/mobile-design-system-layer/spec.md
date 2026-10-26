@@ -13,7 +13,7 @@ raw `ActivityIndicator` or `SymbolView` element, an inline style object, a raw 4
 value, the `themeColor` prop, or a legacy `ThemedText` type alias (`default`, `small`,
 `smallBold`, `subtitle`). Platform branching and style arrays that compose an animated or measured
 value SHALL stay allowed. The list SHALL only grow: each Phase 5 slice appends its files in the
-same change that migrates them, and a listed file that no longer exists SHALL fail the test.
+same change that migrates them and raises the contract's file floor; the test SHALL fail when the list holds fewer files than the floor, and when a listed file no longer exists.
 
 #### Scenario: A migrated screen regains a deprecated color prop
 

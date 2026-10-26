@@ -527,8 +527,9 @@ truth; this file carries the caveats the config can't (R-1).
   numbers kept. The test fails on any hit (`path:line id`), a listed file that does not exist, or a
   path listed twice. Platform branching and style arrays stay allowed (they compose animated or
   measured values). **The list only grows: every Phase 5 slice appends its files in the same PR
-  that migrates them.** Caveat: a value behind a variable or a computed key is not seen, the same
-  blind spot as the audit greps. Inject-and-revert proof: `themeColor="textSecondary"` in
+  that migrates them and raises `MIGRATED_FILE_FLOOR` to the new count;** the test fails when the
+  list holds fewer files than the floor. Caveat: a value behind a variable or a computed key is
+  not seen, the same blind spot as the audit greps. Inject-and-revert proof: `themeColor="textSecondary"` in
   `src/features/onboarding/ui/welcome-pages.tsx` and `const H = Platform.OS === "ios" ? 44 : 48` in
   `connect-screen.tsx` fail the test with `theme-color-prop` and `touch-target-branch`.
 - **L12 — no identifiers on SwiftUI containers** (`local/no-swiftui-container-identifier` in the

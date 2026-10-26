@@ -13,7 +13,11 @@ export function WelcomeSkip({ hidden, onPress }: WelcomeSkipProps) {
   const { t } = useTranslation()
 
   return (
-    <AdaptiveContent lane="readable" contentContainerStyle={styles.topBar}>
+    <AdaptiveContent
+      testID="onboarding-top-bar"
+      lane="readable"
+      contentContainerStyle={styles.topBar}
+    >
       {!hidden && (
         <Button
           variant="text"

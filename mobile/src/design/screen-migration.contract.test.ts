@@ -95,6 +95,9 @@ function findDrift(source: string): { id: string; line: number }[] {
     )
 }
 
+// Raised by every Phase 5 slice that appends files, so the list cannot shrink.
+const MIGRATED_FILE_FLOOR = 12
+
 const listedFiles = MIGRATED_SCREENS.flatMap(({ files }) => files)
 
 describe("migrated-screen contract", () => {
@@ -142,6 +145,10 @@ describe("migrated-screen contract", () => {
     expect(
       listedFiles.filter((file) => !existsSync(resolve(process.cwd(), file))),
     ).toEqual([])
+  })
+
+  it("never lists fewer files than the floor", () => {
+    expect(listedFiles.length).toBeGreaterThanOrEqual(MIGRATED_FILE_FLOOR)
   })
 
   it("lists each file once", () => {

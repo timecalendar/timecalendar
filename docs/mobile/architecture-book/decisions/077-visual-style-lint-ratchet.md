@@ -63,7 +63,7 @@ exit as the style literals. This is roadmap slice 4.2.
   a grow-only list of the files each Phase 5 slice has migrated, grouped by slice, and fails on any
   hit of the design-system audit's drift greps in them (comments excluded), including the three
   patterns no lint rule carries: the `themeColor` prop, the legacy `ThemedText` type aliases and a
-  hand-rolled 44/48 touch target. Every Phase 5 slice appends its files in the same PR. Platform
+  hand-rolled 44/48 touch target. Every Phase 5 slice appends its files in the same PR and raises `MIGRATED_FILE_FLOOR`, which the test enforces as a minimum count. Platform
   branching and style arrays composing an animated or measured value stay allowed.
 
 Rejected:

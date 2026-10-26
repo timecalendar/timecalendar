@@ -3,9 +3,7 @@ import { router } from "expo-router"
 import {
   AccessibilityInfo,
   type EmitterSubscription,
-  type StyleProp,
   StyleSheet,
-  type ViewStyle,
 } from "react-native"
 import { cancelAnimation, withTiming } from "react-native-reanimated"
 
@@ -44,22 +42,6 @@ const pagerMock = (
     __pagerMock: PagerMock
   }
 ).__pagerMock
-
-type HostNode = {
-  parent: HostNode | null
-  props: { style?: StyleProp<ViewStyle> }
-}
-
-function skipBar(skip: HostNode) {
-  let node: HostNode | null = skip.parent
-  while (
-    node &&
-    StyleSheet.flatten(node.props.style)?.alignItems !== "flex-end"
-  ) {
-    node = node.parent
-  }
-  return StyleSheet.flatten(node?.props.style)
-}
 
 async function flushMicrotasks(turns = 3): Promise<void> {
   for (let index = 0; index < turns; index += 1) {
@@ -133,7 +115,7 @@ describe("WelcomeScreen", () => {
       "Next",
     ]) {
       const { adjustsFontSizeToFit, numberOfLines } = getByText(text).props
-      expect(numberOfLines ?? Infinity).toBeGreaterThan(2)
+      expect(numberOfLines || Infinity).toBeGreaterThan(2)
       expect(adjustsFontSizeToFit).toBeFalsy()
     }
 
@@ -241,7 +223,10 @@ describe("WelcomeScreen", () => {
   it("lets the Skip bar grow with its label above a touch-target floor", async () => {
     const { getByTestId } = await render(<WelcomeScreen />)
 
-    const bar = skipBar(getByTestId("onboarding-skip") as unknown as HostNode)
+    const lane = getByTestId("onboarding-top-bar").children[0] as unknown as {
+      props: { style: { minHeight?: number }[] }
+    }
+    const bar = StyleSheet.flatten(lane.props.style)
     expect(bar.minHeight).toBe(MinTouchTarget + Spacing.three)
     expect(bar).not.toHaveProperty("height")
     expect(
