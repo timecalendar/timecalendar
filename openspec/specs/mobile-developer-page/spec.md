@@ -27,7 +27,7 @@ or the URL scheme. A route added to the subtree without that check SHALL fail an
 #### Scenario: Production capability redirects gallery deep links
 
 - **WHEN** a production-capability build opens `/developer/gallery` or
-  `/developer/gallery/native-settings--switches`
+  `/developer/gallery/native-list--switches`
 - **THEN** the app redirects to `/settings`
 - **AND** no fixture renders
 
