@@ -147,5 +147,5 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
     maxWidth: "100%",
   },
-  label: { flexShrink: 1, fontVariant: ["tabular-nums"] },
+  label: { flexShrink: 1, fontVariant: ["tabular-nums"], textAlign: "center" },
 })

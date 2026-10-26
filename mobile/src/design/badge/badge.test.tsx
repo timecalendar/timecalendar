@@ -125,6 +125,7 @@ describe.each(["ios", "android"] as const)("Badge on %s", (platform) => {
     expect(label.props.numberOfLines).toBe(2)
     expect(label.props.adjustsFontSizeToFit).toBeUndefined()
     expect(label.props.ellipsizeMode).toBeUndefined()
+    expect(styleOf("b-label").textAlign).toBe("center")
     expect(styleOf("b").height).toBeUndefined()
   })
 

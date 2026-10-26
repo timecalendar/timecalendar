@@ -421,7 +421,7 @@
   "gallery.designTokens.colorRow": "{{name}}, clair {{light}}, sombre {{dark}}",
   "gallery.designTokens.sample": "Aa",
   "gallery.designTokens.pairName": "{{foreground}} sur {{background}}",
-  "gallery.designTokens.composited": "{{background}} sur {{over}}",
+  "gallery.designTokens.composited": "{{background}} par-dessus {{over}}",
   "gallery.designTokens.pairDetail": "{{ratio}}:1, seuil {{floor}}",
   "gallery.designTokens.contrastRow": "{{foreground}} sur {{background}}, {{ratio}} pour 1, seuil {{floor}}",
   "gallery.designTokens.floor.body": "4,5:1 texte courant",

@@ -130,6 +130,10 @@ describe("HomeScreen", () => {
       screen.getByTestId("home-welcome-dots-overflow", hidden),
     ).toHaveTextContent("+2")
     expect(screen.queryByTestId("home-welcome-dots")).toBeNull()
+    expect(
+      screen.getByTestId("home-welcome-dots", hidden).props
+        .importantForAccessibility,
+    ).toBe("no-hide-descendants")
     expect(screen.getByText("7 events today")).toBeOnTheScreen()
   })
 

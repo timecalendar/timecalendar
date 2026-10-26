@@ -346,8 +346,8 @@ from `@/design` (ADR [074](./decisions/074-badge-and-color-dot.md)).
 - **Badge icon.** The optional `icon` (`{ ios?, android? }`) is an `Icon` with `scaling="text"`,
   sized to the label's `TypeRamp` font size and drawn in the label color. It is decorative.
 - **Badge scaling.** No fixed height and no `adjustsFontSizeToFit`. The label has
-  `numberOfLines={2}` and tabular figures, so at accessibility sizes the badge grows and wraps into
-  a stadium instead of clipping.
+  `numberOfLines={2}`, tabular figures and centered text, so at accessibility sizes the badge grows
+  and wraps into a stadium with both lines centered instead of clipping.
 - **Badge accessibility.** `accessibilityLabel: string | null` is required: a string makes the
   badge one `text` element with that name, `null` hides it for an owner that already announces it
   ([Accessibility → Badges and dots](./accessibility.md#badges-and-dots--encoded-in-badge-and-colordot)).

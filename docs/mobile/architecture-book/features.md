@@ -293,7 +293,7 @@ The registry lists, in this order (paths under `mobile/src/`):
 - UI failures are accessible. Unexpected native, persistence, and background failures are
   recorded through `@/firebase` without personal data.
 - About owns its standalone `features/about` module and renders the `NativeList` seam directly
-  (`NativeListSection`, `NativeListRow`). It opens with the chrome brand header (app icon, name, blurb, and the version caption as a brand `Badge` keeping `about-version`); a
+  (`NativeListSection`, `NativeListRow`). It opens with the chrome brand header (app icon, name, blurb, and the version caption as a brand `Badge` with testID `about-version`); a
   link failure shows as a `NativeListAlert` below it. This reversible local ownership choice does not require an ADR.
 - Changelog owns its typed newest-first catalog, total seen-version store, gate, and shared
   history/sheet content. Phase 09 must call its exported setter before `(tabs)` mounts; every

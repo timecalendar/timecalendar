@@ -377,7 +377,9 @@ truth; this file carries the caveats the config can't (R-1).
   duplicate, or a list longer than its ceiling (1). `no-raw-event-color.test.js` is the RuleTester
   suite: `color: row.color` (a data-object key, not a fill), `[key]: event.color` and
   `eventSurfaceColor(event.color, scheme)` pass. **Caveats:** a color reached through a variable
-  or a call is not followed, and a `color=` JSX prop is not matched, so review checks that new
+  or a call is not followed, a `color=` JSX prop is not matched, per-side border keys
+  (`borderLeftColor` and the like, e.g. the agenda stripe, which slice 3.9 `EventSurface` absorbs)
+  are not checked, and `.ts` style helpers are outside `files`, so review checks that new
   event-color UI uses `ColorDot`. There is no pill or dot shape rule: `borderRadius: Radii.pill`
   also draws FABs, glass buttons, the now line, the agenda rail and page indicators, so it is no
   badge signature. Inject-and-revert proof: a `<View style={{ backgroundColor: event.color }} />`

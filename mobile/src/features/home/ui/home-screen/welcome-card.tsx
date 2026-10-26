@@ -73,6 +73,7 @@ export function WelcomeCard({
         <View
           style={styles.dots}
           accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
           testID="home-welcome-dots"
         >
           {events.slice(0, MAX_EVENT_DOTS).map((event, index) => (

@@ -72,7 +72,7 @@ Rejected:
 - The checklist indicator has two drawing paths until the 3.9/5.11 tile work absorbs `compact`.
 - A color reached through a variable or a call, or a `color=` prop, is not matched by the rule;
   review covers it.
-- The dark Home ring is the dark hero surface instead of white.
+- In dark mode the Home ring is drawn in the dark hero surface color.
 - TalkBack announcements, the wrap at the largest size and the ring rendering are device evidence
   (`docs/react-native-migration/inbox/2026-10-26-mobile-ds-badge-color-dot-device-pass.md`).
 
