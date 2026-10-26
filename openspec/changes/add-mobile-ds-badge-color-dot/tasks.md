@@ -153,7 +153,7 @@ Android on the Mac. Land three commits, following the design's Migration Plan.
 
 ## 6. Architecture Book, ADR and docs (`docs/mobile/architecture-book/`)
 
-- [ ] 6.1 Create `decisions/074-badge-and-color-dot.md` from `TEMPLATE.md` (use the number from
+- [x] 6.1 Create `decisions/074-badge-and-color-dot.md` from `TEMPLATE.md` (use the number from
       0.1), with status Accepted.
       - Context: A14/A15 drift, the uncovered translucent brand pair (4.30:1), the `#FFFFFF` ring.
       - Decision: D1 (tone table), D2–D3 (size, scaling, required `accessibilityLabel: string | null`),
@@ -170,7 +170,7 @@ Android on the Mac. Land three commits, following the design's Migration Plan.
 
       Add the row to `decisions/README.md`. Verify: from the repo root,
       `rg -n "074" docs/mobile/architecture-book` shows the index row and every link.
-- [ ] 6.2 `theming.md`: add `## Badges and color dots — Badge, ColorDot (src/design/badge/, src/design/color-dot/)`
+- [x] 6.2 `theming.md`: add `## Badges and color dots — Badge, ColorDot (src/design/badge/, src/design/color-dot/)`
       after the Lists section. Cover the tone table, sizes, scaling, the accessibility choice, the
       dot sizes and ring, "color names belong to the control", the gates (90% tiers,
       `local/no-raw-event-color`, gallery story ids) and the deferrals. In the color-role list, add
@@ -178,18 +178,18 @@ Android on the Mac. Land three commits, following the design's Migration Plan.
       calendar", make item 1 (Dot) name `ColorDot`. In the `NativeListHeader` bullet, say the caption
       is a brand `Badge`. Verify: `rg -n "ColorDot|onPrimarySoft|no-raw-event-color" docs/mobile/architecture-book/theming.md`
       shows each.
-- [ ] 6.3 `accessibility.md`: add `## Badges and dots — encoded in Badge and ColorDot` (the required
+- [x] 6.3 `accessibility.md`: add `## Badges and dots — encoded in Badge and ColorDot` (the required
       name-or-hidden choice, counts read as phrases, the two-line wrap with no clip, dots always
       decorative, and spoken color names owned by the control such as the swatch picker's
       `SWATCH_NAME_KEYS`). Change the event-details dot bullet to say it is decorative and
       migrates in 5.8. Link the inbox note `2026-10-26-mobile-ds-badge-color-dot-device-pass.md`.
       Verify: the section exists and every link resolves.
-- [ ] 6.4 `lint-format.md`: add `timecalendar/raw-event-color` to the block list, and a
+- [x] 6.4 `lint-format.md`: add `timecalendar/raw-event-color` to the block list, and a
       rule-inventory entry `**Event colors — local/no-raw-event-color**` after Lists. Cover the
       scope, ignores, allowlist and ceiling (1), the variable/call and JSX-prop caveats, the
       no-shape-rule rationale, and the 4.6 inject-and-revert proof. Verify:
       `rg -n "raw-event-color" docs/mobile/architecture-book/lint-format.md` shows both.
-- [ ] 6.5 Update the rest:
+- [x] 6.5 Update the rest:
       - `testing.md`: the 90% tiers for `badge.tsx` and `color-dot.tsx`, and composited contrast
         pairs in the theme test.
       - `features.md`: the gallery registry table gets `badge` and `color-dot` rows. Personal
@@ -199,7 +199,7 @@ Android on the Mac. Land three commits, following the design's Migration Plan.
 
       Verify: `rg -n "Badge|ColorDot" docs/mobile/architecture-book/{testing,features,architecture}.md`
       covers each file.
-- [ ] 6.6 `CHANGELOG.md`: add `## 2026-10-26 — Badge and ColorDot` at the top. Bullets:
+- [x] 6.6 `CHANGELOG.md`: add `## 2026-10-26 — Badge and ColorDot` at the top. Bullets:
       - `Badge` and `ColorDot` in `src/design/` (theming.md → Badges and color dots, ADR 074).
       - `onPrimarySoft` and composited contrast pairs (theming.md).
       - The badge accessibility choice and decorative dots (accessibility.md).
@@ -207,7 +207,7 @@ Android on the Mac. Land three commits, following the design's Migration Plan.
       - The migrated sites (features.md).
 
       Leave earlier entries as they are. Verify: the entry is first and every link resolves.
-- [ ] 6.7 Outside the Book: `docs/react-native-migration/inbox/2026-10-26-mobile-ds-badge-color-dot-device-pass.md`
+- [x] 6.7 Outside the Book: `docs/react-native-migration/inbox/2026-10-26-mobile-ds-badge-color-dot-device-pass.md`
       exists (written at planning). Update its story ids if any changed during implementation.
       Verify: every story id it names (`badge--accessibility`, `badge--long-strings`,
       `color-dot--rings`, `color-dot--stack`) is produced by `src/design/gallery/stories.ts`
@@ -218,13 +218,13 @@ Android on the Mac. Land three commits, following the design's Migration Plan.
 
 ## 7. Verification
 
-- [ ] 7.1 `npx tsc --noEmit` passes.
-- [ ] 7.2 `npm run lint` passes with `--max-warnings 0`.
-- [ ] 7.3 `npm test -- --coverage` passes. That includes the 90% per-file tiers (`badge.tsx`,
+- [x] 7.1 `npx tsc --noEmit` passes.
+- [x] 7.2 `npm run lint` passes with `--max-warnings 0`.
+- [x] 7.3 `npm test -- --coverage` passes. That includes the 90% per-file tiers (`badge.tsx`,
       `color-dot.tsx`, `src/theme/**`), the registry matrix with an unchanged known-violation
       list, `tools/eslint-rules` (new suites), the design import-policy and import-graph
       contracts, FR/EN parity and `e2e/maestro-selectors.test.ts`. Record the suite and test
       counts for the PR.
-- [ ] 7.4 From the repo root, `openspec validate add-mobile-ds-badge-color-dot` passes. Then grep
+- [x] 7.4 From the repo root, `openspec validate add-mobile-ds-badge-color-dot` passes. Then grep
       the change folder, the new tests and the inbox note for developer or account names. Verify:
       the grep finds none.

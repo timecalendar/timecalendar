@@ -66,6 +66,7 @@ decision changes; use Git for its history.
 | [071](./071-native-e2e-runs-every-scheduled-day.md)                   | Run both native E2E platforms on every scheduled day, with no skip                                |
 | [072](./072-native-list-seam.md)                                      | The native list seam is `NativeList*`, with no feature-owned row adapters                         |
 | [073](./073-list-row-family.md)                                       | `ListRow` family for RN lists; Android `NativeListRow` semantics through a local Compose modifier |
+| [074](./074-badge-and-color-dot.md)                                   | `Badge` with a closed tone and a required accessibility choice; a decorative `ColorDot`           |
 
 > `045` is intentionally left free: the open source-recovery PR carries an ADR
 > numbered `044` that collides with the merged one above and renumbers to `045`

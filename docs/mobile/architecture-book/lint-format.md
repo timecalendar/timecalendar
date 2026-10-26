@@ -8,7 +8,7 @@ The exact rules and their options live in `mobile/eslint.config.js` (named block
 `timecalendar/environment-home`, `timecalendar/design-home`, `timecalendar/fixtures`,
 `timecalendar/design-tests`, `timecalendar/design-fixtures`, `timecalendar/chrome-fixtures`,
 `timecalendar/icon-seam`, `timecalendar/raw-button`, `timecalendar/ad-hoc-status`,
-`timecalendar/ad-hoc-separator`, `timecalendar/raw-text-input`,
+`timecalendar/ad-hoc-separator`, `timecalendar/raw-event-color`, `timecalendar/raw-text-input`,
 `timecalendar/retired-list-names`,
 `timecalendar/calendar-sources-is-a-leaf`, `timecalendar/storage-seams`,
 `timecalendar/swiftui-identifiers`, and `timecalendar/tests`). The config is the source of
@@ -364,6 +364,26 @@ truth; this file carries the caveats the config can't (R-1).
   `src/features/settings/ui/timezone-chooser-screen.tsx` fails `npm run lint` naming the rule; a
   migrated file added to the allowlist fails the contract test; re-adding `school-row.tsx` to the
   raw-button allowlist fails its test (stale and over the ceiling).
+- **Event colors — `local/no-raw-event-color`** (`tools/eslint-rules/no-raw-event-color.js`,
+  block `timecalendar/raw-event-color`, `files: ["src/**/*.tsx"]`): a non-computed
+  `backgroundColor` or `borderColor` style property whose value is a non-computed `.color` member
+  (`event.color`, `tag.color`, `item?.color`), unless the object is `theme`, is an error; event and
+  calendar colors enter UI through `ColorDot` from `@/design` (and `EventSurface` later)
+  ([theming.md](./theming.md) → Badges and color dots, ADR [074](./decisions/074-badge-and-color-dot.md)).
+  Ignored: `src/design/**`, `src/theme/**`, `src/features/calendar/renderer/**` (the owned
+  renderer, ADR 033), tests, and the files in `tools/eslint-rules/raw-event-color-allowlist.js`,
+  each annotated with its migrating slice (`event-details-content.tsx`, the title dot and
+  `TagBubble`, 5.8). `raw-event-color-allowlist.test.js` fails on a stale entry, a missing file, a
+  duplicate, or a list longer than its ceiling (1). `no-raw-event-color.test.js` is the RuleTester
+  suite: `color: row.color` (a data-object key, not a fill), `[key]: event.color` and
+  `eventSurfaceColor(event.color, scheme)` pass. **Caveats:** a color reached through a variable
+  or a call is not followed, and a `color=` JSX prop is not matched, so review checks that new
+  event-color UI uses `ColorDot`. There is no pill or dot shape rule: `borderRadius: Radii.pill`
+  also draws FABs, glass buttons, the now line, the agenda rail and page indicators, so it is no
+  badge signature. Inject-and-revert proof: a `<View style={{ backgroundColor: event.color }} />`
+  in `src/features/personal-events/ui/personal-events-list.tsx` fails `npm run lint` naming the
+  rule; adding that file to the allowlist fails its test (stale and over the ceiling); a `Badge`
+  with no `accessibilityLabel` in a gallery fixture fails `npx tsc --noEmit`.
 - **L12 — no identifiers on SwiftUI containers** (`local/no-swiftui-container-identifier` in the
   `timecalendar/swiftui-identifiers` block, `src/**`): SwiftUI applies an accessibility identifier
   set on a container to every child and replaces the children's own, so a row inside an identified

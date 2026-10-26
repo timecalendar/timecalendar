@@ -22,7 +22,7 @@ these pages describe the system as it is now.
 - Shared infrastructure is reached through owned seams such as `@/db`, `@/storage`,
   `@/firebase`, and `@/components/chrome`.
 - Design primitives live in family folders under `src/design/` (`text/`, `icon/`, `button/`,
-  `field/`, `list/`, `status/`, `layout/`) and are imported only through the `@/design` barrel, which exports
+  `badge/`, `color-dot/`, `field/`, `list/`, `status/`, `layout/`) and are imported only through the `@/design` barrel, which exports
   primitives and their types, never tokens (`@/theme`) or gallery code. The component gallery is
   the developer-only entry `@/design/gallery`; `*.gallery.tsx` fixtures live next to the component
   they exercise ([ADR 068](./decisions/068-design-layer-barrel-and-gallery-entry.md)).

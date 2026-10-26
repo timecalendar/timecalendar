@@ -69,6 +69,8 @@ The registry lists, in this order (paths under `mobile/src/`):
 | `design/list/list-row.gallery.tsx`                             | `list-row`                       | `plain`, `grouped`, `states`, `leading`, `static`, `overline`, `long-strings`                                                                                                                       |
 | `design/list/list-section.gallery.tsx`                         | `list-section`                   | `titled`, `single`, `seam-comparison`, `long-strings`                                                                                                                                               |
 | `design/list/separator.gallery.tsx`                            | `separator`                      | `insets`                                                                                                                                                                                            |
+| `design/badge/badge.gallery.tsx`                               | `badge`                          | `tones`, `sizes`, `with-icon`, `accessibility`, `long-strings`                                                                                                                                      |
+| `design/color-dot/color-dot.gallery.tsx`                       | `color-dot`                      | `sizes`, `presets`, `rings`, `stack`                                                                                                                                                                |
 | `components/chrome/native-list.gallery.tsx`                    | `native-list`                    | `rows`, `destructive`, `switches`, `choices`, `header-and-alert`, `floating-action` (Android), `radio-dialog` (Android), `long-strings`                                                             |
 | `components/chrome/native-text-entry-dialog.gallery.tsx`       | `native-text-entry-dialog`       | `default`, `submit-disabled`, `pending`                                                                                                                                                             |
 | `components/chrome/native-list-numeric-editor.gallery.tsx`     | `native-list-numeric-editor`     | `default`, `validation-error`, `long-strings`                                                                                                                                                       |
@@ -158,9 +160,17 @@ The registry lists, in this order (paths under `mobile/src/`):
   inset `ListRowSeparator`; the row's name stays the bare school name), hidden events (a
   `ListSection` per group of static rows with the Unhide button as accessory), Activity (grouped
   rows with a toned overline; new and changed rows open event details and announce their change
-  lines, cancelled rows are static), personal events (grouped rows with the color swatch, opened
-  through `router.push`) and export-guide provider selection (grouped rows with the thumbnail).
+  lines, cancelled rows are static), personal events (grouped rows with a large `ColorDot` in the
+  event color as leading element, the row named by the title alone, opened through `router.push`) and export-guide provider selection (grouped rows with the thumbnail).
   The dormant school-group picker keeps its own tree rows.
+- Home's welcome card summarizes the day with at most five overlapping medium `ColorDot`s ringed
+  in `homeHero`, then a `+N` count, in a container hidden from assistive technology; the summary
+  text carries the count (`ui/home-screen.test.tsx`).
+- The inline checklist progress pill (Home today, upcoming and timeline cards, the agenda) is a
+  hidden `Badge`, `positive` when complete and `informational` otherwise, with the checked or
+  pending glyph and `completed/total`; the owning summary carries the progress phrase. The
+  `compact` variant fitted inside calendar grid tiles keeps its own drawing
+  (`event-checklists/ui/checklist-progress-indicator.test.tsx`).
 - Home's brand lockup renders the app name as a one-line `title2` header capped at
   `WordmarkMaxFontScale` (`ui/home-screen.test.tsx`).
 - `onboarding/index` keeps its branded safe-area composition. Each welcome page wraps its content
@@ -283,7 +293,7 @@ The registry lists, in this order (paths under `mobile/src/`):
 - UI failures are accessible. Unexpected native, persistence, and background failures are
   recorded through `@/firebase` without personal data.
 - About owns its standalone `features/about` module and renders the `NativeList` seam directly
-  (`NativeListSection`, `NativeListRow`). It opens with the chrome brand header (app icon, name, blurb, version caption); a
+  (`NativeListSection`, `NativeListRow`). It opens with the chrome brand header (app icon, name, blurb, and the version caption as a brand `Badge` keeping `about-version`); a
   link failure shows as a `NativeListAlert` below it. This reversible local ownership choice does not require an ADR.
 - Changelog owns its typed newest-first catalog, total seen-version store, gate, and shared
   history/sheet content. Phase 09 must call its exported setter before `(tabs)` mounts; every

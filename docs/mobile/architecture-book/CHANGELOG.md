@@ -1,3 +1,20 @@
+## 2026-10-26 — Badge and ColorDot
+
+- `Badge` and `ColorDot` live in `src/design/badge/` and `src/design/color-dot/`: a closed tone
+  and size table for short labels, and a decorative circular marker for event and calendar colors
+  with an optional surface-token ring ([theming.md](./theming.md) → Badges and color dots, ADR
+  [074](./decisions/074-badge-and-color-dot.md)).
+- `onPrimarySoft` is the label role on the `primarySoft` brand wash, and a contrast pair can name
+  the opaque surface a translucent background sits on (`over`), composited before the ratio is
+  checked; `ColorDotSize` is a token ([theming.md](./theming.md) → Token layer, Contrast).
+- A badge requires `accessibilityLabel: string | null` (a name or hidden), wraps to two lines
+  without clipping, and a color dot is always decorative
+  ([accessibility.md](./accessibility.md) → Badges and dots).
+- `local/no-raw-event-color` reports a raw `.color` style fill outside the design layer, with its
+  allowlist at ceiling 1 ([lint-format.md](./lint-format.md) → Event colors).
+- The About header caption, the inline checklist progress pill, the personal-events list dot and
+  the Home welcome dots render through `Badge` and `ColorDot` ([features.md](./features.md)).
+
 ## 2026-10-26 — List row family and Android row semantics
 
 - On Android every `NativeListRow` is one TalkBack node with a content description (name, value,
