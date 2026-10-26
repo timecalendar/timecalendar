@@ -6,7 +6,7 @@
   ([lint-format.md](./lint-format.md) → Style literals, ADR
   [077](./decisions/077-visual-style-lint-ratchet.md)).
 - Not-yet-migrated files sit on `style-literal-allowlist.js` with only the categories they still
-  violate turned off, pinned by a per-category ceiling test; every migration slice deletes its
+  violate turned off, pinned by an exact per-category ceiling test; every migration slice deletes its
   files from the allowlist in the same PR ([lint-format.md](./lint-format.md) → Style literals).
 - `src/design/**` and chrome are clean: the `ErrorMessage` title is the `sectionTitle` ramp step,
   and the iOS list icon tile and native list header icon use the `ListGeometry` tokens

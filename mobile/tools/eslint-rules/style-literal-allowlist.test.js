@@ -57,14 +57,12 @@ describe("style-literal allowlist", () => {
   })
 
   it.each(Object.keys(STYLE_LITERAL_ALLOWLIST_CEILING))(
-    "never grows past its %s ceiling",
+    "matches its %s ceiling exactly",
     (category) => {
       const count = styleLiteralAllowlist.filter(({ categories }) =>
         categories.includes(category),
       ).length
-      expect(count).toBeLessThanOrEqual(
-        STYLE_LITERAL_ALLOWLIST_CEILING[category],
-      )
+      expect(count).toBe(STYLE_LITERAL_ALLOWLIST_CEILING[category])
     },
   )
 

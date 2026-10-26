@@ -40,6 +40,9 @@ const radiusLiteral = (code) => invalid(code, "radiusLiteral")
 ruleTester.run("no-style-literals", rule, {
   valid: [
     on(`const a = { color: theme.text }`),
+    on(`const { elevation } = props`),
+    on(`const { color = "#fff" } = props`),
+    on(`function f({ padding = 8, borderRadius: r = 4 }) {}`),
     on(`const a = { padding: Spacing.two }`),
     on(`const a = { borderRadius: Radii.medium }`),
     on(`const a = { borderBottomWidth: StyleSheet.hairlineWidth }`),

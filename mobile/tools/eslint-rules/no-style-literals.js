@@ -257,7 +257,7 @@ module.exports = {
 
     return {
       Property(node) {
-        if (node.computed) return
+        if (node.computed || node.parent.type === "ObjectPattern") return
         const name = keyName(node.key)
         if (name === undefined) return
         const category = classify(name)

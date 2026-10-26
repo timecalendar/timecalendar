@@ -447,7 +447,8 @@ truth; this file carries the caveats the config can't (R-1).
   file (`npx eslint --print-config <file>` shows the result).
   `style-literal-allowlist.test.js` lints each listed file with all five categories on and fails on
   a missing file, a duplicate path, an unknown category, a stale category (the failure names
-  `path:category`), or a per-category entry count above `STYLE_LITERAL_ALLOWLIST_CEILING`.
+  `path:category`), or a per-category entry count that differs from
+  `STYLE_LITERAL_ALLOWLIST_CEILING` (the ceiling is exact, so a cleaned category cannot leave slack).
   **Every migration slice deletes its files, or the categories it cleans, from
   `style-literal-allowlist.js` in the same PR, and lowers the matching ceilings.** Raising a
   ceiling needs a reason in review. `no-style-literals.test.js` is the RuleTester suite.

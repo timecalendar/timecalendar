@@ -4,7 +4,7 @@ import { AccessibilityInfo } from "react-native"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { useErrorAnnouncement } from "@/hooks/use-error-announcement"
 import { usePlatform } from "@/test-support/platform"
-import { Colors, MinTouchTarget, Spacing } from "@/theme"
+import { Colors, MinTouchTarget, Spacing, TypeRamp } from "@/theme"
 
 import { ErrorNotice, FieldError } from "./error-surfaces"
 
@@ -94,9 +94,12 @@ describe.each(["ios" as const, "android" as const])(
           testID="notice"
         />,
       )
-      expect(
-        view.getByRole("header", { name: "Could not refresh" }),
-      ).toBeTruthy()
+      const title = view.getByRole("header", { name: "Could not refresh" })
+      expect(title).toHaveProp(
+        "dynamicTypeRamp",
+        TypeRamp.sectionTitle.dynamicTypeRamp,
+      )
+      expect(title).toHaveStyle(TypeRamp.sectionTitle.style)
       expect(
         view.getByRole("alert", {
           name: /Could not refresh.*Your saved events are still available\./,

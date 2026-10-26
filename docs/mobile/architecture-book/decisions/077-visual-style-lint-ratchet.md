@@ -30,7 +30,8 @@ be a gate before it is prose. This is roadmap slice 4.1 (audit gates L5, L6, L7,
   not-yet-migrated file with the categories it still violates and its migrating slice.
   `eslint.config.js` appends one block per entry that turns off only those categories for that
   file. `style-literal-allowlist.test.js` fails on a missing file, a duplicate, an unknown or stale
-  category, or a per-category count above its committed ceiling.
+  category, or a per-category count that differs from its committed ceiling (exact, so the
+  ceiling only moves down with the list).
 - **Every migration slice deletes its files (or the categories it cleans) from the allowlist in
   the same PR** and lowers the matching ceilings.
 
