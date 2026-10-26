@@ -186,6 +186,22 @@ describe.each(["ios", "android"] as const)("on %s", (platform) => {
     expect(screen.queryByTestId("color-error")).toBeNull()
   })
 
+  it("speaks the error through every swatch's hint", async () => {
+    await renderField({ error: "Choose a color." })
+    for (const option of options) {
+      expect(
+        screen.getByTestId(`color-${option.color}`).props.accessibilityHint,
+      ).toBe("Choose a color.")
+    }
+  })
+
+  it("gives the swatches no hint without an error", async () => {
+    await renderField()
+    expect(
+      screen.getByTestId("color-#E91E63").props.accessibilityHint,
+    ).toBeUndefined()
+  })
+
   it("merges the caller style last", async () => {
     const { view } = await renderField({ style: { marginTop: 7 } })
     const root = view.toJSON() as unknown as { props: { style: unknown } }

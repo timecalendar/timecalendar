@@ -309,6 +309,11 @@ colors, so an RN list and a `NativeList` on the same page read as one surface.
   union makes a nested control in a pressable row, a color, height or font override, and a row
   without `testID` type errors. `style` is `StyleProp<ListRowLayoutStyle>` (`ButtonLayoutStyle`
   keys) and merges last.
+- **Large text.** At accessibility text sizes (`useIsAccessibilityTextSize()`) the value, the
+  selection check and a static row's accessory stack under the text instead of beside it, so a
+  long label wraps at word boundaries across the full row width. The stacked accessory is a
+  sibling below the accessible text element, never inside it, so it stays its own focus stop
+  (`list-row.test.tsx` pins the layout and the tree).
 - **Geometry** comes from `ListGeometry` in `@/theme`, which `native-list.tsx` also reads:
 
   | Token                                     | iOS                       | Android            |

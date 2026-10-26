@@ -221,11 +221,13 @@ function useRowModel(props: ListRowProps, grouped: boolean): RowModel {
   const accessibilitySize = useIsAccessibilityTextSize()
   const interactive = props.onPress !== undefined || props.href !== undefined
   const selected = interactive && props.selected === true
+  const accessory = !interactive && props.trailing !== undefined
   return {
     interactive,
     disabled: interactive && props.disabled === true,
     selected,
-    stacked: accessibilitySize && Boolean(props.value || selected),
+    stacked:
+      accessibilitySize && (Boolean(props.value) || selected || accessory),
     name:
       props.accessibilityLabel ??
       joinRowName([
@@ -280,9 +282,11 @@ function RowText({
   stackedTrailing: ReactNode
 }) {
   const supporting = keyedLines([row.subtitle, ...(row.details ?? [])])
-  return (
+  const stackedAccessory =
+    model.stacked && !model.interactive && row.trailing ? row.trailing : null
+  const text = (
     <View
-      style={styles.text}
+      style={stackedAccessory ? styles.stackedText : styles.text}
       {...(model.interactive
         ? {}
         : {
@@ -314,6 +318,15 @@ function RowText({
       {model.stacked ? (
         <View style={styles.stackedTrailing}>{stackedTrailing}</View>
       ) : null}
+    </View>
+  )
+  if (!stackedAccessory) return text
+  // The accessory sits beside the accessible text element, not inside it,
+  // so an interactive accessory stays its own focusable element.
+  return (
+    <View style={styles.text}>
+      {text}
+      <View style={styles.stackedAccessory}>{stackedAccessory}</View>
     </View>
   )
 }
@@ -392,7 +405,7 @@ function RowContent({ row, model }: { row: ListRowProps; model: RowModel }) {
       ) : null}
       {model.stacked ? null : check}
       {chevron ? <DisclosureChevron testID={`${row.testID}-chevron`} /> : null}
-      {!model.interactive && row.trailing ? (
+      {!model.interactive && row.trailing && !model.stacked ? (
         <View style={styles.accessory}>{row.trailing}</View>
       ) : null}
     </>
@@ -528,6 +541,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.two,
   },
+  stackedText: { gap: Spacing.half },
   accessory: { marginStart: Spacing.two },
+  stackedAccessory: { alignSelf: "flex-start", marginTop: Spacing.one },
   separator: { position: "absolute", start: 0, end: 0, bottom: 0 },
 })

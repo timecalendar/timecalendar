@@ -1,4 +1,4 @@
-import { fireEvent, render } from "@testing-library/react-native"
+import { fireEvent, render, within } from "@testing-library/react-native"
 import { router } from "expo-router"
 import {
   Platform,
@@ -374,6 +374,64 @@ describe.each(["ios", "android"] as const)("ListRow on %s", (platform) => {
     expect(large.getByText("Zone").props.numberOfLines).toBe(1)
     expect(large.getByText("Zone").props.adjustsFontSizeToFit).toBe(true)
     expect(large.getByText("Zone").props.minimumFontScale).toBe(0.5)
+  })
+
+  it("keeps a static accessory beside the text at standard sizes", async () => {
+    const onAccessory = jest.fn()
+    const view = await render(
+      <ListRow
+        label="Seminar demo"
+        testID="row"
+        trailing={
+          <Button
+            variant="text"
+            size="small"
+            label="Un-hide"
+            onPress={onAccessory}
+            testID="accessory"
+          />
+        }
+      />,
+    )
+    const text = view.getByLabelText("Seminar demo")
+    expect(text.parent!.props.testID).toBe("row")
+    expect(flat(view.getByTestId("accessory").parent!)).toMatchObject({
+      marginStart: Spacing.two,
+    })
+  })
+
+  it("stacks a static accessory under the text at accessibility sizes", async () => {
+    mockFontScale = 3.571
+    const onAccessory = jest.fn()
+    const view = await render(
+      <ListRow
+        label="Seminar demo"
+        value="3"
+        testID="row"
+        trailing={
+          <Button
+            variant="text"
+            size="small"
+            label="Un-hide"
+            onPress={onAccessory}
+            testID="accessory"
+          />
+        }
+      />,
+    )
+    const text = view.getByLabelText("Seminar demo")
+    expect(text.props.accessible).toBe(true)
+    expect(text.props.accessibilityValue).toEqual({ text: "3" })
+    expect(within(text).queryByTestId("accessory")).toBeNull()
+    const accessorySlot = view.getByTestId("accessory").parent!
+    expect(flat(accessorySlot)).toMatchObject({ alignSelf: "flex-start" })
+    const column = accessorySlot.parent!
+    expect(column).toBe(text.parent)
+    expect(flat(column)).toMatchObject({ flex: 1 })
+    expect(column.parent!.props.testID).toBe("row")
+    expect(view.queryAllByRole("button")).toHaveLength(1)
+    await fireEvent.press(view.getByTestId("accessory"))
+    expect(onAccessory).toHaveBeenCalledTimes(1)
   })
 
   it("wraps a multi-word label at accessibility sizes", async () => {

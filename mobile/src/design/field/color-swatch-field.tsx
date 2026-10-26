@@ -6,6 +6,7 @@ import {
   View,
 } from "react-native"
 
+import { fieldErrorHint } from "@/design/field/field-error-hint"
 import { MinTouchTarget, Radii, Spacing, StateOpacity, useTheme } from "@/theme"
 
 import { FieldChrome, type TextFieldLayoutStyle } from "./text-field"
@@ -61,6 +62,7 @@ export function ColorSwatchField({
                 ios ? { selected, disabled } : { checked: selected, disabled }
               }
               accessibilityLabel={option.label}
+              accessibilityHint={fieldErrorHint(error)}
               disabled={disabled}
               onPress={() => onChange(option.color)}
               android_ripple={

@@ -90,8 +90,9 @@ These rules guard real product touchables (interactive controls declare `accessi
   reader reads the text, then the action.
 - A `ListSection` title is a `header`. A `Separator` is hidden from assistive technology.
 - Rows are at least 44pt (iOS) or 56dp (Android) tall and grow with their text. Line caps are
-  label 8, supporting 8, value 4, overline 2; at accessibility text sizes the value and check
-  stack under the label, and a single-word label shrinks to one line instead of breaking.
+  label 8, supporting 8, value 4, overline 2; at accessibility text sizes the value, the check
+  and a static row's accessory stack under the label, and a single-word label shrinks to one line
+  instead of breaking. A stacked accessory stays outside the text element, its own focus stop.
 - On Android, a `NativeListRow` from the native seam is one TalkBack node whose content
   description is the name, then the value, then the badge, then the hint, with `Role.Button` on
   navigation and action rows (the `timecalendarSemantics` modifier, ADR
@@ -182,8 +183,8 @@ These rules guard real product touchables (interactive controls declare `accessi
 - Artwork is decorative and not rendered at accessibility text sizes; `screen` scrolls once the
   text outgrows the viewport, so title and actions stay reachable at AX5 and font scale 2.0.
 - **Field errors live in the field's hint.** React Native forwards `aria-describedby` and
-  `nativeID` relations to neither UIKit nor Android, so `TextField` and `DateTimeField` fold the
-  error into the control's `accessibilityHint` (→ Fields). VoiceOver and TalkBack read it after
+  `nativeID` relations to neither UIKit nor Android, so `TextField`, `DateTimeField` and every
+  `ColorSwatchField` swatch fold the error into the control's `accessibilityHint` (→ Fields). VoiceOver and TalkBack read it after
   the label and value on focus; `FieldError` keeps its alert text, Android live region and iOS
   announcement for the moment it appears. `aria-describedby` is a lint
   error ([lint-format.md](./lint-format.md) → Status). Folding the error into

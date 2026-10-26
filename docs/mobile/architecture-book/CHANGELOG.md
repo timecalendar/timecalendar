@@ -5,12 +5,18 @@
   platform press feedback and roles, caller-supplied names ([theming.md](./theming.md) → Fields,
   ADR [078](./decisions/078-color-swatch-field.md), [accessibility.md](./accessibility.md)).
 - `local/no-raw-radio-group` makes a hand-built `radiogroup` or `radio` role in feature or route
-  code a lint error, with no allowlist ([lint-format.md](./lint-format.md) → Radio groups).
+  code a lint error, including through a conditional, a logical expression or a type assertion,
+  with no allowlist ([lint-format.md](./lint-format.md) → Radio groups).
 - The personal-events list adds through the create idiom: an iOS header "+" and an Android
   `FloatingAction` with `Layout.fabClearance` under the list
   ([theming.md](./theming.md) → Header and floating actions, [features.md](./features.md)).
 - The personal-event editor passes `KeyboardSafeActionLayout` no layout style; Save and Delete
   sit stacked in the shared action rhythm ([theming.md](./theming.md), [features.md](./features.md)).
+- At accessibility text sizes a static `ListRow`'s accessory stacks under the text, as the value
+  and check do, and stays its own focus stop outside the text element
+  ([theming.md](./theming.md) → Lists, [accessibility.md](./accessibility.md)).
+- Each `ColorSwatchField` swatch speaks the field error through its hint (`fieldErrorHint`)
+  ([accessibility.md](./accessibility.md)).
 - Hidden events, the personal-events list and the personal-event form compose only `@/design`
   and `@/components/chrome`, and sit on no lint allowlist.
 
