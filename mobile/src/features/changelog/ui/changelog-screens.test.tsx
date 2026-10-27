@@ -1,6 +1,7 @@
-import { act, fireEvent, render } from "@testing-library/react-native"
+import { act, fireEvent, render, within } from "@testing-library/react-native"
 import { type NativeStackNavigationOptions, router, Stack } from "expo-router"
 import { StyleSheet } from "react-native"
+import type { TestInstance } from "test-renderer"
 
 import {
   getChangelogSeenVersion,
@@ -9,6 +10,7 @@ import {
 import i18n from "@/i18n"
 import { headerBarItem, renderHeaderSide } from "@/test-support/header-actions"
 import { usePlatform } from "@/test-support/platform"
+import { Colors, TypeRamp } from "@/theme"
 
 import { ChangelogHistoryScreen } from "./changelog-history-screen"
 import { ChangelogSheetScreen } from "./changelog-sheet-screen"
@@ -107,6 +109,59 @@ describe("Changelog screens", () => {
     expect(mockDismiss).not.toHaveBeenCalled()
   })
 })
+
+function hiddenSubtrees(node: TestInstance): number {
+  const own =
+    node.props.accessibilityElementsHidden === true &&
+    node.props.importantForAccessibility === "no-hide-descendants"
+      ? 1
+      : 0
+  return node.children.reduce<number>(
+    (count, child) =>
+      typeof child === "string" ? count : count + hiddenSubtrees(child),
+    own,
+  )
+}
+
+describe.each(["ios", "android"] as const)(
+  "Changelog release list on %s",
+  (platform) => {
+    usePlatform(platform)
+    const ios = platform === "ios"
+
+    it("titles each release like a list section", async () => {
+      const view = await render(<ChangelogHistoryScreen />)
+      const title = view.getByRole("header", { name: "Version 4.0" })
+      expect(title.props.testID).toBe("changelog-release-4-title")
+      expect(StyleSheet.flatten(title.props.style)).toMatchObject({
+        fontSize: TypeRamp[ios ? "footnote" : "label"].style.fontSize,
+        color: ios ? Colors.light.textSecondary : Colors.light.actionText,
+      })
+      await view.unmount()
+    })
+
+    it("lists each item as a static row in catalog order", async () => {
+      const view = await render(<ChangelogHistoryScreen />)
+      const release = view.getByTestId("changelog-release-4")
+      expect(within(release).queryAllByRole("button")).toHaveLength(0)
+      const names = [0, 1, 2].map((index) => {
+        const row = view.getByTestId(`changelog-release-4-item-${index}`)
+        expect(row.props.accessibilityRole).toBeUndefined()
+        expect(hiddenSubtrees(row)).toBeGreaterThan(0)
+        return within(row)
+          .getAllByLabelText(/, /)
+          .map((node) => node.props.accessibilityLabel as string)[0]
+      })
+      expect(names).toEqual([
+        `A fresh new design, ${i18n.t("changelog.item.design.subtitle")}`,
+        `A faster calendar, ${i18n.t("changelog.item.speed.subtitle")}`,
+        `A truly native feel, ${i18n.t("changelog.item.native.subtitle")}`,
+      ])
+      expect(view.queryByTestId("changelog-release-4-item-3")).toBeNull()
+      await view.unmount()
+    })
+  },
+)
 
 describe("Changelog sheet close on ios", () => {
   usePlatform("ios")

@@ -1,13 +1,7 @@
 import { Stack } from "expo-router"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import {
-  ActivityIndicator,
-  RefreshControl,
-  SectionList,
-  StyleSheet,
-  View,
-} from "react-native"
+import { RefreshControl, SectionList, StyleSheet, View } from "react-native"
 
 import {
   developerActivityArtwork,
@@ -17,9 +11,9 @@ import {
   ListRow,
   type ListRowPosition,
   listRowPosition,
+  ListSectionHeader,
   RootPage,
   StatusView,
-  ThemedText,
 } from "@/design"
 import {
   loadOlderPage,
@@ -115,12 +109,12 @@ export function ActivityScreen() {
         {({ laneStyle }) =>
           !loaded ? (
             <View style={[laneStyle, styles.stateLane]}>
-              <View style={styles.centered} testID="activity-loading">
-                <ActivityIndicator
-                  color={theme.primary}
-                  accessibilityLabel={t("activity.loading")}
-                />
-              </View>
+              <StatusView
+                kind="loading"
+                presentation="screen"
+                testID="activity-loading"
+                title={t("activity.loading")}
+              />
             </View>
           ) : sections.length === 0 && refreshFailed ? (
             <View style={[laneStyle, styles.stateLane]}>
@@ -152,6 +146,7 @@ export function ActivityScreen() {
                 refreshFailed ? (
                   <ErrorNotice
                     compact
+                    style={styles.noticeGap}
                     testID="activity-cached-error"
                     message={t("activity.error.cached")}
                     action={{
@@ -184,16 +179,26 @@ export function ActivityScreen() {
                 />
               }
               contentContainerStyle={[laneStyle, styles.content]}
-              renderSectionHeader={({ section }) => (
-                <ActivityGroupHeader
-                  section={section}
-                  time={formatFullDateTime(
-                    section.log.createdAt,
-                    locale,
-                    displayZone,
-                  )}
-                />
-              )}
+              renderSectionHeader={({ section }) => {
+                const time = formatFullDateTime(
+                  section.log.createdAt,
+                  locale,
+                  displayZone,
+                )
+                return (
+                  <ListSectionHeader
+                    title={section.log.calendarName}
+                    detail={time}
+                    accessibilityLabel={t("activity.group.accessibilityLabel", {
+                      calendar: section.log.calendarName,
+                      time,
+                    })}
+                    style={
+                      section === sections[0] ? undefined : styles.sectionGap
+                    }
+                  />
+                )
+              }}
               renderItem={({ item, index, section }) => (
                 <ActivityItemRow
                   item={item}
@@ -208,32 +213,6 @@ export function ActivityScreen() {
         }
       </RootPage>
     </>
-  )
-}
-
-function ActivityGroupHeader({
-  section,
-  time,
-}: {
-  section: ActivitySection
-  time: string
-}) {
-  const { t } = useTranslation()
-  const theme = useTheme()
-  return (
-    <View
-      accessibilityRole="header"
-      accessibilityLabel={t("activity.group.accessibilityLabel", {
-        calendar: section.log.calendarName,
-        time,
-      })}
-      style={[styles.groupHeader, { backgroundColor: theme.background }]}
-    >
-      <ThemedText type="subtitle">{section.log.calendarName}</ThemedText>
-      <ThemedText type="small" themeColor="textSecondary">
-        {time}
-      </ThemedText>
-    </View>
   )
 }
 
@@ -313,13 +292,13 @@ function OlderFooter({
   onRetry: () => void
 }) {
   const { t } = useTranslation()
-  const theme = useTheme()
   if (loading) {
     return (
-      <ActivityIndicator
+      <StatusView
+        kind="loading"
+        presentation="inline"
         testID="activity-older-loading"
-        color={theme.primary}
-        accessibilityLabel={t("activity.older.loading")}
+        title={t("activity.older.loading")}
         style={styles.footer}
       />
     )
@@ -347,18 +326,8 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.four,
     paddingBottom: Spacing.four,
   },
-  centered: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: Spacing.three,
-    padding: Spacing.four,
-  },
   stateLane: { flex: 1, paddingTop: Spacing.four },
-  groupHeader: {
-    paddingTop: Spacing.four,
-    paddingBottom: Spacing.two,
-    gap: Spacing.half,
-  },
+  sectionGap: { marginTop: Spacing.four },
+  noticeGap: { marginBottom: Spacing.four },
   footer: { marginVertical: Spacing.four },
 })

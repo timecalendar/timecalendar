@@ -339,9 +339,9 @@ truth; this file carries the caveats the config can't (R-1).
   ([theming.md](./theming.md) → Status, ADR [069](./decisions/069-status-view.md)). Ignored:
   `src/design/**`, `src/components/chrome/**`, `src/features/calendar/renderer/**`, tests, and the
   files in `tools/eslint-rules/ad-hoc-status-allowlist.js`, each annotated with its migrating slice
-  (Activity 5.4, developer import 5.7).
+  (developer import 5.7).
   `ad-hoc-status-allowlist.test.js` fails on a stale entry, a missing file, a duplicate, or a list
-  longer than `AD_HOC_STATUS_ALLOWLIST_CEILING` (2). `no-ad-hoc-status.test.js` is the RuleTester
+  longer than `AD_HOC_STATUS_ALLOWLIST_CEILING` (1). `no-ad-hoc-status.test.js` is the RuleTester
   suite. **Caveats:** a plain-text empty outside a list slot, a `screen` `StatusView` nested in a
   scroll view or list, and a spinner from another package are invisible to it; review and the
   gallery cover them. Inject-and-revert proof: a migrated file added to the allowlist fails the

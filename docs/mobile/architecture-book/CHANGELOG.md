@@ -1,3 +1,21 @@
+## 2026-10-27 — Activity and the changelog on the design system
+
+- `ListSectionHeader` is `ListSection`'s title as an export for virtualized lists' section
+  headers, with an optional `detail` line; with a detail it is one heading element named by the
+  caller's label or "title, detail" ([theming.md](./theming.md) → Lists,
+  [accessibility.md](./accessibility.md)).
+- Activity's first load is a `screen` loading `StatusView` and its older-page footer an `inline`
+  one; its group headers are `ListSectionHeader`s ([theming.md](./theming.md) → Status,
+  [features.md](./features.md)).
+- The changelog history and sheet render a `ListSection` per release with a static `ListRow` per
+  item and its leading icon ([features.md](./features.md)).
+- `activity-screen.tsx` leaves the ad-hoc-status allowlist (`AD_HOC_STATUS_ALLOWLIST_CEILING` 1)
+  and `changelog-content.tsx` the style-literal allowlist (`typographyLiteral` 6,
+  `spacingLiteral` 5) ([lint-format.md](./lint-format.md) → Status, Style literals).
+- The Activity and changelog routes and screens (ten files) join the migrated-screen contract
+  under slice 5.4, `MIGRATED_FILE_FLOOR` 33 ([lint-format.md](./lint-format.md) → Migrated
+  screens).
+
 ## 2026-10-26 — Personal events and hidden events on the design system
 
 - `ColorSwatchField` is the field-family primitive for choosing one color from a palette:

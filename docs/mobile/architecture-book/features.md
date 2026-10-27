@@ -125,6 +125,8 @@ The registry lists, in this order (paths under `mobile/src/`):
 - `activity` and `hidden-events` use `RootPage` with a measured standard lane. Their list/scroll
   owners, loading/error distinctions, pagination, filtering, and write behavior remain
   feature-owned; loaded-empty presentation is a `section` `StatusView` with local artwork.
+  Activity's first load is a `screen` loading `StatusView` in the lane (`activity-loading`) and
+  its older-page footer an `inline` one (`activity-older-loading`).
 - `personal-events` uses a standard `RootPage` for its standalone list and a readable page for the
   editor, while giving list/create/edit titles to compact native Stack chrome. The list's empty
   state is a title and caption ("No personal events", "Events you add appear here."). The
@@ -161,8 +163,9 @@ The registry lists, in this order (paths under `mobile/src/`):
   not-found a `screen` empty with the `calendar.badge.exclamationmark` / `event_busy` symbol.
   Settings timezone chooser: no results is the `FlatList` `ListEmptyComponent`, a `section` empty
   with `announcementKey="noResults"` (`timezone-no-results`). Home sections use `inline`;
-  personal events, hidden events and Activity empties use `section`. Activity, the developer
-  import and the environment runtime gate keep their own spinners until their slices
+  personal events, hidden events and Activity empties use `section`; Activity's first load is
+  `screen` and its older-page footer `inline`. The developer import and the environment runtime
+  gate keep their own spinners until their slices
   ([lint-format.md](./lint-format.md) → Status).
 - Lists the native seam cannot host render `ListRow` (ADR
   [073](./decisions/073-list-row-family.md), [theming.md](./theming.md) → Lists), each keeping
@@ -170,8 +173,9 @@ The registry lists, in this order (paths under `mobile/src/`):
   `ListRowSeparator`), the school picker (plain rows with the logo as leading element and an
   inset `ListRowSeparator`; the row's name stays the bare school name), hidden events (a
   `ListSection` per group of static rows with the Unhide button as accessory), Activity (grouped
-  rows with a toned overline; new and changed rows open event details and announce their change
-  lines, cancelled rows are static), personal events (grouped rows with a large `ColorDot` in the
+  rows with a toned overline under a `ListSectionHeader` per server log, the calendar name as
+  title and the change time as detail, one heading named "calendar, changed time"; new and
+  changed rows open event details and announce their change lines, cancelled rows are static), personal events (grouped rows with a large `ColorDot` in the
   event color as leading element, the row named by the title alone, opened through `router.push`) and export-guide provider selection (grouped rows with the thumbnail).
   The dormant school-group picker keeps its own tree rows.
 - Home's welcome card summarizes the day with at most five overlapping medium `ColorDot`s ringed
@@ -343,7 +347,10 @@ The registry lists, in this order (paths under `mobile/src/`):
   (`NativeListSection`, `NativeListRow`). It opens with the chrome brand header (app icon, name, blurb, and the version caption as a brand `Badge` with testID `about-version`); a
   link failure shows as a `NativeListAlert` below it. This reversible local ownership choice does not require an ADR.
 - Changelog owns its typed newest-first catalog, total seen-version store, gate, and shared
-  history/sheet content. Phase 09 must call its exported setter before `(tabs)` mounts; every
+  history/sheet content. The content is a `ListSection` per release titled "Version x"
+  (`changelog-release-<version>`) with a static `ListRow` per item: the catalog icon as leading
+  icon, the title as label and the description as subtitle
+  (`changelog-release-<version>-item-<index>`). Phase 09 must call its exported setter before `(tabs)` mounts; every
   future `CHANGELOG_VERSION` bump must ship matching bundled content in the same JS update.
 - Environment switching owns all destructive coordination. Feature UI never clears SQLite/MMKV
   directly. Any future authentication/session feature must register its idempotent clear operation

@@ -4,13 +4,15 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react-native"
 import { router } from "expo-router"
 import { Dimensions, Platform, StyleSheet } from "react-native"
 
 import type { ActivityLog, ActivityState } from "@/features/activity/data"
 import i18n from "@/i18n"
-import { Spacing } from "@/theme"
+import { usePlatform } from "@/test-support/platform"
+import { Colors, Spacing, TypeRamp } from "@/theme"
 
 import { buildActivitySections } from "./activity-items"
 import { ActivityScreen } from "./activity-screen"
@@ -113,15 +115,21 @@ afterEach(() => {
 })
 
 describe.each([
-  ["en", "No recent changes", "Timetable updates will appear here."],
+  [
+    "en",
+    "No recent changes",
+    "Timetable updates will appear here.",
+    "Loading recent changes",
+  ],
   [
     "fr",
     "Aucune modification récente",
     "Les changements d'emploi du temps apparaîtront ici.",
+    "Chargement des modifications récentes",
   ],
 ] as const)(
   "ActivityScreen states in %s",
-  (locale, emptyTitle, emptyCaption) => {
+  (locale, emptyTitle, emptyCaption, loadingTitle) => {
     beforeEach(async () => {
       await i18n.changeLanguage(locale)
     })
@@ -129,7 +137,12 @@ describe.each([
     it("renders loading", async () => {
       mockUseActivityLogs.mockReturnValue({ logs: [], loaded: false })
       await render(<ActivityScreen />)
-      expect(screen.getByTestId("activity-loading")).toBeTruthy()
+      const loading = within(screen.getByTestId("activity-loading")).getByRole(
+        "progressbar",
+        { name: loadingTitle },
+      )
+      expect(loading).toBeBusy()
+      expect(within(loading).getByText(loadingTitle)).toBeTruthy()
     })
 
     it("renders the exact illustrated empty title and caption", async () => {
@@ -176,7 +189,11 @@ describe.each([
         refresh: mockScreenRefresh,
       })
       await render(<ActivityScreen />)
-      expect(screen.getByTestId("activity-cached-error")).toBeTruthy()
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId("activity-cached-error").props.style,
+        ).marginBottom,
+      ).toBe(Spacing.four)
       expect(screen.getByText("Event new")).toBeTruthy()
     })
 
@@ -426,6 +443,72 @@ describe("ActivityScreen behavior", () => {
       ])[0]?.data,
     ).toHaveLength(300)
     const calendarName = screen.getAllByText(long)[0]
-    expect(calendarName?.props.numberOfLines).toBeUndefined()
+    expect(calendarName?.props.numberOfLines).toBeGreaterThan(1)
   })
 })
+
+describe("ActivityScreen older-page footer", () => {
+  it("shows an inline loading state while an older page loads", async () => {
+    mockUseActivityLogs.mockReturnValue({
+      logs: [populatedLog()],
+      loaded: true,
+    })
+    let resolve: (value: { status: "loaded" }) => void = () => {}
+    mockLoadOlderPage.mockReturnValueOnce(
+      new Promise((done) => {
+        resolve = done
+      }),
+    )
+    await render(<ActivityScreen />)
+    const list = screen.getByTestId("activity-section-list")
+    await act(async () => {
+      void list.props.onEndReached()
+    })
+    const footer = within(
+      screen.getByTestId("activity-older-loading"),
+    ).getByRole("progressbar", { name: "Loading older changes" })
+    expect(footer).toBeBusy()
+    expect(within(footer).getByText("Loading older changes")).toBeTruthy()
+    await act(async () => {
+      resolve({ status: "loaded" })
+    })
+    expect(screen.queryByTestId("activity-older-loading")).toBeNull()
+  })
+})
+
+describe.each(["ios", "android"] as const)(
+  "ActivityScreen group headers on %s",
+  (platform) => {
+    usePlatform(platform)
+    const ios = platform === "ios"
+
+    it("titles each group with one list-section header", async () => {
+      mockUseActivityLogs.mockReturnValue({
+        logs: [
+          populatedLog(),
+          populatedLog({
+            id: "log-2",
+            createdAt: new Date("2026-08-29T12:00:00.000Z"),
+          }),
+        ],
+        loaded: true,
+      })
+      await render(<ActivityScreen />)
+      const headers = screen.getAllByRole("header", {
+        name: /^Computer Science, changed /,
+      })
+      expect(headers).toHaveLength(2)
+      const [first, second] = headers
+      expect(StyleSheet.flatten(first!.props.style).marginTop).toBeUndefined()
+      expect(StyleSheet.flatten(second!.props.style).marginTop).toBe(
+        Spacing.four,
+      )
+      const title = screen.getAllByText("Computer Science")[0]!
+      expect(title.props.accessibilityRole).toBeUndefined()
+      expect(StyleSheet.flatten(title.props.style)).toMatchObject({
+        fontSize: TypeRamp[ios ? "footnote" : "label"].style.fontSize,
+        color: ios ? Colors.light.textSecondary : Colors.light.actionText,
+      })
+    })
+  },
+)

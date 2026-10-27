@@ -166,6 +166,7 @@ describe.each(["ios", "android"] as const)(
           "list-section--single",
           "list-section--seam-comparison",
           "list-section--long-strings",
+          "list-section--header-detail",
           "separator--insets",
           "badge--tones",
           "badge--sizes",

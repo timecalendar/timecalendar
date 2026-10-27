@@ -11,6 +11,7 @@ import {
   listRowPosition,
   ListRowPositionContext,
 } from "@/design/list/list-row-position"
+import { joinRowName } from "@/design/list/row-name"
 import { ThemedText } from "@/design/text/themed-text"
 import { ListGeometry, Spacing } from "@/theme"
 
@@ -31,20 +32,13 @@ export function ListSection({
   const rows = Children.toArray(children).filter(
     (child): child is ReactElement => isValidElement(child),
   )
-  const ios = Platform.OS === "ios"
   return (
     <View testID={testID} style={[styles.section, style]}>
       {title ? (
-        <ThemedText
-          accessibilityRole="header"
-          type={ios ? "footnote" : "label"}
-          tone={ios ? "secondary" : "action"}
-          numberOfLines={4}
-          style={ios ? styles.iosTitle : styles.androidTitle}
-          {...(testID ? { testID: `${testID}-title` } : {})}
-        >
-          {title}
-        </ThemedText>
+        <ListSectionHeader
+          title={title}
+          testID={testID ? `${testID}-title` : undefined}
+        />
       ) : null}
       <View>
         {rows.map((row, index) => (
@@ -67,6 +61,58 @@ export function ListSection({
           {footer}
         </ThemedText>
       ) : null}
+    </View>
+  )
+}
+
+export type ListSectionHeaderProps = {
+  title: string
+  detail?: string | undefined
+  accessibilityLabel?: string | undefined
+  testID?: string | undefined
+  style?: StyleProp<ButtonLayoutStyle>
+}
+
+export function ListSectionHeader({
+  title,
+  detail,
+  accessibilityLabel,
+  testID,
+  style,
+}: ListSectionHeaderProps) {
+  const ios = Platform.OS === "ios"
+  const titleType = ios ? "footnote" : "label"
+  const titleTone = ios ? "secondary" : "action"
+  const inset = ios ? styles.iosTitle : styles.androidTitle
+  if (!detail) {
+    return (
+      <ThemedText
+        accessibilityRole="header"
+        accessibilityLabel={accessibilityLabel}
+        type={titleType}
+        tone={titleTone}
+        numberOfLines={4}
+        style={[inset, style]}
+        testID={testID}
+      >
+        {title}
+      </ThemedText>
+    )
+  }
+  return (
+    <View
+      accessible
+      accessibilityRole="header"
+      accessibilityLabel={accessibilityLabel ?? joinRowName([title, detail])}
+      testID={testID}
+      style={[inset, style]}
+    >
+      <ThemedText type={titleType} tone={titleTone} numberOfLines={4}>
+        {title}
+      </ThemedText>
+      <ThemedText type="footnote" tone="secondary" numberOfLines={4}>
+        {detail}
+      </ThemedText>
     </View>
   )
 }

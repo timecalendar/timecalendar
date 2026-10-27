@@ -11,12 +11,13 @@ import {
   headerScrollProps,
   ListRow,
   ListSection,
+  ListSectionHeader,
   type ListSectionProps,
   RootPage,
   ThemedText,
 } from "@/design"
 import type { GalleryMeta, GalleryStory } from "@/design/gallery"
-import { Spacing } from "@/theme"
+import { Spacing, useIsAccessibilityTextSize } from "@/theme"
 
 type Story = GalleryStory<ListSectionProps>
 
@@ -181,7 +182,55 @@ function LongStringsFixture() {
   )
 }
 
+function HeaderDetailFixture() {
+  const { t } = useTranslation()
+  const accessibilitySize = useIsAccessibilityTextSize()
+  return (
+    <Page>
+      {(onPress) => (
+        <>
+          <ThemedText tone="secondary" testID="gallery-list-section-text-size">
+            {t(
+              accessibilitySize
+                ? "gallery.listSection.textSize.accessibility"
+                : "gallery.listSection.textSize.standard",
+            )}
+          </ThemedText>
+          <ListSectionHeader
+            title={t("gallery.listSection.header")}
+            detail={t("gallery.listSection.detail")}
+            testID="gallery-list-section-header-detail"
+            style={styles.headerGap}
+          />
+          <ListRow
+            label={t("gallery.listRow.label")}
+            subtitle={t("gallery.listRow.subtitle")}
+            hint={t("gallery.listRow.hint")}
+            position="single"
+            trailing="chevron"
+            onPress={onPress}
+            testID="gallery-list-section-header-detail-row"
+          />
+          <ListSectionHeader
+            title={t("gallery.stress.title")}
+            detail={t("gallery.stress.body")}
+            testID="gallery-list-section-header-detail-long"
+            style={styles.headerGap}
+          />
+          <ListRow
+            label={t("gallery.stress.word")}
+            position="single"
+            onPress={onPress}
+            testID="gallery-list-section-header-detail-long-row"
+          />
+        </>
+      )}
+    </Page>
+  )
+}
+
 const styles = StyleSheet.create({
+  headerGap: { marginTop: Spacing.four },
   scroll: { paddingTop: Spacing.four },
   fill: { flex: 1 },
   comparison: { paddingTop: Spacing.four, gap: Spacing.two },
@@ -191,7 +240,13 @@ const meta: GalleryMeta<ListSectionProps> = {
   id: "list-section",
   title: "gallery.listSection.title",
   component: ListSection,
-  stories: ["Titled", "Single", "SeamComparison", "LongStrings"],
+  stories: [
+    "Titled",
+    "Single",
+    "SeamComparison",
+    "LongStrings",
+    "HeaderDetail",
+  ],
 }
 
 export default meta
@@ -214,4 +269,9 @@ export const SeamComparison: Story = {
 export const LongStrings: Story = {
   name: "gallery.listSection.story.longStrings",
   render: () => <LongStringsFixture />,
+}
+
+export const HeaderDetail: Story = {
+  name: "gallery.listSection.story.headerDetail",
+  render: () => <HeaderDetailFixture />,
 }
