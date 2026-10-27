@@ -182,7 +182,7 @@ no real developer or account names.
 
 ## 7. Device verification
 
-- [ ] 7.1 iOS simulator pass (conductor-owned; Xcode 26.6 build on the Mac), light and dark, at the
+- [x] 7.1 iOS simulator pass (conductor-owned; Xcode 26.6 build on the Mac), light and dark, at the
       default text size and at AX5:
       - **Gallery:** `timecalendar-dev://developer/gallery/list-section--header-detail`.
       - **Activity:** cold open (loading: spinner + "Loading recent changes"), the empty state, the
@@ -197,5 +197,7 @@ no real developer or account names.
       title is the M3 `label` in the action color with the time below, and the changelog rows are
       M3 segments with flat icons. Verify: screenshots for the PR. If the host is unreachable,
       record that in the PR and leave this unchecked; it does not block the merge.
+      Host unreachable on 2026-10-27 (`ssh pc` timed out); see
+      inbox/2026-10-27-mobile-ds-activity-changelog-android-device-pass.md.
 - [ ] 7.3 VoiceOver and TalkBack pass (HUMAN: see inbox/2026-10-27-mobile-ds-activity-changelog-screen-reader-pass.md).
       Skip and continue. This does not block the PR.
