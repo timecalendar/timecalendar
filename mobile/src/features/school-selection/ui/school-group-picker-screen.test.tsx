@@ -138,6 +138,48 @@ describe("SchoolGroupPickerScreen", () => {
     expect(mockSelectGroup).not.toHaveBeenCalled()
   })
 
+  it("announces a branch's expanded state and titles its section by the branch", async () => {
+    mockUseSchoolGroups.mockReturnValue(
+      ready([
+        {
+          text: "L1",
+          value: "l1",
+          children: [
+            {
+              text: "L2",
+              value: "l2",
+              children: [{ text: "Group A", value: "a", children: [] }],
+            },
+          ],
+        },
+      ]),
+    )
+    const view = await render(<SchoolGroupPickerScreen />)
+    const branch = () => view.getByTestId("onboarding-group-branch-l1")
+
+    expect(branch().props.accessibilityState).toMatchObject({
+      expanded: false,
+    })
+    expect(branch().props.accessibilityState.selected).toBeUndefined()
+    await fireEvent.press(branch())
+    expect(branch().props.accessibilityState).toMatchObject({ expanded: true })
+
+    const section = view.getByTestId("onboarding-group-section-l1")
+    expect(within(section).getByRole("header")).toHaveTextContent("L1")
+    expect(
+      within(section).getByTestId("onboarding-group-branch-l2"),
+    ).toBeTruthy()
+
+    await fireEvent.press(view.getByTestId("onboarding-group-branch-l2"))
+    expect(view.getByTestId("onboarding-group-leaf-a")).toBeTruthy()
+    await fireEvent.press(branch())
+    await fireEvent.press(branch())
+    expect(
+      view.getByTestId("onboarding-group-branch-l2").props.accessibilityState,
+    ).toMatchObject({ expanded: false })
+    expect(view.queryByTestId("onboarding-group-leaf-a")).toBeNull()
+  })
+
   it("commits the full selected set and dismisses the stack on confirm", async () => {
     mockUseSchoolGroups.mockReturnValue(
       ready([

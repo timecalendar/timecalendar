@@ -276,6 +276,11 @@ export const ColorDotSize = {
   large: 16,
 } as const
 
+export const ThumbnailSize = {
+  medium: 40,
+  large: 56,
+} as const
+
 export const StateOpacity = {
   pressed: 0.65,
   disabled: 0.55,

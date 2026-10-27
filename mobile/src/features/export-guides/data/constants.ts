@@ -4,6 +4,8 @@ export const EXPORT_GUIDE_MAX_AGE_MS = 24 * 60 * 60 * 1000
 
 export const EXPORT_GUIDE_ASSET_ORIGINS = Object.freeze([
   "https://timecalendar-dev-public.fra1.digitaloceanspaces.com",
+  "https://timecalendar-preprod-public.fra1.digitaloceanspaces.com",
+  "https://timecalendar-public.fra1.digitaloceanspaces.com",
 ] as const)
 
 export const EXPORT_GUIDE_PROVIDER_SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/

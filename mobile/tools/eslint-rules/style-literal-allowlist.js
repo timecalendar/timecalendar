@@ -46,10 +46,6 @@ const styleLiteralAllowlist = [
     path: "src/features/home/ui/home-screen/welcome-card.tsx",
     categories: ["typographyLiteral"],
   }, // 5.9
-  {
-    path: "src/features/school-selection/ui/school-logo.tsx",
-    categories: ["typographyLiteral"],
-  }, // 5.5
 ]
 
 module.exports = { styleLiteralAllowlist, styleLiteralCategoryOption }

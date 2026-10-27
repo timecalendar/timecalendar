@@ -70,10 +70,7 @@ function LongStringsFixture() {
           testID="gallery-keyboard-layout"
           actions={<Submit label={t("gallery.stress.action")} />}
         >
-          <PageIntro
-            title={t("gallery.stress.title")}
-            caption={t("gallery.stress.body")}
-          />
+          <PageIntro caption={t("gallery.stress.body")} />
           {Array.from({ length: LONG_FIELDS }, (_, index) => (
             <Field
               key={index}

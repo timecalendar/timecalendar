@@ -14,10 +14,7 @@ function DefaultFixture() {
   const { t } = useTranslation()
   return (
     <RootPage testID="gallery-root-page">
-      <PageIntro
-        title={t("gallery.rootPage.introTitle")}
-        caption={t("gallery.rootPage.introCaption")}
-      />
+      <PageIntro caption={t("gallery.rootPage.introCaption")} />
       <ThemedText>{t("gallery.rootPage.body")}</ThemedText>
     </RootPage>
   )
@@ -43,10 +40,7 @@ function ScrollsUnderHeaderFixture() {
           testID="gallery-root-page-scroll"
           contentContainerStyle={[laneStyle, styles.scrollContent]}
         >
-          <PageIntro
-            title={t("gallery.rootPage.introTitle")}
-            caption={t("gallery.rootPage.introCaption")}
-          />
+          <PageIntro caption={t("gallery.rootPage.introCaption")} />
           {Array.from({ length: SCROLL_PARAGRAPHS }, (_, index) => (
             <ThemedText key={index}>
               {t("gallery.rootPage.paragraph", { number: index + 1 })}
@@ -62,10 +56,7 @@ function ReadableLaneFixture() {
   const { t } = useTranslation()
   return (
     <RootPage testID="gallery-root-page" lane="readable">
-      <PageIntro
-        title={t("gallery.rootPage.introTitle")}
-        caption={t("gallery.rootPage.readableCaption")}
-      />
+      <PageIntro caption={t("gallery.rootPage.readableCaption")} />
       <ThemedText>{t("gallery.rootPage.body")}</ThemedText>
     </RootPage>
   )
@@ -80,10 +71,7 @@ function LongStringsFixture() {
           {...headerScrollProps(true)}
           contentContainerStyle={[laneStyle, styles.scrollContent]}
         >
-          <PageIntro
-            title={t("gallery.stress.title")}
-            caption={t("gallery.stress.body")}
-          />
+          <PageIntro caption={t("gallery.stress.body")} />
           <ThemedText>{t("gallery.stress.word")}</ThemedText>
           <ThemedText>{t("gallery.stress.body")}</ThemedText>
         </ScrollView>

@@ -111,6 +111,26 @@ function GroupedFixture() {
   )
 }
 
+function DisclosureRow({
+  label,
+  initiallyExpanded,
+  testID,
+}: {
+  label: string
+  initiallyExpanded: boolean
+  testID: string
+}) {
+  const [expanded, setExpanded] = useState(initiallyExpanded)
+  return (
+    <ListRow
+      label={label}
+      expanded={expanded}
+      onPress={() => setExpanded((value) => !value)}
+      testID={testID}
+    />
+  )
+}
+
 function StatesFixture() {
   const { t } = useTranslation()
   return (
@@ -136,6 +156,16 @@ function StatesFixture() {
             destructive
             onPress={onPress}
             testID="gallery-list-row-destructive"
+          />
+          <DisclosureRow
+            label={t("gallery.listRow.collapsed")}
+            initiallyExpanded={false}
+            testID="gallery-list-row-collapsed"
+          />
+          <DisclosureRow
+            label={t("gallery.listRow.expanded")}
+            initiallyExpanded
+            testID="gallery-list-row-expanded"
           />
         </>
       )}

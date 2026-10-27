@@ -42,12 +42,19 @@ type ActiveGuideState = Extract<
   { phase: "guide" | "completed" }
 >
 
+function shownGuidePage(
+  state: ActiveGuideState | null,
+  pageIndex: number | null,
+): { state: ActiveGuideState; pageIndex: number } | null {
+  return state === null || pageIndex === null ? null : { state, pageIndex }
+}
+
 export default function GuidePageScreen() {
   const { t, i18n } = useTranslation()
   const params = useLocalSearchParams<{ pageIndex?: string | string[] }>()
   const pageIndex = parsePageIndex(params.pageIndex)
   const { state, dispatch } = useImportDraft()
-  const heading = useRef<View>(null)
+  const focusTarget = useRef<View>(null)
 
   const listedInstitution =
     state.phase !== "empty" && state.draft.institution.kind === "listed"
@@ -162,22 +169,36 @@ export default function GuidePageScreen() {
         catalogue_version: snapshotState.snapshot.catalogueVersion,
       },
     })
-    const handle = findNodeHandle(heading.current)
+    const handle = findNodeHandle(focusTarget.current)
     if (handle !== null) AccessibilityInfo.setAccessibilityFocus(handle)
   }, [pageIndex, snapshotState, validPage])
 
+  const shownPage =
+    state.phase !== "blocked" && validPage
+      ? shownGuidePage(snapshotState, pageIndex)
+      : null
+
   return (
     <>
-      <Stack.Screen options={{ title: t("exportGuide.page.title") }} />
+      <Stack.Screen
+        options={
+          shownPage === null
+            ? { title: t("exportGuide.page.title") }
+            : {
+                title:
+                  shownPage.state.snapshot.pages[shownPage.pageIndex]!.title,
+              }
+        }
+      />
       {state.phase === "blocked" ? (
         <GuideBlockingError retry={retry} busy={busy} />
-      ) : !validPage || pageIndex === null || snapshotState === null ? (
+      ) : shownPage === null ? (
         <GuideProgress />
       ) : (
         <GuidePageContent
-          state={snapshotState}
-          pageIndex={pageIndex}
-          heading={heading}
+          state={shownPage.state}
+          pageIndex={shownPage.pageIndex}
+          focusTarget={focusTarget}
           dispatch={dispatch}
         />
       )}
@@ -188,12 +209,12 @@ export default function GuidePageScreen() {
 function GuidePageContent({
   state,
   pageIndex,
-  heading,
+  focusTarget,
   dispatch,
 }: {
   state: ActiveGuideState
   pageIndex: number
-  heading: RefObject<View | null>
+  focusTarget: RefObject<View | null>
   dispatch: (action: ImportJourneyAction) => void
 }) {
   const { t } = useTranslation()
@@ -238,13 +259,12 @@ function GuidePageContent({
           testID="export-guide-page-scroll"
           contentContainerStyle={[laneStyle, styles.content]}
         >
-          <View ref={heading} accessible accessibilityRole="header">
-            <ThemedText type="title">{page.title}</ThemedText>
-            <ThemedText
-              testID="export-guide-progress"
-              accessibilityLabel={progress}
-              themeColor="textSecondary"
-            >
+          <View
+            ref={focusTarget}
+            accessible
+            accessibilityLabel={`${page.title}, ${progress}`}
+          >
+            <ThemedText testID="export-guide-progress" tone="secondary">
               {progress}
             </ThemedText>
           </View>

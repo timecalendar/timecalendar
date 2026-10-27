@@ -58,6 +58,22 @@ const MIGRATED_SCREENS: readonly {
       "src/features/changelog/ui/changelog-gate.tsx",
     ],
   },
+  {
+    slice: "5.5",
+    files: [
+      "src/app/onboarding/school.tsx",
+      "src/app/onboarding/groups.tsx",
+      "src/app/onboarding/export-guide/providers.tsx",
+      "src/app/onboarding/export-guide/[pageIndex].tsx",
+      "src/features/school-selection/ui/school-picker-screen.tsx",
+      "src/features/school-selection/ui/school-row.tsx",
+      "src/features/school-selection/ui/school-group-picker-screen.tsx",
+      "src/features/export-guides/ui/provider-selection-screen.tsx",
+      "src/features/export-guides/ui/guide-page-screen.tsx",
+      "src/features/export-guides/ui/guide-status.tsx",
+      "src/features/export-guides/ui/export-guide-image.tsx",
+    ],
+  },
 ]
 
 const DRIFT_PATTERNS: readonly { id: string; pattern: RegExp }[] = [
@@ -127,7 +143,7 @@ function findDrift(source: string): { id: string; line: number }[] {
 }
 
 // Raised by every Phase 5 slice that appends files, so the list cannot shrink.
-const MIGRATED_FILE_FLOOR = 33
+const MIGRATED_FILE_FLOOR = 44
 
 const listedFiles = MIGRATED_SCREENS.flatMap(({ files }) => files)
 

@@ -280,6 +280,42 @@ describe.each(["ios", "android"] as const)("ListRow on %s", (platform) => {
     )
   })
 
+  it("draws and announces a disclosure row's state", async () => {
+    const element = (expanded: boolean) => (
+      <ListRow
+        label="Year 1"
+        expanded={expanded}
+        onPress={jest.fn()}
+        testID="branch"
+      />
+    )
+    const view = await render(element(false))
+    const glyph = () =>
+      view.getByTestId("branch-disclosure", { includeHiddenElements: true })
+    const drawn = () =>
+      ios
+        ? glyph().props.name
+        : (within(glyph()).getByText(/./, { includeHiddenElements: true }).props
+            .children as string)
+    expect(view.queryByTestId("branch-disclosure")).toBeNull()
+    expect(drawn()).toBe(ios ? "chevron.forward" : "\ue5cf")
+    expect(view.getByRole("button", { name: "Year 1" })).toBeOnTheScreen()
+    expect(pressableProps("branch").accessibilityState).toEqual({
+      expanded: false,
+      disabled: false,
+    })
+
+    await view.rerender(element(true))
+    expect(drawn()).toBe(ios ? "chevron.down" : "\ue5ce")
+    expect(pressableProps("branch").accessibilityState).toEqual({
+      expanded: true,
+      disabled: false,
+    })
+    expect(
+      view.queryByTestId("branch-chevron", { includeHiddenElements: true }),
+    ).toBeNull()
+  })
+
   it("spaces the value from a chevron on iOS and leaves a bare value flush", async () => {
     const view = await render(
       <>
@@ -624,7 +660,27 @@ describe("ListRow props", () => {
       />,
       // @ts-expect-error a hint needs an activation
       <ListRow key="d" label="D" testID="d" hint="Opens" />,
+      // @ts-expect-error a disclosure row has no selected state
+      <ListRow
+        key="e"
+        label="E"
+        testID="e"
+        onPress={() => {}}
+        expanded
+        selected
+      />,
+      <ListRow
+        key="f"
+        label="F"
+        testID="f"
+        onPress={() => {}}
+        expanded={false}
+        // @ts-expect-error a disclosure row draws its own glyph
+        trailing="chevron"
+      />,
+      // @ts-expect-error a static row cannot disclose
+      <ListRow key="g" label="G" testID="g" expanded />,
     ]
-    expect(rows).toHaveLength(4)
+    expect(rows).toHaveLength(7)
   })
 })

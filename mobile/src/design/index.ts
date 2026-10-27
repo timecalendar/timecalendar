@@ -96,3 +96,9 @@ export {
   type ThemedTextType,
 } from "./text/themed-text"
 export { ThemedView, type ThemedViewProps } from "./text/themed-view"
+export {
+  Thumbnail,
+  type ThumbnailProps,
+  type ThumbnailSizeName,
+  type ThumbnailSource,
+} from "./thumbnail/thumbnail"

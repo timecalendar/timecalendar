@@ -490,7 +490,9 @@ describe("SchoolPickerScreen", () => {
     const { getByTestId, queryByTestId } = await render(<SchoolPickerScreen />)
 
     expect(getByTestId("onboarding-school-logo-a", hidden)).toBeTruthy()
-    expect(queryByTestId("onboarding-school-monogram-a", hidden)).toBeNull()
+    expect(
+      queryByTestId("onboarding-school-logo-a-monogram", hidden),
+    ).toBeNull()
   })
 
   it("renders the dark logo in dark mode", async () => {
@@ -532,7 +534,9 @@ describe("SchoolPickerScreen", () => {
     )
     const { getByTestId, getByText } = await render(<SchoolPickerScreen />)
 
-    expect(getByTestId("onboarding-school-monogram-b", hidden)).toBeTruthy()
+    expect(
+      getByTestId("onboarding-school-logo-b-monogram", hidden),
+    ).toBeTruthy()
     expect(getByText("B", hidden)).toBeTruthy()
   })
 
@@ -617,6 +621,8 @@ describe("SchoolPickerScreen", () => {
         nativeEvent: { error: "load failed" },
       })
     })
-    expect(getByTestId("onboarding-school-monogram-a", hidden)).toBeTruthy()
+    expect(
+      getByTestId("onboarding-school-logo-a-monogram", hidden),
+    ).toBeTruthy()
   })
 })

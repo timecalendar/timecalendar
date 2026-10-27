@@ -38,6 +38,7 @@ export {
   Radii,
   Spacing,
   StateOpacity,
+  ThumbnailSize,
   WordmarkMaxFontScale,
 } from "@/theme/tokens"
 export type { TypeStep, TypeVariant } from "@/theme/typography"

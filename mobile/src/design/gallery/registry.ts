@@ -25,6 +25,7 @@ import * as errorSurfaces from "@/design/status/error-surfaces.gallery"
 import * as statusView from "@/design/status/status-view.gallery"
 import * as themedText from "@/design/text/themed-text.gallery"
 import * as themedView from "@/design/text/themed-view.gallery"
+import * as thumbnail from "@/design/thumbnail/thumbnail.gallery"
 import * as designTokens from "@/theme/tokens.gallery"
 
 import type { GalleryModule } from "./types"
@@ -48,6 +49,7 @@ export const galleryModules: readonly GalleryModule[] = [
   separator,
   badge,
   colorDot,
+  thumbnail,
   eventSurface,
   nativeList,
   nativeTextEntryDialog,

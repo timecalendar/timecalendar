@@ -9,6 +9,8 @@ export const MATERIAL_GLYPHS = {
   check_box_outline_blank: 0xe835,
   error_outline: 0xe001,
   event_busy: 0xe615,
+  expand_less: 0xe5ce,
+  expand_more: 0xe5cf,
   link: 0xe157,
   open_in_new: 0xe89e,
   palette: 0xe40a,
