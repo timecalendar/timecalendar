@@ -42,13 +42,6 @@ type ActiveGuideState = Extract<
   { phase: "guide" | "completed" }
 >
 
-function shownGuidePage(
-  state: ActiveGuideState | null,
-  pageIndex: number | null,
-): { state: ActiveGuideState; pageIndex: number } | null {
-  return state === null || pageIndex === null ? null : { state, pageIndex }
-}
-
 export default function GuidePageScreen() {
   const { t, i18n } = useTranslation()
   const params = useLocalSearchParams<{ pageIndex?: string | string[] }>()
@@ -174,8 +167,11 @@ export default function GuidePageScreen() {
   }, [pageIndex, snapshotState, validPage])
 
   const shownPage =
-    state.phase !== "blocked" && validPage
-      ? shownGuidePage(snapshotState, pageIndex)
+    state.phase !== "blocked" &&
+    validPage &&
+    snapshotState !== null &&
+    pageIndex !== null
+      ? { state: snapshotState, pageIndex }
       : null
 
   return (

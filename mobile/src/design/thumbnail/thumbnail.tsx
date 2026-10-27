@@ -53,61 +53,61 @@ export function Thumbnail({
   const side = ThumbnailSize[size]
   const box = { width: side, height: side }
 
-  if (uri === undefined || uri === failedUri) {
-    return (
-      <View
-        {...decorative}
-        testID={`${testID}-tile`}
-        style={[styles.tile, box, { backgroundColor: theme.primarySoft }]}
-      >
-        {monogram ? (
-          <ThemedText
-            testID={`${testID}-monogram`}
-            type="headline"
-            // The letter is an image stand-in in a fixed tile; the row's
-            // label carries the scalable name.
-            // eslint-disable-next-line no-restricted-syntax
-            allowFontScaling={false}
-            style={{ color: theme.onPrimarySoft }}
-          >
-            {monogram}
-          </ThemedText>
-        ) : null}
-      </View>
-    )
-  }
+  const showsImage = uri !== undefined && uri !== failedUri
 
   return (
     <View
       {...decorative}
       testID={`${testID}-tile`}
-      style={[styles.tile, box, { backgroundColor: theme.logoSurface }]}
+      style={[
+        styles.tile,
+        box,
+        {
+          backgroundColor: showsImage ? theme.logoSurface : theme.primarySoft,
+        },
+      ]}
     >
-      <Image
-        testID={testID}
-        source={{ uri }}
-        contentFit="contain"
-        onError={() => {
-          setFailedUri(uri)
-          onError?.()
-        }}
-        style={{
-          position: "absolute",
-          top: -OVERSHOOT,
-          start: -OVERSHOOT,
-          width: side + 2 * OVERSHOOT,
-          height: side + 2 * OVERSHOOT,
-        }}
-      />
-      {/* RN paints children above a view's own border, so the ring is an overlay. */}
-      <View
-        pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          styles.ring,
-          { borderColor: theme.separator },
-        ]}
-      />
+      {showsImage ? (
+        <>
+          <Image
+            testID={testID}
+            source={{ uri }}
+            contentFit="contain"
+            onError={() => {
+              setFailedUri(uri)
+              onError?.()
+            }}
+            style={{
+              position: "absolute",
+              top: -OVERSHOOT,
+              start: -OVERSHOOT,
+              width: side + 2 * OVERSHOOT,
+              height: side + 2 * OVERSHOOT,
+            }}
+          />
+          {/* RN paints children above a view's own border, so the ring is an overlay. */}
+          <View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              styles.ring,
+              { borderColor: theme.separator },
+            ]}
+          />
+        </>
+      ) : monogram ? (
+        <ThemedText
+          testID={`${testID}-monogram`}
+          type="headline"
+          // The letter is an image stand-in in a fixed tile; the row's
+          // label carries the scalable name.
+          // eslint-disable-next-line no-restricted-syntax
+          allowFontScaling={false}
+          style={{ color: theme.onPrimarySoft }}
+        >
+          {monogram}
+        </ThemedText>
+      ) : null}
     </View>
   )
 }
