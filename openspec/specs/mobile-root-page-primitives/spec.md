@@ -8,13 +8,18 @@ TBD - created by archiving change establish-mobile-root-page-primitives. Update 
 
 ### Requirement: Root pages share a measured frame and optional intro hierarchy
 
-The mobile app SHALL provide shared `RootPage` and `PageIntro` components for user-facing non-tab destinations. `RootPage` SHALL own the themed full-height surface, non-header safe-area edges, consistent vertical rhythm, and one measured `readable` or `standard` lane while leaving scrolling, virtualization, overlays, presentation, and feature state to the consumer. `PageIntro` SHALL support an optional heading and optional caption in source order; a native Stack title SHALL be sufficient as the route heading, and the component SHALL NOT require a second oversized in-content copy of that title.
+The mobile app SHALL provide shared `RootPage` and `PageIntro` components for user-facing non-tab destinations. `RootPage` SHALL own the themed full-height surface, non-header safe-area edges, consistent vertical rhythm, and one measured `readable` or `standard` lane while leaving scrolling, virtualization, overlays, presentation, and feature state to the consumer. `PageIntro` SHALL render a required caption only; the native Stack title SHALL be the route heading, and `PageIntro` SHALL NOT accept a heading, so a second in-content copy of the route title cannot be passed to it.
 
 #### Scenario: Native title stands alone
 
 - **WHEN** a root destination supplies its localized route title through `Stack.Screen` and needs only explanatory intro copy
-- **THEN** it renders `PageIntro` without a duplicate content heading
+- **THEN** it renders `PageIntro` with that caption and no content heading
 - **AND** the caption follows the shared spacing and text hierarchy
+
+#### Scenario: A heading cannot be passed to the intro
+
+- **WHEN** a caller passes a title to `PageIntro`
+- **THEN** type checking fails
 
 #### Scenario: Virtualized content keeps its owner
 
