@@ -82,9 +82,11 @@ These rules guard real product touchables (interactive controls declare `accessi
 
 - An activatable row is one element: a `button` whose name is the caller's `accessibilityLabel`,
   else the overline, label, subtitle and detail lines joined with ", ". Its `value` is the
-  accessibility value, its `hint` the hint, and `selected` and `disabled` are derived into
-  `accessibilityState`, never passed. Leading icons and elements, the chevron and the check are
-  hidden from assistive technology.
+  accessibility value, its `hint` the hint, and `selected`, `expanded` and `disabled` are derived
+  into `accessibilityState`, never passed. A disclosure row (`expanded`) reports `expanded` and no
+  `selected` (`list-row.test.tsx`, `school-group-picker-screen.test.tsx`). Leading icons and
+  elements (a `Thumbnail` included), the chevron, the disclosure glyph and the check are hidden
+  from assistive technology.
 - A static row's text column is one element with the same composed name and value and no role;
   its trailing accessory (a small text `Button` with its own name) is the next stop, so a screen
   reader reads the text, then the action.
@@ -202,6 +204,11 @@ These rules guard real product touchables (interactive controls declare `accessi
 - Ordinary pushed routes expose their localized name once through native compact chrome. Caption-
   only `PageIntro` content follows that navigation heading before fields, actions, status, or rows;
   content headings remain only when they identify domain content such as an event or release.
+  `PageIntro` takes no title, by type.
+- An export-guide page's native title is the page title; the content has no heading. Each page
+  focuses the progress caption once, named "<page title>, Page n of N", so the title is read even
+  though programmatic focus skips the header. Loading and blocked states keep the localized guide
+  title (`guide-screens.test.tsx`).
 - The Android personal-event date/time field announces its label and its value ("Starts, <date
   time>"), and the name follows each commit (`src/design/field/date-time-field.test.tsx`).
 - Personal-event date/time text follows the device 12/24-hour setting in the app language: the

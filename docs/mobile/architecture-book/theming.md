@@ -124,10 +124,11 @@ surfaces and calendar content; native controls are tinted and composed rather th
 - `src/theme/use-theme.ts` owns light/dark resolution: `useTheme()` reads the `@/hooks/use-color-scheme` seam and returns `Colors[scheme]`.
 - **`onPrimarySoft` color role:** the label on the translucent `primarySoft` brand wash (`#AD1457` light / `#FF80AB` dark), the text of the brand `Badge`. `actionText` stays the brand text tone on neutral surfaces. The wash is translucent, so its pairs are composited: a `documentedContrastPairs` row can name the opaque surface it sits on (`over`), and the test composites the wash over that surface before computing the ratio. `onPrimarySoft` on `primarySoft` is checked over `background`, `backgroundElement` and `homeHero` in both schemes (5.79 / 5.10 / 4.88 light, 8.11 / 5.90 / 5.89 dark).
 - **`ColorDotSize`** (`small` 8 / `medium` 12 / `large` 16), the diameters of `ColorDot`.
+- **`ThumbnailSize`** (`medium` 40 / `large` 56), the sides of `Thumbnail`.
 - **Event appearance resolver (`src/theme/event-appearance.ts`, ADR [076](./decisions/076-event-surface.md)):** `resolveEventAppearance({ color, scheme, increasedContrast })` turns a stored event color into an `EventAppearance`: `surface` (the source composited over the scheme canvas, 35% alpha, 20% under increased contrast), `foreground` (black or white, whichever contrasts more with the surface), `accent` (the source stepped toward the foreground until it reaches 3:1 against the canvas), `outline` (the foreground under increased contrast, the accent otherwise), the normalized `source` and the policy flag. An invalid color resolves as `EventFallbackColor` (`#64748B`). The calendar presenters and `EventSurface` share this one resolver, so the grid and every tile draw the same colors for one event. `src/theme/event-appearance.test.ts` checks, for every personal-event swatch preset and the fallback, and over a 6×6×6 sRGB grid, in light and dark, with increased contrast off and on: foreground on surface ≥ 4.5:1, accent on the canvas ≥ 3:1, every output an opaque `#RRGGBB`.
 - **Home welcome surface:** `homeHero` is a quiet pink paper (`#FCE4EC` light / `#321824` dark) carrying normal `text`; `homeHeroDate` is its stronger eyebrow (`#AD1457` light / `#FF80AB` dark). These are fixed scheme tokens rather than call-site alpha math. An imported event color never colors text directly: on a tile, text is the resolver's foreground.
 - **Single color-scheme seam (C1):** `@/hooks/use-color-scheme` is the **one** scheme source — both `useTheme` _and_ the root `_layout.tsx` read it (never `useColorScheme` from `react-native` directly), so a theme override is a single-file change. The seam resolves the stored theme preference (a `"light"`/`"dark"` override wins, `"system"` falls through to the device scheme), **preserving the `ColorSchemeName` return contract** so `useTheme` / `buildNavTheme` / `theme.test.tsx` are untouched. **Lint-enforced (L1):** `no-restricted-imports` bans `useColorScheme` and `Appearance` from `react-native` everywhere except `src/hooks/use-color-scheme.ts` (block `timecalendar/color-scheme-seam`; see `lint-format.md`).
-- `src/theme/index.ts` re-exports the public surface (`Colors` / `Spacing` / `Radii` / `Fonts` / `MaxContentWidth` / `MinTouchTarget` / `IconSize` / `WordmarkMaxFontScale` / `ChevronMaxFontScale` / `StateOpacity` / `ColorDotSize` / `Elevation` / `Motion` / `Layout` / `AccessibilityFontScale` / `isAccessibilityTextSize` / `useIsAccessibilityTextSize` / `resolveEventAppearance` / `EventAppearance` / `EventAppearanceScheme` / `EventFallbackColor` / `ThemeColor` / `TypeRamp` / `TypeVariant` / `TypeStep` / `useTheme` / `buildNavTheme` / the responsive exports) — **call sites import `@/theme`**, import-source-only. `Fonts.mono` resolves via `Platform.select` (`ios` → `ui-monospace`, `default` → `monospace`).
+- `src/theme/index.ts` re-exports the public surface (`Colors` / `Spacing` / `Radii` / `Fonts` / `MaxContentWidth` / `MinTouchTarget` / `IconSize` / `WordmarkMaxFontScale` / `ChevronMaxFontScale` / `StateOpacity` / `ColorDotSize` / `ThumbnailSize` / `Elevation` / `Motion` / `Layout` / `AccessibilityFontScale` / `isAccessibilityTextSize` / `useIsAccessibilityTextSize` / `resolveEventAppearance` / `EventAppearance` / `EventAppearanceScheme` / `EventFallbackColor` / `ThemeColor` / `TypeRamp` / `TypeVariant` / `TypeStep` / `useTheme` / `buildNavTheme` / the responsive exports) — **call sites import `@/theme`**, import-source-only. `Fonts.mono` resolves via `Platform.select` (`ios` → `ui-monospace`, `default` → `monospace`).
 - `ThemedText` and `ThemedView` (`src/design/text/`) are imported from `@/design` and read their tokens from `@/theme`. `ThemedText` owns no type scale: it renders the `TypeRamp` step named by `type` (default `body`) and passes the step's `dynamicTypeRamp`; caller `style` and props win. The aliases `default` → `body`, `small` → `callout`, `smallBold` → `label` and `subtitle` → `sectionTitle` resolve inside the component. Color comes from `tone` (`primary` → `text`, `secondary` → `textSecondary`, `action` → `actionText`, `destructive` → `destructive`, `onPrimary` → `onPrimary`; `primary` is the label color, not brand pink, and the union has no brand or tertiary member) or from `themeColor` (any `ThemeColor`); the two props are mutually exclusive at the type level, and with neither the text is `text`. The heading role per step follows [Accessibility](./accessibility.md#the-heading-role-contract--encoded-in-themedtext).
 
 ## Buttons — `Button` and `ButtonRow` (`src/design/button/`)
@@ -307,7 +308,8 @@ colors, so an RN list and a `NativeList` on the same page read as one surface.
   `{ element, width }` for a caller element such as a logo, swatch or thumbnail), then a text
   column (`overline` in a status tone, `label`, `subtitle`, `details` lines), then `value`, the
   selection check, and a trailing slot. An action row (`onPress` or `href`, which calls
-  `router.push`) takes `hint`, `selected`, `disabled` and `trailing="chevron"`; a static row takes
+  `router.push`) takes `hint`, `selected`, `disabled` and `trailing="chevron"`, or `expanded`
+  in place of `selected` and the chevron; a static row takes
   none of those and accepts one accessory element (a small text `Button`) as `trailing`. The props
   union makes a nested control in a pressable row, a color, height or font override, and a row
   without `testID` type errors. `style` is `StyleProp<ListRowLayoutStyle>` (`ButtonLayoutStyle`
@@ -359,12 +361,20 @@ colors, so an RN list and a `NativeList` on the same page read as one surface.
 - **States:** iOS fills the shaped row with `backgroundSelected` on press; Android draws a
   foreground `ripple` clipped by the row shape. `disabled` dims to `StateOpacity.disabled` and
   shows no feedback. `selected` draws an SF `checkmark` or Material `check` in `primary`.
+- **Disclosure:** `expanded: boolean` marks a row that shows or hides nested content. It draws a
+  trailing glyph on both platforms (`${testID}-disclosure`): iOS `chevron.down` when expanded and
+  `chevron.forward` when collapsed, Android `expand_less` / `expand_more` at the leading-icon size.
+  The glyph takes the chevron's `textTertiary` color and `ChevronMaxFontScale` cap. The props
+  union makes `expanded` with `selected` or with `trailing="chevron"` a type error. The dormant
+  school-group step is the one caller: one `ListSection` per tree level, each expanded branch
+  opening the next section titled by the branch.
 - **Scaling:** line caps are label 8, each supporting line 8, value 4, overline 2. At accessibility
   text sizes the value and check stack under the label, and a single-word label shrinks to one
   line (`minimumFontScale` 0.5) instead of breaking mid-word.
 - Gates: `list-row.test.tsx`, `list-section.test.tsx` and `separator.test.tsx` at 90% per-file
   tiers; `local/no-ad-hoc-separator` ([lint-format.md](./lint-format.md) → Lists); the gallery
-  stories `list-row--plain`, `--grouped`, `--states`, `--leading`, `--static`, `--overline`,
+  stories `list-row--plain`, `--grouped`, `--states` (with a collapsed and an expanded
+  disclosure row), `--leading`, `--static`, `--overline`,
   `--long-strings`, `list-section--titled`, `--single`, `--seam-comparison`, `--long-strings`,
   `--header-detail` and `separator--insets`.
 - **What lint cannot carry:** no rule detects a hand-built row (a `Pressable` with a label and a
@@ -433,6 +443,33 @@ from `@/design` (ADR [074](./decisions/074-badge-and-color-dot.md)).
   `SwiftBadge` / Compose `Badge` in the native list seam (native idiom, stays).
 - **What lint cannot carry:** an event color reached through a variable or a call, or passed as a
   `color=` prop, is not matched. Review checks that new event-color UI uses `ColorDot`.
+
+## Thumbnails — `Thumbnail` (`src/design/thumbnail/`)
+
+A remote first-party image that leads a row (a school logo, a provider screenshot) is `Thumbnail`
+from `@/design` (ADR [079](./decisions/079-thumbnail.md)).
+
+- **Props:** `source: { light, dark? }` (URL strings), `size` (`medium` 40 or `large` 56 from
+  `ThumbnailSize`), optional `monogram` and `onError`, required `testID`. The image is `testID`,
+  the tile `${testID}-tile`, the letter `${testID}-monogram`.
+- **Image:** the dark URL in the dark scheme when present, the light URL otherwise, read through
+  the `@/hooks/use-color-scheme` seam. It fills a `Radii.medium` chip on `logoSurface` with
+  `contentFit="contain"`, overshooting one point per edge so full-bleed artwork leaves no Android
+  sub-pixel gap, under a `separator` hairline ring drawn as an overlay (React Native paints
+  children above a view's own border).
+- **Fallback:** with no URL, or after the image fails, the tile is the `primarySoft` wash with the
+  monogram in `onPrimarySoft` on the `headline` step. A failure belongs to the URL that failed:
+  when the resolved URL changes (new source, scheme switch), the image is tried again without a
+  caller `key`. `onError` runs once per failure.
+- **Size:** fixed at every text size, monogram included (`allowFontScaling={false}`): the tile is
+  an image, and the row label carries the scalable name.
+- **Semantics:** the whole tile is hidden from assistive technology; the row names itself.
+- **Sites:** school rows (`medium`, monogram from the school name), provider-selection rows
+  (`large`, no monogram; a failed thumbnail drops the leading element and adds the
+  image-unavailable subtitle).
+- **Gates:** `thumbnail.test.tsx` at a 90% per-file tier; the gallery stories
+  `thumbnail--image`, `--dark-image`, `--monogram` and `--sizes`, rendered in both schemes by
+  `thumbnail.gallery.test.tsx`.
 
 ## Event tiles — EventSurface (src/design/event-surface/)
 
@@ -529,8 +566,8 @@ with `text` title), and minimal back display described by ADR
 than an alpha API, but co-location keeps root chrome policy discoverable.
 
 Every ordinary non-tab root and onboarding push uses that compact chrome plus one `RootPage`.
-The native title is the route heading; `PageIntro` contains supporting caption text only and adds
-no placeholder when no caption exists. `RootPage` replaces feature-local themed surfaces, safe
+The native title is the route heading; `PageIntro` takes a required `caption` and no title, so a
+second in-content copy of the route title is a `tsc` error (`root-page.test.tsx`). `RootPage` replaces feature-local themed surfaces, safe
 areas, top padding, and primary lane measurement while leaving `FlatList`, `SectionList`,
 `ScrollView`, keyboard avoidance, refresh, pagination, overlays, and native actions with the
 feature that already owns them.

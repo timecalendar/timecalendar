@@ -323,7 +323,7 @@ truth; this file carries the caveats the config can't (R-1).
   `tools/eslint-rules/raw-button-allowlist.js`, each annotated with
   the slice that migrates it. `raw-button-allowlist.test.js` lints every entry with only this rule
   and fails on a stale entry (no report: remove it), a missing file, a duplicate, or a list longer
-  than `RAW_BUTTON_ALLOWLIST_CEILING` (5); migrating a file means deleting its entry and lowering the
+  than `RAW_BUTTON_ALLOWLIST_CEILING` (4); migrating a file means deleting its entry and lowering the
   ceiling. `no-raw-button.test.js` is the RuleTester suite. **Caveats:** a role passed as a
   variable, text wrapped in a layout `View`, a function child and `Animated` pressables are not
   inspected (rows and tiles legitimately use `Pressable`; review covers the rest). The rule has its
@@ -421,7 +421,7 @@ truth; this file carries the caveats the config can't (R-1).
   `tools/eslint-rules/ad-hoc-separator-allowlist.js`, each annotated with its migrating slice (the
   Home timeline divider, 5.9). `ad-hoc-separator-allowlist.test.js` fails on a stale entry, a
   missing file, a duplicate, or a list longer than its ceiling (1). `no-ad-hoc-separator.test.js`
-  is the RuleTester suite. `borderWidth` (the rings of the school logo, header icon and checklist
+  is the RuleTester suite. `borderWidth` (the rings of the thumbnail, header icon and checklist
   box) is deliberately not matched. **Caveats:** a value reached through a variable
   (`const line = StyleSheet.hairlineWidth`) is not followed, and no rule detects a hand-built
   row: a `Pressable` with a label and chevron has no reliable static signature, so review checks
