@@ -189,12 +189,14 @@ in `style-literal-allowlist.js` / `ad-hoc-status-allowlist.js`. On rebase, resol
       read the diff of tests, specs, the inbox note and this change folder for real person or
       account names. Verify: the scan exits 0 and the read finds none.
 - [x] 6.6 `openspec validate ds-5-5-school-group-provider-guide` (repo root). Verify: valid.
-- [ ] 6.7 iOS simulator pass (iPhone, iOS 26), light and dark, default text and AX5: school list
+- [x] 6.7 iOS simulator pass (iPhone, iOS 26), light and dark, default text and AX5: school list
       (logos, monogram, separator inset), dev deep link `timecalendar-dev://onboarding/groups?schoolId=<id>`
       (expand, select, Confirm guard), provider selection (no in-body title), a guide page (title
       in the bar, progress caption, image or placeholder), and the blocked state against a local
       server with the flag off (Retry and Back). Verify: screenshots or notes in the PR body.
-      Note: left to the delivery pipeline (the conductor runs the simulator pass).
+      Note: run against preprod. The group tree, provider selection content and guide content are
+      unreachable there (no school groups, flag off); results and gaps are in
+      inbox/2026-10-27-mobile-ds-5-5-device-pass.md.
 - [ ] 6.8 Android device pass and VoiceOver/TalkBack pass (group disclosure announces expanded,
       guide focus reads "<title>, Page n of N", school row reads the name only) (HUMAN: see
       inbox/2026-10-27-mobile-ds-5-5-device-pass.md)

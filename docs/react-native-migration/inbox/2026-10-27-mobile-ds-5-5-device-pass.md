@@ -1,7 +1,24 @@
 **For:** whoever runs the Android device and screen-reader passes (OpenSpec
 `ds-5-5-school-group-provider-guide`). The delivery pipeline runs the iOS simulator pass. Android
 rendering, TalkBack and VoiceOver judgement need a person on a device or on the Windows host. Android
-never builds on the Mac.
+never builds on the Mac, and the Windows host (`ssh pc`) was unreachable from the pipeline on
+2026-10-27 (connection timed out), so no Android build ran for this slice.
+
+## iOS simulator pass (pipeline, 2026-10-27)
+
+iPhone 17 Pro Max, iOS 26.5, dev client against preprod:
+
+- School picker: content (logo chips, native title, caption, no in-body title), search with no
+  results, light and dark, and the largest accessibility text size. Pass.
+- Group picker (deep link, Université Gustave Eiffel): the error state shows `StatusView` with Retry
+  under the native "Choose groups" title. Pass. The group tree was not reachable because preprod
+  schools have no school groups (`GET /schools/<id>/school-group` returns 404). The expanded and
+  collapsed disclosure rows were checked in the gallery's `ListRow` "States" story in dark mode.
+- Blocked guide on preprod (`export-guides-v1` off): `StatusView` with Retry and Back under the native
+  "Export timetable" title, light, dark and the largest text size (scrolls, nothing clipped). Retry
+  keeps the error state. Pass.
+- Not reachable on preprod: provider selection content and guide page content (items 3 and 4 below).
+  `Thumbnail` was checked in its gallery story only.
 
 # School picker, group picker, provider selection and guide page: device and screen-reader pass
 
