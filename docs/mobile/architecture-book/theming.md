@@ -345,7 +345,7 @@ colors, so an RN list and a `NativeList` on the same page read as one surface.
   footer `footnote`/`textSecondary`, and sections stack `Spacing.four` apart.
 - **`ListSectionHeader`** is `ListSection`'s title as its own export, for a virtualized list's
   `renderSectionHeader` (a `SectionList` cannot wrap its rows in `ListSection`). Title only, it is
-  the same `header` text `ListSection` draws. With `detail`, it adds a second line in
+  the same `header` text `ListSection` draws, named by the caller's label when one is passed. With `detail`, it adds a second line in
   `footnote`/`textSecondary` and the pair is **one** `header` element named by the caller's
   `accessibilityLabel`, or "title, detail" without one; neither text carries its own role.
   `style` is `ButtonLayoutStyle` and merges last; the list leaves `marginTop: Spacing.four` on

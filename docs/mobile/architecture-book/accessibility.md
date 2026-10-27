@@ -88,7 +88,8 @@ These rules guard real product touchables (interactive controls declare `accessi
 - A static row's text column is one element with the same composed name and value and no role;
   its trailing accessory (a small text `Button` with its own name) is the next stop, so a screen
   reader reads the text, then the action.
-- A `ListSection` title or a `ListSectionHeader` is a `header`. With a `detail` line the
+- A `ListSection` title or a `ListSectionHeader` is a `header`; a title-only header takes the
+  caller's label when one is passed. With a `detail` line the
   `ListSectionHeader` is one heading element named by the caller's label, or "title, detail",
   and neither text carries its own role, so the pair is one heading stop
   (`src/design/list/list-section.test.tsx`). A `Separator` is hidden from assistive technology.
