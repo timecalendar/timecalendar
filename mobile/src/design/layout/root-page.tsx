@@ -60,23 +60,15 @@ export function RootPage({
 }
 
 type PageIntroProps = {
-  title?: string
-  caption?: string
+  caption: string
   testID?: string
   style?: StyleProp<ViewStyle>
 }
 
-export function PageIntro({ title, caption, testID, style }: PageIntroProps) {
-  if (title === undefined && caption === undefined) return null
-
+export function PageIntro({ caption, testID, style }: PageIntroProps) {
   return (
     <View testID={testID} style={[styles.intro, style]}>
-      {title === undefined ? null : (
-        <ThemedText type="subtitle">{title}</ThemedText>
-      )}
-      {caption === undefined ? null : (
-        <ThemedText themeColor="textSecondary">{caption}</ThemedText>
-      )}
+      <ThemedText tone="secondary">{caption}</ThemedText>
     </View>
   )
 }
@@ -90,7 +82,6 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.four,
   },
   intro: {
-    gap: Spacing.two,
     marginBottom: Spacing.four,
   },
 })

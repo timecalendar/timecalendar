@@ -263,10 +263,56 @@ describe("parseExportGuideCatalogue", () => {
     },
   )
 
+  it("pins the compiled first-party image origins", () => {
+    expect(EXPORT_GUIDE_ASSET_ORIGINS).toEqual([
+      "https://timecalendar-dev-public.fra1.digitaloceanspaces.com",
+      "https://timecalendar-preprod-public.fra1.digitaloceanspaces.com",
+      "https://timecalendar-public.fra1.digitaloceanspaces.com",
+    ])
+  })
+
+  it.each(EXPORT_GUIDE_ASSET_ORIGINS)(
+    "accepts images served from %s",
+    (origin) => {
+      const input = catalogue()
+      input.providers[0] = provider("future-provider", {
+        thumbnail: image({
+          url: `${origin}/export-guides/v1/thumb.png`,
+          byteSize: 1024,
+        }),
+      })
+      const result = parse(input)
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.catalogue.providers[0]?.thumbnail?.url).toBe(
+        `${origin}/export-guides/v1/thumb.png`,
+      )
+      expect(result.catalogue.rejectedProviders).toEqual({})
+    },
+  )
+
   it.each([
     ["foreign origin", { url: "https://example.com/page.png" }],
     ["malformed URL", { url: "not a URL" }],
     ["HTTP", { url: `${assetOrigin.replace("https:", "http:")}/page.png` }],
+    [
+      "HTTP on the preprod bucket",
+      {
+        url: "http://timecalendar-preprod-public.fra1.digitaloceanspaces.com/page.png",
+      },
+    ],
+    [
+      "look-alike bucket host",
+      {
+        url: "https://evil-timecalendar-public.fra1.digitaloceanspaces.com/page.png",
+      },
+    ],
+    [
+      "subdomain of a bucket host",
+      {
+        url: "https://cdn.timecalendar-public.fra1.digitaloceanspaces.com/page.png",
+      },
+    ],
     [
       "credentials",
       { url: `https://user:pass@${new URL(assetOrigin).host}/page.png` },

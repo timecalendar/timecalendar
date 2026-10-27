@@ -144,6 +144,7 @@ module.exports = {
     "src/design/list/separator-inset.ts": { lines: 90, branches: 90 },
     "src/design/badge/badge.tsx": { lines: 90, branches: 90 },
     "src/design/color-dot/color-dot.tsx": { lines: 90, branches: 90 },
+    "src/design/thumbnail/thumbnail.tsx": { lines: 90, branches: 90 },
     "src/design/event-surface/event-surface.tsx": { lines: 90, branches: 90 },
     "src/design/event-surface/event-surface-context.ts": {
       lines: 90,

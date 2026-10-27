@@ -33,6 +33,19 @@ describe.each(["ios", "android"] as const)(
       expect(view.getByTestId(COUNT)).toHaveTextContent("Pressed 1 time")
     })
 
+    it("toggles the disclosure rows in the states story", async () => {
+      const view = await renderStory(fixture.States)
+      const hidden = { includeHiddenElements: true }
+      expect(
+        view.getByTestId("gallery-list-row-collapsed-disclosure", hidden),
+      ).toBeTruthy()
+      expect(
+        view.getByTestId("gallery-list-row-expanded-disclosure", hidden),
+      ).toBeTruthy()
+      await fireEvent.press(view.getByTestId("gallery-list-row-collapsed"))
+      expect(view.getByTestId(COUNT)).toHaveTextContent("Pressed 0 times")
+    })
+
     it("names the text-size layout in the long-strings story", async () => {
       const view = await renderStory(fixture.LongStrings)
       expect(view.getByTestId("gallery-list-row-text-size")).toHaveTextContent(

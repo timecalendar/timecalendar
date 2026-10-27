@@ -158,12 +158,23 @@ describe("GuidePageScreen", () => {
     })
     const view = await render(<GuidePageScreen />)
 
-    expect(view.getByText("<b>Literal heading</b>")).toBeTruthy()
+    expect(view.queryByText("<b>Literal heading</b>")).toBeNull()
     expect(view.getByText("[Not a link](javascript:alert(1))")).toBeTruthy()
     expect(view.queryByRole("link")).toBeNull()
-    expect(
-      view.getByTestId("export-guide-progress").props.accessibilityLabel,
-    ).toBe("Page 1 of 2")
+    expect(view.queryByRole("header")).toBeNull()
+    expect(view.getByTestId("export-guide-progress")).toHaveTextContent(
+      "Page 1 of 2",
+    )
+    expect(mockStackScreen).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        options: { title: "<b>Literal heading</b>" },
+      }),
+      undefined,
+    )
+    const focusTarget = view.getByLabelText(
+      "<b>Literal heading</b>, Page 1 of 2",
+    )
+    expect(focusTarget.props.accessibilityRole).toBeUndefined()
     expect(AccessibilityInfo.setAccessibilityFocus).toHaveBeenCalledTimes(1)
     expect(
       StyleSheet.flatten(view.getByTestId("export-guide-next").props.style),
@@ -192,14 +203,12 @@ describe("GuidePageScreen", () => {
     const view = await render(<GuidePageScreen />)
 
     expect(
-      view.getByTestId("export-guide-progress").props.accessibilityLabel,
-    ).toBe("Page 1 sur 2")
+      view.getByLabelText("<b>Literal heading</b>, Page 1 sur 2"),
+    ).toBeTruthy()
     expect(view.getByText("Suivant")).toBeTruthy()
-    expect(mockStackScreen).toHaveBeenCalledWith(
+    expect(mockStackScreen).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        options: expect.objectContaining({
-          title: "Exporter l'emploi du temps",
-        }),
+        options: { title: "<b>Literal heading</b>" },
       }),
       undefined,
     )
@@ -361,7 +370,16 @@ describe("GuidePageScreen", () => {
       })
       const view = await render(<GuidePageScreen />)
 
-      expect(view.getByText(snapshot.pages[pageIndex]!.title)).toBeTruthy()
+      const title = snapshot.pages[pageIndex]!.title
+      expect(mockStackScreen).toHaveBeenLastCalledWith(
+        expect.objectContaining({ options: { title } }),
+        undefined,
+      )
+      expect(view.queryByText(title)).toBeNull()
+      expect(
+        view.getByLabelText(`${title}, Page ${pageIndex + 1} of 2`),
+      ).toBeTruthy()
+      expect(AccessibilityInfo.setAccessibilityFocus).toHaveBeenCalledTimes(1)
       expect(view.getByTestId("export-guide-next")).toBeEnabled()
       await fireEvent.press(view.getByTestId("export-guide-next"))
       expect(router.push).toHaveBeenCalledWith(
@@ -550,7 +568,12 @@ describe("ProviderSelectionScreen", () => {
       expect.objectContaining({ options: { title: "Export guide" } }),
       undefined,
     )
-    expect(view.getByText("Choose the timetable service")).toBeTruthy()
+    expect(
+      view.getByText(
+        "Choose the service your institution uses, then follow its export steps.",
+      ),
+    ).toBeTruthy()
+    expect(view.queryByRole("header")).toBeNull()
     expect(
       view.getAllByRole("button").map((node) => node.props.accessibilityLabel),
     ).toEqual(["Future Provider", "Generic"])
@@ -596,18 +619,26 @@ describe("ProviderSelectionScreen", () => {
     })
     const view = await render(<ProviderSelectionScreen />)
     const row = view.getByTestId("export-guide-provider-future-provider")
-    const image = within(row).getByLabelText("Provider logo", {
-      includeHiddenElements: true,
-    })
+    const image = within(row).getByTestId(
+      "export-guide-provider-future-provider-thumbnail",
+      { includeHiddenElements: true },
+    )
+    expect(image.props.source).toEqual({ uri: snapshot.pages[0]!.image!.url })
+    expect(
+      within(row).queryByTestId(
+        "export-guide-provider-future-provider-thumbnail",
+      ),
+    ).toBeNull()
     expect(row.props.accessibilityLabel).toBe("Future Provider")
     await fireEvent(image, "error")
     expect(emitExportGuideEvent).toHaveBeenCalledWith(
       expect.objectContaining({ name: "export_guide_image_failed" }),
     )
     expect(
-      within(row).queryByLabelText("Provider logo", {
-        includeHiddenElements: true,
-      }),
+      within(row).queryByTestId(
+        "export-guide-provider-future-provider-thumbnail",
+        { includeHiddenElements: true },
+      ),
     ).toBeNull()
     expect(
       within(row).getByText(/^Instructional image unavailable/, {

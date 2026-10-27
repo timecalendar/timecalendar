@@ -1,3 +1,26 @@
+## 2026-10-27 — School picker, group picker, provider selection and guide page on the design system
+
+- `Thumbnail` is the primitive for list-leading images: a `logoSurface` chip with a hairline ring,
+  a scheme-aware source, a `primarySoft` monogram fallback that retries when the URL changes, and
+  the `ThumbnailSize` token (40 / 56) ([theming.md](./theming.md) → Thumbnails,
+  ADR [079](./decisions/079-thumbnail.md)).
+- `ListRow` takes `expanded` for disclosure rows: a down or up chevron, the `expanded`
+  accessibility state, and no `selected` or `trailing` beside it ([theming.md](./theming.md) →
+  Lists, [accessibility.md](./accessibility.md)).
+- `PageIntro` takes a required caption and no title ([theming.md](./theming.md)).
+- A shown export-guide page puts its title in the native header and focuses a progress caption
+  named "<page title>, Page n of N"; provider selection has no in-content heading
+  ([features.md](./features.md), [accessibility.md](./accessibility.md)).
+- Export-guide images load from the dev, preprod and production public buckets, compiled into
+  `EXPORT_GUIDE_ASSET_ORIGINS` ([features.md](./features.md) → `export-guides`).
+- The school picker leads with `Thumbnail`; the group picker renders one `ListSection` per tree
+  level with `selected` leaves, `expanded` branches and a filled `Button` Confirm
+  ([features.md](./features.md)).
+- The group picker leaves the raw-button allowlist (ceiling 4) and the school logo leaves the
+  style-literal allowlist (`typographyLiteral` ceiling 5). Slice 5.5 appends eleven route and UI
+  files to the migrated-screen contract and raises `MIGRATED_FILE_FLOOR` to 44
+  ([lint-format.md](./lint-format.md) → Migrated screens).
+
 ## 2026-10-27 — Activity and the changelog on the design system
 
 - `ListSectionHeader` is `ListSection`'s title as an export for virtualized lists' section

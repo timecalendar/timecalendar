@@ -1,12 +1,11 @@
 import { router } from "expo-router"
 import { useTranslation } from "react-i18next"
 
-import { ListRow } from "@/design"
+import { ListRow, Thumbnail } from "@/design"
 import { emitExportGuideEvent } from "@/features/export-guides/ui"
 import { decideIntranetUrl, useImportDraft } from "@/features/onboarding"
 import { type SchoolListItem } from "@/features/school-selection/data"
-
-import { LogoSize, SchoolLogo } from "./school-logo"
+import { ThumbnailSize } from "@/theme"
 
 export function SchoolRow({ school }: { school: SchoolListItem }) {
   const { t } = useTranslation()
@@ -19,12 +18,17 @@ export function SchoolRow({ school }: { school: SchoolListItem }) {
       hint={t("onboarding.school.rowHint")}
       leading={{
         element: (
-          <SchoolLogo
-            key={`${school.imageUrl}:${school.imageUrlDark ?? ""}`}
-            school={school}
+          <Thumbnail
+            source={{
+              light: school.imageUrl,
+              dark: school.imageUrlDark ?? undefined,
+            }}
+            size="medium"
+            monogram={school.name.trim().charAt(0).toUpperCase()}
+            testID={`onboarding-school-logo-${school.id}`}
           />
         ),
-        width: LogoSize,
+        width: ThumbnailSize.medium,
       }}
       trailing="chevron"
       // The import journey (TIM-391), not the group step: `groups` persists a

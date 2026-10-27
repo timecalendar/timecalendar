@@ -128,15 +128,12 @@ describe("PageIntro", () => {
     expect(view.queryByRole("header")).toBeNull()
   })
 
-  it("renders an optional heading before its caption", async () => {
+  it("takes no heading", async () => {
     const view = await render(
+      // @ts-expect-error the native title is the route heading
       <PageIntro title="Heading" caption="Supporting context" />,
     )
-    expect(view.getByRole("header")).toHaveTextContent("Heading")
-    expect(
-      view
-        .getAllByText(/Heading|Supporting context/)
-        .map((n) => n.props.children),
-    ).toEqual(["Heading", "Supporting context"])
+    expect(view.queryByRole("header")).toBeNull()
+    expect(view.queryByText("Heading")).toBeNull()
   })
 })

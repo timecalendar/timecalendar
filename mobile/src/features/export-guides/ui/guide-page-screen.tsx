@@ -42,28 +42,44 @@ type ActiveGuideState = Extract<
   { phase: "guide" | "completed" }
 >
 
+function guideRequest(state: ImportJourneyState): {
+  selector: ExportGuideSelector | null
+  requestedProvider: string | null
+} {
+  if (state.phase === "empty" || state.draft.institution.kind !== "listed") {
+    return { selector: null, requestedProvider: null }
+  }
+  const { exportGuide } = state.draft.institution.school
+  return {
+    selector: { kind: "exact", catalogueVersion: exportGuide.catalogueVersion },
+    requestedProvider: exportGuide.providerSlug,
+  }
+}
+
+function validGuidePage(
+  state: ActiveGuideState | null,
+  pageIndex: number | null,
+): { state: ActiveGuideState; pageIndex: number } | null {
+  return state !== null &&
+    pageIndex !== null &&
+    pageIndex < state.snapshot.pages.length &&
+    pageIndex <= state.visitedThrough
+    ? { state, pageIndex }
+    : null
+}
+
 export default function GuidePageScreen() {
   const { t, i18n } = useTranslation()
   const params = useLocalSearchParams<{ pageIndex?: string | string[] }>()
   const pageIndex = parsePageIndex(params.pageIndex)
   const { state, dispatch } = useImportDraft()
-  const heading = useRef<View>(null)
+  const focusTarget = useRef<View>(null)
 
-  const listedInstitution =
-    state.phase !== "empty" && state.draft.institution.kind === "listed"
-      ? state.draft.institution
-      : null
-  const selector: ExportGuideSelector | null =
-    listedInstitution === null
-      ? null
-      : {
-          kind: "exact",
-          catalogueVersion:
-            listedInstitution.school.exportGuide.catalogueVersion,
-        }
-  const requestedProvider =
-    listedInstitution?.school.exportGuide.providerSlug ?? null
-  const legalPageZero =
+  const { selector, requestedProvider } = guideRequest(state)
+  const loadsPageZero =
+    pageIndex === 0 &&
+    state.phase === "draft" &&
+    requestedProvider !== null &&
     earliestLegalRoute(state) === "/onboarding/export-guide/0"
 
   const onCatalogue = (
@@ -106,23 +122,13 @@ export default function GuidePageScreen() {
   })
 
   useEffect(() => {
-    if (
-      pageIndex === 0 &&
-      state.phase === "draft" &&
-      requestedProvider !== null &&
-      legalPageZero
-    ) {
-      load()
-    }
-  }, [legalPageZero, load, pageIndex, requestedProvider, state.phase])
+    if (loadsPageZero) load()
+  }, [load, loadsPageZero])
 
   const snapshotState =
     state.phase === "guide" || state.phase === "completed" ? state : null
-  const validPage =
-    snapshotState !== null &&
-    pageIndex !== null &&
-    pageIndex < snapshotState.snapshot.pages.length &&
-    pageIndex <= snapshotState.visitedThrough
+  const validPage = validGuidePage(snapshotState, pageIndex)
+  const onValidPage = validPage !== null
 
   useEffect(() => {
     if (
@@ -136,48 +142,53 @@ export default function GuidePageScreen() {
 
   useEffect(() => {
     if (state.phase === "resolving" || state.phase === "blocked") return
-    if (
-      pageIndex === 0 &&
-      state.phase === "draft" &&
-      requestedProvider !== null &&
-      legalPageZero
-    )
-      return
-    if (!validPage) {
-      const target = earliestLegalRoute(state)
-      if (target !== `/onboarding/export-guide/${pageIndex ?? "invalid"}`) {
-        router.replace(target)
-      }
+    if (loadsPageZero || onValidPage) return
+    const target = earliestLegalRoute(state)
+    if (target !== `/onboarding/export-guide/${pageIndex ?? "invalid"}`) {
+      router.replace(target)
     }
-  }, [legalPageZero, pageIndex, requestedProvider, state, validPage])
+  }, [loadsPageZero, onValidPage, pageIndex, state])
 
   useEffect(() => {
-    if (!validPage || pageIndex === null || snapshotState === null) return
+    const viewed = validGuidePage(snapshotState, pageIndex)
+    if (viewed === null) return
+    const { snapshot } = viewed.state
     emitExportGuideEvent({
       name: "export_guide_page_viewed",
       params: {
-        provider_slug: snapshotState.snapshot.providerSlug,
-        page_index: pageIndex,
-        page_count: snapshotState.snapshot.pages.length,
-        catalogue_version: snapshotState.snapshot.catalogueVersion,
+        provider_slug: snapshot.providerSlug,
+        page_index: viewed.pageIndex,
+        page_count: snapshot.pages.length,
+        catalogue_version: snapshot.catalogueVersion,
       },
     })
-    const handle = findNodeHandle(heading.current)
+    const handle = findNodeHandle(focusTarget.current)
     if (handle !== null) AccessibilityInfo.setAccessibilityFocus(handle)
-  }, [pageIndex, snapshotState, validPage])
+  }, [pageIndex, snapshotState])
+
+  const shownPage = state.phase === "blocked" ? null : validPage
 
   return (
     <>
-      <Stack.Screen options={{ title: t("exportGuide.page.title") }} />
+      <Stack.Screen
+        options={
+          shownPage === null
+            ? { title: t("exportGuide.page.title") }
+            : {
+                title:
+                  shownPage.state.snapshot.pages[shownPage.pageIndex]!.title,
+              }
+        }
+      />
       {state.phase === "blocked" ? (
         <GuideBlockingError retry={retry} busy={busy} />
-      ) : !validPage || pageIndex === null || snapshotState === null ? (
+      ) : shownPage === null ? (
         <GuideProgress />
       ) : (
         <GuidePageContent
-          state={snapshotState}
-          pageIndex={pageIndex}
-          heading={heading}
+          state={shownPage.state}
+          pageIndex={shownPage.pageIndex}
+          focusTarget={focusTarget}
           dispatch={dispatch}
         />
       )}
@@ -188,12 +199,12 @@ export default function GuidePageScreen() {
 function GuidePageContent({
   state,
   pageIndex,
-  heading,
+  focusTarget,
   dispatch,
 }: {
   state: ActiveGuideState
   pageIndex: number
-  heading: RefObject<View | null>
+  focusTarget: RefObject<View | null>
   dispatch: (action: ImportJourneyAction) => void
 }) {
   const { t } = useTranslation()
@@ -238,13 +249,12 @@ function GuidePageContent({
           testID="export-guide-page-scroll"
           contentContainerStyle={[laneStyle, styles.content]}
         >
-          <View ref={heading} accessible accessibilityRole="header">
-            <ThemedText type="title">{page.title}</ThemedText>
-            <ThemedText
-              testID="export-guide-progress"
-              accessibilityLabel={progress}
-              themeColor="textSecondary"
-            >
+          <View
+            ref={focusTarget}
+            accessible
+            accessibilityLabel={`${page.title}, ${progress}`}
+          >
+            <ThemedText testID="export-guide-progress" tone="secondary">
               {progress}
             </ThemedText>
           </View>

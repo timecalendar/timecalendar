@@ -1,10 +1,15 @@
-import { Image } from "expo-image"
 import { router, Stack } from "expo-router"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { FlatList, StyleSheet } from "react-native"
 
-import { ListRow, listRowPosition, PageIntro, RootPage } from "@/design"
+import {
+  ListRow,
+  listRowPosition,
+  PageIntro,
+  RootPage,
+  Thumbnail,
+} from "@/design"
 import {
   type ExportGuideCatalogue,
   type ExportGuideLoadOutcome,
@@ -16,7 +21,7 @@ import {
   useImportDraft,
   useJourneyGateRoute,
 } from "@/features/onboarding/draft"
-import { Radii, Spacing } from "@/theme"
+import { Spacing, ThumbnailSize } from "@/theme"
 
 import { GuideBlockingError, GuideProgress } from "./guide-status"
 import { emitExportGuideEvent } from "./telemetry"
@@ -122,11 +127,7 @@ export default function ProviderSelectionScreen() {
             contentContainerStyle={[layout.laneStyle, styles.content]}
             accessibilityLabel={instructions}
             ListHeaderComponent={
-              <PageIntro
-                title={t("exportGuide.provider.title")}
-                caption={instructions}
-                style={styles.intro}
-              />
+              <PageIntro caption={instructions} style={styles.intro} />
             }
             renderItem={({ item: provider, index }) => {
               const thumbnail = provider.thumbnail
@@ -146,10 +147,10 @@ export default function ProviderSelectionScreen() {
                     thumbnail !== undefined && !imageFailed
                       ? {
                           element: (
-                            <Image
-                              source={{ uri: thumbnail.url }}
-                              accessibilityLabel={thumbnail.altText}
-                              accessibilityRole="image"
+                            <Thumbnail
+                              source={{ light: thumbnail.url }}
+                              size="large"
+                              testID={`export-guide-provider-${provider.slug}-thumbnail`}
                               onError={() => {
                                 setFailedImages((current) =>
                                   new Set(current).add(provider.slug),
@@ -163,10 +164,9 @@ export default function ProviderSelectionScreen() {
                                   },
                                 })
                               }}
-                              style={styles.thumbnail}
                             />
                           ),
-                          width: THUMBNAIL,
+                          width: ThumbnailSize.large,
                         }
                       : undefined
                   }
@@ -183,11 +183,8 @@ export default function ProviderSelectionScreen() {
   )
 }
 
-const THUMBNAIL = 56
-
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   content: { paddingVertical: Spacing.four },
   intro: { marginBottom: Spacing.three },
-  thumbnail: { width: THUMBNAIL, height: THUMBNAIL, borderRadius: Radii.small },
 })

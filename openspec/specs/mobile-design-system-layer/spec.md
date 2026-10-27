@@ -195,3 +195,11 @@ same change that migrates them and raises the contract's file floor; the test SH
 - **WHEN** the contract is read after slice 5.1
 - **THEN** it lists the onboarding welcome, connect and manual-import screen files under slice 5.1
   and every one of them passes
+
+#### Scenario: Slice 5.5 extends the contract
+
+- **WHEN** the contract is read after slice 5.5
+- **THEN** it lists the school, groups, provider-selection and guide-page route files and their
+  screen modules under slice 5.5, every one of them passes, and the file floor counts them
+- **AND WHEN** `type="smallBold"` is added back to the group picker
+- **THEN** the contract test fails naming that file and line

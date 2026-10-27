@@ -15,15 +15,14 @@ import {
   ThemedView,
 } from "@/design"
 import { schoolMatches, useSchools } from "@/features/school-selection/data"
-import { Spacing, useTheme } from "@/theme"
+import { Spacing, ThumbnailSize, useTheme } from "@/theme"
 
-import { LogoSize } from "./school-logo"
 import { SchoolRow } from "./school-row"
 
 function SchoolRowSeparator() {
   return (
     <ListRowSeparator
-      leadingWidth={LogoSize}
+      leadingWidth={ThumbnailSize.medium}
       testID="onboarding-school-separator"
     />
   )

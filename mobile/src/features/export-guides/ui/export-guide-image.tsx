@@ -36,7 +36,7 @@ export function ExportGuideImage({
           ]}
         >
           <ErrorNotice compact message={t("exportGuide.imageUnavailable")} />
-          <ThemedText themeColor="textSecondary">{image.altText}</ThemedText>
+          <ThemedText tone="secondary">{image.altText}</ThemedText>
         </View>
       ) : (
         <Image
@@ -50,7 +50,7 @@ export function ExportGuideImage({
         />
       )}
       {image.caption === undefined ? null : (
-        <ThemedText themeColor="textSecondary">{image.caption}</ThemedText>
+        <ThemedText tone="secondary">{image.caption}</ThemedText>
       )}
     </View>
   )

@@ -55,18 +55,26 @@ type ListRowBase = {
   style?: StyleProp<ListRowLayoutStyle>
 }
 
+type ListRowTrailingState =
+  | {
+      selected?: boolean | undefined
+      trailing?: "chevron" | undefined
+      expanded?: never
+    }
+  | { expanded: boolean; selected?: never; trailing?: never }
+
 type ListRowAction = {
   hint?: string | undefined
-  selected?: boolean | undefined
   disabled?: boolean | undefined
-  trailing?: "chevron" | undefined
-} & ({ onPress: () => void; href?: never } | { href: Href; onPress?: never })
+} & ListRowTrailingState &
+  ({ onPress: () => void; href?: never } | { href: Href; onPress?: never })
 
 type ListRowStatic = {
   onPress?: never
   href?: never
   hint?: never
   selected?: never
+  expanded?: never
   disabled?: never
   trailing?: ReactElement | undefined
 }
@@ -189,12 +197,33 @@ function SelectedCheck({ testID }: { testID: string }) {
   )
 }
 
-function DisclosureChevron({ testID }: { testID: string }) {
+type Glyph = { ios: SFSymbol; android?: MaterialGlyph }
+
+const navigationGlyph: Glyph = { ios: "chevron.forward" }
+
+function disclosureGlyph(expanded: boolean): Glyph {
+  return expanded
+    ? { ios: "chevron.down", android: "expand_less" }
+    : { ios: "chevron.forward", android: "expand_more" }
+}
+
+function DisclosureChevron({
+  glyph,
+  testID,
+}: {
+  glyph: Glyph
+  testID: string
+}) {
   const theme = useTheme()
   return (
     <Icon
-      ios="chevron.forward"
-      size={IconSize.small}
+      ios={glyph.ios}
+      {...(glyph.android === undefined ? {} : { android: glyph.android })}
+      size={
+        Platform.OS === "ios"
+          ? IconSize.small
+          : ListGeometry.android.leadingIcon
+      }
       iosWeight="semibold"
       color={theme.textTertiary}
       scaling="text"
@@ -208,6 +237,12 @@ type RowModel = {
   interactive: boolean
   disabled: boolean
   selected: boolean
+  expanded: boolean | undefined
+  accessibilityState: {
+    selected?: boolean
+    expanded?: boolean
+    disabled: boolean
+  }
   stacked: boolean
   accessory: ReactElement | null
   name: string
@@ -222,12 +257,17 @@ function useRowModel(props: ListRowProps, grouped: boolean): RowModel {
   const accessibilitySize = useIsAccessibilityTextSize()
   const interactive = props.onPress !== undefined || props.href !== undefined
   const selected = interactive && props.selected === true
+  const disabled = interactive && props.disabled === true
+  const expanded = interactive ? props.expanded : undefined
   const accessory =
     props.trailing && props.trailing !== "chevron" ? props.trailing : null
   return {
     interactive,
-    disabled: interactive && props.disabled === true,
+    disabled,
     selected,
+    expanded,
+    accessibilityState:
+      expanded === undefined ? { selected, disabled } : { expanded, disabled },
     stacked:
       accessibilitySize &&
       (Boolean(props.value) || selected || accessory !== null),
@@ -402,12 +442,28 @@ function InlineTrailing({
   )
 }
 
+function trailingDisclosure(
+  row: ListRowProps,
+  model: RowModel,
+): { glyph: Glyph; testID: string } | null {
+  if (model.expanded !== undefined) {
+    return {
+      glyph: disclosureGlyph(model.expanded),
+      testID: `${row.testID}-disclosure`,
+    }
+  }
+  if (row.trailing === "chevron" && Platform.OS === "ios") {
+    return { glyph: navigationGlyph, testID: `${row.testID}-chevron` }
+  }
+  return null
+}
+
 function RowContent({ row, model }: { row: ListRowProps; model: RowModel }) {
   const value = row.value ? <RowValue value={row.value} model={model} /> : null
   const check = model.selected ? (
     <SelectedCheck testID={`${row.testID}-check`} />
   ) : null
-  const chevron = row.trailing === "chevron" && Platform.OS === "ios"
+  const disclosure = trailingDisclosure(row, model)
   return (
     <>
       {row.leading && model.leadingBox !== undefined ? (
@@ -434,10 +490,10 @@ function RowContent({ row, model }: { row: ListRowProps; model: RowModel }) {
           model={model}
           value={value}
           check={check}
-          chevron={chevron}
+          chevron={disclosure !== null}
         />
       )}
-      {chevron ? <DisclosureChevron testID={`${row.testID}-chevron`} /> : null}
+      {disclosure ? <DisclosureChevron {...disclosure} /> : null}
       {model.accessory && !model.stacked ? (
         <View style={styles.accessory}>{model.accessory}</View>
       ) : null}
@@ -484,7 +540,7 @@ export function ListRow(props: ListRowProps) {
     paddingVertical: geometry.rowPaddingVertical,
     paddingHorizontal: ListGeometry.rowPaddingHorizontal,
   }
-  const { disabled, selected } = model
+  const { disabled } = model
 
   return (
     <View
@@ -504,7 +560,7 @@ export function ListRow(props: ListRowProps) {
             ? { accessibilityValue: { text: props.value } }
             : {})}
           {...(props.hint ? { accessibilityHint: props.hint } : {})}
-          accessibilityState={{ selected, disabled }}
+          accessibilityState={model.accessibilityState}
           disabled={disabled}
           onPress={() => activate(props)}
           android_ripple={
