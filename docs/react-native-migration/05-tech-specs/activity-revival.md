@@ -439,7 +439,7 @@ Adding that control remains a follow-up only if production evidence shows a need
 
 ## Observability and capacity
 
-> The budgets below are the *initial* ones. They have since been measured and frozen in
+> The budgets below are the _initial_ ones. They have since been measured and frozen in
 > [`activity-capacity-gate.md`](./activity-capacity-gate.md), which also records the production
 > volume buckets, the fixture definitions, the query-plan evidence, the index verdict, and the
 > default-page-size verdict. Where the two differ, the gate document wins and states why.
@@ -736,6 +736,11 @@ university feeds.
 
 **Outcome:** Activity is approved for production only with measured server capacity, complete
 compatibility evidence, and an executable rollback plan.
+
+**Current readiness:** **NO-GO**. The candidate-bound
+[release-readiness record](./activity-release-readiness.md) is authoritative; the implementation
+passes the corrected local capacity and environment gates, while a passing exact-candidate Android
+native flow remains required before production approval.
 
 **Scope:**
 
