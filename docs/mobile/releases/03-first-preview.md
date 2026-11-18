@@ -93,7 +93,9 @@ The first preview is complete only when:
 - a named physical iPhone and Android phone installed it through the store testing path;
 - the recorded build numbers exceed previous uploads;
 - the recorded host toolchain versions are attached to the release record;
-- Play-delivered signing fingerprint matches the expected app-signing certificate;
+- Play-delivered signing fingerprint matches the expected app-signing certificate (moved
+  2026-11-18 to the production go/no-go record, [document 4](./04-production-cutover.md) §4.5;
+  see §3.9);
 - the build identifies the approved SHA/profile/channel without relying on “latest”;
 - a compatible preview OTA and a deliberately incompatible fingerprint case are exercised when
   the OTA service is ready;
@@ -280,7 +282,7 @@ dependency-maintenance items, not preview-build defects, and are not addressed b
 | Named physical device installed it                | ❌ operator item           | ❌ operator item                          |
 | Build numbers exceed previous uploads             | ✅ 142                     | ✅ 138 > 137                              |
 | Host toolchain recorded                           | ✅ §3.6                    | ✅ §3.8                                   |
-| Play-delivered signing fingerprint matches        | n/a                        | ➡ moved to production go/no-go (§3.9)     |
+| Play-delivered signing fingerprint matches        | n/a                        | ⏳ expected value recorded; verify on-device → moved to go/no-go 2026-11-18 (§3.9) |
 | Build identifies the approved SHA/profile/channel | ✅                         | ✅                                        |
 | OTA compatible + incompatible cases               | ⏸ waits on the OTA service | ⏸ waits on the OTA service                |
 | No secret or private key in git/logs/comments     | ✅                         | ✅                                        |
@@ -292,13 +294,15 @@ the physical-device installs on both platforms, and the OTA cases.
 
 The board closed the first-preview release record with the state in §3.6 and §3.8. Nothing was
 rebuilt or re-submitted to close it, and no further Play Developer API access will be set up for
-this preview.
+this preview. The record is closed with §3.5 **not fully met**: the lines listed as still open
+below stay open.
 
 - **Build provenance.** §3.8 stays the Android record. The board did not re-verify it. No second
   build was made to re-derive those values.
 - **Play-delivered signing fingerprint.** This check is no longer part of the preview. It moves to
   the production go/no-go record ([document 4](./04-production-cutover.md) §4.5): check the
-  installed APK's signer against the §3.8 app-signing certificate.
+  installed APK's signer against the §3.8 app-signing certificate. This replaces the signer step
+  in the inbox note linked below.
 - **EAS counter and upload certificate.** They were not read again for this closure. The next
   Android build records both when it is built.
 - **Still open, not blocking this closure:** the physical-device installs on both platforms and the
