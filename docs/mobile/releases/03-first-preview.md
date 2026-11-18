@@ -140,7 +140,7 @@ three Android prerequisites actually looked like, read back from the Expo API ra
 | ----------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------- |
 | Upload key in EAS credentials       | An unrelated EAS-generated keystore, alias `aa6e0585…`, SHA-1 `135a8d77…`       | **Fixed** — the held upload key is imported   |
 | EAS remote `versionCode`            | `1`                                                                             | **Fixed 2026-09-07** — set to `137` from the live production track (§3.8) |
-| Play service account for EAS Submit | `googleServiceAccountKeyForSubmissions = null`                                   | **Fixed 2026-09-07** — `eas-submit@timecalendar-samuelprak.iam.gserviceaccount.com`, key on the build host only (§3.8) |
+| Play service account for EAS Submit | `googleServiceAccountKeyForSubmissions = null`                                   | **Fixed 2026-09-07** — a dedicated least-privilege Play submit service account, key on the build host only (§3.8) |
 
 ### The keystore that was there was not the upload key
 
@@ -236,7 +236,7 @@ untouched. Nothing was promoted.
 
 ### Prerequisites cleared this pass
 
-- **Play service account.** `eas-submit@timecalendar-samuelprak.iam.gserviceaccount.com`, created
+- **Play service account.** A dedicated least-privilege Play submit service account, created
   with no Google Cloud role; granted in Play Console only *release to testing tracks* and *view app
   information* for `fr.samuelprak.timecalendar`. The JSON key lives at repo-root `ci/keys/` on the
   build host (gitignored), not in EAS and not in git.
