@@ -93,7 +93,9 @@ The first preview is complete only when:
 - a named physical iPhone and Android phone installed it through the store testing path;
 - the recorded build numbers exceed previous uploads;
 - the recorded host toolchain versions are attached to the release record;
-- Play-delivered signing fingerprint matches the expected app-signing certificate;
+- Play-delivered signing fingerprint matches the expected app-signing certificate (moved
+  2026-11-18 to the production go/no-go record, [document 4](./04-production-cutover.md) §4.5;
+  see §3.9);
 - the build identifies the approved SHA/profile/channel without relying on “latest”;
 - a compatible preview OTA and a deliberately incompatible fingerprint case are exercised when
   the OTA service is ready;
@@ -140,7 +142,7 @@ three Android prerequisites actually looked like, read back from the Expo API ra
 | ----------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------- |
 | Upload key in EAS credentials       | An unrelated EAS-generated keystore, alias `aa6e0585…`, SHA-1 `135a8d77…`       | **Fixed** — the held upload key is imported   |
 | EAS remote `versionCode`            | `1`                                                                             | **Fixed 2026-09-07** — set to `137` from the live production track (§3.8) |
-| Play service account for EAS Submit | `googleServiceAccountKeyForSubmissions = null`                                   | **Fixed 2026-09-07** — `eas-submit@timecalendar-samuelprak.iam.gserviceaccount.com`, key on the build host only (§3.8) |
+| Play service account for EAS Submit | `googleServiceAccountKeyForSubmissions = null`                                   | **Fixed 2026-09-07** — a dedicated least-privilege Play submit service account, key on the build host only (§3.8) |
 
 ### The keystore that was there was not the upload key
 
@@ -236,7 +238,7 @@ untouched. Nothing was promoted.
 
 ### Prerequisites cleared this pass
 
-- **Play service account.** `eas-submit@timecalendar-samuelprak.iam.gserviceaccount.com`, created
+- **Play service account.** A dedicated least-privilege Play submit service account, created
   with no Google Cloud role; granted in Play Console only *release to testing tracks* and *view app
   information* for `fr.samuelprak.timecalendar`. The JSON key lives at repo-root `ci/keys/` on the
   build host (gitignored), not in EAS and not in git.
@@ -280,13 +282,33 @@ dependency-maintenance items, not preview-build defects, and are not addressed b
 | Named physical device installed it                | ❌ operator item           | ❌ operator item                          |
 | Build numbers exceed previous uploads             | ✅ 142                     | ✅ 138 > 137                              |
 | Host toolchain recorded                           | ✅ §3.6                    | ✅ §3.8                                   |
-| Play-delivered signing fingerprint matches        | n/a                        | ⏳ expected value recorded; verify on-device |
+| Play-delivered signing fingerprint matches        | n/a                        | ⏳ expected value recorded; verify on-device → moved to go/no-go 2026-11-18 (§3.9) |
 | Build identifies the approved SHA/profile/channel | ✅                         | ✅                                        |
 | OTA compatible + incompatible cases               | ⏸ waits on the OTA service | ⏸ waits on the OTA service                |
 | No secret or private key in git/logs/comments     | ✅                         | ✅                                        |
 
 Still open: the Play **The team** internal tester list (no API for email lists — Play Console act),
 the physical-device installs on both platforms, and the OTA cases.
+
+## 3.9 Preview record closed, 2026-11-18
+
+The board closed the first-preview release record with the state in §3.6 and §3.8. Nothing was
+rebuilt or re-submitted to close it, and no further Play Developer API access will be set up for
+this preview. The record is closed with §3.5 **not fully met**: the lines listed as still open
+below stay open.
+
+- **Build provenance.** §3.8 stays the Android record. The board did not re-verify it. No second
+  build was made to re-derive those values.
+- **Play-delivered signing fingerprint.** This check is no longer part of the preview. It moves to
+  the production go/no-go record ([document 4](./04-production-cutover.md) §4.5): check the
+  installed APK's signer against the §3.8 app-signing certificate. This replaces the signer step
+  in the inbox note linked below.
+- **EAS counter and upload certificate.** They were not read again for this closure. The next
+  Android build records both when it is built.
+- **Still open, not blocking this closure:** the physical-device installs on both platforms and the
+  Play internal tester list (both in
+  [`inbox/2026-08-28-android-preview-play-access.md`](../../react-native-migration/inbox/2026-08-28-android-preview-play-access.md)),
+  and the OTA cases, which wait on the OTA service.
 
 ## Official references
 
