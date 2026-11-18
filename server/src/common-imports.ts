@@ -17,11 +17,10 @@ import { ConfigModule } from "@nestjs/config"
 // worker-spawning `SharedQueueModule.forRoot` is runtime-only (app.module.ts);
 // tests get a no-op `QueueService` stub from create-test-module.ts.
 //
-// Note: nest-shared's `forRoot()` connection is `REDIS_URL`-only — it does NOT
-// carry a Bull key prefix (the company convention isolates environments by
-// `REDIS_URL`, not a per-env prefix, like the sibling services). This replaces
-// the previous `prefix: REDIS_KEY_PREFIX` Bull root config; `REDIS_KEY_PREFIX`
-// is therefore retired (see config/constants.ts).
+// Note: nest-shared applies `REDIS_KEY_PREFIX` as the Bull key prefix when it
+// is set. TimeCalendar must leave it unset: environments are isolated by the
+// logical DB index in `REDIS_URL` (production DB 0, preprod DB 1), and setting
+// a prefix would orphan the existing schedulers and delayed jobs.
 //
 // `ConfigModule` is global so `SharedDatabaseModule.forRoot`'s injected
 // `ConfigService` resolves; `ignoreEnvFile` keeps `process.env` (populated by

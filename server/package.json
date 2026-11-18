@@ -46,7 +46,7 @@
     "@bull-board/express": "^8.6.0",
     "@eslint/js": "^9",
     "@golevelup/ts-jest": "^0.7.0",
-    "@lyrolab/nest-shared": "^2.1.0",
+    "@lyrolab/nest-shared": "^2.13.1",
     "@nestjs/bullmq": "^11",
     "@nestjs/cli": "^11",
     "@nestjs/common": "^11",
