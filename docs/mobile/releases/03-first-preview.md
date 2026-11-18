@@ -280,13 +280,31 @@ dependency-maintenance items, not preview-build defects, and are not addressed b
 | Named physical device installed it                | ❌ operator item           | ❌ operator item                          |
 | Build numbers exceed previous uploads             | ✅ 142                     | ✅ 138 > 137                              |
 | Host toolchain recorded                           | ✅ §3.6                    | ✅ §3.8                                   |
-| Play-delivered signing fingerprint matches        | n/a                        | ⏳ expected value recorded; verify on-device |
+| Play-delivered signing fingerprint matches        | n/a                        | ➡ moved to production go/no-go (§3.9)     |
 | Build identifies the approved SHA/profile/channel | ✅                         | ✅                                        |
 | OTA compatible + incompatible cases               | ⏸ waits on the OTA service | ⏸ waits on the OTA service                |
 | No secret or private key in git/logs/comments     | ✅                         | ✅                                        |
 
 Still open: the Play **The team** internal tester list (no API for email lists — Play Console act),
 the physical-device installs on both platforms, and the OTA cases.
+
+## 3.9 Preview record closed, 2026-11-18
+
+The board closed the first-preview release record with the state in §3.6 and §3.8. Nothing was
+rebuilt or re-submitted to close it, and no further Play Developer API access will be set up for
+this preview.
+
+- **Build provenance.** §3.8 stays the Android record. The board did not re-verify it. No second
+  build was made to re-derive those values.
+- **Play-delivered signing fingerprint.** This check is no longer part of the preview. It moves to
+  the production go/no-go record ([document 4](./04-production-cutover.md) §4.5): check the
+  installed APK's signer against the §3.8 app-signing certificate.
+- **EAS counter and upload certificate.** They were not read again for this closure. The next
+  Android build records both when it is built.
+- **Still open, not blocking this closure:** the physical-device installs on both platforms and the
+  Play internal tester list (both in
+  [`inbox/2026-08-28-android-preview-play-access.md`](../../react-native-migration/inbox/2026-08-28-android-preview-play-access.md)),
+  and the OTA cases, which wait on the OTA service.
 
 ## Official references
 

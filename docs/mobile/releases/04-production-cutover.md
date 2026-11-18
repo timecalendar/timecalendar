@@ -65,7 +65,9 @@ installed native fingerprint.
 The release record should contain:
 
 - approved SHA/tag, artifact paths, host toolchain versions and store build numbers;
-- bundle/package identity and signing fingerprints;
+- bundle/package identity and signing fingerprints, including the Play-delivered signer of the
+  installed Android build checked against the app-signing certificate in
+  [document 3](./03-first-preview.md) §3.8 (moved here from preview acceptance, §3.9);
 - CI/Reviewer evidence on the exact SHA;
 - physical-device upgrade-from-v3 evidence on both platforms;
 - migration success and crash-free thresholds with named observers;
