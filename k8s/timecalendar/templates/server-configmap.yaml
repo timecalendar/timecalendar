@@ -22,8 +22,8 @@ data:
   # undefined, and an empty ConfigMap value arrives as "".
   QUEUE_CONCURRENCY: {{ .Values.timecalendar.queueConcurrency | default 100 | quote }}
   # NOTE: REDIS_KEY_PREFIX is retired as of the nest-shared migration (TIM-143).
-  # nest-shared's SharedRedisModule/SharedBullModule connect by REDIS_URL only
-  # and do not apply a per-environment Bull key prefix. Isolation is owned by the
+  # nest-shared's SharedBullModule applies REDIS_KEY_PREFIX as the Bull key prefix
+  # only when it is set; TimeCalendar leaves it unset. Isolation is owned by the
   # logical DB index (or separate instance) in the sealed REDIS_URL, NOT by this
   # prefix: production uses DB 0 and preproduction uses DB 1 (TIM-294). Sources:
   # lyrolab/platform/kubernetes/clusters/do-fra1-cluster01/20-apps/
