@@ -63,12 +63,14 @@ const parseUrl = (value: string) => {
   }
 }
 
+// Checked on the raw value: URL parsing would accept user info, a query or a
+// fragment and normalize paths like "/." to "/", and the relay must only get
+// the token when its origin is exactly what was configured.
+const RELAY_ORIGIN = /^https:\/\/[a-z0-9.-]+(:\d+)?\/?$/i
+
 const relayOrigin = (relay?: EgressRelay) => {
   if (!relay?.clientId || !relay.clientSecret) return undefined
-  const origin = parseUrl(relay.origin)
-  return origin?.protocol === "https:" && origin.pathname === "/"
-    ? origin
-    : undefined
+  return RELAY_ORIGIN.test(relay.origin) ? parseUrl(relay.origin) : undefined
 }
 
 // The relay sits behind Cloudflare Access, which answers a missing or wrong

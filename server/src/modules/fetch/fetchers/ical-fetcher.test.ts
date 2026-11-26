@@ -398,6 +398,22 @@ describe("IcalFetcher", () => {
         "an origin with a path",
         { ...relay, origin: "https://relay.example.com/x" },
       ],
+      [
+        "an origin with user info",
+        { ...relay, origin: "https://user@relay.example.com" },
+      ],
+      [
+        "an origin with a query",
+        { ...relay, origin: "https://relay.example.com/?x=1" },
+      ],
+      [
+        "an origin with a fragment",
+        { ...relay, origin: "https://relay.example.com/#x" },
+      ],
+      [
+        "an origin whose path normalizes to /",
+        { ...relay, origin: "https://relay.example.com/." },
+      ],
       ["no client id", { ...relay, clientId: "" }],
       ["no client secret", { ...relay, clientSecret: "" }],
     ])(
