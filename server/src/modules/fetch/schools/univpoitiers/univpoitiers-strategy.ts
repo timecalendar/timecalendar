@@ -23,6 +23,7 @@ const univpoitiersStrategy = new SchoolStrategy({
     useProxy: true,
     relay: {
       host: "upplanning.appli.univ-poitiers.fr",
+      path: "/jsp/custom/modules/plannings/anonymous_cal.jsp",
       origin: POITIERS_RELAY_ORIGIN,
       clientId: EGRESS_RELAY_CLIENT_ID,
       clientSecret: EGRESS_RELAY_CLIENT_SECRET,

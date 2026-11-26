@@ -1,4 +1,9 @@
-import axios, { AxiosError, AxiosRequestConfig } from "axios"
+import axios, {
+  AxiosError,
+  AxiosHeaders,
+  AxiosRequestConfig,
+  AxiosResponse,
+} from "axios"
 import { Fetcher } from "modules/fetch/fetchers/fetcher"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { parseIcal } from "modules/fetch/parsers/parse-ical"
@@ -38,6 +43,7 @@ const waitForRetry = (delayMs: number, signal: AbortSignal) =>
 
 export type EgressRelay = {
   host: string
+  path: string
   origin: string
   clientId: string
   clientSecret: string
@@ -49,8 +55,19 @@ type IcalFetcherOptions = {
   relay?: EgressRelay
 }
 
-const isConfigured = (relay?: EgressRelay): relay is EgressRelay =>
-  !!relay?.origin && !!relay.clientId && !!relay.clientSecret
+const parseUrl = (value: string) => {
+  try {
+    return new URL(value)
+  } catch {
+    return undefined
+  }
+}
+
+const relayOrigin = (relay?: EgressRelay) => {
+  if (!relay?.clientId || !relay.clientSecret) return undefined
+  const origin = parseUrl(relay.origin)
+  return origin?.protocol === "https:" ? origin : undefined
+}
 
 // The relay sits behind Cloudflare Access, which answers a missing or wrong
 // service token with a redirect to its login page; following it would turn an
@@ -58,22 +75,51 @@ const isConfigured = (relay?: EgressRelay): relay is EgressRelay =>
 const relayRequest = (
   url: string,
   relay: EgressRelay,
+  origin: URL,
 ): Partial<AxiosRequestConfig> | undefined => {
-  let target: URL
-  try {
-    target = new URL(url)
-  } catch {
+  const target = parseUrl(url)
+  if (target?.host !== relay.host || target.pathname !== relay.path)
     return undefined
-  }
-  if (target.host !== relay.host) return undefined
+  const relayed = new URL(origin)
+  relayed.pathname = target.pathname
+  relayed.search = target.search
   return {
-    url: new URL(target.pathname + target.search, relay.origin).toString(),
+    url: relayed.toString(),
     maxRedirects: 0,
     headers: {
       "CF-Access-Client-Id": relay.clientId,
       "CF-Access-Client-Secret": relay.clientSecret,
     },
   }
+}
+
+const isAccessLoginRedirect = (response?: AxiosResponse) =>
+  !!response &&
+  response.status >= 300 &&
+  response.status < 400 &&
+  /\/cdn-cgi\/access\/login/.test(String(response.headers?.location ?? ""))
+
+// Rebuilds a relayed request's failure without its request config, so the
+// service token cannot reach logs or serialized errors.
+const redactRelayFailure = (error: unknown): unknown => {
+  if (!(error instanceof AxiosError)) return error
+  const response = error.response && {
+    status: error.response.status,
+    statusText: error.response.statusText,
+    headers: error.response.headers,
+    data: error.response.data,
+    config: { headers: new AxiosHeaders() },
+  }
+  const redacted = new AxiosError(
+    error.message,
+    error.code,
+    undefined,
+    undefined,
+    response as AxiosResponse | undefined,
+  )
+  if (isAccessLoginRedirect(redacted.response))
+    return new CalendarFetchFailure("authentication", redacted)
+  return redacted
 }
 
 const defaultOptions: IcalFetcherOptions = {
@@ -113,9 +159,11 @@ export class IcalFetcher implements Fetcher {
       signal: budgetController.signal,
     }
 
-    const relayed = isConfigured(this.options.relay)
-      ? relayRequest(url, this.options.relay)
-      : undefined
+    const origin = relayOrigin(this.options.relay)
+    const relayed =
+      origin && this.options.relay
+        ? relayRequest(url, this.options.relay, origin)
+        : undefined
     if (relayed) {
       Object.assign(axiosConfig, relayed)
     } else if (this.options.useProxy && PROXY_URL.length > 0) {
@@ -174,7 +222,8 @@ export class IcalFetcher implements Fetcher {
           outcome = "success"
           finalDisposition = "success"
           return events
-        } catch (error: unknown) {
+        } catch (caught: unknown) {
+          const error = relayed ? redactRelayFailure(caught) : caught
           if (context.signal?.aborted) {
             throw context.signal.reason
           }
