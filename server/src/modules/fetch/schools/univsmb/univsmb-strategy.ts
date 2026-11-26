@@ -16,7 +16,7 @@ const univsmbStrategy = new SchoolStrategy({
   match: ["grenet.fr"],
   urlRenamers: [{ rename: univsmbRenamer }],
   eventPipes: [],
-  fetcher: new IcalFetcher({ withRetries: true, useProxy: true }),
+  fetcher: new IcalFetcher({ withRetries: true }),
 })
 
 export default univsmbStrategy

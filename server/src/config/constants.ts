@@ -72,6 +72,9 @@ export const CRISP_KEY = env.CRISP_KEY ?? ""
 export const CRISP_WEBSITE_ID = env.CRISP_WEBSITE_ID ?? ""
 
 export const PROXY_URL = env.PROXY_URL ?? ""
+export const POITIERS_RELAY_ORIGIN = env.POITIERS_RELAY_ORIGIN ?? ""
+export const EGRESS_RELAY_CLIENT_ID = env.EGRESS_RELAY_CLIENT_ID ?? ""
+export const EGRESS_RELAY_CLIENT_SECRET = env.EGRESS_RELAY_CLIENT_SECRET ?? ""
 
 export const OTEL_ENABLED = isEnvTrue(env.OTEL_ENABLED)
 

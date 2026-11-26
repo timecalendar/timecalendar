@@ -265,4 +265,99 @@ describe("IcalFetcher", () => {
     expect(onFinal).toHaveBeenCalledWith("authentication", "terminal")
     expect(authorizationHeaders).toEqual([null])
   })
+
+  describe("egress relay", () => {
+    const relay = {
+      host: "calendar.example.edu",
+      origin: "https://relay.example.com",
+      clientId: "client-id.access",
+      clientSecret: "client-secret",
+    }
+
+    it("sends matching URLs to the relay origin with the Access service token", async () => {
+      const seen: { url: string; id: string | null; secret: string | null }[] =
+        []
+      server.use(
+        http.get(
+          "https://relay.example.com/plannings/cal.jsp",
+          ({ request }) => {
+            seen.push({
+              url: request.url,
+              id: request.headers.get("cf-access-client-id"),
+              secret: request.headers.get("cf-access-client-secret"),
+            })
+            return HttpResponse.text(validIcal)
+          },
+        ),
+      )
+
+      const events = await new IcalFetcher({ relay }).fetch(
+        "https://calendar.example.edu/plannings/cal.jsp?resources=1&projectId=2",
+      )
+
+      expect(events).toHaveLength(1)
+      expect(seen).toEqual([
+        {
+          url: "https://relay.example.com/plannings/cal.jsp?resources=1&projectId=2",
+          id: "client-id.access",
+          secret: "client-secret",
+        },
+      ])
+    })
+
+    it("fetches other hosts directly without the service token", async () => {
+      const tokens: (string | null)[] = []
+      server.use(
+        http.get("https://other.example.edu/cal.ics", ({ request }) => {
+          tokens.push(request.headers.get("cf-access-client-id"))
+          return HttpResponse.text(validIcal)
+        }),
+      )
+
+      await new IcalFetcher({ relay }).fetch(
+        "https://other.example.edu/cal.ics",
+      )
+
+      expect(tokens).toEqual([null])
+    })
+
+    it("does not follow the Access login redirect", async () => {
+      let loginPageHits = 0
+      server.use(
+        http.get("https://relay.example.com/cal.ics", () =>
+          HttpResponse.redirect(
+            "https://team.example.com/cdn-cgi/access/login",
+            302,
+          ),
+        ),
+        http.get("https://team.example.com/cdn-cgi/access/login", () => {
+          loginPageHits++
+          return HttpResponse.text("<html></html>")
+        }),
+      )
+
+      await expect(
+        new IcalFetcher({ relay }).fetch(
+          "https://calendar.example.edu/cal.ics",
+        ),
+      ).rejects.toBeDefined()
+      expect(loginPageHits).toBe(0)
+    })
+
+    it("falls back to a direct fetch when the relay is not configured", async () => {
+      const hosts: string[] = []
+      server.use(
+        http.get("https://calendar.example.edu/cal.ics", ({ request }) => {
+          hosts.push(new URL(request.url).host)
+          return HttpResponse.text(validIcal)
+        }),
+      )
+
+      await new IcalFetcher({ relay: { ...relay, origin: "" } }).fetch(
+        "https://calendar.example.edu/cal.ics",
+      )
+
+      expect(hosts).toEqual(["calendar.example.edu"])
+    })
+  })
 })

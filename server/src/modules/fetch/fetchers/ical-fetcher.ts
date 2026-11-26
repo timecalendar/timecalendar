@@ -36,9 +36,44 @@ const waitForRetry = (delayMs: number, signal: AbortSignal) =>
     signal.addEventListener("abort", onAbort, { once: true })
   })
 
+export type EgressRelay = {
+  host: string
+  origin: string
+  clientId: string
+  clientSecret: string
+}
+
 type IcalFetcherOptions = {
   withRetries?: boolean
   useProxy?: boolean
+  relay?: EgressRelay
+}
+
+const isConfigured = (relay?: EgressRelay): relay is EgressRelay =>
+  !!relay?.origin && !!relay.clientId && !!relay.clientSecret
+
+// The relay sits behind Cloudflare Access, which answers a missing or wrong
+// service token with a redirect to its login page; following it would turn an
+// auth failure into an "invalid ical" HTML page, so redirects stay off.
+const relayRequest = (
+  url: string,
+  relay: EgressRelay,
+): Partial<AxiosRequestConfig> | undefined => {
+  let target: URL
+  try {
+    target = new URL(url)
+  } catch {
+    return undefined
+  }
+  if (target.host !== relay.host) return undefined
+  return {
+    url: new URL(target.pathname + target.search, relay.origin).toString(),
+    maxRedirects: 0,
+    headers: {
+      "CF-Access-Client-Id": relay.clientId,
+      "CF-Access-Client-Secret": relay.clientSecret,
+    },
+  }
 }
 
 const defaultOptions: IcalFetcherOptions = {
@@ -78,7 +113,12 @@ export class IcalFetcher implements Fetcher {
       signal: budgetController.signal,
     }
 
-    if (this.options.useProxy && PROXY_URL.length > 0) {
+    const relayed = isConfigured(this.options.relay)
+      ? relayRequest(url, this.options.relay)
+      : undefined
+    if (relayed) {
+      Object.assign(axiosConfig, relayed)
+    } else if (this.options.useProxy && PROXY_URL.length > 0) {
       const httpsAgent = new HttpsProxyAgent(PROXY_URL)
       axiosConfig.httpsAgent = httpsAgent
     }
