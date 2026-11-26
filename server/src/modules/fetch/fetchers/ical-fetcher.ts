@@ -1,4 +1,9 @@
-import axios, { AxiosError, AxiosRequestConfig } from "axios"
+import axios, {
+  AxiosError,
+  AxiosHeaders,
+  AxiosRequestConfig,
+  AxiosResponse,
+} from "axios"
 import { Fetcher } from "modules/fetch/fetchers/fetcher"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { parseIcal } from "modules/fetch/parsers/parse-ical"
@@ -36,9 +41,97 @@ const waitForRetry = (delayMs: number, signal: AbortSignal) =>
     signal.addEventListener("abort", onAbort, { once: true })
   })
 
+export type EgressRelay = {
+  host: string
+  path: string
+  origin: string
+  clientId: string
+  clientSecret: string
+}
+
 type IcalFetcherOptions = {
   withRetries?: boolean
   useProxy?: boolean
+  relay?: EgressRelay
+}
+
+const parseUrl = (value: string) => {
+  try {
+    return new URL(value)
+  } catch {
+    return undefined
+  }
+}
+
+// Checked on the raw value: URL parsing would accept user info, a query or a
+// fragment and normalize paths like "/." to "/", and the relay must only get
+// the token when its origin is exactly what was configured.
+const RELAY_ORIGIN = /^https:\/\/[a-z0-9.-]+(:\d+)?\/?$/i
+
+const relayOrigin = (relay?: EgressRelay) => {
+  if (!relay?.clientId || !relay.clientSecret) return undefined
+  return RELAY_ORIGIN.test(relay.origin) ? parseUrl(relay.origin) : undefined
+}
+
+// The relay sits behind Cloudflare Access, which answers a missing or wrong
+// service token with a redirect to its login page; following it would turn an
+// auth failure into an "invalid ical" HTML page, so redirects stay off.
+const relayRequest = (
+  url: string,
+  relay: EgressRelay,
+  origin: URL,
+): Partial<AxiosRequestConfig> | undefined => {
+  const target = parseUrl(url)
+  if (target?.host !== relay.host || target.pathname !== relay.path)
+    return undefined
+  const relayed = new URL(origin)
+  relayed.pathname = target.pathname
+  relayed.search = target.search
+  return {
+    url: relayed.toString(),
+    maxRedirects: 0,
+    headers: {
+      "CF-Access-Client-Id": relay.clientId,
+      "CF-Access-Client-Secret": relay.clientSecret,
+    },
+  }
+}
+
+const isAccessLoginRedirect = (response?: AxiosResponse) =>
+  !!response &&
+  response.status >= 300 &&
+  response.status < 400 &&
+  /\/cdn-cgi\/access\/login/.test(String(response.headers?.location ?? ""))
+
+const pickHeaders = (headers: AxiosResponse["headers"], names: string[]) =>
+  Object.fromEntries(
+    names.flatMap((name) =>
+      headers?.[name] === undefined ? [] : [[name, headers[name]]],
+    ),
+  )
+
+// Rebuilds a relayed request's failure without its request config and with
+// only the response headers classification reads, so neither the service
+// token nor an Access session cookie can reach logs or serialized errors.
+const redactRelayFailure = (error: unknown): unknown => {
+  if (!(error instanceof AxiosError)) return error
+  const response = error.response && {
+    status: error.response.status,
+    statusText: error.response.statusText,
+    headers: pickHeaders(error.response.headers, ["location", "retry-after"]),
+    data: error.response.data,
+    config: { headers: new AxiosHeaders() },
+  }
+  const redacted = new AxiosError(
+    error.message,
+    error.code,
+    undefined,
+    undefined,
+    response as AxiosResponse | undefined,
+  )
+  if (isAccessLoginRedirect(redacted.response))
+    return new CalendarFetchFailure("authentication", redacted)
+  return redacted
 }
 
 const defaultOptions: IcalFetcherOptions = {
@@ -78,7 +171,14 @@ export class IcalFetcher implements Fetcher {
       signal: budgetController.signal,
     }
 
-    if (this.options.useProxy && PROXY_URL.length > 0) {
+    const origin = relayOrigin(this.options.relay)
+    const relayed =
+      origin && this.options.relay
+        ? relayRequest(url, this.options.relay, origin)
+        : undefined
+    if (relayed) {
+      Object.assign(axiosConfig, relayed)
+    } else if (this.options.useProxy && PROXY_URL.length > 0) {
       const httpsAgent = new HttpsProxyAgent(PROXY_URL)
       axiosConfig.httpsAgent = httpsAgent
     }
@@ -134,7 +234,8 @@ export class IcalFetcher implements Fetcher {
           outcome = "success"
           finalDisposition = "success"
           return events
-        } catch (error: unknown) {
+        } catch (caught: unknown) {
+          const error = relayed ? redactRelayFailure(caught) : caught
           if (context.signal?.aborted) {
             throw context.signal.reason
           }

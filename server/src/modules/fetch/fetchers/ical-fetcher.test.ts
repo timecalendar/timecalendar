@@ -1,5 +1,6 @@
 import { readFileSync } from "fs"
 import { join } from "path"
+import { inspect } from "util"
 import { setupMsw } from "test-utils/setup-msw"
 import { delay, http, HttpResponse } from "msw"
 import { IcalFetcher } from "modules/fetch/fetchers/ical-fetcher"
@@ -264,5 +265,184 @@ describe("IcalFetcher", () => {
     expect(onAttempt).toHaveBeenCalledTimes(1)
     expect(onFinal).toHaveBeenCalledWith("authentication", "terminal")
     expect(authorizationHeaders).toEqual([null])
+  })
+
+  describe("egress relay", () => {
+    const relay = {
+      host: "calendar.example.edu",
+      path: "/plannings/cal.jsp",
+      origin: "https://relay.example.com",
+      clientId: "client-id.access",
+      clientSecret: "client-secret",
+    }
+
+    it("sends the relayed path to the relay origin with the Access service token", async () => {
+      const seen: { url: string; id: string | null; secret: string | null }[] =
+        []
+      server.use(
+        http.get(
+          "https://relay.example.com/plannings/cal.jsp",
+          ({ request }) => {
+            seen.push({
+              url: request.url,
+              id: request.headers.get("cf-access-client-id"),
+              secret: request.headers.get("cf-access-client-secret"),
+            })
+            return HttpResponse.text(validIcal)
+          },
+        ),
+      )
+
+      const events = await new IcalFetcher({ relay }).fetch(
+        "https://calendar.example.edu/plannings/cal.jsp?resources=1&projectId=2",
+      )
+
+      expect(events).toHaveLength(1)
+      expect(seen).toEqual([
+        {
+          url: "https://relay.example.com/plannings/cal.jsp?resources=1&projectId=2",
+          id: "client-id.access",
+          secret: "client-secret",
+        },
+      ])
+    })
+
+    it("keeps the relay origin for a path that looks like another authority", async () => {
+      const request = jest
+        .spyOn(axios, "request")
+        .mockResolvedValue({ data: validIcal })
+
+      await new IcalFetcher({
+        relay: { ...relay, path: "//evil.example/x" },
+      }).fetch("https://calendar.example.edu//evil.example/x")
+
+      expect(new URL(request.mock.calls[0][0].url!).host).toBe(
+        "relay.example.com",
+      )
+      request.mockRestore()
+    })
+
+    it.each([
+      ["another host", "https://other.example.edu/plannings/cal.jsp"],
+      ["another path", "https://calendar.example.edu/plannings/other.jsp"],
+    ])("fetches %s without the relay or the token", async (_, url) => {
+      const request = jest
+        .spyOn(axios, "request")
+        .mockResolvedValue({ data: validIcal })
+
+      await new IcalFetcher({ relay }).fetch(url)
+
+      expect(request.mock.calls[0][0]).toMatchObject({ url })
+      expect(request.mock.calls[0][0].headers).toBeUndefined()
+      request.mockRestore()
+    })
+
+    it("classifies the Access login redirect as authentication without following it", async () => {
+      let attempts = 0
+      let loginPageHits = 0
+      server.use(
+        http.get("https://relay.example.com/plannings/cal.jsp", () => {
+          attempts++
+          return HttpResponse.redirect(
+            "https://team.cloudflareaccess.com/cdn-cgi/access/login/relay.example.com",
+            302,
+          )
+        }),
+        http.get("https://team.cloudflareaccess.com/*", () => {
+          loginPageHits++
+          return HttpResponse.text("<html></html>")
+        }),
+      )
+
+      const failure = await new IcalFetcher({ relay, withRetries: true })
+        .fetch("https://calendar.example.edu/plannings/cal.jsp")
+        .catch((error) => error)
+
+      expect(failure).toMatchObject({ classification: "authentication" })
+      expect(attempts).toBe(1)
+      expect(loginPageHits).toBe(0)
+    })
+
+    it("keeps the service token out of a relayed failure", async () => {
+      server.use(
+        http.get("https://relay.example.com/plannings/cal.jsp", () =>
+          HttpResponse.text("down", {
+            status: 503,
+            headers: { "set-cookie": "CF_Authorization=session-jwt" },
+          }),
+        ),
+      )
+
+      const failure = await new IcalFetcher({ relay })
+        .fetch("https://calendar.example.edu/plannings/cal.jsp")
+        .catch((error) => error)
+
+      expect(failure).toMatchObject({ classification: "service_unavailable" })
+      const cause = failure.originalCause
+      expect(cause).toBeInstanceOf(AxiosError)
+      expect(cause.config).toBeUndefined()
+      expect(cause.request).toBeUndefined()
+      expect(cause.cause).toBeUndefined()
+      expect(cause.response?.request).toBeUndefined()
+      expect(cause.response?.config.headers.toJSON()).toEqual({})
+      const serialized = inspect(failure, { depth: null })
+      expect(serialized).not.toContain("client-secret")
+      expect(serialized).not.toContain("client-id.access")
+      expect(serialized).not.toContain("session-jwt")
+    })
+
+    it.each([
+      ["no origin", { ...relay, origin: "" }],
+      ["a plain-http origin", { ...relay, origin: "http://relay.example.com" }],
+      [
+        "an origin with a path",
+        { ...relay, origin: "https://relay.example.com/x" },
+      ],
+      [
+        "an origin with user info",
+        { ...relay, origin: "https://user@relay.example.com" },
+      ],
+      [
+        "an origin with a query",
+        { ...relay, origin: "https://relay.example.com/?x=1" },
+      ],
+      [
+        "an origin with a fragment",
+        { ...relay, origin: "https://relay.example.com/#x" },
+      ],
+      [
+        "an origin whose path normalizes to /",
+        { ...relay, origin: "https://relay.example.com/." },
+      ],
+      ["no client id", { ...relay, clientId: "" }],
+      ["no client secret", { ...relay, clientSecret: "" }],
+    ])(
+      "keeps the proxy path when the relay has %s",
+      async (_, unconfigured) => {
+        await jest.isolateModulesAsync(async () => {
+          jest.doMock("config/constants", () => ({
+            ...jest.requireActual("config/constants"),
+            PROXY_URL: "http://proxy.example.com:3128",
+          }))
+          const { IcalFetcher: IsolatedFetcher } = await import(
+            "modules/fetch/fetchers/ical-fetcher"
+          )
+          const isolatedAxios = (await import("axios")).default
+          const request = jest
+            .spyOn(isolatedAxios, "request")
+            .mockResolvedValue({ data: validIcal })
+          const url = "https://calendar.example.edu/plannings/cal.jsp"
+
+          await new IsolatedFetcher({
+            useProxy: true,
+            relay: unconfigured,
+          }).fetch(url)
+
+          expect(request.mock.calls[0][0]).toMatchObject({ url })
+          expect(request.mock.calls[0][0].httpsAgent).toBeDefined()
+          expect(request.mock.calls[0][0].headers).toBeUndefined()
+        })
+      },
+    )
   })
 })
