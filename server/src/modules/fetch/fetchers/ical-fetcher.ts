@@ -66,7 +66,9 @@ const parseUrl = (value: string) => {
 const relayOrigin = (relay?: EgressRelay) => {
   if (!relay?.clientId || !relay.clientSecret) return undefined
   const origin = parseUrl(relay.origin)
-  return origin?.protocol === "https:" ? origin : undefined
+  return origin?.protocol === "https:" && origin.pathname === "/"
+    ? origin
+    : undefined
 }
 
 // The relay sits behind Cloudflare Access, which answers a missing or wrong
@@ -99,14 +101,22 @@ const isAccessLoginRedirect = (response?: AxiosResponse) =>
   response.status < 400 &&
   /\/cdn-cgi\/access\/login/.test(String(response.headers?.location ?? ""))
 
-// Rebuilds a relayed request's failure without its request config, so the
-// service token cannot reach logs or serialized errors.
+const pickHeaders = (headers: AxiosResponse["headers"], names: string[]) =>
+  Object.fromEntries(
+    names.flatMap((name) =>
+      headers?.[name] === undefined ? [] : [[name, headers[name]]],
+    ),
+  )
+
+// Rebuilds a relayed request's failure without its request config and with
+// only the response headers classification reads, so neither the service
+// token nor an Access session cookie can reach logs or serialized errors.
 const redactRelayFailure = (error: unknown): unknown => {
   if (!(error instanceof AxiosError)) return error
   const response = error.response && {
     status: error.response.status,
     statusText: error.response.statusText,
-    headers: error.response.headers,
+    headers: pickHeaders(error.response.headers, ["location", "retry-after"]),
     data: error.response.data,
     config: { headers: new AxiosHeaders() },
   }

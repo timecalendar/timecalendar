@@ -1,5 +1,6 @@
 import { readFileSync } from "fs"
 import { join } from "path"
+import { inspect } from "util"
 import { setupMsw } from "test-utils/setup-msw"
 import { delay, http, HttpResponse } from "msw"
 import { IcalFetcher } from "modules/fetch/fetchers/ical-fetcher"
@@ -365,7 +366,10 @@ describe("IcalFetcher", () => {
     it("keeps the service token out of a relayed failure", async () => {
       server.use(
         http.get("https://relay.example.com/plannings/cal.jsp", () =>
-          HttpResponse.text("down", { status: 503 }),
+          HttpResponse.text("down", {
+            status: 503,
+            headers: { "set-cookie": "CF_Authorization=session-jwt" },
+          }),
         ),
       )
 
@@ -381,14 +385,21 @@ describe("IcalFetcher", () => {
       expect(cause.cause).toBeUndefined()
       expect(cause.response?.request).toBeUndefined()
       expect(cause.response?.config.headers.toJSON()).toEqual({})
-      const serialized = JSON.stringify(failure) + JSON.stringify(cause)
+      const serialized = inspect(failure, { depth: null })
       expect(serialized).not.toContain("client-secret")
       expect(serialized).not.toContain("client-id.access")
+      expect(serialized).not.toContain("session-jwt")
     })
 
     it.each([
       ["no origin", { ...relay, origin: "" }],
       ["a plain-http origin", { ...relay, origin: "http://relay.example.com" }],
+      [
+        "an origin with a path",
+        { ...relay, origin: "https://relay.example.com/x" },
+      ],
+      ["no client id", { ...relay, clientId: "" }],
+      ["no client secret", { ...relay, clientSecret: "" }],
     ])(
       "keeps the proxy path when the relay has %s",
       async (_, unconfigured) => {
