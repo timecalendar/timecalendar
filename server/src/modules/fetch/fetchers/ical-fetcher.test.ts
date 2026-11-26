@@ -374,7 +374,14 @@ describe("IcalFetcher", () => {
         .catch((error) => error)
 
       expect(failure).toMatchObject({ classification: "service_unavailable" })
-      const serialized = JSON.stringify(failure) + JSON.stringify(failure.cause)
+      const cause = failure.originalCause
+      expect(cause).toBeInstanceOf(AxiosError)
+      expect(cause.config).toBeUndefined()
+      expect(cause.request).toBeUndefined()
+      expect(cause.cause).toBeUndefined()
+      expect(cause.response?.request).toBeUndefined()
+      expect(cause.response?.config.headers.toJSON()).toEqual({})
+      const serialized = JSON.stringify(failure) + JSON.stringify(cause)
       expect(serialized).not.toContain("client-secret")
       expect(serialized).not.toContain("client-id.access")
     })
