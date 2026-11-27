@@ -20,7 +20,6 @@ const univpoitiersStrategy = new SchoolStrategy({
   // devmain (platform terraform/envs/infra/timecalendar-egress.tf).
   fetcher: new IcalFetcher({
     withRetries: true,
-    useProxy: true,
     relay: {
       host: "upplanning.appli.univ-poitiers.fr",
       path: "/jsp/custom/modules/plannings/anonymous_cal.jsp",

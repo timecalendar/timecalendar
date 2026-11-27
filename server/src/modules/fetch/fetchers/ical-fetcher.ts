@@ -7,8 +7,6 @@ import axios, {
 import { Fetcher } from "modules/fetch/fetchers/fetcher"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { parseIcal } from "modules/fetch/parsers/parse-ical"
-import { HttpsProxyAgent } from "https-proxy-agent"
-import { PROXY_URL } from "config/constants"
 import {
   ICAL_ATTEMPT_TIMEOUT_MS,
   ICAL_FETCH_BUDGET_MS,
@@ -51,7 +49,6 @@ export type EgressRelay = {
 
 type IcalFetcherOptions = {
   withRetries?: boolean
-  useProxy?: boolean
   relay?: EgressRelay
 }
 
@@ -136,7 +133,6 @@ const redactRelayFailure = (error: unknown): unknown => {
 
 const defaultOptions: IcalFetcherOptions = {
   withRetries: false,
-  useProxy: false,
 }
 
 export class IcalFetcher implements Fetcher {
@@ -176,12 +172,7 @@ export class IcalFetcher implements Fetcher {
       origin && this.options.relay
         ? relayRequest(url, this.options.relay, origin)
         : undefined
-    if (relayed) {
-      Object.assign(axiosConfig, relayed)
-    } else if (this.options.useProxy && PROXY_URL.length > 0) {
-      const httpsAgent = new HttpsProxyAgent(PROXY_URL)
-      axiosConfig.httpsAgent = httpsAgent
-    }
+    if (relayed) Object.assign(axiosConfig, relayed)
 
     let outcome: CalendarFetchOutcome = "cancelled"
     let finalDisposition: CalendarFetchFinalDisposition = "cancelled"

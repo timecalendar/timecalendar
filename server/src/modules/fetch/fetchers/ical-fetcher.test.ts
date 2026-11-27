@@ -417,31 +417,18 @@ describe("IcalFetcher", () => {
       ["no client id", { ...relay, clientId: "" }],
       ["no client secret", { ...relay, clientSecret: "" }],
     ])(
-      "keeps the proxy path when the relay has %s",
+      "fetches directly without the token when the relay has %s",
       async (_, unconfigured) => {
-        await jest.isolateModulesAsync(async () => {
-          jest.doMock("config/constants", () => ({
-            ...jest.requireActual("config/constants"),
-            PROXY_URL: "http://proxy.example.com:3128",
-          }))
-          const { IcalFetcher: IsolatedFetcher } = await import(
-            "modules/fetch/fetchers/ical-fetcher"
-          )
-          const isolatedAxios = (await import("axios")).default
-          const request = jest
-            .spyOn(isolatedAxios, "request")
-            .mockResolvedValue({ data: validIcal })
-          const url = "https://calendar.example.edu/plannings/cal.jsp"
+        const request = jest
+          .spyOn(axios, "request")
+          .mockResolvedValue({ data: validIcal })
+        const url = `https://${relay.host}${relay.path}?resources=1`
 
-          await new IsolatedFetcher({
-            useProxy: true,
-            relay: unconfigured,
-          }).fetch(url)
+        await new IcalFetcher({ relay: unconfigured }).fetch(url)
 
-          expect(request.mock.calls[0][0]).toMatchObject({ url })
-          expect(request.mock.calls[0][0].httpsAgent).toBeDefined()
-          expect(request.mock.calls[0][0].headers).toBeUndefined()
-        })
+        expect(request.mock.calls[0][0]).toMatchObject({ url })
+        expect(request.mock.calls[0][0].httpsAgent).toBeUndefined()
+        expect(request.mock.calls[0][0].headers).toBeUndefined()
       },
     )
   })
