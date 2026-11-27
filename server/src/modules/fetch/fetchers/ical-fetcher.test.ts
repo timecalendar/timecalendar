@@ -429,6 +429,7 @@ describe("IcalFetcher", () => {
         expect(request.mock.calls[0][0]).toMatchObject({ url })
         expect(request.mock.calls[0][0].httpsAgent).toBeUndefined()
         expect(request.mock.calls[0][0].headers).toBeUndefined()
+        request.mockRestore()
       },
     )
   })
