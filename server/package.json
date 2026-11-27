@@ -103,7 +103,7 @@
     "express-basic-auth": "^1.2.1",
     "firebase-admin": "^13",
     "fishery": "^2.1.0",
-    "glob": "^13",
+    "glob": "^14",
     "globals": "^16",
     "helmet": "^7.0.0",
     "ioredis": "^5.11.1",
